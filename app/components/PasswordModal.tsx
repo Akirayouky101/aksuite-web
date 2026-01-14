@@ -18,7 +18,7 @@ interface PasswordModalProps {
 }
 
 const emojis = ['🔥', '💀', '⚡', '💎', '🎯', '🚀', '👑', '💣', '⭐', '🌟', '✨', '💥']
-const categories = ['Work', 'Personal', 'Social', 'Finance', 'Gaming', 'Other']
+const categories = ['Lavoro', 'Personale', 'Social', 'Finanza', 'Gaming', 'Altro']
 
 export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModalProps) {
   const [formData, setFormData] = useState({
@@ -26,7 +26,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
     username: '',
     password: '',
     website: '',
-    category: 'Personal',
+    category: 'Personale',
     emoji: '🔥',
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -54,7 +54,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
       username: '',
       password: '',
       website: '',
-      category: 'Personal',
+      category: 'Personale',
       emoji: '🔥',
     })
     setIsSaving(false)
@@ -124,9 +124,9 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       </motion.div>
                       <div>
                         <h2 className="text-3xl font-black bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent">
-                          ⚡ ADD NEW PASSWORD ⚡
+                          ⚡ AGGIUNGI NUOVA PASSWORD ⚡
                         </h2>
-                        <p className="text-yellow-100 font-bold">MAXIMUM SECURITY MODE!</p>
+                        <p className="text-yellow-100 font-bold">MODALITÀ SICUREZZA MASSIMA!</p>
                       </div>
                     </div>
                     <motion.button
@@ -145,7 +145,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                   {/* EMOJI SELECTOR! */}
                   <div>
                     <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider">
-                      🎯 Choose Your Icon!
+                      🎯 Scegli la tua Icona!
                     </label>
                     <div className="grid grid-cols-6 gap-2">
                       {emojis.map((emoji) => (
@@ -170,7 +170,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                   {/* TITLE! */}
                   <div>
                     <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" /> Title
+                      <Sparkles className="w-4 h-4" /> Titolo
                     </label>
                     <input
                       type="text"
@@ -178,7 +178,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                       className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
-                      placeholder="e.g., My Super Secret Account 💀"
+                      placeholder="es. Il mio Account Super Segreto 💀"
                     />
                   </div>
 
@@ -186,7 +186,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                     {/* USERNAME! */}
                     <div>
                       <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                        <User className="w-4 h-4" /> Username
+                        <User className="w-4 h-4" /> Nome Utente
                       </label>
                       <input
                         type="text"
@@ -194,14 +194,14 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         value={formData.username}
                         onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
                         className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
-                        placeholder="your_username"
+                        placeholder="tuo_username"
                       />
                     </div>
 
                     {/* CATEGORY! */}
                     <div>
                       <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                        <Tag className="w-4 h-4" /> Category
+                        <Tag className="w-4 h-4" /> Categoria
                       </label>
                       <select
                         value={formData.category}
@@ -255,14 +255,14 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                   {/* WEBSITE! */}
                   <div>
                     <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                      <Globe className="w-4 h-4" /> Website
+                      <Globe className="w-4 h-4" /> Sito Web
                     </label>
                     <input
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
                       className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
-                      placeholder="https://example.com"
+                      placeholder="https://esempio.com"
                     />
                   </div>
 
@@ -285,14 +285,14 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                             <Zap className="w-6 h-6 text-white" />
                           </motion.div>
                           <span className="text-white font-black text-xl uppercase tracking-wider">
-                            SAVING... 💥
+                            SALVATAGGIO... 💥
                           </span>
                         </>
                       ) : (
                         <>
                           <Lock className="w-6 h-6 text-white" strokeWidth={3} />
                           <span className="text-white font-black text-xl uppercase tracking-wider">
-                            🔥 SAVE PASSWORD 🔥
+                            🔥 SALVA PASSWORD 🔥
                           </span>
                         </>
                       )}
