@@ -75,3 +75,42 @@ CREATE TRIGGER on_auth_user_created
 CREATE INDEX IF NOT EXISTS passwords_user_id_idx ON public.passwords(user_id);
 CREATE INDEX IF NOT EXISTS passwords_category_idx ON public.passwords(category);
 CREATE INDEX IF NOT EXISTS passwords_created_at_idx ON public.passwords(created_at DESC);
+
+-- Create budget table for family budget management
+CREATE TABLE IF NOT EXISTS public.budget_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+  amount DECIMAL(10, 2) NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT NOT NULL,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  emoji TEXT DEFAULT '💰',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS for budget
+ALTER TABLE public.budget_transactions ENABLE ROW LEVEL SECURITY;
+
+-- Budget policies
+CREATE POLICY "Users can view own budget transactions"
+  ON public.budget_transactions FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own budget transactions"
+  ON public.budget_transactions FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own budget transactions"
+  ON public.budget_transactions FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own budget transactions"
+  ON public.budget_transactions FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Create index for budget
+CREATE INDEX IF NOT EXISTS budget_user_id_idx ON public.budget_transactions(user_id);
+CREATE INDEX IF NOT EXISTS budget_date_idx ON public.budget_transactions(date DESC);
+CREATE INDEX IF NOT EXISTS budget_type_idx ON public.budget_transactions(type);
