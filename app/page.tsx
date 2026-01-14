@@ -11,10 +11,13 @@ import BudgetMenuModal from './components/BudgetMenuModal'
 import BudgetViewModal from './components/BudgetViewModal'
 import RecurringModal from './components/RecurringModal'
 import RecurringListModal from './components/RecurringListModal'
+import BudgetLimitModal from './components/BudgetLimitModal'
+import BudgetLimitsViewModal from './components/BudgetLimitsViewModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
 import { useRecurring } from './hooks/useRecurring'
+import { useBudgetLimits } from './hooks/useBudgetLimits'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -36,12 +39,15 @@ export default function Home() {
   const [isBudgetViewModalOpen, setIsBudgetViewModalOpen] = useState(false)
   const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false)
   const [isRecurringListModalOpen, setIsRecurringListModalOpen] = useState(false)
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false)
+  const [isLimitsViewModalOpen, setIsLimitsViewModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const { passwords, addPassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
+  const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
 
   // Initialize console guard once
   useEffect(() => {
@@ -561,6 +567,8 @@ export default function Home() {
         onSelectView={() => setIsBudgetViewModalOpen(true)}
         onSelectRecurring={() => setIsRecurringModalOpen(true)}
         onSelectRecurringList={() => setIsRecurringListModalOpen(true)}
+        onSelectLimit={() => setIsLimitModalOpen(true)}
+        onSelectLimitsList={() => setIsLimitsViewModalOpen(true)}
       />
 
       {/* BUDGET MODAL (Add Transaction) */}
@@ -593,6 +601,23 @@ export default function Home() {
         recurring={recurring}
         onToggleActive={toggleActive}
         onDelete={deleteRecurring}
+      />
+
+      {/* BUDGET LIMIT MODAL (Add Limit) */}
+      <BudgetLimitModal 
+        isOpen={isLimitModalOpen}
+        onClose={() => setIsLimitModalOpen(false)}
+        onSave={addLimit}
+        existingCategories={limits.map(l => l.category)}
+      />
+
+      {/* BUDGET LIMITS VIEW MODAL (Manage Limits) */}
+      <BudgetLimitsViewModal 
+        isOpen={isLimitsViewModalOpen}
+        onClose={() => setIsLimitsViewModalOpen(false)}
+        limits={limitsStatus}
+        onToggleActive={toggleLimitActive}
+        onDelete={deleteLimit}
       />
 
       {/* AUTH MODAL! */}

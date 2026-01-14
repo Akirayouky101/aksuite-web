@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, BarChart3, Repeat } from 'lucide-react'
+import { X, Plus, BarChart3, Repeat, AlertTriangle } from 'lucide-react'
 
 interface BudgetMenuModalProps {
   isOpen: boolean
@@ -10,6 +10,8 @@ interface BudgetMenuModalProps {
   onSelectView: () => void
   onSelectRecurring?: () => void
   onSelectRecurringList?: () => void
+  onSelectLimit?: () => void
+  onSelectLimitsList?: () => void
 }
 
 export default function BudgetMenuModal({ 
@@ -18,7 +20,9 @@ export default function BudgetMenuModal({
   onSelectNew, 
   onSelectView,
   onSelectRecurring,
-  onSelectRecurringList 
+  onSelectRecurringList,
+  onSelectLimit,
+  onSelectLimitsList
 }: BudgetMenuModalProps) {
   if (!isOpen) return null
 
@@ -266,6 +270,99 @@ export default function BudgetMenuModal({
 
                 {/* Glow effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-teal-600 rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
+              </motion.button>
+            )}
+
+            {/* Option 5: Imposta Limite */}
+            {onSelectLimit && (
+              <motion.button
+                onClick={() => handleOptionClick(onSelectLimit)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative overflow-hidden bg-gradient-to-br from-orange-600 via-red-600 to-orange-700 rounded-2xl p-8 border-2 border-orange-400/30 hover:border-orange-400/60 transition-all shadow-2xl hover:shadow-orange-500/50"
+              >
+                {/* Animated shine */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{
+                    x: ['-200%', '200%'],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 1,
+                    delay: 2,
+                  }}
+                />
+
+                {/* Content */}
+                <div className="relative z-10">
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                  >
+                    <AlertTriangle className="w-8 h-8 text-white" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-white mb-2">⚠️ LIMITE BUDGET</h3>
+                  <p className="text-sm text-orange-100">Imposta tetto massimo di spesa</p>
+                </div>
+
+                {/* Glow effect */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-red-600 rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
+              </motion.button>
+            )}
+
+            {/* Option 6: Gestisci Limiti */}
+            {onSelectLimitsList && (
+              <motion.button
+                onClick={() => handleOptionClick(onSelectLimitsList)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative overflow-hidden bg-gradient-to-br from-red-600 via-pink-600 to-red-700 rounded-2xl p-8 border-2 border-red-400/30 hover:border-red-400/60 transition-all shadow-2xl hover:shadow-red-500/50"
+              >
+                {/* Animated shine */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{
+                    x: ['-200%', '200%'],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 1,
+                    delay: 2.5,
+                  }}
+                />
+
+                {/* Content */}
+                <div className="relative z-10">
+                  <motion.div
+                    animate={{
+                      y: [0, -5, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                  >
+                    <span className="text-3xl">🎯</span>
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-white mb-2">🎯 GESTISCI LIMITI</h3>
+                  <p className="text-sm text-red-100">Vedi tutti i limiti e avvisi</p>
+                </div>
+
+                {/* Glow effect */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-pink-600 rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
               </motion.button>
             )}
           </div>
