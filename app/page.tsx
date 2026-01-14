@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
+import PasswordMenuModal from './components/PasswordMenuModal'
+import PasswordListModal from './components/PasswordListModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { supabase } from '@/lib/supabase'
@@ -19,11 +21,13 @@ interface AppCard {
 
 export default function Home() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [isListModalOpen, setIsListModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
-  const { passwords, addPassword, user } = usePasswords()
+  const { passwords, addPassword, user, deletePassword } = usePasswords()
 
   // Initialize console guard once
   useEffect(() => {
@@ -355,7 +359,7 @@ export default function Home() {
                     }}
                     onHoverStart={() => setHoveredCard(app.id)}
                     onHoverEnd={() => setHoveredCard(null)}
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => setIsMenuModalOpen(true)}
                     className="relative group cursor-pointer col-span-full"
                   >
                     {/* EXPLOSIVE GLOW EFFECT! */}
@@ -499,11 +503,27 @@ export default function Home() {
         </div>
       </div>
 
-      {/* PASSWORD MODAL! */}
+      {/* PASSWORD MENU MODAL */}
+      <PasswordMenuModal 
+        isOpen={isMenuModalOpen}
+        onClose={() => setIsMenuModalOpen(false)}
+        onSelectNew={() => setIsPasswordModalOpen(true)}
+        onSelectList={() => setIsListModalOpen(true)}
+      />
+
+      {/* PASSWORD FORM MODAL */}
       <PasswordModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
         onSave={handleSavePassword}
+      />
+
+      {/* PASSWORD LIST MODAL */}
+      <PasswordListModal 
+        isOpen={isListModalOpen}
+        onClose={() => setIsListModalOpen(false)}
+        passwords={passwords}
+        onDelete={deletePassword}
       />
 
       {/* AUTH MODAL! */}
