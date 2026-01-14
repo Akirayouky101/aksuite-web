@@ -239,7 +239,7 @@ export default function Home() {
           </div>
         </motion.div>
 
-        <AuthModal 
+        <AuthModal onSuccess={() => {}} 
           isOpen={isAuthModalOpen} 
           onClose={() => setIsAuthModalOpen(false)} 
         />
