@@ -20,12 +20,13 @@ export default function BudgetMenuModal({ isOpen, onClose, onSelectNew, onSelect
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-gradient-to-br from-slate-900 via-green-900/20 to-slate-900 rounded-2xl max-w-2xl w-full border border-green-500/20 shadow-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+          className="bg-gradient-to-br from-slate-900 via-green-900/50 to-slate-900 rounded-2xl max-w-2xl w-full border border-green-500/20 shadow-2xl overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-white/10">
