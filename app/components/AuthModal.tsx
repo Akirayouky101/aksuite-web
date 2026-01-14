@@ -78,7 +78,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 <Zap className="w-6 h-6 text-white" strokeWidth={3} />
               </motion.div>
               <h2 className="text-3xl font-black bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
-                {isLogin ? '⚡ LOGIN ⚡' : '✨ SIGN UP ✨'}
+                {isLogin ? '⚡ ACCEDI ⚡' : '✨ REGISTRATI ✨'}
               </h2>
             </div>
             <button
@@ -99,7 +99,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             {!isLogin && (
               <div>
                 <label className="block text-violet-300 font-bold mb-2 text-sm flex items-center gap-2">
-                  <User className="w-4 h-4" /> Full Name
+                  <User className="w-4 h-4" /> Nome Completo
                 </label>
                 <input
                   type="text"
@@ -107,7 +107,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full px-4 py-3 bg-black/50 border-2 border-violet-400/50 rounded-xl text-white font-bold placeholder-violet-300/50 focus:border-violet-400 focus:outline-none transition-all"
-                  placeholder="Your Name"
+                  placeholder="Il tuo nome"
                 />
               </div>
             )}
@@ -122,7 +122,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-black/50 border-2 border-violet-400/50 rounded-xl text-white font-bold placeholder-violet-300/50 focus:border-violet-400 focus:outline-none transition-all"
-                placeholder="your@email.com"
+                placeholder="tua@email.com"
               />
             </div>
 
@@ -149,7 +149,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               <div className="relative px-6 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl border-2 border-violet-400 flex items-center justify-center gap-3">
                 <Sparkles className="w-5 h-5 text-white" />
                 <span className="text-white font-black text-lg uppercase">
-                  {loading ? 'LOADING...' : isLogin ? 'LOGIN' : 'SIGN UP'}
+                  {loading ? 'CARICAMENTO...' : isLogin ? 'ACCEDI' : 'REGISTRATI'}
                 </span>
               </div>
             </button>
@@ -160,7 +160,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               onClick={() => setIsLogin(!isLogin)}
               className="text-violet-300 hover:text-violet-200 font-bold text-sm"
             >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Login'}
+              {isLogin ? "Non hai un account? Registrati" : 'Hai già un account? Accedi'}
             </button>
           </div>
         </div>
