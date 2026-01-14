@@ -9,9 +9,12 @@ import PasswordListModal from './components/PasswordListModal'
 import BudgetModal from './components/BudgetModal'
 import BudgetMenuModal from './components/BudgetMenuModal'
 import BudgetViewModal from './components/BudgetViewModal'
+import RecurringModal from './components/RecurringModal'
+import RecurringListModal from './components/RecurringListModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
+import { useRecurring } from './hooks/useRecurring'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -31,11 +34,14 @@ export default function Home() {
   const [isBudgetMenuModalOpen, setIsBudgetMenuModalOpen] = useState(false)
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false)
   const [isBudgetViewModalOpen, setIsBudgetViewModalOpen] = useState(false)
+  const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false)
+  const [isRecurringListModalOpen, setIsRecurringListModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const { passwords, addPassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
+  const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
 
   // Initialize console guard once
   useEffect(() => {
@@ -553,6 +559,8 @@ export default function Home() {
         onClose={() => setIsBudgetMenuModalOpen(false)}
         onSelectNew={() => setIsBudgetModalOpen(true)}
         onSelectView={() => setIsBudgetViewModalOpen(true)}
+        onSelectRecurring={() => setIsRecurringModalOpen(true)}
+        onSelectRecurringList={() => setIsRecurringListModalOpen(true)}
       />
 
       {/* BUDGET MODAL (Add Transaction) */}
@@ -569,6 +577,22 @@ export default function Home() {
         transactions={transactions}
         onDelete={deleteTransaction}
         stats={getStats()}
+      />
+
+      {/* RECURRING MODAL (Add Recurring) */}
+      <RecurringModal 
+        isOpen={isRecurringModalOpen}
+        onClose={() => setIsRecurringModalOpen(false)}
+        onSave={addRecurring}
+      />
+
+      {/* RECURRING LIST MODAL (Manage Recurring) */}
+      <RecurringListModal 
+        isOpen={isRecurringListModalOpen}
+        onClose={() => setIsRecurringListModalOpen(false)}
+        recurring={recurring}
+        onToggleActive={toggleActive}
+        onDelete={deleteRecurring}
       />
 
       {/* AUTH MODAL! */}

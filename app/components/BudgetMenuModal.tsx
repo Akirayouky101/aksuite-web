@@ -1,16 +1,25 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, BarChart3 } from 'lucide-react'
+import { X, Plus, BarChart3, Repeat } from 'lucide-react'
 
 interface BudgetMenuModalProps {
   isOpen: boolean
   onClose: () => void
   onSelectNew: () => void
   onSelectView: () => void
+  onSelectRecurring?: () => void
+  onSelectRecurringList?: () => void
 }
 
-export default function BudgetMenuModal({ isOpen, onClose, onSelectNew, onSelectView }: BudgetMenuModalProps) {
+export default function BudgetMenuModal({ 
+  isOpen, 
+  onClose, 
+  onSelectNew, 
+  onSelectView,
+  onSelectRecurring,
+  onSelectRecurringList 
+}: BudgetMenuModalProps) {
   if (!isOpen) return null
 
   const handleOptionClick = (action: () => void) => {
@@ -167,6 +176,98 @@ export default function BudgetMenuModal({ isOpen, onClose, onSelectNew, onSelect
               {/* Glow effect */}
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
             </motion.button>
+
+            {/* Option 3: Transazioni Ricorrenti */}
+            {onSelectRecurring && (
+              <motion.button
+                onClick={() => handleOptionClick(onSelectRecurring)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative overflow-hidden bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 rounded-2xl p-8 border-2 border-purple-400/30 hover:border-purple-400/60 transition-all shadow-2xl hover:shadow-purple-500/50"
+              >
+                {/* Animated shine */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{
+                    x: ['-200%', '200%'],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 1,
+                    delay: 1,
+                  }}
+                />
+
+                {/* Content */}
+                <div className="relative z-10">
+                  <motion.div
+                    animate={{
+                      rotate: [0, 360],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                    className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                  >
+                    <Repeat className="w-8 h-8 text-white" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-white mb-2">🔄 RICORRENTE</h3>
+                  <p className="text-sm text-purple-100">Automatizza stipendi, affitti e bollette</p>
+                </div>
+
+                {/* Glow effect */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
+              </motion.button>
+            )}
+
+            {/* Option 4: Lista Ricorrenti */}
+            {onSelectRecurringList && (
+              <motion.button
+                onClick={() => handleOptionClick(onSelectRecurringList)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative overflow-hidden bg-gradient-to-br from-cyan-600 via-teal-600 to-cyan-700 rounded-2xl p-8 border-2 border-cyan-400/30 hover:border-cyan-400/60 transition-all shadow-2xl hover:shadow-cyan-500/50"
+              >
+                {/* Animated shine */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{
+                    x: ['-200%', '200%'],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 1,
+                    delay: 1.5,
+                  }}
+                />
+
+                {/* Content */}
+                <div className="relative z-10">
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.2, 1],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                  >
+                    <span className="text-3xl">📋</span>
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-white mb-2">📋 GESTISCI RICORRENTI</h3>
+                  <p className="text-sm text-cyan-100">Vedi e modifica le automazioni attive</p>
+                </div>
+
+                {/* Glow effect */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-teal-600 rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
+              </motion.button>
+            )}
           </div>
           </div>
         </motion.div>
