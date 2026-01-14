@@ -44,8 +44,8 @@ export default function Home() {
   const apps: AppCard[] = [
     { 
       id: 'passwords', 
-      title: '⚡ PASSWORDS ⚡', 
-      description: `🔥 ULTRA SECRET VAULT! Maximum security mode activated! Your passwords are protected by the power of anime! 💀✨ (${passwords.length} passwords stored)`, 
+      title: '⚡ PASSWORD ⚡', 
+      description: `🔥 VAULT ULTRA SEGRETO! Modalità sicurezza massima attivata! Le tue password sono protette dal potere dell'anime! 💀✨ (${passwords.length} password salvate)`, 
       icon: Skull, 
       gradient: 'from-red-600 via-orange-500 to-yellow-400' 
     },
@@ -121,14 +121,14 @@ export default function Home() {
               className="text-center mb-10"
             >
               <h1 className="text-6xl font-black mb-6 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent">
-                🏴‍☠️ ZONA PROTETTA 🏴‍☠️
+                🔐 ZONA PROTETTA 🔐
               </h1>
               <p className="text-3xl font-bold text-yellow-200 mb-4">
                 ⚠️ ACCESSO NEGATO ⚠️
               </p>
               <p className="text-xl text-yellow-100 leading-relaxed">
-                Questa console è sotto la protezione della<br />
-                <span className="text-2xl font-black text-red-400">CIURMA DI CAPPELLO DI PAGLIA!</span>
+                Questa console è sotto massima protezione!<br />
+                <span className="text-2xl font-black text-red-400">VAULT ULTRA SEGRETO</span>
               </p>
               <p className="text-lg text-yellow-200 mt-6 font-bold">
                 🔒 Devi eseguire il <span className="text-red-400">LOGIN</span> per procedere! 🔒
@@ -154,14 +154,14 @@ export default function Home() {
               </div>
             </motion.button>
 
-            {/* Luffy quote */}
+            {/* Motivational quote */}
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
               className="text-center text-yellow-300 font-bold text-lg mt-8 italic"
             >
-              "I'm gonna be the King of the Pirates!" - Luffy 🏴‍☠️
+              "La sicurezza è potere!" 🔐✨
             </motion.p>
           </div>
         </motion.div>
@@ -171,7 +171,7 @@ export default function Home() {
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           onSuccess={() => {
-            console.log('🎉 Welcome aboard, nakama!')
+            console.log('🎉 Benvenuto nel vault!')
             setIsAuthModalOpen(false)
           }}
         />
@@ -235,7 +235,7 @@ export default function Home() {
                 className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full"
               >
                 <Sparkles className="w-4 h-4 text-violet-400" />
-                <span className="text-sm text-violet-200 font-medium">Coming Soon</span>
+                <span className="text-sm text-violet-200 font-medium">Prossimamente</span>
               </motion.div>
 
               {user ? (
@@ -257,7 +257,7 @@ export default function Home() {
                   className="flex items-center gap-2 px-4 py-2 bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/50 rounded-full transition-all"
                 >
                   <LogIn className="w-4 h-4 text-violet-400" />
-                  <span className="text-sm text-violet-200 font-medium">Login / Sign Up</span>
+                  <span className="text-sm text-violet-200 font-medium">Accedi / Registrati</span>
                 </motion.button>
               )}
             </div>
@@ -275,15 +275,15 @@ export default function Home() {
             >
               <h2 className="text-7xl md:text-8xl font-black mb-6 leading-tight">
                 <span className="bg-gradient-to-r from-white via-violet-200 to-fuchsia-200 bg-clip-text text-transparent">
-                  Your Digital
+                  Il Tuo Centro
                 </span>
                 <br />
                 <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
-                  Command Center
+                  Di Comando Digitale
                 </span>
               </h2>
               <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-                Everything you need to manage your digital life in one beautiful, secure place
+                Tutto ciò di cui hai bisogno per gestire la tua vita digitale in un unico posto sicuro e bellissimo
               </p>
             </motion.div>
 
