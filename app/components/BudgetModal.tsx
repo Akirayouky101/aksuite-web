@@ -17,6 +17,7 @@ interface Transaction {
 interface BudgetModalProps {
   isOpen: boolean
   onClose: () => void
+  onSave: (transaction: any) => Promise<void>
 }
 
 const incomeCategories = [
@@ -41,21 +42,44 @@ const expenseCategories = [
   { name: 'Altro', emoji: '💸' }
 ]
 
-export default function BudgetModal({ isOpen, onClose }: BudgetModalProps) {
+export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProps) {
   const [type, setType] = useState<'income' | 'expense'>('expense')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [emoji, setEmoji] = useState('💸')
+  const [isSaving, setIsSaving] = useState(false)
 
   const categories = type === 'income' ? incomeCategories : expenseCategories
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Salvare in Supabase
-    console.log({ type, amount, category, description, date, emoji })
-    onClose()
+    setIsSaving(true)
+    
+    try {
+      await onSave({
+        type,
+        amount: parseFloat(amount),
+        category,
+        description,
+        date,
+        emoji
+      })
+      
+      // Reset form
+      setAmount('')
+      setCategory('')
+      setDescription('')
+      setDate(new Date().toISOString().split('T')[0])
+      setEmoji(type === 'income' ? '💰' : '💸')
+      
+      onClose()
+    } catch (error) {
+      console.error('Error saving transaction:', error)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   if (!isOpen) return null

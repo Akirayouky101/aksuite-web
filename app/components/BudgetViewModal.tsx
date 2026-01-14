@@ -16,21 +16,17 @@ interface Transaction {
 interface BudgetViewModalProps {
   isOpen: boolean
   onClose: () => void
+  transactions: Transaction[]
+  onDelete: (id: string) => Promise<void>
+  stats: {
+    totalIncome: number
+    totalExpenses: number
+    balance: number
+  }
 }
 
-export default function BudgetViewModal({ isOpen, onClose }: BudgetViewModalProps) {
-  // TODO: Caricare da Supabase
-  const transactions: Transaction[] = []
-  
-  const totalIncome = transactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
-  
-  const totalExpenses = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
-  
-  const balance = totalIncome - totalExpenses
+export default function BudgetViewModal({ isOpen, onClose, transactions, onDelete, stats }: BudgetViewModalProps) {
+  const { totalIncome, totalExpenses, balance } = stats
 
   if (!isOpen) return null
 
@@ -160,10 +156,7 @@ export default function BudgetViewModal({ isOpen, onClose }: BudgetViewModalProp
                       </p>
 
                       <button
-                        onClick={() => {
-                          // TODO: Implementare eliminazione
-                          console.log('Delete', transaction.id)
-                        }}
+                        onClick={() => onDelete(transaction.id)}
                         className="w-10 h-10 rounded-lg bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                         aria-label="Elimina transazione"
                       >

@@ -11,6 +11,7 @@ import BudgetMenuModal from './components/BudgetMenuModal'
 import BudgetViewModal from './components/BudgetViewModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
+import { useBudget } from './hooks/useBudget'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -34,6 +35,7 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const { passwords, addPassword, user, deletePassword } = usePasswords()
+  const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
 
   // Initialize console guard once
   useEffect(() => {
@@ -557,12 +559,16 @@ export default function Home() {
       <BudgetModal 
         isOpen={isBudgetModalOpen}
         onClose={() => setIsBudgetModalOpen(false)}
+        onSave={addTransaction}
       />
 
       {/* BUDGET VIEW MODAL (View All) */}
       <BudgetViewModal 
         isOpen={isBudgetViewModalOpen}
         onClose={() => setIsBudgetViewModalOpen(false)}
+        transactions={transactions}
+        onDelete={deleteTransaction}
+        stats={getStats()}
       />
 
       {/* AUTH MODAL! */}
