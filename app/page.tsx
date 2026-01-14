@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Sparkles, Zap, Lock, Skull } from 'lucide-react'
+import PasswordModal from './components/PasswordModal'
+import { usePasswords } from './hooks/usePasswords'
 
 interface AppCard {
   id: string
@@ -14,12 +16,19 @@ interface AppCard {
 
 export default function Home() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const { passwords, addPassword } = usePasswords()
+
+  const handleSavePassword = (data: any) => {
+    addPassword(data)
+    console.log('💥 PASSWORD SAVED!', data)
+  }
 
   const apps: AppCard[] = [
     { 
       id: 'passwords', 
       title: '⚡ PASSWORDS ⚡', 
-      description: '🔥 ULTRA SECRET VAULT! Maximum security mode activated! Your passwords are protected by the power of anime! 💀✨', 
+      description: `🔥 ULTRA SECRET VAULT! Maximum security mode activated! Your passwords are protected by the power of anime! 💀✨ (${passwords.length} passwords stored)`, 
       icon: Skull, 
       gradient: 'from-red-600 via-orange-500 to-yellow-400' 
     },
@@ -142,6 +151,7 @@ export default function Home() {
                     }}
                     onHoverStart={() => setHoveredCard(app.id)}
                     onHoverEnd={() => setHoveredCard(null)}
+                    onClick={() => setIsModalOpen(true)}
                     className="relative group cursor-pointer col-span-full"
                   >
                     {/* EXPLOSIVE GLOW EFFECT! */}
@@ -284,6 +294,13 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* PASSWORD MODAL! */}
+      <PasswordModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSavePassword}
+      />
     </div>
   )
 }
