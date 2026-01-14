@@ -9,6 +9,7 @@ import ThemeSwitcher from './components/ThemeSwitcher'
 import { usePasswords } from './hooks/usePasswords'
 import { supabase } from '@/lib/supabase'
 import { animeTheme } from './themes/anime'
+import { initConsoleGuard } from '@/lib/console-guard'
 
 interface AppCard {
   id: string
@@ -24,6 +25,15 @@ export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState<'geometric' | 'anime'>('geometric')
   const { passwords, addPassword, user } = usePasswords()
+
+  // Initialize console guard - Show Luffy ASCII art
+  useEffect(() => {
+    const guard = initConsoleGuard()
+    if (!user) {
+      // Block console if not logged in
+      guard?.blockConsole()
+    }
+  }, [user])
 
   // Load theme preference
   useEffect(() => {
@@ -58,6 +68,134 @@ export default function Home() {
     },
   ]
 
+  // 🔒 BLOCCO TOTALE SE NON AUTENTICATO! 🔒
+  // Show only login screen if user is not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-red-950 to-orange-950 relative overflow-hidden flex items-center justify-center">
+        {/* Dramatic background */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,0,0.2),transparent_70%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,69,0,0.1)_2px,transparent_2px),linear-gradient(to_bottom,rgba(255,69,0,0.1)_2px,transparent_2px)] bg-[size:50px_50px]" />
+        </div>
+
+        {/* Floating danger symbols */}
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-6xl opacity-20"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              rotate: [0, 360],
+              opacity: [0.1, 0.3, 0.1],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          >
+            {['🏴‍☠️', '⚠️', '🔒', '💀', '⚡'][i % 5]}
+          </motion.div>
+        ))}
+
+        {/* Login card */}
+        <motion.div
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+          className="relative z-10 max-w-2xl w-full mx-6"
+        >
+          <div className="bg-gradient-to-br from-red-900/50 via-orange-900/50 to-yellow-900/50 backdrop-blur-xl border-4 border-yellow-400 rounded-3xl p-12 shadow-[0_0_50px_rgba(255,215,0,0.5)]">
+            {/* Danger tape effect */}
+            <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-90" />
+            <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-90" />
+
+            {/* Skull warning */}
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 10, -10, 0] 
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="flex justify-center mb-8"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-red-500 rounded-full blur-2xl opacity-50" />
+                <Skull className="w-24 h-24 text-red-500 relative z-10" strokeWidth={2.5} />
+              </div>
+            </motion.div>
+
+            {/* Warning text */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-center mb-10"
+            >
+              <h1 className="text-6xl font-black mb-6 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent">
+                🏴‍☠️ ZONA PROTETTA 🏴‍☠️
+              </h1>
+              <p className="text-3xl font-bold text-yellow-200 mb-4">
+                ⚠️ ACCESSO NEGATO ⚠️
+              </p>
+              <p className="text-xl text-yellow-100 leading-relaxed">
+                Questa console è sotto la protezione della<br />
+                <span className="text-2xl font-black text-red-400">CIURMA DI CAPPELLO DI PAGLIA!</span>
+              </p>
+              <p className="text-lg text-yellow-200 mt-6 font-bold">
+                🔒 Devi eseguire il <span className="text-red-400">LOGIN</span> per procedere! 🔒
+              </p>
+            </motion.div>
+
+            {/* Login button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsAuthModalOpen(true)}
+              className="w-full py-6 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 text-white text-2xl font-black rounded-2xl shadow-2xl hover:shadow-[0_0_30px_rgba(255,215,0,0.8)] transition-all"
+            >
+              <div className="flex items-center justify-center gap-3">
+                <LogIn className="w-8 h-8" strokeWidth={3} />
+                <span>ENTRA NEL VAULT!</span>
+                <motion.span
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                >
+                  ⚡
+                </motion.span>
+              </div>
+            </motion.button>
+
+            {/* Luffy quote */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="text-center text-yellow-300 font-bold text-lg mt-8 italic"
+            >
+              "I'm gonna be the King of the Pirates!" - Luffy 🏴‍☠️
+            </motion.p>
+          </div>
+        </motion.div>
+
+        {/* Auth Modal */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={() => {
+            console.log('🎉 Welcome aboard, nakama!')
+            setIsAuthModalOpen(false)
+          }}
+        />
+      </div>
+    )
+  }
+
   // Render anime theme
   if (currentTheme === 'anime') {
     return (
@@ -86,12 +224,12 @@ export default function Home() {
                   transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
                   className="relative"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-purple-500 rounded-xl blur-md opacity-75" />
-                  <div className="relative bg-gradient-to-br from-cyan-600 to-purple-600 p-2.5 rounded-xl border-2 border-cyan-400">
-                    <Zap className="w-7 h-7 text-white" strokeWidth={2.5} />
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-yellow-500 rounded-xl blur-md opacity-75" />
+                  <div className="relative bg-gradient-to-br from-red-600 to-orange-600 p-2.5 rounded-xl border-2 border-yellow-400">
+                    <span className="text-2xl">👒</span>
                   </div>
                 </motion.div>
-                <h1 className="text-3xl font-black bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-black bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent">
                   AK Suite
                 </h1>
               </div>
@@ -100,10 +238,10 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 backdrop-blur-sm border border-cyan-400/30 rounded-full"
+                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 backdrop-blur-sm border border-yellow-400/30 rounded-full"
                 >
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
-                  <span className="text-sm text-cyan-200 font-medium">Anime Mode</span>
+                  <span className="text-xl">🏴‍☠️</span>
+                  <span className="text-sm text-yellow-200 font-medium">One Piece Mode</span>
                 </motion.div>
 
                 {user ? (

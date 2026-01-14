@@ -64,7 +64,7 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
               </div>
             </motion.button>
 
-            {/* Anime theme */}
+            {/* One Piece Anime theme */}
             <motion.button
               whileHover={{ scale: 1.02, x: 5 }}
               whileTap={{ scale: 0.98 }}
@@ -74,20 +74,20 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
               }}
               className={`w-full p-4 rounded-xl border-2 transition-all ${
                 currentTheme === 'anime'
-                  ? 'border-cyan-400 bg-cyan-500/20'
-                  : 'border-white/20 hover:border-cyan-400/50'
+                  ? 'border-red-400 bg-red-500/20'
+                  : 'border-white/20 hover:border-red-400/50'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 via-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl">🎌</span>
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 via-yellow-500 to-orange-500 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">�‍☠️</span>
                 </div>
                 <div className="text-left flex-1">
-                  <div className="text-white font-bold">Anime Hologram</div>
-                  <div className="text-xs text-cyan-300">Cyberpunk Style</div>
+                  <div className="text-white font-bold">One Piece</div>
+                  <div className="text-xs text-yellow-300">Straw Hat Pirates</div>
                 </div>
                 {currentTheme === 'anime' && (
-                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
+                  <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse" />
                 )}
               </div>
             </motion.button>
