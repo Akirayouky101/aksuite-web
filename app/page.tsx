@@ -21,7 +21,28 @@ export default function Home() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [userProfile, setUserProfile] = useState<any>(null)
   const { passwords, addPassword, user } = usePasswords()
+
+  // Load user profile from Supabase
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        
+        if (!error && data) {
+          setUserProfile(data)
+        }
+      } else {
+        setUserProfile(null)
+      }
+    }
+    loadProfile()
+  }, [user])
 
   // Initialize console guard - Show Luffy ASCII art
   useEffect(() => {
@@ -246,7 +267,9 @@ export default function Home() {
                   className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-full transition-all"
                 >
                   <User className="w-4 h-4 text-red-400" />
-                  <span className="text-sm text-red-200 font-medium">{user.email}</span>
+                  <span className="text-sm text-red-200 font-medium">
+                    {userProfile?.full_name || user.email}
+                  </span>
                   <LogOut className="w-4 h-4 text-red-400" />
                 </motion.button>
               ) : (
