@@ -7,6 +7,8 @@ import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
 import PasswordListModal from './components/PasswordListModal'
 import BudgetModal from './components/BudgetModal'
+import BudgetMenuModal from './components/BudgetMenuModal'
+import BudgetViewModal from './components/BudgetViewModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { supabase } from '@/lib/supabase'
@@ -25,7 +27,9 @@ export default function Home() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isListModalOpen, setIsListModalOpen] = useState(false)
+  const [isBudgetMenuModalOpen, setIsBudgetMenuModalOpen] = useState(false)
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false)
+  const [isBudgetViewModalOpen, setIsBudgetViewModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
@@ -372,7 +376,7 @@ export default function Home() {
                       if (app.id === 'passwords') {
                         setIsMenuModalOpen(true)
                       } else if (app.id === 'budget') {
-                        setIsBudgetModalOpen(true)
+                        setIsBudgetMenuModalOpen(true)
                       }
                     }}
                     className="relative group cursor-pointer col-span-full"
@@ -541,10 +545,24 @@ export default function Home() {
         onDelete={deletePassword}
       />
 
-      {/* BUDGET MODAL */}
+      {/* BUDGET MENU MODAL */}
+      <BudgetMenuModal 
+        isOpen={isBudgetMenuModalOpen}
+        onClose={() => setIsBudgetMenuModalOpen(false)}
+        onSelectNew={() => setIsBudgetModalOpen(true)}
+        onSelectView={() => setIsBudgetViewModalOpen(true)}
+      />
+
+      {/* BUDGET MODAL (Add Transaction) */}
       <BudgetModal 
         isOpen={isBudgetModalOpen}
         onClose={() => setIsBudgetModalOpen(false)}
+      />
+
+      {/* BUDGET VIEW MODAL (View All) */}
+      <BudgetViewModal 
+        isOpen={isBudgetViewModalOpen}
+        onClose={() => setIsBudgetViewModalOpen(false)}
       />
 
       {/* AUTH MODAL! */}
