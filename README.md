@@ -1,6 +1,6 @@
 # AK Suite
 
-Your Digital Vault - Secure password manager and productivity suite with Yu-Gi-Oh! card aesthetics.
+Your Digital Command Center - Secure password manager and productivity suite with modern glassmorphism design.
 
 ## 🚀 Deploy to Vercel
 
@@ -35,11 +35,12 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## 🎨 Design
 
-Yu-Gi-Oh! trading card aesthetic with:
-- Animated star background
-- Golden card borders
-- 3D hover effects
-- Responsive grid layout
+Modern glassmorphism aesthetic with:
+- Animated gradient orb background
+- Glass-effect cards with backdrop blur
+- Smooth hover animations and glows
+- Bold gradient typography
+- Responsive grid layout (1-4 columns)
 
 ## 🔧 Tech Stack
 
