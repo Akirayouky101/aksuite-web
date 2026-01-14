@@ -5,10 +5,8 @@ import { motion } from 'framer-motion'
 import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
 import AuthModal from './components/AuthModal'
-import ThemeSwitcher from './components/ThemeSwitcher'
 import { usePasswords } from './hooks/usePasswords'
 import { supabase } from '@/lib/supabase'
-import { animeTheme } from './themes/anime'
 import { initConsoleGuard } from '@/lib/console-guard'
 
 interface AppCard {
@@ -23,7 +21,6 @@ export default function Home() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
-  const [currentTheme, setCurrentTheme] = useState<'geometric' | 'anime'>('geometric')
   const { passwords, addPassword, user } = usePasswords()
 
   // Initialize console guard - Show Luffy ASCII art
@@ -34,20 +31,6 @@ export default function Home() {
       guard?.blockConsole()
     }
   }, [user])
-
-  // Load theme preference
-  useEffect(() => {
-    const saved = localStorage.getItem('ak-theme')
-    if (saved === 'anime' || saved === 'geometric') {
-      setCurrentTheme(saved)
-    }
-  }, [])
-
-  // Save theme preference
-  const handleThemeChange = (theme: 'geometric' | 'anime') => {
-    setCurrentTheme(theme)
-    localStorage.setItem('ak-theme', theme)
-  }
 
   const handleSavePassword = (data: any) => {
     addPassword(data)
@@ -196,184 +179,6 @@ export default function Home() {
     )
   }
 
-  // Render anime theme
-  if (currentTheme === 'anime') {
-    return (
-      <div className="min-h-screen bg-black relative overflow-hidden">
-        {/* Anime theme background */}
-        <animeTheme.Background />
-        
-        {/* Holographic characters */}
-        <animeTheme.HologramCharacters />
-
-        {/* Theme switcher */}
-        <ThemeSwitcher currentTheme={currentTheme} onThemeChange={handleThemeChange} />
-
-        {/* Main content */}
-        <div className="relative z-10 min-h-screen flex flex-col">
-          {/* Header */}
-          <header className="container mx-auto px-6 pt-16 pb-8">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                  className="relative"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-yellow-500 rounded-xl blur-md opacity-75" />
-                  <div className="relative bg-gradient-to-br from-red-600 to-orange-600 p-2.5 rounded-xl border-2 border-yellow-400">
-                    <span className="text-2xl">👒</span>
-                  </div>
-                </motion.div>
-                <h1 className="text-3xl font-black bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent">
-                  AK Suite
-                </h1>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 backdrop-blur-sm border border-yellow-400/30 rounded-full"
-                >
-                  <span className="text-xl">🏴‍☠️</span>
-                  <span className="text-sm text-yellow-200 font-medium">One Piece Mode</span>
-                </motion.div>
-
-                {user ? (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-full transition-all"
-                  >
-                    <User className="w-4 h-4 text-red-400" />
-                    <span className="text-sm text-red-200 font-medium">{user.email}</span>
-                    <LogOut className="w-4 h-4 text-red-400" />
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsAuthModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 rounded-full transition-all"
-                  >
-                    <LogIn className="w-4 h-4 text-cyan-400" />
-                    <span className="text-sm text-cyan-200 font-medium">Login / Sign Up</span>
-                  </motion.button>
-                )}
-              </div>
-            </motion.div>
-          </header>
-
-          {/* Hero with anime title */}
-          <div className="flex-1 flex items-center justify-center">
-            <div className="container mx-auto px-6">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mb-16"
-              >
-                <animeTheme.Title />
-              </motion.div>
-
-              {/* Apps Grid */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="max-w-6xl mx-auto"
-              >
-                <div className="grid grid-cols-1 gap-6">
-                  {apps.map((app, index) => (
-                    <motion.div
-                      key={app.id}
-                      initial={{ opacity: 0, scale: 0, rotate: -180 }}
-                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                      transition={{ 
-                        delay: 0.6 + index * 0.1,
-                        type: 'spring',
-                        stiffness: 200,
-                        damping: 15
-                      }}
-                      onHoverStart={() => setHoveredCard(app.id)}
-                      onHoverEnd={() => setHoveredCard(null)}
-                      onClick={() => setIsModalOpen(true)}
-                      className="relative group cursor-pointer"
-                    >
-                      {/* Cyberpunk card style */}
-                      <div className="relative bg-gradient-to-br from-slate-900/90 via-red-900/50 to-orange-900/50 backdrop-blur-xl border-4 border-yellow-400 rounded-2xl p-8 shadow-2xl overflow-hidden">
-                        {/* Rest of the password card... same as before */}
-                        <div className="relative z-10 flex items-center gap-6">
-                          <motion.div 
-                            className={`inline-flex p-6 rounded-2xl bg-gradient-to-br ${app.gradient} shadow-2xl relative`}
-                            animate={hoveredCard === app.id ? {
-                              scale: [1, 1.2, 1],
-                              rotate: [0, 360],
-                            } : {}}
-                            transition={{ duration: 0.6, repeat: hoveredCard === app.id ? Infinity : 0 }}
-                          >
-                            <app.icon className="w-12 h-12 text-white relative z-10" strokeWidth={3} />
-                          </motion.div>
-                          
-                          <div className="flex-1">
-                            <h3 className="text-4xl font-black mb-3 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent">
-                              {app.title}
-                            </h3>
-                            <p className="text-lg text-yellow-100 leading-relaxed font-bold">
-                              {app.description}
-                            </p>
-                          </div>
-
-                          <div className="flex flex-col gap-2">
-                            <motion.div
-                              animate={{ rotate: [0, 10, -10, 0] }}
-                              transition={{ duration: 0.5, repeat: Infinity }}
-                              className="text-6xl"
-                            >
-                              ⚠️
-                            </motion.div>
-                            <motion.div
-                              animate={{ scale: [1, 1.2, 1] }}
-                              transition={{ duration: 0.8, repeat: Infinity }}
-                              className="text-6xl"
-                            >
-                              💥
-                            </motion.div>
-                          </div>
-                        </div>
-
-                        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-70" />
-                        <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-70" />
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-
-        {/* Modals */}
-        <PasswordModal 
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSavePassword}
-        />
-        <AuthModal
-          isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
-          onSuccess={() => console.log('🎉 Logged in successfully!')}
-        />
-      </div>
-    )
-  }
-
   // GEOMETRIC THEME (original)
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 relative overflow-hidden">
@@ -402,9 +207,6 @@ export default function Home() {
         transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
         className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-br from-cyan-500/30 to-blue-500/30 rounded-full blur-3xl"
       />
-
-      {/* Theme switcher */}
-      <ThemeSwitcher currentTheme={currentTheme} onThemeChange={handleThemeChange} />
 
       {/* Main content */}
       <div className="relative z-10 min-h-screen flex flex-col">
