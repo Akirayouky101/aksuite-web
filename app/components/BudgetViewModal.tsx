@@ -1,7 +1,9 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, TrendingUp, TrendingDown, DollarSign, Trash2 } from 'lucide-react'
+import { X, TrendingUp, TrendingDown, DollarSign, Trash2, Calendar, Filter, BarChart3 } from 'lucide-react'
+import BudgetStats from './BudgetStats'
 
 interface Transaction {
   id: string
@@ -25,8 +27,66 @@ interface BudgetViewModalProps {
   }
 }
 
+type DateFilter = 'all' | 'month' | 'quarter' | 'year' | 'custom'
+type TypeFilter = 'all' | 'income' | 'expense'
+
 export default function BudgetViewModal({ isOpen, onClose, transactions, onDelete, stats }: BudgetViewModalProps) {
-  const { totalIncome, totalExpenses, balance } = stats
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all')
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [activeTab, setActiveTab] = useState<'transactions' | 'stats'>('transactions')
+  
+  // Filtra le transazioni in base ai filtri attivi
+  const filteredTransactions = useMemo(() => {
+    let filtered = [...transactions]
+    const now = new Date()
+    
+    // Filtro per data
+    if (dateFilter === 'month') {
+      const monthAgo = new Date(now.getFullYear(), now.getMonth(), 1)
+      filtered = filtered.filter(t => new Date(t.date) >= monthAgo)
+    } else if (dateFilter === 'quarter') {
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+      filtered = filtered.filter(t => new Date(t.date) >= threeMonthsAgo)
+    } else if (dateFilter === 'year') {
+      const yearStart = new Date(now.getFullYear(), 0, 1)
+      filtered = filtered.filter(t => new Date(t.date) >= yearStart)
+    }
+    
+    // Filtro per tipo
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(t => t.type === typeFilter)
+    }
+    
+    // Filtro per categoria
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(t => t.category === selectedCategory)
+    }
+    
+    return filtered
+  }, [transactions, dateFilter, typeFilter, selectedCategory])
+  
+  // Calcola le statistiche filtrate
+  const filteredStats = useMemo(() => {
+    const income = filteredTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    const expenses = filteredTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    
+    return {
+      totalIncome: income,
+      totalExpenses: expenses,
+      balance: income - expenses
+    }
+  }, [filteredTransactions])
+  
+  // Estrai categorie uniche
+  const uniqueCategories = useMemo(() => {
+    const cats = new Set(transactions.map(t => t.category))
+    return Array.from(cats)
+  }, [transactions])
 
   if (!isOpen) return null
 
@@ -67,6 +127,125 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
 
           {/* Content */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-88px)]">
+            {/* Tabs */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={() => setActiveTab('transactions')}
+                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'transactions'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                }`}
+              >
+                💳 Transazioni
+              </button>
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'stats'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                }`}
+              >
+                📊 Statistiche
+              </button>
+            </div>
+
+            {activeTab === 'transactions' ? (
+              <>
+            {/* Filtri */}
+            <div className="mb-6 space-y-4">
+              {/* Filtro Data */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-4 h-4 text-green-400" />
+                  <span className="text-sm text-green-300 font-semibold">Periodo</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'all', label: '📅 Tutto' },
+                    { value: 'month', label: '📆 Questo mese' },
+                    { value: 'quarter', label: '📊 Ultimi 3 mesi' },
+                    { value: 'year', label: '🗓️ Quest\'anno' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setDateFilter(option.value as DateFilter)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        dateFilter === option.value
+                          ? 'bg-green-500 text-white shadow-lg shadow-green-500/50'
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtro Tipo */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Filter className="w-4 h-4 text-green-400" />
+                  <span className="text-sm text-green-300 font-semibold">Tipo</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'all', label: '💎 Tutte', color: 'purple' },
+                    { value: 'income', label: '💚 Entrate', color: 'green' },
+                    { value: 'expense', label: '❤️ Uscite', color: 'red' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setTypeFilter(option.value as TypeFilter)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        typeFilter === option.value
+                          ? `bg-${option.color}-500 text-white shadow-lg shadow-${option.color}-500/50`
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtro Categoria */}
+              {uniqueCategories.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Filter className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-green-300 font-semibold">Categoria</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSelectedCategory('all')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        selectedCategory === 'all'
+                          ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/50'
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      🌟 Tutte
+                    </button>
+                    {uniqueCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          selectedCategory === cat
+                            ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/50'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <motion.div
@@ -77,7 +256,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                   <TrendingUp className="w-6 h-6 text-green-400" />
                   <span className="text-sm text-green-300">Entrate</span>
                 </div>
-                <p className="text-3xl font-bold text-white">€{totalIncome.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-white">€{filteredStats.totalIncome.toFixed(2)}</p>
               </motion.div>
 
               <motion.div
@@ -88,36 +267,62 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                   <TrendingDown className="w-6 h-6 text-red-400" />
                   <span className="text-sm text-red-300">Uscite</span>
                 </div>
-                <p className="text-3xl font-bold text-white">€{totalExpenses.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-white">€{filteredStats.totalExpenses.toFixed(2)}</p>
               </motion.div>
 
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 className={`bg-gradient-to-br ${
-                  balance >= 0
+                  filteredStats.balance >= 0
                     ? 'from-blue-500/20 to-cyan-600/20 border-blue-500/30'
                     : 'from-orange-500/20 to-red-600/20 border-orange-500/30'
                 } rounded-xl p-6 border`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <DollarSign className={`w-6 h-6 ${balance >= 0 ? 'text-blue-400' : 'text-orange-400'}`} />
-                  <span className={`text-sm ${balance >= 0 ? 'text-blue-300' : 'text-orange-300'}`}>Bilancio</span>
+                  <DollarSign className={`w-6 h-6 ${filteredStats.balance >= 0 ? 'text-blue-400' : 'text-orange-400'}`} />
+                  <span className={`text-sm ${filteredStats.balance >= 0 ? 'text-blue-300' : 'text-orange-300'}`}>Bilancio</span>
                 </div>
-                <p className="text-3xl font-bold text-white">€{balance.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-white">€{filteredStats.balance.toFixed(2)}</p>
               </motion.div>
             </div>
 
             {/* Transactions List */}
-            {transactions.length === 0 ? (
+            {filteredTransactions.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">💰</div>
-                <p className="text-slate-400 text-lg">Nessuna transazione salvata</p>
-                <p className="text-slate-500 text-sm mt-2">Aggiungi un movimento per iniziare!</p>
+                <p className="text-slate-400 text-lg">
+                  {transactions.length === 0 
+                    ? 'Nessuna transazione salvata'
+                    : 'Nessuna transazione con questi filtri'
+                  }
+                </p>
+                <p className="text-slate-500 text-sm mt-2">
+                  {transactions.length === 0
+                    ? 'Aggiungi un movimento per iniziare!'
+                    : 'Prova a cambiare i filtri sopra'
+                  }
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-white mb-4">Transazioni recenti</h3>
-                {transactions.map((transaction, index) => (
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">
+                    Transazioni ({filteredTransactions.length})
+                  </h3>
+                  {(dateFilter !== 'all' || typeFilter !== 'all' || selectedCategory !== 'all') && (
+                    <button
+                      onClick={() => {
+                        setDateFilter('all')
+                        setTypeFilter('all')
+                        setSelectedCategory('all')
+                      }}
+                      className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                    >
+                      ✨ Cancella filtri
+                    </button>
+                  )}
+                </div>
+                {filteredTransactions.map((transaction, index) => (
                   <motion.div
                     key={transaction.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -166,6 +371,10 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                   </motion.div>
                 ))}
               </div>
+            )}
+            </>
+            ) : (
+              <BudgetStats transactions={transactions} />
             )}
           </div>
           </div>
