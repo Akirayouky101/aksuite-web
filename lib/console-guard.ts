@@ -80,22 +80,49 @@ export function initConsoleGuard() {
   console.log('%c💀 Qualsiasi tentativo di accesso non autorizzato sarà respinto! 💀', pirateStyle);
   console.log('%c⚡ GOMU GOMU NO... CONSOLE BLOCK! ⚡', warningStyle);
 
+  // Store original console methods
+  const originalMethods = {
+    log: console.log,
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+    debug: console.debug
+  };
+
   // Block console access for non-authenticated users
   const blockConsole = () => {
     // Override console methods to show warning
     const methods = ['log', 'info', 'warn', 'error', 'debug'] as const;
     
     methods.forEach(method => {
-      const original = console[method];
       (console as any)[method] = (...args: any[]) => {
-        original.call(console, '%c🏴‍☠️ CONSOLE BLOCCATA! Fai il login! 🏴‍☠️', warningStyle);
+        originalMethods.log.call(console, '%c🏴‍☠️ CONSOLE BLOCCATA! Fai il login! 🏴‍☠️', warningStyle);
       };
     });
   };
 
+  // Unblock console (restore original methods)
+  const unblockConsole = () => {
+    console.log = originalMethods.log;
+    console.info = originalMethods.info;
+    console.warn = originalMethods.warn;
+    console.error = originalMethods.error;
+    console.debug = originalMethods.debug;
+    
+    // Clear and show success message
+    console.clear();
+    console.log('%c✅ CONSOLE SBLOCCATA! Benvenuto! ✅', `
+      color: #00ff00;
+      font-size: 20px;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00ff00;
+    `);
+  };
+
   return {
     luffyArt,
-    blockConsole
+    blockConsole,
+    unblockConsole
   };
 }
 

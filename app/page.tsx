@@ -22,7 +22,27 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
+  const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const { passwords, addPassword, user } = usePasswords()
+
+  // Initialize console guard once
+  useEffect(() => {
+    const guard = initConsoleGuard()
+    setConsoleGuard(guard)
+  }, [])
+
+  // Manage console blocking based on auth state
+  useEffect(() => {
+    if (consoleGuard) {
+      if (!user) {
+        // Block console if not logged in
+        consoleGuard.blockConsole()
+      } else {
+        // Unblock console if logged in
+        consoleGuard.unblockConsole()
+      }
+    }
+  }, [user, consoleGuard])
 
   // Load user profile from Supabase
   useEffect(() => {
@@ -42,15 +62,6 @@ export default function Home() {
       }
     }
     loadProfile()
-  }, [user])
-
-  // Initialize console guard - Show Luffy ASCII art
-  useEffect(() => {
-    const guard = initConsoleGuard()
-    if (!user) {
-      // Block console if not logged in
-      guard?.blockConsole()
-    }
   }, [user])
 
   const handleSavePassword = (data: any) => {
