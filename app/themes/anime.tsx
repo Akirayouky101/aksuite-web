@@ -94,9 +94,15 @@ export const animeTheme = {
           {/* Red aura (Gear 5th inspired) */}
           <div className="absolute inset-0 bg-gradient-to-t from-red-500/30 via-yellow-500/20 to-transparent rounded-xl backdrop-blur-sm border-3 border-red-400/60 shadow-[0_0_30px_rgba(255,0,0,0.5)]" />
           
-          {/* Luffy character */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="text-9xl">👒</div>
+          {/* Luffy character IMAGE */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2">
+            <div className="relative w-full h-48 rounded-lg overflow-hidden">
+              <img 
+                src="/onepiece/luffy4.png" 
+                alt="Luffy"
+                className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]"
+              />
+            </div>
             <div className="text-red-400 font-black text-2xl tracking-wider" style={{ textShadow: '0 0 20px rgba(255,0,0,0.8)' }}>
               LUFFY
             </div>
@@ -135,9 +141,15 @@ export const animeTheme = {
           {/* Green aura (Santoryu) */}
           <div className="absolute inset-0 bg-gradient-to-t from-green-500/30 via-emerald-500/20 to-transparent rounded-xl backdrop-blur-sm border-3 border-green-400/60 shadow-[0_0_30px_rgba(0,255,0,0.5)]" />
           
-          {/* Zoro character */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="text-9xl">⚔️</div>
+          {/* Zoro character IMAGE */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2">
+            <div className="relative w-full h-48 rounded-lg overflow-hidden">
+              <img 
+                src="/onepiece/Zoro1.png" 
+                alt="Zoro"
+                className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(0,255,0,0.8)]"
+              />
+            </div>
             <div className="text-green-400 font-black text-2xl tracking-wider" style={{ textShadow: '0 0 20px rgba(0,255,0,0.8)' }}>
               ZORO
             </div>
@@ -175,9 +187,15 @@ export const animeTheme = {
           {/* Orange/Electric aura (Climate Tact) */}
           <div className="absolute inset-0 bg-gradient-to-t from-orange-500/30 via-yellow-500/20 to-cyan-500/20 rounded-xl backdrop-blur-sm border-3 border-orange-400/60 shadow-[0_0_30px_rgba(255,165,0,0.5)]" />
           
-          {/* Nami character */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="text-8xl">🌩️</div>
+          {/* Nami character IMAGE */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2">
+            <div className="relative w-full h-40 rounded-lg overflow-hidden">
+              <img 
+                src="/onepiece/nami2.jpg" 
+                alt="Nami"
+                className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(255,165,0,0.8)]"
+              />
+            </div>
             <div className="text-orange-400 font-black text-2xl tracking-wider" style={{ textShadow: '0 0 20px rgba(255,165,0,0.8)' }}>
               NAMI
             </div>
@@ -215,9 +233,15 @@ export const animeTheme = {
           {/* Blue/Orange fire aura (Diable Jambe) */}
           <div className="absolute inset-0 bg-gradient-to-t from-blue-500/30 via-orange-500/20 to-transparent rounded-xl backdrop-blur-sm border-3 border-blue-400/60 shadow-[0_0_30px_rgba(0,100,255,0.5)]" />
           
-          {/* Sanji character */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="text-8xl">🔥</div>
+          {/* Sanji character IMAGE */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2">
+            <div className="relative w-full h-40 rounded-lg overflow-hidden">
+              <img 
+                src="/onepiece/sanjy2.jpg" 
+                alt="Sanji"
+                className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(0,100,255,0.8)]"
+              />
+            </div>
             <div className="text-blue-400 font-black text-2xl tracking-wider" style={{ textShadow: '0 0 20px rgba(0,100,255,0.8)' }}>
               SANJI
             </div>
