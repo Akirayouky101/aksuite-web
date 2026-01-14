@@ -42,10 +42,15 @@ export default function BudgetViewModal({ isOpen, onClose }: BudgetViewModalProp
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-br from-slate-900 via-green-900/50 to-slate-900 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden border border-green-500/20 shadow-2xl"
+          className="relative max-w-6xl w-full"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/10">
+          {/* Glow effect */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl blur-2xl opacity-30" />
+          
+          {/* Main modal */}
+          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-green-500/30 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-green-900/30 to-emerald-900/30">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-2xl">
                 📊
@@ -169,6 +174,7 @@ export default function BudgetViewModal({ isOpen, onClose }: BudgetViewModalProp
                 ))}
               </div>
             )}
+          </div>
           </div>
         </motion.div>
       </div>
