@@ -274,28 +274,28 @@ export default function Home() {
       {/* Main content */}
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="container mx-auto px-6 pt-16 pb-8">
+        <header className="container mx-auto px-4 sm:px-6 pt-8 sm:pt-16 pb-4 sm:pb-8">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center justify-between"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-xl blur-md opacity-75" />
-                <div className="relative bg-gradient-to-br from-violet-600 to-fuchsia-600 p-2.5 rounded-xl">
-                  <Zap className="w-7 h-7 text-white" strokeWidth={2.5} />
+                <div className="relative bg-gradient-to-br from-violet-600 to-fuchsia-600 p-2 sm:p-2.5 rounded-xl">
+                  <Zap className="w-5 h-5 sm:w-7 sm:h-7 text-white" strokeWidth={2.5} />
                 </div>
               </div>
-              <h1 className="text-3xl font-black bg-gradient-to-r from-white to-violet-200 bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-white to-violet-200 bg-clip-text text-transparent">
                 AK Suite
               </h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full"
               >
                 <Sparkles className="w-4 h-4 text-violet-400" />
                 <span className="text-sm text-violet-200 font-medium">Prossimamente</span>
@@ -306,13 +306,13 @@ export default function Home() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-full transition-all"
+                  className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-full transition-all"
                 >
-                  <User className="w-4 h-4 text-red-400" />
-                  <span className="text-sm text-red-200 font-medium">
+                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+                  <span className="text-xs sm:text-sm text-red-200 font-medium hidden sm:inline">
                     {userProfile?.full_name || user.email}
                   </span>
-                  <LogOut className="w-4 h-4 text-red-400" />
+                  <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
                 </motion.button>
               ) : (
                 <motion.button
@@ -331,14 +331,14 @@ export default function Home() {
 
         {/* Hero Section */}
         <div className="flex-1 flex items-center justify-center">
-          <div className="container mx-auto px-6">
+          <div className="container mx-auto px-4 sm:px-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-center max-w-4xl mx-auto mb-16"
+              className="text-center max-w-4xl mx-auto mb-8 sm:mb-16"
             >
-              <h2 className="text-7xl md:text-8xl font-black mb-6 leading-tight">
+              <h2 className="text-4xl sm:text-7xl md:text-8xl font-black mb-4 sm:mb-6 leading-tight">
                 <span className="bg-gradient-to-r from-white via-violet-200 to-fuchsia-200 bg-clip-text text-transparent">
                   Il Tuo Centro
                 </span>
@@ -347,7 +347,7 @@ export default function Home() {
                   Di Comando Digitale
                 </span>
               </h2>
-              <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
+              <p className="text-sm sm:text-xl text-slate-300 mb-4 sm:mb-8 max-w-2xl mx-auto">
                 Tutto ciò di cui hai bisogno per gestire la tua vita digitale in un unico posto sicuro e bellissimo
               </p>
             </motion.div>
@@ -357,9 +357,9 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="max-w-7xl mx-auto pb-20"
+              className="max-w-7xl mx-auto pb-8 sm:pb-20"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {apps.length === 0 && (
                   <div className="col-span-full">
                     <div className="relative group cursor-pointer">
@@ -433,7 +433,7 @@ export default function Home() {
                     )}
                     
                     {/* ANIME STYLE CARD! */}
-                    <div className="relative bg-gradient-to-br from-slate-900/90 via-red-900/50 to-orange-900/50 backdrop-blur-xl border-4 border-yellow-400 rounded-2xl p-6 hover:border-red-500 transition-all shadow-2xl overflow-hidden min-h-[280px] flex flex-col">
+                    <div className="relative bg-gradient-to-br from-slate-900/90 via-red-900/50 to-orange-900/50 backdrop-blur-xl border-4 border-yellow-400 rounded-2xl p-4 sm:p-6 hover:border-red-500 transition-all shadow-2xl overflow-hidden flex flex-col">
                       {/* SPEED LINES BACKGROUND! */}
                       <div className="absolute inset-0 opacity-20">
                         {[...Array(20)].map((_, i) => (
@@ -461,10 +461,10 @@ export default function Home() {
 
                       <div className="relative z-10 flex flex-col h-full">
                         {/* TOP SECTION - Icon and Title */}
-                        <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start justify-between mb-3">
                           {/* PULSATING ICON! */}
                           <motion.div 
-                            className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${app.gradient} shadow-2xl relative`}
+                            className={`inline-flex p-2.5 sm:p-4 rounded-xl bg-gradient-to-br ${app.gradient} shadow-2xl relative`}
                             animate={hoveredCard === app.id ? {
                               scale: [1, 1.1, 1],
                               rotate: [0, 10, -10, 0],
@@ -473,7 +473,7 @@ export default function Home() {
                           >
                             {/* DANGER STRIPES! */}
                             <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-yellow-500/30 rounded-xl" />
-                            <app.icon className="w-10 h-10 text-white relative z-10" strokeWidth={3} />
+                            <app.icon className="w-7 h-7 sm:w-10 sm:h-10 text-white relative z-10" strokeWidth={3} />
                             
                             {/* ROTATING RING! */}
                             {hoveredCard === app.id && (
@@ -492,7 +492,7 @@ export default function Home() {
                               scale: [1, 1.2, 1]
                             } : {}}
                             transition={{ duration: 0.5, repeat: Infinity }}
-                            className="text-4xl"
+                            className="text-2xl sm:text-4xl"
                           >
                             ⚠️
                           </motion.div>
@@ -500,7 +500,7 @@ export default function Home() {
                         
                         {/* TITLE */}
                         <motion.h3 
-                          className="text-3xl font-black mb-3 relative"
+                          className="text-xl sm:text-3xl font-black mb-2 sm:mb-3 relative"
                           animate={hoveredCard === app.id ? {
                             scale: [1, 1.02, 1],
                           } : {}}
@@ -516,7 +516,7 @@ export default function Home() {
                         </motion.h3>
                         
                         {/* DESCRIPTION */}
-                        <p className="text-base text-yellow-100 leading-relaxed font-bold flex-1">
+                        <p className="text-sm sm:text-base text-yellow-100 leading-snug sm:leading-relaxed font-bold flex-1">
                           {app.description}
                         </p>
                       </div>
