@@ -129,7 +129,7 @@ export default function Home() {
         {[...Array(15)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute text-6xl opacity-20"
+            className="absolute text-3xl sm:text-6xl opacity-20"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -154,12 +154,12 @@ export default function Home() {
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-          className="relative z-10 max-w-2xl w-full mx-6"
+          className="relative z-10 max-w-2xl w-full mx-4 sm:mx-6"
         >
-          <div className="bg-gradient-to-br from-red-900/50 via-orange-900/50 to-yellow-900/50 backdrop-blur-xl border-4 border-yellow-400 rounded-3xl p-12 shadow-[0_0_50px_rgba(255,215,0,0.5)]">
+          <div className="bg-gradient-to-br from-red-900/50 via-orange-900/50 to-yellow-900/50 backdrop-blur-xl border-2 sm:border-4 border-yellow-400 rounded-2xl sm:rounded-3xl p-6 sm:p-12 shadow-[0_0_50px_rgba(255,215,0,0.5)]">
             {/* Danger tape effect */}
-            <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-90" />
-            <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-90" />
+            <div className="absolute top-0 left-0 right-0 h-2 sm:h-4 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-90" />
+            <div className="absolute bottom-0 left-0 right-0 h-2 sm:h-4 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-90" />
 
             {/* Skull warning */}
             <motion.div
@@ -168,11 +168,11 @@ export default function Home() {
                 rotate: [0, 10, -10, 0] 
               }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="flex justify-center mb-8"
+              className="flex justify-center mb-4 sm:mb-8"
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-red-500 rounded-full blur-2xl opacity-50" />
-                <Skull className="w-24 h-24 text-red-500 relative z-10" strokeWidth={2.5} />
+                <Skull className="w-16 h-16 sm:w-24 sm:h-24 text-red-500 relative z-10" strokeWidth={2.5} />
               </div>
             </motion.div>
 
@@ -181,19 +181,19 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-center mb-10"
+              className="text-center mb-6 sm:mb-10"
             >
-              <h1 className="text-6xl font-black mb-6 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-6xl font-black mb-3 sm:mb-6 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent">
                 🔐 ZONA PROTETTA 🔐
               </h1>
-              <p className="text-3xl font-bold text-yellow-200 mb-4">
+              <p className="text-xl sm:text-3xl font-bold text-yellow-200 mb-2 sm:mb-4">
                 ⚠️ ACCESSO NEGATO ⚠️
               </p>
-              <p className="text-xl text-yellow-100 leading-relaxed">
+              <p className="text-sm sm:text-xl text-yellow-100 leading-snug sm:leading-relaxed">
                 Questa console è sotto massima protezione!<br />
-                <span className="text-2xl font-black text-red-400">VAULT ULTRA SEGRETO</span>
+                <span className="text-lg sm:text-2xl font-black text-red-400">VAULT ULTRA SEGRETO</span>
               </p>
-              <p className="text-lg text-yellow-200 mt-6 font-bold">
+              <p className="text-sm sm:text-lg text-yellow-200 mt-3 sm:mt-6 font-bold">
                 🔒 Devi eseguire il <span className="text-red-400">LOGIN</span> per procedere! 🔒
               </p>
             </motion.div>
@@ -203,10 +203,10 @@ export default function Home() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsAuthModalOpen(true)}
-              className="w-full py-6 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 text-white text-2xl font-black rounded-2xl shadow-2xl hover:shadow-[0_0_30px_rgba(255,215,0,0.8)] transition-all"
+              className="w-full py-4 sm:py-6 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 text-white text-lg sm:text-2xl font-black rounded-xl sm:rounded-2xl shadow-2xl hover:shadow-[0_0_30px_rgba(255,215,0,0.8)] transition-all"
             >
-              <div className="flex items-center justify-center gap-3">
-                <LogIn className="w-8 h-8" strokeWidth={3} />
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                <LogIn className="w-6 h-6 sm:w-8 sm:h-8" strokeWidth={3} />
                 <span>ENTRA NEL VAULT!</span>
                 <motion.span
                   animate={{ rotate: [0, 360] }}
@@ -222,7 +222,7 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="text-center text-yellow-300 font-bold text-lg mt-8 italic"
+              className="text-center text-yellow-300 font-bold text-sm sm:text-lg mt-4 sm:mt-8 italic"
             >
               "La sicurezza è potere!" 🔐✨
             </motion.p>
