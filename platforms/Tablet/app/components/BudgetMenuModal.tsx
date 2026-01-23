@@ -33,21 +33,21 @@ export default function BudgetMenuModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative max-w-2xl w-full"
+          className="relative max-w-2xl w-full my-4 sm:my-8"
         >
           {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl border-2 border-green-500/30 shadow-2xl overflow-hidden">
+          <div className="relative bg-slate-900 rounded-2xl border-2 border-green-500/30 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-3 sm:p-6 border-b border-white/10 bg-gradient-to-r from-green-900/30 to-emerald-900/30">
+            <div className="flex items-center justify-between p-3 sm:p-6 border-b border-white/10 bg-gradient-to-r from-green-900/30 to-emerald-900/30 flex-shrink-0">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-lg sm:text-2xl">
                 💰
@@ -65,14 +65,14 @@ export default function BudgetMenuModal({
             </button>
           </div>
 
-          {/* Options */}
-          <div className="p-3 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+          {/* Options - Scrollable */}
+          <div className="p-3 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 overflow-y-auto overscroll-contain">
             {/* New Transaction */}
             <motion.button
               whileHover={{ scale: 1.02, y: -4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleOptionClick(onSelectNew)}
-              className="relative bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl p-4 sm:p-8 overflow-hidden group"
+              className="relative bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl p-3 sm:p-8 overflow-hidden group"
             >
               {/* Animated background */}
               <motion.div
@@ -112,11 +112,11 @@ export default function BudgetMenuModal({
                     repeat: Infinity,
                     ease: 'easeInOut',
                   }}
-                  className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                  className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-1.5 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
                 >
-                  <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <Plus className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
                 </motion.div>
-                <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">✨ NUOVO MOVIMENTO</h3>
+                <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-2">✨ NUOVO MOVIMENTO</h3>
                 <p className="text-xs sm:text-sm text-green-100">Aggiungi una nuova entrata o uscita</p>
               </div>
 
@@ -129,7 +129,7 @@ export default function BudgetMenuModal({
               whileHover={{ scale: 1.02, y: -4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleOptionClick(onSelectView)}
-              className="relative bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl p-4 sm:p-8 overflow-hidden group"
+              className="relative bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl p-3 sm:p-8 overflow-hidden group"
             >
               {/* Animated background */}
               <motion.div
@@ -169,11 +169,11 @@ export default function BudgetMenuModal({
                     repeat: Infinity,
                     ease: 'easeInOut',
                   }}
-                  className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                  className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-1.5 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
                 >
-                  <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <BarChart3 className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
                 </motion.div>
-                <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">📊 BILANCIO COMPLETO</h3>
+                <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-2">📊 BILANCIO COMPLETO</h3>
                 <p className="text-xs sm:text-sm text-blue-100">Visualizza tutte le transazioni e i totali</p>
               </div>
 
@@ -187,7 +187,7 @@ export default function BudgetMenuModal({
                 onClick={() => handleOptionClick(onSelectRecurring)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 rounded-2xl p-4 sm:p-8 border-2 border-purple-400/30 hover:border-purple-400/60 transition-all shadow-2xl hover:shadow-purple-500/50"
+                className="group relative overflow-hidden bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 rounded-2xl p-3 sm:p-8 border-2 border-purple-400/30 hover:border-purple-400/60 transition-all shadow-2xl hover:shadow-purple-500/50"
               >
                 {/* Animated shine */}
                 <motion.div
@@ -214,11 +214,11 @@ export default function BudgetMenuModal({
                       repeat: Infinity,
                       ease: 'linear',
                     }}
-                    className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                    className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-1.5 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
                   >
-                    <Repeat className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    <Repeat className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
                   </motion.div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">🔄 RICORRENTE</h3>
+                  <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-2">🔄 RICORRENTE</h3>
                   <p className="text-xs sm:text-sm text-purple-100">Automatizza stipendi, affitti e bollette</p>
                 </div>
 
@@ -233,7 +233,7 @@ export default function BudgetMenuModal({
                 onClick={() => handleOptionClick(onSelectRecurringList)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-cyan-600 via-teal-600 to-cyan-700 rounded-2xl p-4 sm:p-8 border-2 border-cyan-400/30 hover:border-cyan-400/60 transition-all shadow-2xl hover:shadow-cyan-500/50"
+                className="group relative overflow-hidden bg-gradient-to-br from-cyan-600 via-teal-600 to-cyan-700 rounded-2xl p-3 sm:p-8 border-2 border-cyan-400/30 hover:border-cyan-400/60 transition-all shadow-2xl hover:shadow-cyan-500/50"
               >
                 {/* Animated shine */}
                 <motion.div
@@ -260,11 +260,11 @@ export default function BudgetMenuModal({
                       repeat: Infinity,
                       ease: 'easeInOut',
                     }}
-                    className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                    className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-1.5 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
                   >
-                    <span className="text-2xl sm:text-3xl">📋</span>
+                    <span className="text-xl sm:text-3xl">📋</span>
                   </motion.div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">📋 GESTISCI RICORRENTI</h3>
+                  <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-2">📋 GESTISCI RICORRENTI</h3>
                   <p className="text-xs sm:text-sm text-cyan-100">Vedi e modifica le automazioni attive</p>
                 </div>
 
@@ -279,7 +279,7 @@ export default function BudgetMenuModal({
                 onClick={() => handleOptionClick(onSelectLimit)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-orange-600 via-red-600 to-orange-700 rounded-2xl p-4 sm:p-8 border-2 border-orange-400/30 hover:border-orange-400/60 transition-all shadow-2xl hover:shadow-orange-500/50"
+                className="group relative overflow-hidden bg-gradient-to-br from-orange-600 via-red-600 to-orange-700 rounded-2xl p-3 sm:p-8 border-2 border-orange-400/30 hover:border-orange-400/60 transition-all shadow-2xl hover:shadow-orange-500/50"
               >
                 {/* Animated shine */}
                 <motion.div
@@ -307,11 +307,11 @@ export default function BudgetMenuModal({
                       repeat: Infinity,
                       ease: 'easeInOut',
                     }}
-                    className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                    className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-1.5 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
                   >
-                    <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    <AlertTriangle className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
                   </motion.div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">⚠️ LIMITE BUDGET</h3>
+                  <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-2">⚠️ LIMITE BUDGET</h3>
                   <p className="text-xs sm:text-sm text-orange-100">Imposta tetto massimo di spesa</p>
                 </div>
 
@@ -326,7 +326,7 @@ export default function BudgetMenuModal({
                 onClick={() => handleOptionClick(onSelectLimitsList)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative overflow-hidden bg-gradient-to-br from-red-600 via-pink-600 to-red-700 rounded-2xl p-4 sm:p-8 border-2 border-red-400/30 hover:border-red-400/60 transition-all shadow-2xl hover:shadow-red-500/50"
+                className="group relative overflow-hidden bg-gradient-to-br from-red-600 via-pink-600 to-red-700 rounded-2xl p-3 sm:p-8 border-2 border-red-400/30 hover:border-red-400/60 transition-all shadow-2xl hover:shadow-red-500/50"
               >
                 {/* Animated shine */}
                 <motion.div
@@ -353,11 +353,11 @@ export default function BudgetMenuModal({
                       repeat: Infinity,
                       ease: 'easeInOut',
                     }}
-                    className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
+                    className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-1.5 sm:mb-4 rounded-full bg-white/20 flex items-center justify-center"
                   >
-                    <span className="text-2xl sm:text-3xl">🎯</span>
+                    <span className="text-xl sm:text-3xl">🎯</span>
                   </motion.div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">🎯 GESTISCI LIMITI</h3>
+                  <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-2">🎯 GESTISCI LIMITI</h3>
                   <p className="text-xs sm:text-sm text-red-100">Vedi tutti i limiti e avvisi</p>
                 </div>
 
