@@ -92,13 +92,13 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-hidden">
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-hidden overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full h-full max-w-6xl mx-auto flex items-stretch"
+          className="relative w-full h-full max-w-6xl mx-auto flex items-stretch overflow-x-hidden"
         >
           {/* Glow effect */}
           <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl blur-2xl opacity-20" />
