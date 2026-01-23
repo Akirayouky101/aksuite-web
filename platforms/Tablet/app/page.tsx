@@ -6,8 +6,18 @@ import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User } from 'lucide-re
 import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
 import PasswordListModal from './components/PasswordListModal'
+import BudgetModal from './components/BudgetModal'
+import BudgetMenuModal from './components/BudgetMenuModal'
+import BudgetViewModal from './components/BudgetViewModal'
+import RecurringModal from './components/RecurringModal'
+import RecurringListModal from './components/RecurringListModal'
+import BudgetLimitModal from './components/BudgetLimitModal'
+import BudgetLimitsViewModal from './components/BudgetLimitsViewModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
+import { useBudget } from './hooks/useBudget'
+import { useRecurring } from './hooks/useRecurring'
+import { useBudgetLimits } from './hooks/useBudgetLimits'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -24,10 +34,20 @@ export default function Home() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isListModalOpen, setIsListModalOpen] = useState(false)
+  const [isBudgetMenuModalOpen, setIsBudgetMenuModalOpen] = useState(false)
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false)
+  const [isBudgetViewModalOpen, setIsBudgetViewModalOpen] = useState(false)
+  const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false)
+  const [isRecurringListModalOpen, setIsRecurringListModalOpen] = useState(false)
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false)
+  const [isLimitsViewModalOpen, setIsLimitsViewModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const { passwords, addPassword, user, deletePassword } = usePasswords()
+  const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
+  const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
+  const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
 
   // Initialize console guard once
   useEffect(() => {
@@ -84,6 +104,13 @@ export default function Home() {
       description: `🔥 VAULT ULTRA SEGRETO! Modalità sicurezza massima attivata! Le tue password sono protette dal potere dell'anime! 💀✨ (${passwords.length} password salvate)`, 
       icon: Skull, 
       gradient: 'from-red-600 via-orange-500 to-yellow-400' 
+    },
+    { 
+      id: 'budget', 
+      title: '💰 BILANCIO FAMILIARE 💰', 
+      description: '💸 Gestisci entrate e uscite della famiglia! Tieni traccia di ogni transazione e monitora il tuo budget mensile! 📊✨', 
+      icon: Zap, 
+      gradient: 'from-green-600 via-emerald-500 to-teal-400' 
     },
   ]
 
@@ -330,9 +357,9 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="max-w-6xl mx-auto"
+              className="max-w-7xl mx-auto pb-20"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {apps.length === 0 && (
                   <div className="col-span-full">
                     <div className="relative group cursor-pointer">
@@ -359,8 +386,14 @@ export default function Home() {
                     }}
                     onHoverStart={() => setHoveredCard(app.id)}
                     onHoverEnd={() => setHoveredCard(null)}
-                    onClick={() => setIsMenuModalOpen(true)}
-                    className="relative group cursor-pointer col-span-full"
+                    onClick={() => {
+                      if (app.id === 'passwords') {
+                        setIsMenuModalOpen(true)
+                      } else if (app.id === 'budget') {
+                        setIsBudgetMenuModalOpen(true)
+                      }
+                    }}
+                    className="relative group cursor-pointer"
                   >
                     {/* EXPLOSIVE GLOW EFFECT! */}
                     {hoveredCard === app.id && (
@@ -400,7 +433,7 @@ export default function Home() {
                     )}
                     
                     {/* ANIME STYLE CARD! */}
-                    <div className="relative bg-gradient-to-br from-slate-900/90 via-red-900/50 to-orange-900/50 backdrop-blur-xl border-4 border-yellow-400 rounded-2xl p-8 hover:border-red-500 transition-all shadow-2xl overflow-hidden">
+                    <div className="relative bg-gradient-to-br from-slate-900/90 via-red-900/50 to-orange-900/50 backdrop-blur-xl border-4 border-yellow-400 rounded-2xl p-6 hover:border-red-500 transition-all shadow-2xl overflow-hidden min-h-[280px] flex flex-col">
                       {/* SPEED LINES BACKGROUND! */}
                       <div className="absolute inset-0 opacity-20">
                         {[...Array(20)].map((_, i) => (
@@ -426,69 +459,66 @@ export default function Home() {
                         ))}
                       </div>
 
-                      <div className="relative z-10 flex items-center gap-6">
-                        {/* PULSATING ICON! */}
-                        <motion.div 
-                          className={`inline-flex p-6 rounded-2xl bg-gradient-to-br ${app.gradient} shadow-2xl relative`}
-                          animate={hoveredCard === app.id ? {
-                            scale: [1, 1.2, 1],
-                            rotate: [0, 360],
-                          } : {}}
-                          transition={{ duration: 0.6, repeat: hoveredCard === app.id ? Infinity : 0 }}
-                        >
-                          {/* DANGER STRIPES! */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-yellow-500/30 rounded-2xl" />
-                          <app.icon className="w-12 h-12 text-white relative z-10" strokeWidth={3} />
-                          
-                          {/* ROTATING RING! */}
-                          <motion.div
-                            className="absolute -inset-2 border-4 border-yellow-400 rounded-2xl"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                          />
-                        </motion.div>
-                        
-                        <div className="flex-1">
-                          {/* EXPLOSIVE TITLE! */}
-                          <motion.h3 
-                            className="text-4xl font-black mb-3 relative"
+                      <div className="relative z-10 flex flex-col h-full">
+                        {/* TOP SECTION - Icon and Title */}
+                        <div className="flex items-start justify-between mb-4">
+                          {/* PULSATING ICON! */}
+                          <motion.div 
+                            className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${app.gradient} shadow-2xl relative`}
                             animate={hoveredCard === app.id ? {
-                              scale: [1, 1.05, 1],
+                              scale: [1, 1.1, 1],
+                              rotate: [0, 10, -10, 0],
                             } : {}}
-                            transition={{ duration: 0.3, repeat: Infinity }}
+                            transition={{ duration: 0.6, repeat: hoveredCard === app.id ? Infinity : 0 }}
                           >
-                            <span className="relative z-10 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent drop-shadow-2xl">
-                              {app.title}
-                            </span>
-                            {/* TEXT SHADOW EFFECT! */}
-                            <span className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent blur-sm">
-                              {app.title}
-                            </span>
-                          </motion.h3>
-                          
-                          {/* DESCRIPTION WITH TYPING EFFECT! */}
-                          <p className="text-lg text-yellow-100 leading-relaxed font-bold tracking-wide">
-                            {app.description}
-                          </p>
-                        </div>
+                            {/* DANGER STRIPES! */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-yellow-500/30 rounded-xl" />
+                            <app.icon className="w-10 h-10 text-white relative z-10" strokeWidth={3} />
+                            
+                            {/* ROTATING RING! */}
+                            {hoveredCard === app.id && (
+                              <motion.div
+                                className="absolute -inset-1 border-2 border-yellow-400 rounded-xl"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                              />
+                            )}
+                          </motion.div>
 
-                        {/* WARNING SIGNS! */}
-                        <div className="flex flex-col gap-2">
+                          {/* WARNING SIGN! */}
                           <motion.div
-                            animate={{ rotate: [0, 10, -10, 0] }}
+                            animate={hoveredCard === app.id ? { 
+                              rotate: [0, 10, -10, 0],
+                              scale: [1, 1.2, 1]
+                            } : {}}
                             transition={{ duration: 0.5, repeat: Infinity }}
-                            className="text-6xl"
+                            className="text-4xl"
                           >
                             ⚠️
                           </motion.div>
-                          <motion.div
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ duration: 0.8, repeat: Infinity }}
-                            className="text-6xl"
-                          >
-                            💥
-                          </motion.div>
                         </div>
+                        
+                        {/* TITLE */}
+                        <motion.h3 
+                          className="text-3xl font-black mb-3 relative"
+                          animate={hoveredCard === app.id ? {
+                            scale: [1, 1.02, 1],
+                          } : {}}
+                          transition={{ duration: 0.3, repeat: Infinity }}
+                        >
+                          <span className="relative z-10 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent drop-shadow-2xl">
+                            {app.title}
+                          </span>
+                          {/* TEXT SHADOW EFFECT! */}
+                          <span className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent blur-sm">
+                            {app.title}
+                          </span>
+                        </motion.h3>
+                        
+                        {/* DESCRIPTION */}
+                        <p className="text-base text-yellow-100 leading-relaxed font-bold flex-1">
+                          {app.description}
+                        </p>
                       </div>
 
                       {/* DANGER TAPE BORDER! */}
@@ -524,6 +554,67 @@ export default function Home() {
         onClose={() => setIsListModalOpen(false)}
         passwords={passwords}
         onDelete={deletePassword}
+      />
+
+      {/* BUDGET MENU MODAL */}
+      <BudgetMenuModal 
+        isOpen={isBudgetMenuModalOpen}
+        onClose={() => setIsBudgetMenuModalOpen(false)}
+        onSelectNew={() => setIsBudgetModalOpen(true)}
+        onSelectView={() => setIsBudgetViewModalOpen(true)}
+        onSelectRecurring={() => setIsRecurringModalOpen(true)}
+        onSelectRecurringList={() => setIsRecurringListModalOpen(true)}
+        onSelectLimit={() => setIsLimitModalOpen(true)}
+        onSelectLimitsList={() => setIsLimitsViewModalOpen(true)}
+      />
+
+      {/* BUDGET MODAL (Add Transaction) */}
+      <BudgetModal 
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        onSave={addTransaction}
+      />
+
+      {/* BUDGET VIEW MODAL (View All) */}
+      <BudgetViewModal 
+        isOpen={isBudgetViewModalOpen}
+        onClose={() => setIsBudgetViewModalOpen(false)}
+        transactions={transactions}
+        onDelete={deleteTransaction}
+        stats={getStats()}
+      />
+
+      {/* RECURRING MODAL (Add Recurring) */}
+      <RecurringModal 
+        isOpen={isRecurringModalOpen}
+        onClose={() => setIsRecurringModalOpen(false)}
+        onSave={addRecurring}
+      />
+
+      {/* RECURRING LIST MODAL (Manage Recurring) */}
+      <RecurringListModal 
+        isOpen={isRecurringListModalOpen}
+        onClose={() => setIsRecurringListModalOpen(false)}
+        recurring={recurring}
+        onToggleActive={toggleActive}
+        onDelete={deleteRecurring}
+      />
+
+      {/* BUDGET LIMIT MODAL (Add Limit) */}
+      <BudgetLimitModal 
+        isOpen={isLimitModalOpen}
+        onClose={() => setIsLimitModalOpen(false)}
+        onSave={addLimit}
+        existingCategories={limits.map(l => l.category)}
+      />
+
+      {/* BUDGET LIMITS VIEW MODAL (Manage Limits) */}
+      <BudgetLimitsViewModal 
+        isOpen={isLimitsViewModalOpen}
+        onClose={() => setIsLimitsViewModalOpen(false)}
+        limits={limitsStatus}
+        onToggleActive={toggleLimitActive}
+        onDelete={deleteLimit}
       />
 
       {/* AUTH MODAL! */}
