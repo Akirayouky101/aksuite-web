@@ -87,7 +87,7 @@ export default function RecurringListModal({
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-88px)]">
+            <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {recurring.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">🔄</div>

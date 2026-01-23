@@ -92,19 +92,20 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-hidden overflow-x-hidden">
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-hidden">
+        <div className="w-full h-full overflow-x-hidden overflow-y-auto flex items-center justify-center p-0 sm:p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full h-full max-w-6xl mx-auto flex items-stretch overflow-x-hidden"
+          className="relative w-full h-full sm:h-auto sm:max-w-6xl sm:max-h-[95vh]"
         >
           {/* Glow effect */}
           <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl blur-2xl opacity-20" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-none sm:rounded-2xl w-full h-full sm:h-auto sm:my-4 sm:max-h-[95vh] overflow-hidden border-0 sm:border-2 border-green-500/30 shadow-2xl flex flex-col">
+          <div className="relative bg-slate-900 rounded-none sm:rounded-2xl w-full h-full sm:h-auto overflow-hidden border-0 sm:border-2 border-green-500/30 shadow-2xl flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-white/10 bg-gradient-to-r from-green-900/30 to-emerald-900/30 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -126,7 +127,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
             <div className="p-3 sm:p-4 md:p-6">
             {/* Tabs */}
             <div className="flex gap-2 mb-4 sm:mb-6">
@@ -383,6 +384,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
           </div>
           </div>
         </motion.div>
+        </div>
       </div>
     </AnimatePresence>
   )

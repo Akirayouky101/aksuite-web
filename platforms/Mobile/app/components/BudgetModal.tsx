@@ -119,7 +119,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-88px)]">
+          <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Type Selection */}
               <div className="grid grid-cols-2 gap-4">

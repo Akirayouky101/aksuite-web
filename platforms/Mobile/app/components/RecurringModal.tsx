@@ -138,7 +138,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
             </div>
 
             {/* Content */}
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-88px)]">
+            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {/* Type Selection */}
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-white mb-3">Tipo</label>

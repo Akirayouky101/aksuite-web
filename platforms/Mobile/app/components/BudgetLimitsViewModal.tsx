@@ -108,7 +108,7 @@ export default function BudgetLimitsViewModal({
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-88px)]">
+            <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-gradient-to-br from-red-500/20 to-rose-600/20 rounded-xl p-4 border border-red-500/30">
