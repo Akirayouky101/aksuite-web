@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User } from 'lucide-react'
+import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
 import PasswordListModal from './components/PasswordListModal'
@@ -13,11 +13,15 @@ import RecurringModal from './components/RecurringModal'
 import RecurringListModal from './components/RecurringListModal'
 import BudgetLimitModal from './components/BudgetLimitModal'
 import BudgetLimitsViewModal from './components/BudgetLimitsViewModal'
+import CallModal from './components/CallModal'
+import CallMenuModal from './components/CallMenuModal'
+import CallsListModal from './components/CallsListModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
 import { useRecurring } from './hooks/useRecurring'
 import { useBudgetLimits } from './hooks/useBudgetLimits'
+import { useCalls } from './hooks/useCalls'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -41,6 +45,9 @@ export default function Home() {
   const [isRecurringListModalOpen, setIsRecurringListModalOpen] = useState(false)
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false)
   const [isLimitsViewModalOpen, setIsLimitsViewModalOpen] = useState(false)
+  const [isCallMenuModalOpen, setIsCallMenuModalOpen] = useState(false)
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false)
+  const [isCallsListModalOpen, setIsCallsListModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
@@ -48,6 +55,7 @@ export default function Home() {
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
   const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
+  const { calls, addCall, deleteCall, updateCallStatus } = useCalls()
 
   // Initialize console guard once
   useEffect(() => {
@@ -112,6 +120,13 @@ export default function Home() {
       icon: Zap, 
       gradient: 'from-green-600 via-emerald-500 to-teal-400' 
     },
+    {
+      id: 'calls',
+      title: '📞 GESTIONE CHIAMATE 📞',
+      description: `🎯 Registra e gestisci le chiamate clienti! Tieni traccia dei contatti, richieste e follow-up in modo professionale! 💼✨ (${calls.length} chiamate registrate)`,
+      icon: Phone,
+      gradient: 'from-blue-600 via-cyan-500 to-purple-400'
+    }
   ]
 
   // 🔒 BLOCCO TOTALE SE NON AUTENTICATO! 🔒
@@ -391,6 +406,8 @@ export default function Home() {
                         setIsMenuModalOpen(true)
                       } else if (app.id === 'budget') {
                         setIsBudgetMenuModalOpen(true)
+                      } else if (app.id === 'calls') {
+                        setIsCallMenuModalOpen(true)
                       }
                     }}
                     className="relative group cursor-pointer"
@@ -615,6 +632,30 @@ export default function Home() {
         limits={limitsStatus}
         onToggleActive={toggleLimitActive}
         onDelete={deleteLimit}
+      />
+
+      {/* CALL MENU MODAL */}
+      <CallMenuModal
+        isOpen={isCallMenuModalOpen}
+        onClose={() => setIsCallMenuModalOpen(false)}
+        onSelectNew={() => setIsCallModalOpen(true)}
+        onSelectList={() => setIsCallsListModalOpen(true)}
+      />
+
+      {/* CALL MODAL (Add Call) */}
+      <CallModal
+        isOpen={isCallModalOpen}
+        onClose={() => setIsCallModalOpen(false)}
+        onSave={addCall}
+      />
+
+      {/* CALLS LIST MODAL (View All) */}
+      <CallsListModal
+        isOpen={isCallsListModalOpen}
+        onClose={() => setIsCallsListModalOpen(false)}
+        calls={calls}
+        onDelete={deleteCall}
+        onStatusChange={updateCallStatus}
       />
 
       {/* AUTH MODAL! */}
