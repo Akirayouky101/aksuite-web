@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock } from 'lucide-react'
+import SuccessModal from './SuccessModal'
 
 interface CallModalProps {
   isOpen: boolean
@@ -36,6 +37,7 @@ export default function CallModal({ isOpen, onClose, onSave }: CallModalProps) {
   const [followUp, setFollowUp] = useState(false)
   const [followUpDate, setFollowUpDate] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,7 +69,12 @@ export default function CallModal({ isOpen, onClose, onSave }: CallModalProps) {
       setFollowUp(false)
       setFollowUpDate('')
       
-      onClose()
+      // Show success modal instead of closing immediately
+      setShowSuccess(true)
+      setTimeout(() => {
+        setShowSuccess(false)
+        onClose()
+      }, 2500)
     } catch (error) {
       console.error('Error saving call:', error)
     } finally {
@@ -287,6 +294,14 @@ export default function CallModal({ isOpen, onClose, onSave }: CallModalProps) {
             </div>
           </div>
         </motion.div>
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccess}
+          onClose={() => setShowSuccess(false)}
+          title="Chiamata Salvata!"
+          message="La chiamata è stata registrata con successo nel sistema."
+        />
       </div>
     </AnimatePresence>
   )

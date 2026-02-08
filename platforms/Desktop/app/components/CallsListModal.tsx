@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar } from 'lucide-react'
+import ConfirmModal from './ConfirmModal'
+import CallDetailModal from './CallDetailModal'
 
 interface Call {
   id: string
@@ -57,19 +59,20 @@ const callTypeEmojis: Record<string, string> = {
 export default function CallsListModal({ isOpen, onClose, calls, onDelete, onStatusChange }: CallsListModalProps) {
   const [selectedFilter, setSelectedFilter] = useState<'all' | Call['status']>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [selectedCall, setSelectedCall] = useState<Call | null>(null)
 
   const filteredCalls = selectedFilter === 'all' 
     ? calls 
     : calls.filter(call => call.status === selectedFilter)
 
   const handleDelete = async (id: string) => {
-    if (confirm('Sei sicuro di voler eliminare questa chiamata?')) {
-      setDeletingId(id)
-      try {
-        await onDelete(id)
-      } finally {
-        setDeletingId(null)
-      }
+    setDeletingId(id)
+    try {
+      await onDelete(id)
+      setDeleteConfirmId(null)
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -178,7 +181,8 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className={`rounded-xl border-2 p-4 ${statusColors[call.status].bg} ${statusColors[call.status].border}`}
+                        onClick={() => setSelectedCall(call)}
+                        className={`rounded-xl border-2 p-4 ${statusColors[call.status].bg} ${statusColors[call.status].border} cursor-pointer hover:scale-[1.02] transition-transform`}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 space-y-3">
@@ -253,7 +257,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                           </div>
 
                           {/* Actions */}
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
                             {call.status === 'pending' && (
                               <button
                                 onClick={() => onStatusChange(call.id, 'completed')}
@@ -264,7 +268,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                               </button>
                             )}
                             <button
-                              onClick={() => handleDelete(call.id)}
+                              onClick={() => setDeleteConfirmId(call.id)}
                               disabled={deletingId === call.id}
                               className="p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg transition-colors disabled:opacity-50"
                               title="Elimina chiamata"
@@ -281,6 +285,25 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
             </div>
           </div>
         </motion.div>
+
+        {/* Confirmation Modal */}
+        <ConfirmModal
+          isOpen={deleteConfirmId !== null}
+          onClose={() => setDeleteConfirmId(null)}
+          onConfirm={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+          title="Elimina Chiamata"
+          message="Sei sicuro di voler eliminare questa chiamata? Questa azione non può essere annullata."
+          confirmText="Elimina"
+          cancelText="Annulla"
+          type="danger"
+        />
+
+        {/* Call Detail Modal */}
+        <CallDetailModal
+          isOpen={selectedCall !== null}
+          onClose={() => setSelectedCall(null)}
+          call={selectedCall}
+        />
       </div>
     </AnimatePresence>
   )
