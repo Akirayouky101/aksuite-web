@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User, X, Zap, Sparkles } from 'lucide-react'
+import { Mail, Lock, User, X, Zap, Sparkles, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface AuthModalProps {
@@ -18,6 +18,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,14 +131,28 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               <label className="block text-violet-300 font-bold mb-2 text-sm flex items-center gap-2">
                 <Lock className="w-4 h-4" /> Password
               </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-black/50 border-2 border-violet-400/50 rounded-xl text-white font-bold placeholder-violet-300/50 focus:border-violet-400 focus:outline-none transition-all"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 pr-12 bg-black/50 border-2 border-violet-400/50 rounded-xl text-white font-bold placeholder-violet-300/50 focus:border-violet-400 focus:outline-none transition-all"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-300 hover:text-violet-200 transition-colors"
+                  aria-label={showPassword ? "Nascondi password" : "Mostra password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
