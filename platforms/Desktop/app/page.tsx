@@ -16,12 +16,15 @@ import BudgetLimitsViewModal from './components/BudgetLimitsViewModal'
 import CallModal from './components/CallModal'
 import CallMenuModal from './components/CallMenuModal'
 import CallsListModal from './components/CallsListModal'
+import TaskModal from './components/TaskModal'
+import TasksListModal from './components/TasksListModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
 import { useRecurring } from './hooks/useRecurring'
 import { useBudgetLimits } from './hooks/useBudgetLimits'
 import { useCalls } from './hooks/useCalls'
+import { useTasks } from './hooks/useTasks'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -48,6 +51,8 @@ export default function Home() {
   const [isCallMenuModalOpen, setIsCallMenuModalOpen] = useState(false)
   const [isCallModalOpen, setIsCallModalOpen] = useState(false)
   const [isCallsListModalOpen, setIsCallsListModalOpen] = useState(false)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [isTasksListModalOpen, setIsTasksListModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
@@ -56,6 +61,7 @@ export default function Home() {
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
   const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
   const { calls, addCall, deleteCall, updateCallStatus } = useCalls()
+  const { tasks, addTask, updateTask, deleteTask, toggleComplete } = useTasks()
 
   // Initialize console guard once
   useEffect(() => {
@@ -126,6 +132,13 @@ export default function Home() {
       description: `🎯 Registra e gestisci le chiamate clienti! Tieni traccia dei contatti, richieste e follow-up in modo professionale! 💼✨ (${calls.length} chiamate registrate)`,
       icon: Phone,
       gradient: 'from-blue-600 via-cyan-500 to-purple-400'
+    },
+    {
+      id: 'tasks',
+      title: '✓ TASK MANAGER ✓',
+      description: `🚀 Organizza le tue attività! Crea task, sottotask, imposta scadenze e tieni tutto sotto controllo! ✨📋 (${tasks.length} task attivi)`,
+      icon: Sparkles,
+      gradient: 'from-purple-600 via-pink-500 to-cyan-400'
     }
   ]
 
@@ -408,6 +421,8 @@ export default function Home() {
                         setIsBudgetMenuModalOpen(true)
                       } else if (app.id === 'calls') {
                         setIsCallMenuModalOpen(true)
+                      } else if (app.id === 'tasks') {
+                        setIsTasksListModalOpen(true)
                       }
                     }}
                     className="relative group cursor-pointer"
@@ -656,6 +671,24 @@ export default function Home() {
         calls={calls}
         onDelete={deleteCall}
         onStatusChange={updateCallStatus}
+      />
+
+      {/* TASK MODAL (Add/Edit Task) */}
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onSave={addTask}
+        editTask={null}
+      />
+
+      {/* TASKS LIST MODAL (View All) */}
+      <TasksListModal
+        isOpen={isTasksListModalOpen}
+        onClose={() => setIsTasksListModalOpen(false)}
+        tasks={tasks}
+        onDelete={deleteTask}
+        onToggleComplete={toggleComplete}
+        onUpdate={updateTask}
       />
 
       {/* AUTH MODAL! */}
