@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone, LayoutDashboard, FileText } from 'lucide-react'
+import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone, LayoutDashboard, FileText, Calendar } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
 import PasswordListModal from './components/PasswordListModal'
@@ -20,6 +20,8 @@ import TaskModal from './components/TaskModal'
 import TasksListModal from './components/TasksListModal'
 import NoteModal from './components/NoteModal'
 import NotesListModal from './components/NotesListModal'
+import EventModal from './components/EventModal'
+import CalendarView from './components/CalendarView'
 import UnifiedDashboard from './components/UnifiedDashboard'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
@@ -29,6 +31,7 @@ import { useBudgetLimits } from './hooks/useBudgetLimits'
 import { useCalls } from './hooks/useCalls'
 import { useTasks } from './hooks/useTasks'
 import { useNotes } from './hooks/useNotes'
+import { useEvents } from './hooks/useEvents'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -59,11 +62,14 @@ export default function Home() {
   const [isTasksListModalOpen, setIsTasksListModalOpen] = useState(false)
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
   const [isNotesListModalOpen, setIsNotesListModalOpen] = useState(false)
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false)
+  const [isCalendarViewOpen, setIsCalendarViewOpen] = useState(false)
   const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const [editingNote, setEditingNote] = useState<any>(null)
+  const [editingEvent, setEditingEvent] = useState<any>(null)
   const { passwords, addPassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
@@ -71,6 +77,7 @@ export default function Home() {
   const { calls, addCall, deleteCall, updateCallStatus } = useCalls()
   const { tasks, addTask, updateTask, deleteTask, toggleComplete } = useTasks()
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
+  const { events, addEvent, updateEvent, deleteEvent } = useEvents()
 
   // Initialize console guard once
   useEffect(() => {
@@ -162,6 +169,13 @@ export default function Home() {
       description: `✨ Le tue note, sempre a portata di mano! Organizza idee, promemoria e appunti con colori, tag e cartelle! 🎨📌 (${notes.length} note salvate)`,
       icon: FileText,
       gradient: 'from-yellow-600 via-orange-500 to-pink-400'
+    },
+    {
+      id: 'calendar',
+      title: '📅 CALENDARIO EVENTI 📅',
+      description: `🗓️ Gestisci i tuoi eventi! Calendario mensile, promemoria, eventi ricorrenti e tanto altro! ⏰✨ (${events.length} eventi registrati)`,
+      icon: Calendar,
+      gradient: 'from-indigo-600 via-blue-500 to-cyan-400'
     }
   ]
 
@@ -450,6 +464,8 @@ export default function Home() {
                         setIsTasksListModalOpen(true)
                       } else if (app.id === 'notes') {
                         setIsNotesListModalOpen(true)
+                      } else if (app.id === 'calendar') {
+                        setIsCalendarViewOpen(true)
                       }
                     }}
                     className="relative group cursor-pointer"
@@ -810,6 +826,39 @@ export default function Home() {
         onAdd={() => {
           setEditingNote(null)
           setIsNoteModalOpen(true)
+        }}
+      />
+
+      {/* EVENT MODAL (Create/Edit) */}
+      <EventModal
+        isOpen={isEventModalOpen}
+        onClose={() => {
+          setIsEventModalOpen(false)
+          setEditingEvent(null)
+        }}
+        onSave={(eventData) => {
+          if (editingEvent) {
+            updateEvent(editingEvent.id, eventData)
+          } else {
+            addEvent(eventData)
+          }
+        }}
+        editEvent={editingEvent}
+      />
+
+      {/* CALENDAR VIEW */}
+      <CalendarView
+        isOpen={isCalendarViewOpen}
+        onClose={() => setIsCalendarViewOpen(false)}
+        events={events}
+        onDelete={deleteEvent}
+        onEdit={(event) => {
+          setEditingEvent(event)
+          setIsEventModalOpen(true)
+        }}
+        onAdd={() => {
+          setEditingEvent(null)
+          setIsEventModalOpen(true)
         }}
       />
 

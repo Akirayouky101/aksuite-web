@@ -1,0 +1,358 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  X, ChevronLeft, ChevronRight, Plus, Edit, Trash2, 
+  Calendar as CalendarIcon, MapPin, Clock, Repeat 
+} from 'lucide-react'
+import { Event } from '../hooks/useEvents'
+
+interface CalendarViewProps {
+  isOpen: boolean
+  onClose: () => void
+  events: Event[]
+  onDelete: (id: string) => void
+  onEdit: (event: Event) => void
+  onAdd: () => void
+}
+
+const DAYS = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+const MONTHS = [
+  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+]
+
+const COLORS = {
+  blue: 'bg-blue-500/20 border-blue-500 text-blue-300',
+  green: 'bg-green-500/20 border-green-500 text-green-300',
+  red: 'bg-red-500/20 border-red-500 text-red-300',
+  purple: 'bg-purple-500/20 border-purple-500 text-purple-300',
+  orange: 'bg-orange-500/20 border-orange-500 text-orange-300',
+  pink: 'bg-pink-500/20 border-pink-500 text-pink-300',
+  yellow: 'bg-yellow-500/20 border-yellow-500 text-yellow-300',
+  gray: 'bg-gray-500/20 border-gray-500 text-gray-300'
+}
+
+export default function CalendarView({
+  isOpen,
+  onClose,
+  events,
+  onDelete,
+  onEdit,
+  onAdd
+}: CalendarViewProps) {
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth()
+
+  // Generate calendar days
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(currentYear, currentMonth, 1)
+    const lastDay = new Date(currentYear, currentMonth + 1, 0)
+    const daysInMonth = lastDay.getDate()
+    const startDayOfWeek = firstDay.getDay()
+
+    const days: (Date | null)[] = []
+
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push(null)
+    }
+
+    // Add actual days
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(currentYear, currentMonth, i))
+    }
+
+    return days
+  }, [currentYear, currentMonth])
+
+  // Get events for a specific date
+  const getEventsForDate = (date: Date) => {
+    return events.filter(event => {
+      const eventStart = new Date(event.start_date)
+      const eventEnd = event.end_date ? new Date(event.end_date) : eventStart
+      
+      const dateStart = new Date(date)
+      dateStart.setHours(0, 0, 0, 0)
+      const dateEnd = new Date(date)
+      dateEnd.setHours(23, 59, 59, 999)
+
+      return (
+        (eventStart >= dateStart && eventStart <= dateEnd) ||
+        (eventEnd >= dateStart && eventEnd <= dateEnd) ||
+        (eventStart <= dateStart && eventEnd >= dateEnd)
+      )
+    })
+  }
+
+  // Get events for selected date
+  const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : []
+
+  const goToPreviousMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth - 1, 1))
+  }
+
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth + 1, 1))
+  }
+
+  const goToToday = () => {
+    setCurrentDate(new Date())
+  }
+
+  const isToday = (date: Date | null) => {
+    if (!date) return false
+    const today = new Date()
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    )
+  }
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const formatEventDate = (event: Event) => {
+    const start = new Date(event.start_date)
+    if (event.all_day) {
+      return 'Tutto il giorno'
+    }
+    const end = event.end_date ? new Date(event.end_date) : null
+    return end 
+      ? `${formatTime(event.start_date)} - ${formatTime(event.end_date!)}`
+      : formatTime(event.start_date)
+  }
+
+  const getColorClasses = (color: string) => {
+    return COLORS[color as keyof typeof COLORS] || COLORS.blue
+  }
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col border border-gray-700"
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-gray-700 bg-gradient-to-r from-blue-900/30 to-purple-900/30">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                  📅 Calendario Eventi
+                </h2>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={goToPreviousMonth}
+                    className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    onClick={goToToday}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Oggi
+                  </button>
+                  <button
+                    onClick={goToNextMonth}
+                    className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+
+                <h3 className="text-2xl font-bold text-white">
+                  {MONTHS[currentMonth]} {currentYear}
+                </h3>
+
+                <button
+                  onClick={onAdd}
+                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  Nuovo Evento
+                </button>
+              </div>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="flex-1 overflow-auto p-6">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Calendar */}
+                <div>
+                  {/* Day Headers */}
+                  <div className="grid grid-cols-7 gap-2 mb-2">
+                    {DAYS.map(day => (
+                      <div
+                        key={day}
+                        className="text-center text-sm font-bold text-gray-400 py-2"
+                      >
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Calendar Days */}
+                  <div className="grid grid-cols-7 gap-2">
+                    {calendarDays.map((date, index) => {
+                      if (!date) {
+                        return <div key={`empty-${index}`} className="aspect-square" />
+                      }
+
+                      const dayEvents = getEventsForDate(date)
+                      const isSelected = selectedDate && 
+                        date.getDate() === selectedDate.getDate() &&
+                        date.getMonth() === selectedDate.getMonth() &&
+                        date.getFullYear() === selectedDate.getFullYear()
+
+                      return (
+                        <motion.button
+                          key={date.toISOString()}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedDate(date)}
+                          className={`aspect-square rounded-lg border-2 p-2 relative transition-all ${
+                            isToday(date)
+                              ? 'bg-blue-600 border-blue-400 text-white font-bold'
+                              : isSelected
+                              ? 'bg-purple-600/30 border-purple-400 text-white'
+                              : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          <div className="text-sm">{date.getDate()}</div>
+                          {dayEvents.length > 0 && (
+                            <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-1">
+                              {dayEvents.slice(0, 3).map((event, i) => (
+                                <div
+                                  key={i}
+                                  className={`w-1.5 h-1.5 rounded-full ${
+                                    event.color === 'blue' ? 'bg-blue-400' :
+                                    event.color === 'green' ? 'bg-green-400' :
+                                    event.color === 'red' ? 'bg-red-400' :
+                                    event.color === 'purple' ? 'bg-purple-400' :
+                                    event.color === 'orange' ? 'bg-orange-400' :
+                                    event.color === 'pink' ? 'bg-pink-400' :
+                                    event.color === 'yellow' ? 'bg-yellow-400' :
+                                    'bg-gray-400'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </motion.button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Events List for Selected Date */}
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                  <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <CalendarIcon size={20} />
+                    {selectedDate 
+                      ? `Eventi del ${selectedDate.getDate()} ${MONTHS[selectedDate.getMonth()]}`
+                      : 'Seleziona una data'
+                    }
+                  </h4>
+
+                  {selectedDate && selectedDateEvents.length === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <div className="text-4xl mb-2">📅</div>
+                      <p>Nessun evento per questa data</p>
+                      <button
+                        onClick={onAdd}
+                        className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        Aggiungi Evento
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {selectedDateEvents.map((event, index) => (
+                      <motion.div
+                        key={event.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className={`${getColorClasses(event.color)} border-l-4 rounded-lg p-3`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h5 className="font-bold text-white">{event.title}</h5>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => onEdit(event)}
+                              className="p-1 hover:bg-white/10 rounded transition-colors"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm('Eliminare questo evento?')) {
+                                  onDelete(event.id)
+                                }
+                              }}
+                              className="p-1 hover:bg-white/10 rounded transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {event.description && (
+                          <p className="text-sm text-gray-300 mb-2">{event.description}</p>
+                        )}
+
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} />
+                            {formatEventDate(event)}
+                          </span>
+                          {event.location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin size={12} />
+                              {event.location}
+                            </span>
+                          )}
+                          {event.is_recurring && (
+                            <span className="flex items-center gap-1">
+                              <Repeat size={12} />
+                              {event.recurring_type === 'daily' ? 'Giornaliero' :
+                               event.recurring_type === 'weekly' ? 'Settimanale' :
+                               event.recurring_type === 'monthly' ? 'Mensile' :
+                               event.recurring_type === 'yearly' ? 'Annuale' : 'Ripetuto'}
+                            </span>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  )
+}
