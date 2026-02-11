@@ -142,7 +142,7 @@ export default function PasswordListModal({
                           initial={{ opacity: 0, x: -50 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="relative group">
+                          className="relative group"
                         >
                           <div 
                             onClick={() => setSelectedPassword(pwd)}
