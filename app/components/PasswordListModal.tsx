@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Eye, EyeOff, Copy, Trash2, Edit, ExternalLink } from 'lucide-react'
+import { X, Eye, EyeOff, Copy, Trash2, Edit, ExternalLink, Search } from 'lucide-react'
 import { Password } from '../hooks/usePasswords'
 
 interface PasswordListModalProps {
@@ -21,6 +21,7 @@ export default function PasswordListModal({
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set())
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [selectedPassword, setSelectedPassword] = useState<Password | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const togglePasswordVisibility = (id: string) => {
     setVisiblePasswords(prev => {
@@ -39,6 +40,18 @@ export default function PasswordListModal({
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
   }
+
+  // Filter passwords based on search query
+  const filteredPasswords = passwords.filter(password => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      password.title.toLowerCase().includes(query) ||
+      password.username.toLowerCase().includes(query) ||
+      (password.website && password.website.toLowerCase().includes(query)) ||
+      (password.category && password.category.toLowerCase().includes(query))
+    )
+  })
 
   return (
     <AnimatePresence>
@@ -67,14 +80,14 @@ export default function PasswordListModal({
               {/* Main modal */}
               <div className="relative bg-gradient-to-br from-slate-900 via-blue-900/50 to-purple-900/50 border-4 border-cyan-400 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="relative z-10 p-6 border-b-2 border-cyan-400/50 bg-black/30">
+                <div className="relative z-10 p-6 border-b-2 border-cyan-400/50 bg-black/30 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-3xl font-black bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-500 bg-clip-text text-transparent">
                         📋 ELENCO PASSWORD
                       </h2>
                       <p className="text-cyan-100 font-bold mt-1">
-                        {passwords.length} password salvate
+                        {filteredPasswords.length} di {passwords.length} password
                       </p>
                     </div>
                     <motion.button
@@ -86,29 +99,50 @@ export default function PasswordListModal({
                       <X className="w-6 h-6 text-white" strokeWidth={3} />
                     </motion.button>
                   </div>
+
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="🔍 Cerca per titolo, username, sito o categoria..."
+                      className="w-full pl-12 pr-4 py-3 bg-black/50 border-2 border-cyan-400/50 rounded-xl text-white font-bold placeholder-cyan-300/50 focus:border-cyan-400 focus:outline-none transition-all"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300 hover:text-white transition-colors"
+                        aria-label="Cancella ricerca"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Password List */}
                 <div className="relative z-10 p-6 overflow-y-auto flex-1">
-                  {passwords.length === 0 ? (
+                  {filteredPasswords.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="text-8xl mb-4">🔒</div>
+                      <div className="text-8xl mb-4">{searchQuery ? '🔍' : '🔒'}</div>
                       <h3 className="text-2xl font-black text-cyan-300 mb-2">
-                        Nessuna password salvata
+                        {searchQuery ? 'Nessun risultato' : 'Nessuna password salvata'}
                       </h3>
                       <p className="text-cyan-100">
-                        Inizia aggiungendo la tua prima password!
+                        {searchQuery ? 'Prova a cercare con altri termini' : 'Inizia aggiungendo la tua prima password!'}
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {passwords.map((pwd, index) => (
+                      {filteredPasswords.map((pwd, index) => (
                         <motion.div
                           key={pwd.id}
                           initial={{ opacity: 0, x: -50 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="relative group"
+                          className="relative group">
                         >
                           <div 
                             onClick={() => setSelectedPassword(pwd)}
