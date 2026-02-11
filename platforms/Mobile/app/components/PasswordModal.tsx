@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Lock, User, Globe, Tag, Sparkles, Zap, Eye, EyeOff, Dices } from 'lucide-react'
+import { X, Lock, User, Globe, Tag, Sparkles, Zap, Eye, EyeOff, Dices, Star, MessageSquare } from 'lucide-react'
+import PasswordGenerator from './PasswordGenerator'
 
 interface PasswordModalProps {
   isOpen: boolean
@@ -14,6 +15,8 @@ interface PasswordModalProps {
     website: string
     category: string
     emoji: string
+    notes?: string
+    isFavorite?: boolean
   }) => void
 }
 
@@ -28,9 +31,12 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
     website: '',
     category: 'Personale',
     emoji: '🔥',
+    notes: '',
+    isFavorite: false,
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [showGenerator, setShowGenerator] = useState(false)
 
   const generatePassword = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
@@ -56,6 +62,8 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
       website: '',
       category: 'Personale',
       emoji: '🔥',
+      notes: '',
+      isFavorite: false,
     })
     setIsSaving(false)
     onClose()
@@ -217,36 +225,45 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
 
                   {/* PASSWORD! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
-                      <Lock className="w-4 h-4" /> Password
+                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2 justify-between">
+                      <span className="flex items-center gap-2">
+                        <Lock className="w-4 h-4" /> Password
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowGenerator(!showGenerator)}
+                        className="text-xs bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded-lg flex items-center gap-1"
+                      >
+                        <Dices className="w-3 h-3" />
+                        {showGenerator ? 'Nascondi' : 'Generatore'}
+                      </button>
                     </label>
+
+                    {showGenerator && (
+                      <div className="mb-4">
+                        <PasswordGenerator onGenerate={(pwd) => setFormData(prev => ({ ...prev, password: pwd }))} />
+                      </div>
+                    )}
+
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         required
                         value={formData.password}
                         onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                        className="w-full px-4 py-3 pr-24 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 pr-12 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                         placeholder="••••••••••••"
                       />
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
                         <motion.button
                           type="button"
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => setShowPassword(!showPassword)}
                           className="p-2 bg-yellow-500 hover:bg-yellow-600 rounded-lg"
+                          aria-label={showPassword ? "Nascondi password" : "Mostra password"}
                         >
                           {showPassword ? <EyeOff className="w-4 h-4 text-black" /> : <Eye className="w-4 h-4 text-black" />}
-                        </motion.button>
-                        <motion.button
-                          type="button"
-                          whileHover={{ scale: 1.1, rotate: 180 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={generatePassword}
-                          className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg"
-                        >
-                          <Dices className="w-4 h-4 text-white" />
                         </motion.button>
                       </div>
                     </div>
@@ -264,6 +281,34 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                       placeholder="https://esempio.com"
                     />
+                  </div>
+
+                  {/* NOTES! */}
+                  <div>
+                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" /> Note (opzionale)
+                    </label>
+                    <textarea
+                      value={formData.notes}
+                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all resize-none"
+                      placeholder="Aggiungi note, domande di sicurezza, ecc..."
+                    />
+                  </div>
+
+                  {/* FAVORITE! */}
+                  <div>
+                    <label className="flex items-center gap-3 cursor-pointer bg-gradient-to-r from-purple-900/30 to-pink-900/30 border-2 border-purple-500/50 rounded-xl p-4 hover:border-purple-400 transition-all">
+                      <input
+                        type="checkbox"
+                        checked={formData.isFavorite}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isFavorite: e.target.checked }))}
+                        className="w-5 h-5 rounded accent-yellow-500"
+                      />
+                      <Star className={`w-5 h-5 ${formData.isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`} />
+                      <span className="text-yellow-300 font-bold">Aggiungi ai Preferiti</span>
+                    </label>
                   </div>
 
                   {/* SUBMIT BUTTON! */}

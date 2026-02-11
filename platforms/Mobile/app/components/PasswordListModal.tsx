@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Eye, EyeOff, Copy, Trash2, Edit, ExternalLink, Search } from 'lucide-react'
+import { X, Eye, EyeOff, Copy, Trash2, Edit, ExternalLink, Search, Star, Filter, ArrowUpDown } from 'lucide-react'
 import { Password } from '../hooks/usePasswords'
 
 interface PasswordListModalProps {
@@ -22,6 +22,11 @@ export default function PasswordListModal({
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [selectedPassword, setSelectedPassword] = useState<Password | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tutte')
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'category'>('date')
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+
+  const categories = ['Tutte', 'Lavoro', 'Personale', 'Social', 'Finanza', 'Gaming', 'Altro']
 
   const togglePasswordVisibility = (id: string) => {
     setVisiblePasswords(prev => {
@@ -41,17 +46,43 @@ export default function PasswordListModal({
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  // Filter passwords based on search query
-  const filteredPasswords = passwords.filter(password => {
-    if (!searchQuery) return true
-    const query = searchQuery.toLowerCase()
-    return (
-      password.title.toLowerCase().includes(query) ||
-      password.username.toLowerCase().includes(query) ||
-      (password.website && password.website.toLowerCase().includes(query)) ||
-      (password.category && password.category.toLowerCase().includes(query))
-    )
-  })
+  // Filter and sort passwords
+  const filteredPasswords = passwords
+    .filter(password => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesSearch = (
+          password.title.toLowerCase().includes(query) ||
+          password.username.toLowerCase().includes(query) ||
+          (password.website && password.website.toLowerCase().includes(query)) ||
+          (password.category && password.category.toLowerCase().includes(query))
+        )
+        if (!matchesSearch) return false
+      }
+      
+      // Category filter
+      if (selectedCategory !== 'Tutte' && password.category !== selectedCategory) {
+        return false
+      }
+      
+      // Favorites filter
+      if (showFavoritesOnly && !password.isFavorite) {
+        return false
+      }
+      
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.title.localeCompare(b.title)
+      } else if (sortBy === 'category') {
+        return a.category.localeCompare(b.category)
+      } else {
+        // Sort by date (newest first)
+        return b.createdAt.getTime() - a.createdAt.getTime()
+      }
+    })
 
   return (
     <AnimatePresence>
@@ -120,6 +151,50 @@ export default function PasswordListModal({
                       </button>
                     )}
                   </div>
+
+                  {/* Filters and Sorting */}
+                  <div className="flex flex-wrap gap-3 items-center">
+                    {/* Favorites Toggle */}
+                    <button
+                      onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                      className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${
+                        showFavoritesOnly 
+                          ? 'bg-yellow-500 text-black' 
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      <Star className={`w-4 h-4 ${showFavoritesOnly ? 'fill-black' : ''}`} />
+                      Solo Preferiti
+                    </button>
+
+                    {/* Category Filter */}
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-4 h-4 text-cyan-400" />
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="px-3 py-2 bg-slate-700 border-2 border-cyan-400/50 rounded-lg text-white font-bold text-sm focus:border-cyan-400 focus:outline-none"
+                      >
+                        {categories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Sort */}
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown className="w-4 h-4 text-cyan-400" />
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as any)}
+                        className="px-3 py-2 bg-slate-700 border-2 border-cyan-400/50 rounded-lg text-white font-bold text-sm focus:border-cyan-400 focus:outline-none"
+                      >
+                        <option value="date">Data (recenti)</option>
+                        <option value="name">Nome (A-Z)</option>
+                        <option value="category">Categoria</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Password List */}
@@ -155,10 +230,15 @@ export default function PasswordListModal({
                               {/* Content */}
                               <div className="flex-1 min-w-0">
                                 {/* Title and Category */}
-                                <div className="flex items-center gap-3 mb-2">
-                                  <h3 className="text-xl font-black text-cyan-300">
-                                    {pwd.title}
-                                  </h3>
+                                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                  <div className="flex items-center gap-2">
+                                    {pwd.isFavorite && (
+                                      <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                                    )}
+                                    <h3 className="text-xl font-black text-cyan-300">
+                                      {pwd.title}
+                                    </h3>
+                                  </div>
                                   <span className="px-3 py-1 bg-purple-500/30 border border-purple-400/50 rounded-full text-xs font-bold text-purple-200">
                                     {pwd.category}
                                   </span>
@@ -172,8 +252,9 @@ export default function PasswordListModal({
                                     <motion.button
                                       whileHover={{ scale: 1.1 }}
                                       whileTap={{ scale: 0.9 }}
-                                      onClick={() => copyToClipboard(pwd.username, `${pwd.id}-user`)}
+                                      onClick={(e) => { e.stopPropagation(); copyToClipboard(pwd.username, `${pwd.id}-user`); }}
                                       className="p-1 hover:bg-cyan-500/20 rounded"
+                                      title="Copia username"
                                     >
                                       {copiedId === `${pwd.id}-user` ? (
                                         <span className="text-green-400 text-xs font-bold">✓</span>
@@ -194,8 +275,9 @@ export default function PasswordListModal({
                                     <motion.button
                                       whileHover={{ scale: 1.1 }}
                                       whileTap={{ scale: 0.9 }}
-                                      onClick={() => togglePasswordVisibility(pwd.id)}
+                                      onClick={(e) => { e.stopPropagation(); togglePasswordVisibility(pwd.id); }}
                                       className="p-1 hover:bg-cyan-500/20 rounded"
+                                      title={visiblePasswords.has(pwd.id) ? "Nascondi" : "Mostra"}
                                     >
                                       {visiblePasswords.has(pwd.id) ? (
                                         <EyeOff className="w-4 h-4 text-cyan-400" />
@@ -206,8 +288,9 @@ export default function PasswordListModal({
                                     <motion.button
                                       whileHover={{ scale: 1.1 }}
                                       whileTap={{ scale: 0.9 }}
-                                      onClick={() => copyToClipboard(pwd.password, `${pwd.id}-pass`)}
+                                      onClick={(e) => { e.stopPropagation(); copyToClipboard(pwd.password, `${pwd.id}-pass`); }}
                                       className="p-1 hover:bg-cyan-500/20 rounded"
+                                      title="Copia password"
                                     >
                                       {copiedId === `${pwd.id}-pass` ? (
                                         <span className="text-green-400 text-xs font-bold">✓</span>
@@ -238,7 +321,7 @@ export default function PasswordListModal({
                               </div>
 
                               {/* Actions */}
-                              <div className="flex gap-2">
+                              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                                 {onDelete && (
                                   <motion.button
                                     whileHover={{ scale: 1.1 }}
@@ -249,6 +332,7 @@ export default function PasswordListModal({
                                       }
                                     }}
                                     className="p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-lg"
+                                    title="Elimina password"
                                   >
                                     <Trash2 className="w-4 h-4 text-red-400" />
                                   </motion.button>

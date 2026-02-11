@@ -10,6 +10,8 @@ export interface Password {
   category: string
   createdAt: Date
   emoji: string
+  notes?: string
+  isFavorite?: boolean
 }
 
 export function usePasswords() {
@@ -52,6 +54,8 @@ export function usePasswords() {
               website: p.website || '',
               category: p.category,
               emoji: p.emoji,
+              notes: p.notes,
+              isFavorite: p.is_favorite,
               createdAt: new Date(p.created_at),
             }))
           )
@@ -89,7 +93,7 @@ export function usePasswords() {
     if (user) {
       // Save to Supabase
       const encryptedPwd = await encryptPassword(password.password)
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('passwords')
         .insert({
           user_id: user.id,
@@ -99,6 +103,8 @@ export function usePasswords() {
           website: password.website,
           category: password.category,
           emoji: password.emoji,
+          notes: password.notes || null,
+          is_favorite: password.isFavorite || false,
         })
         .select()
         .single()
@@ -116,6 +122,8 @@ export function usePasswords() {
         website: data.website || '',
         category: data.category,
         emoji: data.emoji,
+        notes: data.notes,
+        isFavorite: data.is_favorite,
         createdAt: new Date(data.created_at),
       }
       setPasswords(prev => [newPassword, ...prev])
