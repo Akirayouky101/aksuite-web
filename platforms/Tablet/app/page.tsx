@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone, LayoutDashboard } from 'lucide-react'
+import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone, LayoutDashboard, FileText } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
 import PasswordListModal from './components/PasswordListModal'
@@ -18,6 +18,8 @@ import CallMenuModal from './components/CallMenuModal'
 import CallsListModal from './components/CallsListModal'
 import TaskModal from './components/TaskModal'
 import TasksListModal from './components/TasksListModal'
+import NoteModal from './components/NoteModal'
+import NotesListModal from './components/NotesListModal'
 import UnifiedDashboard from './components/UnifiedDashboard'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
@@ -26,6 +28,7 @@ import { useRecurring } from './hooks/useRecurring'
 import { useBudgetLimits } from './hooks/useBudgetLimits'
 import { useCalls } from './hooks/useCalls'
 import { useTasks } from './hooks/useTasks'
+import { useNotes } from './hooks/useNotes'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -54,16 +57,20 @@ export default function Home() {
   const [isCallsListModalOpen, setIsCallsListModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isTasksListModalOpen, setIsTasksListModalOpen] = useState(false)
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
+  const [isNotesListModalOpen, setIsNotesListModalOpen] = useState(false)
   const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
+  const [editingNote, setEditingNote] = useState<any>(null)
   const { passwords, addPassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
   const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
   const { calls, addCall, deleteCall, updateCallStatus } = useCalls()
   const { tasks, addTask, updateTask, deleteTask, toggleComplete } = useTasks()
+  const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
 
   // Initialize console guard once
   useEffect(() => {
@@ -148,6 +155,13 @@ export default function Home() {
       description: `🚀 Organizza le tue attività! Crea task, sottotask, imposta scadenze e tieni tutto sotto controllo! ✨📋 (${tasks.length} task attivi)`,
       icon: Sparkles,
       gradient: 'from-purple-600 via-pink-500 to-cyan-400'
+    },
+    {
+      id: 'notes',
+      title: '📝 NOTE MANAGER 📝',
+      description: `✨ Le tue note, sempre a portata di mano! Organizza idee, promemoria e appunti con colori, tag e cartelle! 🎨📌 (${notes.length} note salvate)`,
+      icon: FileText,
+      gradient: 'from-yellow-600 via-orange-500 to-pink-400'
     }
   ]
 
@@ -434,6 +448,8 @@ export default function Home() {
                         setIsCallMenuModalOpen(true)
                       } else if (app.id === 'tasks') {
                         setIsTasksListModalOpen(true)
+                      } else if (app.id === 'notes') {
+                        setIsNotesListModalOpen(true)
                       }
                     }}
                     className="relative group cursor-pointer"
@@ -761,6 +777,41 @@ export default function Home() {
           </motion.div>
         </div>
       )}
+
+      {/* NOTE MODAL (Create/Edit) */}
+      <NoteModal
+        isOpen={isNoteModalOpen}
+        onClose={() => {
+          setIsNoteModalOpen(false)
+          setEditingNote(null)
+        }}
+        onSave={(noteData) => {
+          if (editingNote) {
+            updateNote(editingNote.id, noteData)
+          } else {
+            addNote(noteData)
+          }
+        }}
+        editNote={editingNote}
+      />
+
+      {/* NOTES LIST MODAL (View All) */}
+      <NotesListModal
+        isOpen={isNotesListModalOpen}
+        onClose={() => setIsNotesListModalOpen(false)}
+        notes={notes}
+        onDelete={deleteNote}
+        onUpdate={updateNote}
+        onTogglePin={togglePin}
+        onEdit={(note) => {
+          setEditingNote(note)
+          setIsNoteModalOpen(true)
+        }}
+        onAdd={() => {
+          setEditingNote(null)
+          setIsNoteModalOpen(true)
+        }}
+      />
 
       {/* AUTH MODAL! */}
       <AuthModal
