@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone } from 'lucide-react'
+import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone, LayoutDashboard } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
 import PasswordListModal from './components/PasswordListModal'
@@ -18,6 +18,7 @@ import CallMenuModal from './components/CallMenuModal'
 import CallsListModal from './components/CallsListModal'
 import TaskModal from './components/TaskModal'
 import TasksListModal from './components/TasksListModal'
+import UnifiedDashboard from './components/UnifiedDashboard'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -53,6 +54,7 @@ export default function Home() {
   const [isCallsListModalOpen, setIsCallsListModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isTasksListModalOpen, setIsTasksListModalOpen] = useState(false)
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
@@ -112,6 +114,13 @@ export default function Home() {
   }
 
   const apps: AppCard[] = [
+    { 
+      id: 'dashboard', 
+      title: '📊 DASHBOARD UNIFICATA 📊', 
+      description: '🎯 Vista panoramica di tutto il tuo sistema! Password, chiamate, task e budget a colpo d\'occhio! 🚀✨', 
+      icon: LayoutDashboard, 
+      gradient: 'from-purple-600 via-indigo-500 to-blue-400' 
+    },
     { 
       id: 'passwords', 
       title: '⚡ PASSWORD ⚡', 
@@ -415,7 +424,9 @@ export default function Home() {
                     onHoverStart={() => setHoveredCard(app.id)}
                     onHoverEnd={() => setHoveredCard(null)}
                     onClick={() => {
-                      if (app.id === 'passwords') {
+                      if (app.id === 'dashboard') {
+                        setIsDashboardOpen(true)
+                      } else if (app.id === 'passwords') {
                         setIsMenuModalOpen(true)
                       } else if (app.id === 'budget') {
                         setIsBudgetMenuModalOpen(true)
@@ -691,6 +702,65 @@ export default function Home() {
         onUpdate={updateTask}
         onAdd={addTask}
       />
+
+      {/* UNIFIED DASHBOARD 📊 */}
+      {isDashboardOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-gray-900 rounded-2xl relative"
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsDashboardOpen(false)}
+              className="absolute top-4 right-4 z-10 text-gray-400 hover:text-white transition-colors"
+            >
+              <span className="text-2xl">✕</span>
+            </button>
+
+            <UnifiedDashboard
+              passwords={passwords}
+              calls={calls}
+              tasks={tasks}
+              transactions={transactions}
+              onOpenPasswords={() => {
+                setIsDashboardOpen(false)
+                setIsMenuModalOpen(true)
+              }}
+              onOpenCalls={() => {
+                setIsDashboardOpen(false)
+                setIsCallMenuModalOpen(true)
+              }}
+              onOpenTasks={() => {
+                setIsDashboardOpen(false)
+                setIsTasksListModalOpen(true)
+              }}
+              onOpenBudget={() => {
+                setIsDashboardOpen(false)
+                setIsBudgetMenuModalOpen(true)
+              }}
+              onNewPassword={() => {
+                setIsDashboardOpen(false)
+                setIsPasswordModalOpen(true)
+              }}
+              onNewCall={() => {
+                setIsDashboardOpen(false)
+                setIsCallModalOpen(true)
+              }}
+              onNewTask={() => {
+                setIsDashboardOpen(false)
+                setIsTaskModalOpen(true)
+              }}
+              onNewTransaction={() => {
+                setIsDashboardOpen(false)
+                setIsBudgetModalOpen(true)
+              }}
+            />
+          </motion.div>
+        </div>
+      )}
 
       {/* AUTH MODAL! */}
       <AuthModal
