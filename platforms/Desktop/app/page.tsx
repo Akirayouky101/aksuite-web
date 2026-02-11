@@ -689,6 +689,7 @@ export default function Home() {
         onDelete={deleteTask}
         onToggleComplete={toggleComplete}
         onUpdate={updateTask}
+        onAdd={addTask}
       />
 
       {/* AUTH MODAL! */}

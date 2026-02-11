@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Search, Filter, ArrowUpDown, Download, CheckCircle2, Circle, Clock, Edit, Trash2, Calendar, Tag } from 'lucide-react'
+import { X, Search, Filter, ArrowUpDown, Download, CheckCircle2, Circle, Clock, Edit, Trash2, Calendar, Tag, Plus } from 'lucide-react'
 import TasksDashboard from './TasksDashboard'
 import TaskModal from './TaskModal'
 
@@ -30,6 +30,7 @@ interface TasksListModalProps {
   onDelete: (id: string) => Promise<void>
   onToggleComplete: (id: string, completed: boolean) => Promise<void>
   onUpdate: (id: string, data: any) => Promise<void>
+  onAdd: (data: any) => Promise<void>
 }
 
 const statusColors = {
@@ -53,7 +54,7 @@ const categoryEmojis: Record<string, string> = {
   altro: '📋'
 }
 
-export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onToggleComplete, onUpdate }: TasksListModalProps) {
+export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onToggleComplete, onUpdate, onAdd }: TasksListModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedPriority, setSelectedPriority] = useState<string>('all')
@@ -141,12 +142,16 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
     setShowTaskModal(true)
   }
 
-  const handleUpdate = async (data: any) => {
+  const handleSaveTask = async (data: any) => {
     if (editingTask) {
+      // Modifica task esistente
       await onUpdate(editingTask.id, data)
-      setShowTaskModal(false)
-      setEditingTask(null)
+    } else {
+      // Crea nuovo task
+      await onAdd(data)
     }
+    setShowTaskModal(false)
+    setEditingTask(null)
   }
 
   const isOverdue = (dueDate: string | null) => {
@@ -202,8 +207,16 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                 </button>
               </div>
 
-              {/* Dashboard Toggle */}
-              <div className="p-4 border-b border-white/10 bg-slate-800/50">
+              {/* New Task Button + Dashboard Toggle */}
+              <div className="p-4 border-b border-white/10 bg-slate-800/50 space-y-2">
+                <button
+                  onClick={() => setShowTaskModal(true)}
+                  className="w-full px-4 py-3 rounded-lg font-bold text-base transition-all bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/30 flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  ✨ Nuovo Task
+                </button>
+                
                 <button
                   onClick={() => setShowDashboard(!showDashboard)}
                   className="w-full px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
@@ -485,7 +498,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
           setShowTaskModal(false)
           setEditingTask(null)
         }}
-        onSave={handleUpdate}
+        onSave={handleSaveTask}
         editTask={editingTask}
       />
     </>
