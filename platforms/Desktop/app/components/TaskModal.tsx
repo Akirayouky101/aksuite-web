@@ -18,7 +18,7 @@ interface TaskModalProps {
     description: string
     category: string
     priority: string
-    status: string
+    status: 'todo' | 'in-progress' | 'completed'
     due_date: string | null
     is_recurring: boolean
     recurring_type: string | null
@@ -31,7 +31,7 @@ interface TaskModalProps {
     description: string
     category: string
     priority: string
-    status: string
+    status: 'todo' | 'in-progress' | 'completed'
     due_date: string | null
     is_recurring: boolean
     recurring_type: string | null
@@ -41,7 +41,18 @@ interface TaskModalProps {
 }
 
 export default function TaskModal({ isOpen, onClose, onSave, editTask }: TaskModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string
+    description: string
+    category: string
+    priority: string
+    status: 'todo' | 'in-progress' | 'completed'
+    due_date: string
+    is_recurring: boolean
+    recurring_type: string
+    tags: string[]
+    subtasks: Subtask[]
+  }>({
     title: '',
     description: '',
     category: 'personale',
@@ -50,8 +61,8 @@ export default function TaskModal({ isOpen, onClose, onSave, editTask }: TaskMod
     due_date: '',
     is_recurring: false,
     recurring_type: '',
-    tags: [] as string[],
-    subtasks: [] as Subtask[]
+    tags: [],
+    subtasks: []
   })
   const [newTag, setNewTag] = useState('')
   const [newSubtask, setNewSubtask] = useState('')
@@ -247,7 +258,7 @@ export default function TaskModal({ isOpen, onClose, onSave, editTask }: TaskMod
                   </label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'todo' | 'in-progress' | 'completed' })}
                     className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none"
                   >
                     <option value="todo">📋 Da Fare</option>
