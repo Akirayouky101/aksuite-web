@@ -346,7 +346,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-200px)]">
+            <div className="flex-1 p-6 overflow-y-auto overflow-x-hidden min-h-0">
               {filteredCalls.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📞</div>
