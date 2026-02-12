@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, UserCheck, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, Phone, Calendar, ExternalLink } from 'lucide-react'
+import { X, UserCheck, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, Phone, Calendar, ExternalLink, Plus } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
 import type { Visit } from '../hooks/useVisits'
 
@@ -13,6 +13,7 @@ interface VisitsListModalProps {
   onDelete: (id: string) => Promise<void>
   onStatusChange: (id: string, status: Visit['status']) => Promise<void>
   onEdit?: (visit: Visit) => void
+  onNew?: () => void
 }
 
 const statusColors = {
@@ -29,8 +30,8 @@ const statusLabels = {
   cancelled: '❌ Annullata'
 }
 
-export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onStatusChange, onEdit }: VisitsListModalProps) {
-  console.log('🔍 VisitsListModal - onEdit presente:', !!onEdit)
+export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onStatusChange, onEdit, onNew }: VisitsListModalProps) {
+  console.log('🔍 VisitsListModal - onEdit presente:', !!onEdit, 'onNew presente:', !!onNew)
   const [selectedFilter, setSelectedFilter] = useState<'all' | Visit['status']>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -86,13 +87,25 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   <p className="text-sm text-slate-400">{visits.length} visite registrate</p>
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-                title="Chiudi"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                {onNew && (
+                  <button
+                    onClick={onNew}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold flex items-center gap-2 transition-all shadow-lg"
+                    title="Aggiungi nuova visita"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Nuova Visita
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                  title="Chiudi"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Search */}

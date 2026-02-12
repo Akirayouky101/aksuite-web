@@ -794,6 +794,10 @@ export default function Home() {
           setIsVisitModalOpen(true)
           setIsVisitsListModalOpen(false)
         }}
+        onNew={() => {
+          setEditingVisit(null)
+          setIsVisitModalOpen(true)
+        }}
       />
 
       {/* TASK MODAL (Add/Edit Task) */}
