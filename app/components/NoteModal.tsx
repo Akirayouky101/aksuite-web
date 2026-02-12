@@ -4,12 +4,27 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, Tag, Pin, Folder, Palette } from 'lucide-react'
 import { Note } from '../hooks/useNotes'
+import RelationsIntegration from './RelationsIntegration'
+import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
 
 interface NoteModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (note: Omit<Note, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
   editNote?: Note | null
+  // Relazioni
+  availableItems?: {
+    passwords?: any[]
+    calls?: any[]
+    tasks?: any[]
+    notes?: any[]
+    events?: any[]
+    transactions?: any[]
+  }
+  onAddRelation?: (sourceType: EntityType, sourceId: string, targetType: EntityType, targetId: string, relationType: RelationType, notes?: string) => Promise<void>
+  onRemoveRelation?: (relationId: string) => Promise<void>
+  getRelatedItems?: (type: EntityType, id: string, items: any) => Promise<RelatedItem[]>
+  onNavigateToItem?: (type: EntityType, id: string) => void
 }
 
 const COLORS = [
@@ -34,7 +49,17 @@ const FOLDERS = [
   'other'
 ]
 
-export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteModalProps) {
+export default function NoteModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  editNote,
+  availableItems,
+  onAddRelation,
+  onRemoveRelation,
+  getRelatedItems,
+  onNavigateToItem
+}: NoteModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -251,6 +276,29 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
                 </div>
               </div>
             </form>
+
+            {/* Collegamenti Multi-Entità */}
+            {editNote?.id && (
+              <div className="p-6 border-t border-gray-700 space-y-3">
+                <h4 className="text-base font-bold text-white flex items-center gap-2">
+                  🔗 Collegamenti
+                </h4>
+                <RelationsIntegration
+                  entityType="note"
+                  entityId={editNote.id}
+                  entityTitle={formData.title}
+                  availableItems={availableItems || {}}
+                  onAddRelation={(targetType, targetId, relationType, notes) => {
+                    if (onAddRelation && editNote?.id) {
+                      onAddRelation('note', editNote.id, targetType, targetId, relationType, notes)
+                    }
+                  }}
+                  onRemoveRelation={onRemoveRelation || (async () => {})}
+                  getRelatedItems={getRelatedItems || (async () => [])}
+                  onNavigateToItem={onNavigateToItem}
+                />
+              </div>
+            )}
 
             {/* Footer */}
             <div className="p-6 border-t border-gray-700 bg-gray-900/50">

@@ -105,12 +105,29 @@ export function useCalls() {
     ))
   }
 
+  const updateCall = async (id: string, updates: Partial<Omit<Call, 'id' | 'user_id' | 'created_at'>>) => {
+    const { data, error } = await supabase
+      .from('calls')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    if (data) {
+      setCalls(prev => prev.map(call => 
+        call.id === id ? data : call
+      ))
+    }
+  }
+
   return {
     calls,
     user,
     loading,
     addCall,
     deleteCall,
-    updateCallStatus
+    updateCallStatus,
+    updateCall
   }
 }

@@ -28,6 +28,7 @@ interface CallsListModalProps {
   calls: Call[]
   onDelete: (id: string) => Promise<void>
   onStatusChange: (id: string, status: Call['status']) => Promise<void>
+  onEdit?: (call: Call) => void
 }
 
 const statusColors = {
@@ -57,7 +58,7 @@ const callTypeEmojis: Record<string, string> = {
   altro: '📋'
 }
 
-export default function CallsListModal({ isOpen, onClose, calls, onDelete, onStatusChange }: CallsListModalProps) {
+export default function CallsListModal({ isOpen, onClose, calls, onDelete, onStatusChange, onEdit }: CallsListModalProps) {
   const [selectedFilter, setSelectedFilter] = useState<'all' | Call['status']>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -166,19 +167,19 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-x-hidden">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative max-w-6xl w-full overflow-x-hidden"
+          className="relative max-w-6xl w-full max-h-[90vh] flex flex-col"
         >
           {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-blue-500/30 shadow-2xl">
+          <div className="relative bg-slate-900 rounded-2xl overflow-hidden border-2 border-blue-500/30 shadow-2xl flex flex-col max-h-full">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-blue-900/30 to-cyan-900/30">
               <div className="flex items-center gap-3">
@@ -424,6 +425,18 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                                   <Mail className="w-3.5 h-3.5" />
                                   Email
                                 </a>
+                              )}
+                              {onEdit && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEdit(call)
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                                  title="Modifica chiamata"
+                                >
+                                  ✏️ Modifica
+                                </button>
                               )}
                               <button
                                 onClick={(e) => {

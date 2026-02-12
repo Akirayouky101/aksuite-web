@@ -32,6 +32,7 @@ import { useCalls } from './hooks/useCalls'
 import { useTasks } from './hooks/useTasks'
 import { useNotes } from './hooks/useNotes'
 import { useEvents } from './hooks/useEvents'
+import { useRelations } from './hooks/useRelations'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -70,14 +71,26 @@ export default function Home() {
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const [editingNote, setEditingNote] = useState<any>(null)
   const [editingEvent, setEditingEvent] = useState<any>(null)
+  const [editingCall, setEditingCall] = useState<any>(null)
   const { passwords, addPassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
   const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
-  const { calls, addCall, deleteCall, updateCallStatus } = useCalls()
+  const { calls, addCall, deleteCall, updateCallStatus, updateCall } = useCalls()
   const { tasks, addTask, updateTask, deleteTask, toggleComplete } = useTasks()
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
   const { events, addEvent, updateEvent, deleteEvent } = useEvents()
+  const { addRelation, removeRelation, getRelatedItems } = useRelations()
+
+  // Prepare available items for relations
+  const availableRelationItems = {
+    passwords,
+    calls,
+    tasks,
+    notes,
+    events,
+    transactions
+  }
 
   // Initialize console guard once
   useEffect(() => {
@@ -700,11 +713,25 @@ export default function Home() {
         onSelectList={() => setIsCallsListModalOpen(true)}
       />
 
-      {/* CALL MODAL (Add Call) */}
+      {/* CALL MODAL (Add/Edit Call) */}
       <CallModal
         isOpen={isCallModalOpen}
-        onClose={() => setIsCallModalOpen(false)}
-        onSave={addCall}
+        onClose={() => {
+          setIsCallModalOpen(false)
+          setEditingCall(null)
+        }}
+        onSave={async (callData) => {
+          if (editingCall) {
+            await updateCall(editingCall.id, callData)
+          } else {
+            await addCall(callData)
+          }
+        }}
+        editCall={editingCall}
+        availableItems={availableRelationItems}
+        onAddRelation={addRelation}
+        onRemoveRelation={removeRelation}
+        getRelatedItems={getRelatedItems}
       />
 
       {/* CALLS LIST MODAL (View All) */}
@@ -714,6 +741,11 @@ export default function Home() {
         calls={calls}
         onDelete={deleteCall}
         onStatusChange={updateCallStatus}
+        onEdit={(call) => {
+          setEditingCall(call)
+          setIsCallModalOpen(true)
+          setIsCallsListModalOpen(false)
+        }}
       />
 
       {/* TASK MODAL (Add/Edit Task) */}
@@ -722,6 +754,10 @@ export default function Home() {
         onClose={() => setIsTaskModalOpen(false)}
         onSave={addTask}
         editTask={null}
+        availableItems={availableRelationItems}
+        onAddRelation={addRelation}
+        onRemoveRelation={removeRelation}
+        getRelatedItems={getRelatedItems}
       />
 
       {/* TASKS LIST MODAL (View All) */}
@@ -809,6 +845,10 @@ export default function Home() {
           }
         }}
         editNote={editingNote}
+        availableItems={availableRelationItems}
+        onAddRelation={addRelation}
+        onRemoveRelation={removeRelation}
+        getRelatedItems={getRelatedItems}
       />
 
       {/* NOTES LIST MODAL (View All) */}
@@ -844,6 +884,10 @@ export default function Home() {
           }
         }}
         editEvent={editingEvent}
+        availableItems={availableRelationItems}
+        onAddRelation={addRelation}
+        onRemoveRelation={removeRelation}
+        getRelatedItems={getRelatedItems}
       />
 
       {/* CALENDAR VIEW */}

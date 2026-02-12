@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Trash2, Circle, CheckCircle2 } from 'lucide-react'
+import RelationsIntegration from './RelationsIntegration'
+import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
 
 interface Subtask {
   id: string
@@ -38,9 +40,32 @@ interface TaskModalProps {
     tags: string[]
     subtasks: Subtask[]
   } | null
+  // Relazioni multi-entità
+  availableItems?: {
+    passwords?: any[]
+    calls?: any[]
+    tasks?: any[]
+    notes?: any[]
+    events?: any[]
+    transactions?: any[]
+  }
+  onAddRelation?: (sourceType: EntityType, sourceId: string, targetType: EntityType, targetId: string, relationType: RelationType, notes?: string) => Promise<void>
+  onRemoveRelation?: (relationId: string) => Promise<void>
+  getRelatedItems?: (type: EntityType, id: string, items: any) => Promise<RelatedItem[]>
+  onNavigateToItem?: (type: EntityType, id: string) => void
 }
 
-export default function TaskModal({ isOpen, onClose, onSave, editTask }: TaskModalProps) {
+export default function TaskModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  editTask,
+  availableItems,
+  onAddRelation,
+  onRemoveRelation,
+  getRelatedItems,
+  onNavigateToItem
+}: TaskModalProps) {
   const [formData, setFormData] = useState<{
     title: string
     description: string
@@ -402,6 +427,29 @@ export default function TaskModal({ isOpen, onClose, onSave, editTask }: TaskMod
                   ))}
                 </div>
               </div>
+
+              {/* Collegamenti Multi-Entità */}
+              {editTask?.id && (
+                <div className="space-y-3">
+                  <h4 className="text-base font-bold text-white flex items-center gap-2">
+                    🔗 Collegamenti
+                  </h4>
+                  <RelationsIntegration
+                    entityType="task"
+                    entityId={editTask.id}
+                    entityTitle={formData.title}
+                    availableItems={availableItems || {}}
+                    onAddRelation={(targetType, targetId, relationType, notes) => {
+                      if (onAddRelation && editTask?.id) {
+                        onAddRelation('task', editTask.id, targetType, targetId, relationType, notes)
+                      }
+                    }}
+                    onRemoveRelation={onRemoveRelation || (async () => {})}
+                    getRelatedItems={getRelatedItems || (async () => [])}
+                    onNavigateToItem={onNavigateToItem}
+                  />
+                </div>
+              )}
 
               {/* Buttons */}
               <div className="flex gap-3 pt-4">

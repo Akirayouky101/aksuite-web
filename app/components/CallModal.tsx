@@ -1,14 +1,45 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock } from 'lucide-react'
 import SuccessModal from './SuccessModal'
+import RelationsIntegration from './RelationsIntegration'
+import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
+
+interface Call {
+  id: string
+  caller_name: string
+  company: string
+  phone: string
+  email: string
+  call_type: string
+  priority: string
+  notes: string
+  follow_up: boolean
+  follow_up_date: string | null
+  status: 'pending' | 'completed' | 'cancelled'
+  call_date: string
+}
 
 interface CallModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (call: any) => Promise<void>
+  editCall?: Call | null
+  // Relazioni
+  availableItems?: {
+    passwords?: any[]
+    calls?: any[]
+    tasks?: any[]
+    notes?: any[]
+    events?: any[]
+    transactions?: any[]
+  }
+  onAddRelation?: (sourceType: EntityType, sourceId: string, targetType: EntityType, targetId: string, relationType: RelationType, notes?: string) => Promise<void>
+  onRemoveRelation?: (relationId: string) => Promise<void>
+  getRelatedItems?: (type: EntityType, id: string, items: any) => Promise<RelatedItem[]>
+  onNavigateToItem?: (type: EntityType, id: string) => void
 }
 
 const callTypes = [
@@ -26,7 +57,17 @@ const priorities = [
   { value: 'urgente', label: '🚨 Urgente', color: 'rose' }
 ]
 
-export default function CallModal({ isOpen, onClose, onSave }: CallModalProps) {
+export default function CallModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  editCall,
+  availableItems,
+  onAddRelation,
+  onRemoveRelation,
+  getRelatedItems,
+  onNavigateToItem
+}: CallModalProps) {
   const [callerName, setCallerName] = useState('')
   const [company, setCompany] = useState('')
   const [phone, setPhone] = useState('')
@@ -38,6 +79,32 @@ export default function CallModal({ isOpen, onClose, onSave }: CallModalProps) {
   const [followUpDate, setFollowUpDate] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+
+  // Load edit data
+  useEffect(() => {
+    if (editCall) {
+      setCallerName(editCall.caller_name)
+      setCompany(editCall.company)
+      setPhone(editCall.phone)
+      setEmail(editCall.email)
+      setCallType(editCall.call_type)
+      setPriority(editCall.priority)
+      setNotes(editCall.notes)
+      setFollowUp(editCall.follow_up)
+      setFollowUpDate(editCall.follow_up_date || '')
+    } else {
+      // Reset form for new call
+      setCallerName('')
+      setCompany('')
+      setPhone('')
+      setEmail('')
+      setCallType('informazioni')
+      setPriority('media')
+      setNotes('')
+      setFollowUp(false)
+      setFollowUpDate('')
+    }
+  }, [editCall, isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -280,6 +347,29 @@ export default function CallModal({ isOpen, onClose, onSave }: CallModalProps) {
                   )}
                 </div>
 
+                {/* Collegamenti Multi-Entità */}
+                {editCall?.id && (
+                  <div className="space-y-3 pt-4 border-t border-slate-700">
+                    <h4 className="text-base font-bold text-white flex items-center gap-2">
+                      🔗 Collegamenti
+                    </h4>
+                    <RelationsIntegration
+                      entityType="call"
+                      entityId={editCall.id}
+                      entityTitle={callerName}
+                      availableItems={availableItems || {}}
+                      onAddRelation={(targetType, targetId, relationType, notes) => {
+                        if (onAddRelation && editCall?.id) {
+                          onAddRelation('call', editCall.id, targetType, targetId, relationType, notes)
+                        }
+                      }}
+                      onRemoveRelation={onRemoveRelation || (async () => {})}
+                      getRelatedItems={getRelatedItems || (async () => [])}
+                      onNavigateToItem={onNavigateToItem}
+                    />
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -288,7 +378,7 @@ export default function CallModal({ isOpen, onClose, onSave }: CallModalProps) {
                   disabled={isSaving}
                   className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSaving ? '⏳ Salvataggio...' : '💾 Salva Chiamata'}
+                  {isSaving ? '⏳ Salvataggio...' : editCall ? '✏️ Aggiorna Chiamata' : '💾 Salva Chiamata'}
                 </motion.button>
               </form>
             </div>

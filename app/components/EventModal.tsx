@@ -4,12 +4,27 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, Calendar, Clock, MapPin, Palette, Repeat, Bell } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
+import RelationsIntegration from './RelationsIntegration'
+import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
 
 interface EventModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
   editEvent?: Event | null
+  // Relazioni
+  availableItems?: {
+    passwords?: any[]
+    calls?: any[]
+    tasks?: any[]
+    notes?: any[]
+    events?: any[]
+    transactions?: any[]
+  }
+  onAddRelation?: (sourceType: EntityType, sourceId: string, targetType: EntityType, targetId: string, relationType: RelationType, notes?: string) => Promise<void>
+  onRemoveRelation?: (relationId: string) => Promise<void>
+  getRelatedItems?: (type: EntityType, id: string, items: any) => Promise<RelatedItem[]>
+  onNavigateToItem?: (type: EntityType, id: string) => void
 }
 
 const COLORS = [
@@ -40,7 +55,17 @@ const REMINDER_OPTIONS = [
   { value: 1440, label: '1 giorno prima' }
 ]
 
-export default function EventModal({ isOpen, onClose, onSave, editEvent }: EventModalProps) {
+export default function EventModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  editEvent,
+  availableItems,
+  onAddRelation,
+  onRemoveRelation,
+  getRelatedItems,
+  onNavigateToItem
+}: EventModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -303,6 +328,29 @@ export default function EventModal({ isOpen, onClose, onSave, editEvent }: Event
                 </select>
               </div>
             </form>
+
+            {/* Collegamenti Multi-Entità */}
+            {editEvent?.id && (
+              <div className="p-6 border-t border-gray-700 space-y-3">
+                <h4 className="text-base font-bold text-white flex items-center gap-2">
+                  🔗 Collegamenti
+                </h4>
+                <RelationsIntegration
+                  entityType="event"
+                  entityId={editEvent.id}
+                  entityTitle={formData.title}
+                  availableItems={availableItems || {}}
+                  onAddRelation={(targetType, targetId, relationType, notes) => {
+                    if (onAddRelation && editEvent?.id) {
+                      onAddRelation('event', editEvent.id, targetType, targetId, relationType, notes)
+                    }
+                  }}
+                  onRemoveRelation={onRemoveRelation || (async () => {})}
+                  getRelatedItems={getRelatedItems || (async () => [])}
+                  onNavigateToItem={onNavigateToItem}
+                />
+              </div>
+            )}
 
             {/* Footer */}
             <div className="p-6 border-t border-gray-700 bg-gray-900/50">
