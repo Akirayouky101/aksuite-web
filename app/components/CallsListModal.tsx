@@ -167,19 +167,19 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative max-w-6xl w-full max-h-[90vh] flex flex-col"
+          className="relative max-w-6xl w-full my-8"
         >
           {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl overflow-hidden border-2 border-blue-500/30 shadow-2xl flex flex-col max-h-full">
+          <div className="relative bg-slate-900 rounded-2xl overflow-hidden border-2 border-blue-500/30 shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-blue-900/30 to-cyan-900/30">
               <div className="flex items-center gap-3">
@@ -346,7 +346,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-6 overflow-y-auto overflow-x-hidden min-h-0">
+            <div className="p-6">
               {filteredCalls.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📞</div>
