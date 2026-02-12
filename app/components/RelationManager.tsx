@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link2, Search, X, Lock, Phone, CheckCircle2, FileText, Calendar, DollarSign } from 'lucide-react'
+import { Link2, Search, X, Lock, Phone, CheckCircle2, FileText, Calendar, DollarSign, UserCheck } from 'lucide-react'
 import { EntityType, RelationType } from '../hooks/useRelations'
 
 interface RelationManagerProps {
@@ -12,6 +12,7 @@ interface RelationManagerProps {
   availableItems: {
     passwords?: any[]
     calls?: any[]
+    visits?: any[]
     tasks?: any[]
     notes?: any[]
     events?: any[]
@@ -23,6 +24,7 @@ interface RelationManagerProps {
 const ENTITY_CONFIG = {
   password: { icon: Lock, label: 'Password', color: 'text-blue-400', bg: 'bg-blue-900/30' },
   call: { icon: Phone, label: 'Chiamata', color: 'text-cyan-400', bg: 'bg-cyan-900/30' },
+  visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-400', bg: 'bg-pink-900/30' },
   task: { icon: CheckCircle2, label: 'Task', color: 'text-purple-400', bg: 'bg-purple-900/30' },
   note: { icon: FileText, label: 'Nota', color: 'text-yellow-400', bg: 'bg-yellow-900/30' },
   event: { icon: Calendar, label: 'Evento', color: 'text-indigo-400', bg: 'bg-indigo-900/30' },
@@ -54,6 +56,7 @@ export default function RelationManager({
     switch (type) {
       case 'password': return availableItems.passwords || []
       case 'call': return availableItems.calls || []
+      case 'visit': return availableItems.visits || []
       case 'task': return availableItems.tasks || []
       case 'note': return availableItems.notes || []
       case 'event': return availableItems.events || []
@@ -65,7 +68,8 @@ export default function RelationManager({
   const getItemTitle = (type: EntityType, item: any) => {
     switch (type) {
       case 'password': return item.service || 'Password'
-      case 'call': return item.client_name || 'Chiamata'
+      case 'call': return item.caller_name || 'Chiamata'
+      case 'visit': return item.visitor_name || 'Visita'
       case 'task': return item.title || 'Task'
       case 'note': return item.title || 'Nota'
       case 'event': return item.title || 'Evento'

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Link2Off, Lock, Phone, CheckCircle2, FileText, Calendar, DollarSign, ExternalLink } from 'lucide-react'
+import { Link2Off, Lock, Phone, CheckCircle2, FileText, Calendar, DollarSign, UserCheck, ExternalLink } from 'lucide-react'
 import { RelatedItem, EntityType } from '../hooks/useRelations'
 
 interface RelatedItemsPanelProps {
@@ -13,6 +13,7 @@ interface RelatedItemsPanelProps {
 const ENTITY_CONFIG = {
   password: { icon: Lock, label: 'Password', color: 'text-blue-400', bg: 'bg-blue-900/30', border: 'border-blue-700' },
   call: { icon: Phone, label: 'Chiamata', color: 'text-cyan-400', bg: 'bg-cyan-900/30', border: 'border-cyan-700' },
+  visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-400', bg: 'bg-pink-900/30', border: 'border-pink-700' },
   task: { icon: CheckCircle2, label: 'Task', color: 'text-purple-400', bg: 'bg-purple-900/30', border: 'border-purple-700' },
   note: { icon: FileText, label: 'Nota', color: 'text-yellow-400', bg: 'bg-yellow-900/30', border: 'border-yellow-700' },
   event: { icon: Calendar, label: 'Evento', color: 'text-indigo-400', bg: 'bg-indigo-900/30', border: 'border-indigo-700' },
