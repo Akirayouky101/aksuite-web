@@ -59,6 +59,7 @@ const callTypeEmojis: Record<string, string> = {
 }
 
 export default function CallsListModal({ isOpen, onClose, calls, onDelete, onStatusChange, onEdit }: CallsListModalProps) {
+  console.log('🔍 CallsListModal - onEdit presente:', !!onEdit)
   const [selectedFilter, setSelectedFilter] = useState<'all' | Call['status']>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
