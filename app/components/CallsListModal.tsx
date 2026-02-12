@@ -212,7 +212,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
 
             {/* Dashboard */}
             {showDashboard && (
-              <div className="p-6 border-b border-white/10 bg-slate-800/30">
+              <div className="p-6 border-b border-white/10 bg-slate-800/30 max-h-96 overflow-y-auto">
                 <CallsDashboard calls={calls} />
               </div>
             )}
