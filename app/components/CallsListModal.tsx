@@ -174,7 +174,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative max-w-6xl w-full my-8"
+          className="relative max-w-5xl w-full my-8"
         >
           {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-3xl blur-2xl opacity-30" />
@@ -194,10 +194,10 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
               </div>
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                className="group relative w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
                 aria-label="Chiudi"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
               </button>
             </div>
 

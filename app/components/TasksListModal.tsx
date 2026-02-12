@@ -200,10 +200,10 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                  className="group relative w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
                   aria-label="Chiudi"
                 >
-                  <X className="w-5 h-5 text-white" />
+                  <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
                 </button>
               </div>
 

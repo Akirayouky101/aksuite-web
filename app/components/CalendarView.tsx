@@ -4,14 +4,16 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   X, ChevronLeft, ChevronRight, Plus, Edit, Trash2, 
-  Calendar as CalendarIcon, MapPin, Clock, Repeat 
+  Calendar as CalendarIcon, MapPin, Clock, Repeat, CheckCircle2 
 } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
+import { Task } from '../hooks/useTasks'
 
 interface CalendarViewProps {
   isOpen: boolean
   onClose: () => void
   events: Event[]
+  tasks?: Task[]
   onDelete: (id: string) => void
   onEdit: (event: Event) => void
   onAdd: () => void
@@ -38,6 +40,7 @@ export default function CalendarView({
   isOpen,
   onClose,
   events,
+  tasks = [],
   onDelete,
   onEdit,
   onAdd
@@ -89,8 +92,24 @@ export default function CalendarView({
     })
   }
 
+  // Get tasks for a specific date (only tasks with due_date)
+  const getTasksForDate = (date: Date) => {
+    return tasks.filter(task => {
+      if (!task.due_date) return false
+      
+      const taskDate = new Date(task.due_date)
+      const dateStart = new Date(date)
+      dateStart.setHours(0, 0, 0, 0)
+      const dateEnd = new Date(date)
+      dateEnd.setHours(23, 59, 59, 999)
+
+      return taskDate >= dateStart && taskDate <= dateEnd
+    })
+  }
+
   // Get events for selected date
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : []
+  const selectedDateTasks = selectedDate ? getTasksForDate(selectedDate) : []
 
   const goToPreviousMonth = () => {
     setCurrentDate(new Date(currentYear, currentMonth - 1, 1))
@@ -220,6 +239,7 @@ export default function CalendarView({
                       }
 
                       const dayEvents = getEventsForDate(date)
+                      const dayTasks = getTasksForDate(date)
                       const isSelected = selectedDate && 
                         date.getDate() === selectedDate.getDate() &&
                         date.getMonth() === selectedDate.getMonth() &&
@@ -240,11 +260,11 @@ export default function CalendarView({
                           }`}
                         >
                           <div className="text-sm">{date.getDate()}</div>
-                          {dayEvents.length > 0 && (
+                          {(dayEvents.length > 0 || dayTasks.length > 0) && (
                             <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-1">
-                              {dayEvents.slice(0, 3).map((event, i) => (
+                              {dayEvents.slice(0, 2).map((event, i) => (
                                 <div
-                                  key={i}
+                                  key={`event-${i}`}
                                   className={`w-1.5 h-1.5 rounded-full ${
                                     event.color === 'blue' ? 'bg-blue-400' :
                                     event.color === 'green' ? 'bg-green-400' :
@@ -257,6 +277,13 @@ export default function CalendarView({
                                   }`}
                                 />
                               ))}
+                              {dayTasks.slice(0, 2).map((task, i) => (
+                                <div
+                                  key={`task-${i}`}
+                                  className="w-1.5 h-1.5 rounded-sm bg-cyan-400"
+                                  title="Task"
+                                />
+                              ))}
                             </div>
                           )}
                         </motion.button>
@@ -265,20 +292,20 @@ export default function CalendarView({
                   </div>
                 </div>
 
-                {/* Events List for Selected Date */}
+                {/* Events and Tasks List for Selected Date */}
                 <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
                   <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                     <CalendarIcon size={20} />
                     {selectedDate 
-                      ? `Eventi del ${selectedDate.getDate()} ${MONTHS[selectedDate.getMonth()]}`
+                      ? `${selectedDate.getDate()} ${MONTHS[selectedDate.getMonth()]}`
                       : 'Seleziona una data'
                     }
                   </h4>
 
-                  {selectedDate && selectedDateEvents.length === 0 && (
+                  {selectedDate && selectedDateEvents.length === 0 && selectedDateTasks.length === 0 && (
                     <div className="text-center py-8 text-gray-400">
                       <div className="text-4xl mb-2">📅</div>
-                      <p>Nessun evento per questa data</p>
+                      <p>Nessun evento o task per questa data</p>
                       <button
                         onClick={onAdd}
                         className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
@@ -289,63 +316,127 @@ export default function CalendarView({
                   )}
 
                   <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                    {selectedDateEvents.map((event, index) => (
-                      <motion.div
-                        key={event.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className={`${getColorClasses(event.color)} border-l-4 rounded-lg p-3`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h5 className="font-bold text-white">{event.title}</h5>
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => onEdit(event)}
-                              className="p-1 hover:bg-white/10 rounded transition-colors"
-                            >
-                              <Edit size={14} />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm('Eliminare questo evento?')) {
-                                  onDelete(event.id)
-                                }
-                              }}
-                              className="p-1 hover:bg-white/10 rounded transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
+                    {/* Events */}
+                    {selectedDateEvents.length > 0 && (
+                      <div className="mb-4">
+                        <h5 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                          <CalendarIcon size={14} />
+                          Eventi ({selectedDateEvents.length})
+                        </h5>
+                        {selectedDateEvents.map((event, index) => (
+                          <motion.div
+                            key={event.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className={`${getColorClasses(event.color)} border-l-4 rounded-lg p-3 mb-2`}
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <h6 className="font-bold text-white">{event.title}</h6>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => onEdit(event)}
+                                  className="p-1 hover:bg-white/10 rounded transition-colors"
+                                  title="Modifica evento"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm('Eliminare questo evento?')) {
+                                      onDelete(event.id)
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-white/10 rounded transition-colors"
+                                  title="Elimina evento"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
 
-                        {event.description && (
-                          <p className="text-sm text-gray-300 mb-2">{event.description}</p>
-                        )}
+                            {event.description && (
+                              <p className="text-sm text-gray-300 mb-2">{event.description}</p>
+                            )}
 
-                        <div className="flex flex-wrap gap-2 text-xs">
-                          <span className="flex items-center gap-1">
-                            <Clock size={12} />
-                            {formatEventDate(event)}
-                          </span>
-                          {event.location && (
-                            <span className="flex items-center gap-1">
-                              <MapPin size={12} />
-                              {event.location}
-                            </span>
-                          )}
-                          {event.is_recurring && (
-                            <span className="flex items-center gap-1">
-                              <Repeat size={12} />
-                              {event.recurring_type === 'daily' ? 'Giornaliero' :
-                               event.recurring_type === 'weekly' ? 'Settimanale' :
-                               event.recurring_type === 'monthly' ? 'Mensile' :
-                               event.recurring_type === 'yearly' ? 'Annuale' : 'Ripetuto'}
-                            </span>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              <span className="flex items-center gap-1">
+                                <Clock size={12} />
+                                {formatEventDate(event)}
+                              </span>
+                              {event.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin size={12} />
+                                  {event.location}
+                                </span>
+                              )}
+                              {event.is_recurring && (
+                                <span className="flex items-center gap-1 bg-purple-500/20 px-2 py-0.5 rounded">
+                                  <Repeat size={12} />
+                                  Ricorrente
+                                </span>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Tasks */}
+                    {selectedDateTasks.length > 0 && (
+                      <div>
+                        <h5 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                          <CheckCircle2 size={14} />
+                          Task ({selectedDateTasks.length})
+                        </h5>
+                        {selectedDateTasks.map((task, index) => (
+                          <motion.div
+                            key={task.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: (selectedDateEvents.length + index) * 0.05 }}
+                            className={`border-l-4 rounded-lg p-3 mb-2 ${
+                              task.is_completed 
+                                ? 'bg-green-500/10 border-green-500' 
+                                : task.priority === 'urgent' || task.priority === 'high'
+                                ? 'bg-red-500/10 border-red-500'
+                                : 'bg-cyan-500/10 border-cyan-500'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h6 className={`font-bold ${task.is_completed ? 'text-gray-400 line-through' : 'text-white'}`}>
+                                  {task.title}
+                                </h6>
+                                {task.description && (
+                                  <p className="text-sm text-gray-300 mt-1">{task.description}</p>
+                                )}
+                                <div className="flex flex-wrap gap-2 text-xs mt-2">
+                                  <span className={`px-2 py-0.5 rounded ${
+                                    task.priority === 'urgent' ? 'bg-red-500/20 text-red-300' :
+                                    task.priority === 'high' ? 'bg-orange-500/20 text-orange-300' :
+                                    task.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
+                                    'bg-blue-500/20 text-blue-300'
+                                  }`}>
+                                    {task.priority === 'urgent' ? '🔴 Urgente' :
+                                     task.priority === 'high' ? '🟠 Alta' :
+                                     task.priority === 'medium' ? '🟡 Media' : '🔵 Bassa'}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded ${
+                                    task.status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                                    task.status === 'in-progress' ? 'bg-blue-500/20 text-blue-300' :
+                                    'bg-gray-500/20 text-gray-300'
+                                  }`}>
+                                    {task.status === 'completed' ? '✓ Completato' :
+                                     task.status === 'in-progress' ? '⏳ In corso' : '📋 Da fare'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

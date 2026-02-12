@@ -997,6 +997,7 @@ export default function Home() {
         isOpen={isCalendarViewOpen}
         onClose={() => setIsCalendarViewOpen(false)}
         events={events}
+        tasks={tasks}
         onDelete={deleteEvent}
         onEdit={(event) => {
           setEditingEvent(event)
