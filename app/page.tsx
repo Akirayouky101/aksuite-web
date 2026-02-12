@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone, LayoutDashboard, FileText, Calendar } from 'lucide-react'
+import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone, UserCheck, LayoutDashboard, FileText, Calendar } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
 import PasswordListModal from './components/PasswordListModal'
@@ -16,6 +16,8 @@ import BudgetLimitsViewModal from './components/BudgetLimitsViewModal'
 import CallModal from './components/CallModal'
 import CallMenuModal from './components/CallMenuModal'
 import CallsListModal from './components/CallsListModal'
+import VisitModal from './components/VisitModal'
+import VisitsListModal from './components/VisitsListModal'
 import TaskModal from './components/TaskModal'
 import TasksListModal from './components/TasksListModal'
 import NoteModal from './components/NoteModal'
@@ -29,6 +31,7 @@ import { useBudget } from './hooks/useBudget'
 import { useRecurring } from './hooks/useRecurring'
 import { useBudgetLimits } from './hooks/useBudgetLimits'
 import { useCalls } from './hooks/useCalls'
+import { useVisits } from './hooks/useVisits'
 import { useTasks } from './hooks/useTasks'
 import { useNotes } from './hooks/useNotes'
 import { useEvents } from './hooks/useEvents'
@@ -59,6 +62,8 @@ export default function Home() {
   const [isCallMenuModalOpen, setIsCallMenuModalOpen] = useState(false)
   const [isCallModalOpen, setIsCallModalOpen] = useState(false)
   const [isCallsListModalOpen, setIsCallsListModalOpen] = useState(false)
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false)
+  const [isVisitsListModalOpen, setIsVisitsListModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isTasksListModalOpen, setIsTasksListModalOpen] = useState(false)
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
@@ -72,11 +77,13 @@ export default function Home() {
   const [editingNote, setEditingNote] = useState<any>(null)
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [editingCall, setEditingCall] = useState<any>(null)
+  const [editingVisit, setEditingVisit] = useState<any>(null)
   const { passwords, addPassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
   const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
   const { calls, addCall, deleteCall, updateCallStatus, updateCall } = useCalls()
+  const { visits, addVisit, deleteVisit, updateVisitStatus, updateVisit } = useVisits()
   const { tasks, addTask, updateTask, deleteTask, toggleComplete } = useTasks()
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
   const { events, addEvent, updateEvent, deleteEvent } = useEvents()
@@ -86,6 +93,7 @@ export default function Home() {
   const availableRelationItems = {
     passwords,
     calls,
+    visits,
     tasks,
     notes,
     events,
@@ -168,6 +176,13 @@ export default function Home() {
       description: `🎯 Registra e gestisci le chiamate clienti! Tieni traccia dei contatti, richieste e follow-up in modo professionale! 💼✨ (${calls.length} chiamate registrate)`,
       icon: Phone,
       gradient: 'from-blue-600 via-cyan-500 to-purple-400'
+    },
+    {
+      id: 'visits',
+      title: '👥 REGISTRO VISITE 👥',
+      description: `🏢 Traccia i visitatori in ufficio! Gestisci appuntamenti, riunioni, consegne e molto altro! 📋✨ (${visits.length} visite registrate)`,
+      icon: UserCheck,
+      gradient: 'from-purple-600 via-pink-500 to-fuchsia-400'
     },
     {
       id: 'tasks',
@@ -473,6 +488,8 @@ export default function Home() {
                         setIsBudgetMenuModalOpen(true)
                       } else if (app.id === 'calls') {
                         setIsCallMenuModalOpen(true)
+                      } else if (app.id === 'visits') {
+                        setIsVisitsListModalOpen(true)
                       } else if (app.id === 'tasks') {
                         setIsTasksListModalOpen(true)
                       } else if (app.id === 'notes') {
@@ -745,6 +762,37 @@ export default function Home() {
           setEditingCall(call)
           setIsCallModalOpen(true)
           setIsCallsListModalOpen(false)
+        }}
+      />
+
+      {/* VISIT MODAL (Add/Edit Visit) */}
+      <VisitModal
+        isOpen={isVisitModalOpen}
+        onClose={() => {
+          setIsVisitModalOpen(false)
+          setEditingVisit(null)
+        }}
+        onSave={async (visitData) => {
+          if (editingVisit) {
+            await updateVisit(editingVisit.id, visitData)
+          } else {
+            await addVisit(visitData)
+          }
+        }}
+        editVisit={editingVisit}
+      />
+
+      {/* VISITS LIST MODAL (View All) */}
+      <VisitsListModal
+        isOpen={isVisitsListModalOpen}
+        onClose={() => setIsVisitsListModalOpen(false)}
+        visits={visits}
+        onDelete={deleteVisit}
+        onStatusChange={updateVisitStatus}
+        onEdit={(visit) => {
+          setEditingVisit(visit)
+          setIsVisitModalOpen(true)
+          setIsVisitsListModalOpen(false)
         }}
       />
 
