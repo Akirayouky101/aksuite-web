@@ -5,11 +5,11 @@ CREATE TABLE IF NOT EXISTS public.item_relations (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   
   -- Source entity (the "from" item)
-  source_type TEXT NOT NULL, -- 'password', 'call', 'task', 'note', 'event', 'transaction'
+  source_type TEXT NOT NULL, -- 'password', 'call', 'task', 'note', 'event', 'transaction', 'visit'
   source_id UUID NOT NULL,
   
   -- Target entity (the "to" item)
-  target_type TEXT NOT NULL, -- 'password', 'call', 'task', 'note', 'event', 'transaction'
+  target_type TEXT NOT NULL, -- 'password', 'call', 'task', 'note', 'event', 'transaction', 'visit'
   target_id UUID NOT NULL,
   
   -- Relation metadata

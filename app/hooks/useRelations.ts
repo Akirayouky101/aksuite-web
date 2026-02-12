@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export type EntityType = 'password' | 'call' | 'task' | 'note' | 'event' | 'transaction'
+export type EntityType = 'password' | 'call' | 'task' | 'note' | 'event' | 'transaction' | 'visit'
 export type RelationType = 'related' | 'depends_on' | 'blocks' | 'implements' | 'references'
 
 export interface ItemRelation {
@@ -183,6 +183,7 @@ export function useRelations() {
       notes?: any[]
       events?: any[]
       transactions?: any[]
+      visits?: any[]
     }
   ): Promise<RelatedItem[]> => {
     const itemRelations = getRelationsFor(type, id)
@@ -205,7 +206,7 @@ export function useRelations() {
           break
         case 'call':
           item = allItems.calls?.find(c => c.id === relatedId)
-          title = item?.client_name || 'Call'
+          title = item?.caller_name || 'Call'
           break
         case 'task':
           item = allItems.tasks?.find(t => t.id === relatedId)
@@ -222,6 +223,10 @@ export function useRelations() {
         case 'transaction':
           item = allItems.transactions?.find(t => t.id === relatedId)
           title = item?.description || 'Transaction'
+          break
+        case 'visit':
+          item = allItems.visits?.find(v => v.id === relatedId)
+          title = item?.visitor_name || 'Visit'
           break
       }
 
@@ -250,7 +255,8 @@ export function useRelations() {
       task: 0,
       note: 0,
       event: 0,
-      transaction: 0
+      transaction: 0,
+      visit: 0
     }
 
     itemRelations.forEach(relation => {
