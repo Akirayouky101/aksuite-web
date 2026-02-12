@@ -80,7 +80,9 @@ export function useCalls() {
     if (error) throw error
     if (data) {
       setCalls(prev => [data, ...prev])
+      return data
     }
+    return null
   }
 
   const deleteCall = async (id: string) => {

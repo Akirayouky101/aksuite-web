@@ -738,10 +738,35 @@ export default function Home() {
           setEditingCall(null)
         }}
         onSave={async (callData) => {
+          let callId: string | undefined
           if (editingCall) {
             await updateCall(editingCall.id, callData)
+            callId = editingCall.id
           } else {
-            await addCall(callData)
+            const newCall = await addCall(callData)
+            callId = newCall?.id
+          }
+
+          // Auto-create task if follow-up is enabled
+          if (callData.follow_up && callData.follow_up_date && callId) {
+            const taskTitle = `Follow-up: ${callData.caller_name || 'Chiamata'}`
+            const newTask = await addTask({
+              title: taskTitle,
+              description: `Follow-up per chiamata da ${callData.caller_name || 'contatto'}${callData.company ? ` (${callData.company})` : ''}`,
+              due_date: callData.follow_up_date,
+              priority: callData.priority || 'medium',
+              status: 'todo',
+              category: 'follow_up',
+              is_recurring: false,
+              recurring_type: null,
+              tags: [],
+              subtasks: []
+            })
+            
+            // Link task to call
+            if (newTask?.id) {
+              await addRelation('call', callId, 'task', newTask.id, 'related', 'Auto-created follow-up task')
+            }
           }
         }}
         editCall={editingCall}
@@ -773,10 +798,35 @@ export default function Home() {
           setEditingVisit(null)
         }}
         onSave={async (visitData) => {
+          let visitId: string | undefined
           if (editingVisit) {
             await updateVisit(editingVisit.id, visitData)
+            visitId = editingVisit.id
           } else {
-            await addVisit(visitData)
+            const newVisit = await addVisit(visitData)
+            visitId = newVisit?.id
+          }
+
+          // Auto-create task if follow-up is enabled
+          if (visitData.follow_up && visitData.follow_up_date && visitId) {
+            const taskTitle = `Follow-up: ${visitData.visitor_name || 'Visita'}`
+            const newTask = await addTask({
+              title: taskTitle,
+              description: `Follow-up per visita di ${visitData.visitor_name || 'visitatore'}${visitData.company ? ` (${visitData.company})` : ''}`,
+              due_date: visitData.follow_up_date,
+              priority: visitData.priority || 'medium',
+              status: 'todo',
+              category: 'follow_up',
+              is_recurring: false,
+              recurring_type: null,
+              tags: [],
+              subtasks: []
+            })
+            
+            // Link task to visit
+            if (newTask?.id) {
+              await addRelation('visit', visitId, 'task', newTask.id, 'related', 'Auto-created follow-up task')
+            }
           }
         }}
         editVisit={editingVisit}
@@ -804,7 +854,7 @@ export default function Home() {
       <TaskModal
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
-        onSave={addTask}
+        onSave={async (task) => { await addTask(task) }}
         editTask={null}
         availableItems={availableRelationItems}
         onAddRelation={addRelation}
@@ -820,7 +870,7 @@ export default function Home() {
         onDelete={deleteTask}
         onToggleComplete={toggleComplete}
         onUpdate={updateTask}
-        onAdd={addTask}
+        onAdd={async (task) => { await addTask(task) }}
       />
 
       {/* UNIFIED DASHBOARD 📊 */}
