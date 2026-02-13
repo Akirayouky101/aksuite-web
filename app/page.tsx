@@ -665,20 +665,40 @@ export default function Home() {
         isOpen={isVisitModalOpen}
         onClose={() => { setIsVisitModalOpen(false); setEditingVisit(null) }}
         onSave={async (visitData) => {
+          const { has_lavorazione, lavorazione_date, lavorazione_time, lavorazione_description, lavorazione_assignee, ...cleanVisitData } = visitData
           let visitId: string | undefined
-          if (editingVisit) { await updateVisit(editingVisit.id, visitData); visitId = editingVisit.id }
-          else { const newVisit = await addVisit(visitData); visitId = newVisit?.id }
-          if (visitData.follow_up && visitData.follow_up_date && visitId) {
+          if (editingVisit) { await updateVisit(editingVisit.id, cleanVisitData); visitId = editingVisit.id }
+          else { const newVisit = await addVisit(cleanVisitData); visitId = newVisit?.id }
+          if (cleanVisitData.follow_up && cleanVisitData.follow_up_date && visitId) {
             const newTask = await addTask({
-              title: `Follow-up: ${visitData.visitor_name || 'Visita'}`,
-              description: `Follow-up visita di ${visitData.visitor_name || 'visitatore'}${visitData.company ? ` (${visitData.company})` : ''}`,
-              due_date: visitData.follow_up_date, priority: visitData.priority || 'medium',
+              title: `Follow-up: ${cleanVisitData.visitor_name || 'Visita'}`,
+              description: `Follow-up visita di ${cleanVisitData.visitor_name || 'visitatore'}${cleanVisitData.company ? ` (${cleanVisitData.company})` : ''}`,
+              due_date: cleanVisitData.follow_up_date, priority: cleanVisitData.priority || 'medium',
               status: 'todo', category: 'follow_up', is_recurring: false, recurring_type: null, tags: [], subtasks: []
             })
             if (newTask?.id) await addRelation('visit', visitId, 'task', newTask.id, 'related', 'Auto follow-up')
           }
+          if (has_lavorazione && visitId) {
+            await addLavorazione({
+              call_id: null,
+              title: `Lavorazione: ${cleanVisitData.visitor_name || 'Visita'}${cleanVisitData.company ? ` - ${cleanVisitData.company}` : ''}`,
+              description: lavorazione_description || '',
+              assigned_to: lavorazione_assignee || '',
+              scheduled_date: lavorazione_date || null,
+              scheduled_time: lavorazione_time || null,
+              status: 'da_fare',
+              priority: cleanVisitData.priority || 'media',
+              address: '',
+              city: '',
+              zip_code: '',
+              province: '',
+              notes: cleanVisitData.notes || '',
+              completed_at: null,
+            })
+          }
         }}
         editVisit={editingVisit}
+        teamMembers={teamMembers}
       />
       <VisitsListModal isOpen={isVisitsListModalOpen} onClose={() => setIsVisitsListModalOpen(false)}
         visits={visits} onDelete={deleteVisit} onStatusChange={updateVisitStatus}

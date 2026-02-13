@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, UserCheck, Building2, Phone, Mail, Calendar, FileText, AlertTriangle, Clock } from 'lucide-react'
+import { X, UserCheck, Building2, Phone, Mail, Calendar, FileText, AlertTriangle, Clock, Wrench, ChevronDown } from 'lucide-react'
 // import RelationsIntegration from './RelationsIntegration' // TODO: Fix prop types
 import type { Visit } from '../hooks/useVisits'
 
@@ -11,6 +11,7 @@ interface VisitModalProps {
   onClose: () => void
   onSave: (visitData: any) => Promise<any>
   editVisit?: Visit | null
+  teamMembers?: Array<{ id: string; name: string; role: string }>
   availableRelationItems?: Array<{
     type: string
     id: string
@@ -27,6 +28,7 @@ export default function VisitModal({
   onClose,
   onSave,
   editVisit,
+  teamMembers = [],
   availableRelationItems = [],
   onAddRelation,
   onRemoveRelation,
@@ -43,6 +45,11 @@ export default function VisitModal({
   const [followUp, setFollowUp] = useState(false)
   const [followUpDate, setFollowUpDate] = useState('')
   const [status, setStatus] = useState<'scheduled' | 'in_progress' | 'completed' | 'cancelled'>('scheduled')
+  const [hasLavorazione, setHasLavorazione] = useState(false)
+  const [lavorazioneDate, setLavorazioneDate] = useState('')
+  const [lavorazioneTime, setLavorazioneTime] = useState('')
+  const [lavorazioneDesc, setLavorazioneDesc] = useState('')
+  const [lavorazioneAssignee, setLavorazioneAssignee] = useState('')
 
   useEffect(() => {
     if (editVisit) {
@@ -74,6 +81,11 @@ export default function VisitModal({
     setFollowUp(false)
     setFollowUpDate('')
     setStatus('scheduled')
+    setHasLavorazione(false)
+    setLavorazioneDate('')
+    setLavorazioneTime('')
+    setLavorazioneDesc('')
+    setLavorazioneAssignee('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,7 +102,13 @@ export default function VisitModal({
       notes,
       follow_up: followUp,
       follow_up_date: followUpDate ? new Date(followUpDate).toISOString() : null,
-      status
+      status,
+      // Lavorazione
+      has_lavorazione: hasLavorazione,
+      lavorazione_date: hasLavorazione ? lavorazioneDate || null : null,
+      lavorazione_time: hasLavorazione ? lavorazioneTime || null : null,
+      lavorazione_description: hasLavorazione ? lavorazioneDesc : '',
+      lavorazione_assignee: hasLavorazione ? lavorazioneAssignee : ''
     }
 
     await onSave(visitData)
@@ -299,7 +317,59 @@ export default function VisitModal({
                   value={followUpDate}
                   onChange={(e) => setFollowUpDate(e.target.value)}
                   className="px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-orange-200/60 focus:border-orange-500 focus:outline-none text-sm"
+                  title="Data follow-up"
                 />
+              )}
+            </div>
+
+            {/* Lavorazione / Intervento */}
+            <div className="space-y-2 pt-3 border-t border-slate-100/80">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={hasLavorazione} onChange={(e) => setHasLavorazione(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-200 bg-slate-50 text-indigo-500 focus:ring-2 focus:ring-indigo-500/10" />
+                <span className="text-sm text-slate-700 font-medium">
+                  <Wrench className="w-3.5 h-3.5 inline mr-1" /> Programma Lavorazione / Intervento
+                </span>
+              </label>
+              {hasLavorazione && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                  className="bg-violet-50/50 rounded-xl p-4 border border-violet-200/40 space-y-3"
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Data Intervento</label>
+                      <input type="date" value={lavorazioneDate} onChange={(e) => setLavorazioneDate(e.target.value)}
+                        title="Data intervento"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-800 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Orario</label>
+                      <input type="time" value={lavorazioneTime} onChange={(e) => setLavorazioneTime(e.target.value)}
+                        title="Orario intervento"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-800 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Descrizione Intervento</label>
+                    <input type="text" value={lavorazioneDesc} onChange={(e) => setLavorazioneDesc(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
+                      placeholder="Es. Intervento tecnico presso il cliente" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Assegnato A</label>
+                    <div className="relative">
+                      <select value={lavorazioneAssignee} onChange={(e) => setLavorazioneAssignee(e.target.value)}
+                        title="Assegnatario lavorazione"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-800 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all appearance-none pr-10">
+                        <option value="">— Seleziona —</option>
+                        {teamMembers.map((m) => (
+                          <option key={m.id} value={m.name}>{m.name}{m.role ? ` (${m.role})` : ''}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </motion.div>
               )}
             </div>
 
