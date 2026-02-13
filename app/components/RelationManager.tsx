@@ -98,6 +98,7 @@ export default function RelationManager({
   return (
     <>
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
         className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2"
       >
@@ -122,6 +123,7 @@ export default function RelationManager({
                     Collega Elementi
                   </h3>
                   <button
+                    type="button"
                     onClick={() => setIsOpen(false)}
                     className="text-slate-400 hover:text-slate-800 transition-colors"
                   >
@@ -154,6 +156,7 @@ export default function RelationManager({
                         const TypeIcon = config.icon
                         return (
                           <button
+                            type="button"
                             key={type}
                             onClick={() => setSelectedType(type)}
                             className={`p-3 rounded-lg border-2 transition-all ${
@@ -234,6 +237,7 @@ export default function RelationManager({
                         const ItemIcon = ENTITY_CONFIG[selectedType].icon
                         return (
                           <motion.button
+                            type="button"
                             key={item.id}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}

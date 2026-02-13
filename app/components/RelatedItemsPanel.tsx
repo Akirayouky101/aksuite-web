@@ -109,6 +109,7 @@ export default function RelatedItemsPanel({
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                       {onNavigate && (
                         <button
+                          type="button"
                           onClick={() => onNavigate(item.type, item.id)}
                           className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors"
                           title="Vai a"
@@ -117,6 +118,7 @@ export default function RelatedItemsPanel({
                         </button>
                       )}
                       <button
+                        type="button"
                         onClick={() => {
                           if (confirm('Rimuovere questo collegamento?')) {
                             onRemoveRelation(item.relation_id)
