@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wrench, Search, Download, Plus, Calendar, Clock, MapPin, User, Trash2, Pencil, CheckCircle2, Circle, AlertCircle, ArrowUpDown } from 'lucide-react'
+import { X, Wrench, Search, Download, Plus, Calendar, Clock, MapPin, User, Trash2, Pencil, CheckCircle2, Circle, AlertCircle, ArrowUpDown, History } from 'lucide-react'
 import { Lavorazione } from '../hooks/useLavorazioni'
 
 interface LavorazioniListModalProps {
@@ -13,6 +13,7 @@ interface LavorazioniListModalProps {
   onDelete: (id: string) => Promise<void>
   onNew?: () => void
   onEdit?: (lavorazione: Lavorazione) => void
+  onViewTimeline?: (lavorazione: Lavorazione) => void
   teamMembers?: Array<{ id: string; name: string; role: string }>
 }
 
@@ -31,7 +32,7 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
 }
 
 export default function LavorazioniListModal({
-  isOpen, onClose, lavorazioni, onToggleStatus, onDelete, onNew, onEdit, teamMembers = []
+  isOpen, onClose, lavorazioni, onToggleStatus, onDelete, onNew, onEdit, onViewTimeline, teamMembers = []
 }: LavorazioniListModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -336,6 +337,14 @@ export default function LavorazioniListModal({
                               <button onClick={() => onEdit(lav)} title="Modifica"
                                 className="p-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 rounded-lg transition-colors">
                                 <Pencil className="w-5 h-5 text-indigo-400" />
+                              </button>
+                            )}
+                            {/* Timeline */}
+                            {onViewTimeline && (
+                              <button onClick={() => onViewTimeline(lav)} title="Cronologia"
+                                className="px-3 py-2 bg-violet-50 hover:bg-violet-100 border border-violet-200/60 rounded-lg transition-colors flex items-center gap-1.5">
+                                <History className="w-4 h-4 text-violet-500" />
+                                <span className="text-xs font-bold text-violet-600 hidden md:inline">Cronologia</span>
                               </button>
                             )}
                             {/* Delete */}

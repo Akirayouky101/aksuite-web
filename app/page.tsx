@@ -30,6 +30,7 @@ import EventModal from './components/EventModal'
 import CalendarView from './components/CalendarView'
 import LavorazioniListModal from './components/LavorazioniListModal'
 import LavorazioneModal from './components/LavorazioneModal'
+import LavorazioneTimelineModal from './components/LavorazioneTimelineModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -43,6 +44,7 @@ import { useEvents } from './hooks/useEvents'
 import { useRelations } from './hooks/useRelations'
 import { useTeamMembers } from './hooks/useTeamMembers'
 import { useLavorazioni } from './hooks/useLavorazioni'
+import { useLavorazioneTimeline } from './hooks/useLavorazioneTimeline'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -71,6 +73,8 @@ export default function Home() {
   const [isCalendarViewOpen, setIsCalendarViewOpen] = useState(false)
   const [isLavorazioniListModalOpen, setIsLavorazioniListModalOpen] = useState(false)
   const [isLavorazioneModalOpen, setIsLavorazioneModalOpen] = useState(false)
+  const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false)
+  const [timelineLavorazione, setTimelineLavorazione] = useState<any>(null)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -95,6 +99,7 @@ export default function Home() {
   const { addRelation, removeRelation, getRelatedItems } = useRelations()
   const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
   const { lavorazioni, addLavorazione, updateLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
+  const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, clearTimeline } = useLavorazioneTimeline()
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
@@ -647,6 +652,7 @@ export default function Home() {
         onDelete={deleteLavorazione}
         onNew={() => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) }}
         onEdit={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsLavorazioniListModalOpen(false) }}
+        onViewTimeline={(lav) => { setTimelineLavorazione(lav); loadTimeline(lav.id); setIsTimelineModalOpen(true) }}
         teamMembers={teamMembers}
       />
 
@@ -658,6 +664,17 @@ export default function Home() {
           else { await addLavorazione(data) }
         }}
         editLavorazione={editingLavorazione}
+        teamMembers={teamMembers}
+      />
+
+      <LavorazioneTimelineModal
+        isOpen={isTimelineModalOpen}
+        onClose={() => { setIsTimelineModalOpen(false); setTimelineLavorazione(null); clearTimeline() }}
+        lavorazione={timelineLavorazione}
+        entries={timelineEntries}
+        loading={timelineLoading}
+        onAddEntry={addTimelineEntry}
+        onDeleteEntry={deleteTimelineEntry}
         teamMembers={teamMembers}
       />
 
