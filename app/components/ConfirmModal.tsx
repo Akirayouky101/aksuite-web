@@ -66,9 +66,9 @@ export default function ConfirmModal({
           <div className="hidden" />
           
           {/* Main modal */}
-          <div className={`relative bg-[#131920] rounded-2xl border-4 ${color.border} shadow-2xl overflow-hidden`}>
+          <div className={`relative bg-[#131920] rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden`}>
             {/* Header with icon */}
-            <div className={`bg-gradient-to-r ${color.bg} p-6 border-b-2 ${color.border}`}>
+            <div className={`bg-white/[0.02] p-6 border-b border-white/[0.06]`}>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                   {type === 'danger' && <AlertTriangle className="w-10 h-10 text-white" strokeWidth={3} />}
@@ -119,8 +119,8 @@ export default function ConfirmModal({
             </div>
 
             {/* Decorative elements */}
-            <div className={`absolute top-0 left-0 right-0 h-2 bg-gradient-to-r ${color.glow} opacity-70`} />
-            <div className={`absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r ${color.glow} opacity-70`} />
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/30 to-transparent" />
           </div>
         </motion.div>
       </div>

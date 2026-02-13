@@ -88,7 +88,7 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
           <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-3xl blur-2xl opacity-40" />
           
           {/* Main modal */}
-          <div className="relative bg-[#131920] rounded-2xl border-4 border-teal-400 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="relative bg-[#131920] rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-6 border-b-2 border-teal-400 flex-shrink-0">
               <div className="flex items-start justify-between">

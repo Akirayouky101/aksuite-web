@@ -60,14 +60,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ scale: 1 }}
+        animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-md"
       >
-        <div className="hidden" />
-        
-        <div className="relative bg-[#131920]">
+        <div className="relative bg-[#131920] rounded-2xl border border-white/[0.08] p-6 shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -99,7 +97,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-violet-300 font-bold mb-2 text-sm flex items-center gap-2">
+                <label className="block text-white/60 font-bold mb-2 text-sm flex items-center gap-2">
                   <User className="w-4 h-4" /> Nome Completo
                 </label>
                 <input
@@ -114,7 +112,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             )}
 
             <div>
-              <label className="block text-violet-300 font-bold mb-2 text-sm flex items-center gap-2">
+              <label className="block text-white/60 font-bold mb-2 text-sm flex items-center gap-2">
                 <Mail className="w-4 h-4" /> Email
               </label>
               <input
@@ -128,7 +126,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             </div>
 
             <div>
-              <label className="block text-violet-300 font-bold mb-2 text-sm flex items-center gap-2">
+              <label className="block text-white/60 font-bold mb-2 text-sm flex items-center gap-2">
                 <Lock className="w-4 h-4" /> Password
               </label>
               <div className="relative">
@@ -143,7 +141,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-300 hover:text-violet-200 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
                   aria-label={showPassword ? "Nascondi password" : "Mostra password"}
                 >
                   {showPassword ? (
@@ -158,22 +156,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             <button
               type="submit"
               disabled={loading}
-              className="w-full relative group overflow-hidden"
+              className="w-full px-6 py-4 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 rounded-xl text-white font-semibold text-base flex items-center justify-center gap-3 transition-all shadow-lg shadow-teal-500/20 active:scale-[0.98] disabled:opacity-50"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity" />
-              <div className="relative px-6 py-4 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-xl border border-teal-400/30 flex items-center justify-center gap-3">
-                <Sparkles className="w-5 h-5 text-white" />
-                <span className="text-white/90 font-bold text-lg uppercase">
-                  {loading ? 'CARICAMENTO...' : isLogin ? 'ACCEDI' : 'REGISTRATI'}
-                </span>
-              </div>
+              {loading ? 'Caricamento...' : isLogin ? 'Accedi' : 'Registrati'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-violet-300 hover:text-violet-200 font-bold text-sm"
+              className="text-white/60 hover:text-white/80 font-bold text-sm"
             >
               {isLogin ? "Non hai un account? Registrati" : 'Hai già un account? Accedi'}
             </button>

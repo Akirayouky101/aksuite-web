@@ -99,7 +99,7 @@ export default function PasswordListModal({
             {/* Modal Container */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ scale: 1 }}
+              animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               onClick={(e) => e.stopPropagation()}
@@ -372,7 +372,7 @@ export default function PasswordListModal({
                   <div className="hidden" />
                   
                   {/* Modal content */}
-                  <div className="relative bg-[#131920] border-4 border-pink-400 rounded-2xl shadow-2xl p-8">
+                  <div className="relative bg-[#131920] border border-white/[0.08] rounded-2xl shadow-2xl p-8">
                     {/* Close button */}
                     <motion.button
                       whileHover={{ scale: 1.1 }}

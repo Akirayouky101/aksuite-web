@@ -54,18 +54,18 @@ export default function SuccessModal({
             <div className="hidden" />
             
             {/* Main modal */}
-            <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-white/[0.08] shadow-2xl p-8 overflow-hidden">
+            <div className="relative bg-[#131920] rounded-2xl border border-white/[0.08] shadow-2xl p-8 overflow-hidden">
               
-              {/* Animated circles background */}
-              <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/20 rounded-full blur-3xl animate-pulse" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+              {/* Subtle background glow */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl" />
               
               {/* Content */}
               <div className="relative z-10 text-center">
                 {/* Checkmark icon with animation */}
                 <motion.div
                   initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ 
                     type: 'spring', 
                     stiffness: 500, 
@@ -79,7 +79,7 @@ export default function SuccessModal({
                     <motion.div
                       animate={{ opacity: 1 }}
                       transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                      className="absolute inset-0 rounded-full border-4 border-t-green-400 border-r-emerald-400 border-b-teal-400 border-l-green-500"
+                      className="absolute inset-0 rounded-full border-2 border-green-400/30"
                       style={{ width: '100px', height: '100px' }}
                     />
                     {/* Icon */}
@@ -141,7 +141,7 @@ export default function SuccessModal({
               </div>
 
               {/* Decorative top border */}
-              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400" />
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/40 to-transparent" />
             </div>
           </motion.div>
         </div>
