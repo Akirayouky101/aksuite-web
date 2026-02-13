@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wrench, Search, Filter, Calendar, Clock, MapPin, User, Trash2, ChevronRight, Plus, CheckCircle2, Circle, AlertCircle } from 'lucide-react'
+import { X, Wrench, Search, Filter, Calendar, Clock, MapPin, User, Trash2, ChevronRight, Plus, CheckCircle2, Circle, AlertCircle, Pencil } from 'lucide-react'
 import { Lavorazione } from '../hooks/useLavorazioni'
 
 interface LavorazioniListModalProps {
@@ -12,6 +12,7 @@ interface LavorazioniListModalProps {
   onToggleStatus: (id: string) => Promise<void>
   onDelete: (id: string) => Promise<void>
   onNew?: () => void
+  onEdit?: (lavorazione: Lavorazione) => void
   teamMembers?: Array<{ id: string; name: string; role: string }>
 }
 
@@ -36,6 +37,7 @@ export default function LavorazioniListModal({
   onToggleStatus,
   onDelete,
   onNew,
+  onEdit,
   teamMembers = []
 }: LavorazioniListModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
@@ -183,7 +185,7 @@ export default function LavorazioniListModal({
                   <Wrench className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-400 text-sm font-medium">Nessuna lavorazione trovata</p>
                   <p className="text-slate-300 text-xs mt-1">
-                    {lavorazioni.length === 0 ? 'Crea la prima lavorazione da una chiamata' : 'Prova a modificare i filtri'}
+                    {lavorazioni.length === 0 ? 'Clicca su "Nuova" per creare una lavorazione' : 'Prova a modificare i filtri'}
                   </p>
                 </div>
               ) : (
@@ -249,15 +251,26 @@ export default function LavorazioniListModal({
                             </div>
                           </div>
 
-                          {/* Delete */}
-                          <button
-                            onClick={() => handleDelete(lav.id)}
-                            disabled={deletingId === lav.id}
-                            title="Elimina lavorazione"
-                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all flex-shrink-0"
-                          >
-                            <Trash2 className={`w-3.5 h-3.5 ${deletingId === lav.id ? 'text-slate-300 animate-spin' : 'text-slate-400 hover:text-red-500'}`} />
-                          </button>
+                          {/* Actions */}
+                          <div className="flex flex-col gap-1.5 flex-shrink-0">
+                            {onEdit && (
+                              <button
+                                onClick={() => onEdit(lav)}
+                                title="Modifica lavorazione"
+                                className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200/60 hover:border-indigo-200 flex items-center justify-center transition-all"
+                              >
+                                <Pencil className="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDelete(lav.id)}
+                              disabled={deletingId === lav.id}
+                              title="Elimina lavorazione"
+                              className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+                            >
+                              <Trash2 className={`w-3.5 h-3.5 ${deletingId === lav.id ? 'text-slate-300 animate-spin' : 'text-slate-400 hover:text-red-500'}`} />
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     )

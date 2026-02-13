@@ -29,6 +29,7 @@ import NotesListModal from './components/NotesListModal'
 import EventModal from './components/EventModal'
 import CalendarView from './components/CalendarView'
 import LavorazioniListModal from './components/LavorazioniListModal'
+import LavorazioneModal from './components/LavorazioneModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -69,6 +70,7 @@ export default function Home() {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [isCalendarViewOpen, setIsCalendarViewOpen] = useState(false)
   const [isLavorazioniListModalOpen, setIsLavorazioniListModalOpen] = useState(false)
+  const [isLavorazioneModalOpen, setIsLavorazioneModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -78,6 +80,7 @@ export default function Home() {
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [editingCall, setEditingCall] = useState<any>(null)
   const [editingVisit, setEditingVisit] = useState<any>(null)
+  const [editingLavorazione, setEditingLavorazione] = useState<any>(null)
 
   // ═══ HOOKS ═══
   const { passwords, addPassword, user, deletePassword } = usePasswords()
@@ -91,7 +94,7 @@ export default function Home() {
   const { events, addEvent, updateEvent, deleteEvent } = useEvents()
   const { addRelation, removeRelation, getRelatedItems } = useRelations()
   const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
-  const { lavorazioni, addLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
+  const { lavorazioni, addLavorazione, updateLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
@@ -184,6 +187,7 @@ export default function Home() {
 
   const quickActions = [
     { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true) },
+    { label: 'Lavorazione', icon: Wrench, onClick: () => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) } },
     { label: 'Task', icon: CheckSquare, onClick: () => setIsTaskModalOpen(true) },
     { label: 'Nota', icon: StickyNote, onClick: () => { setEditingNote(null); setIsNoteModalOpen(true) } },
     { label: 'Evento', icon: Calendar, onClick: () => { setEditingEvent(null); setIsEventModalOpen(true) } },
@@ -639,7 +643,19 @@ export default function Home() {
         lavorazioni={lavorazioni}
         onToggleStatus={toggleLavorazioneStatus}
         onDelete={deleteLavorazione}
-        onNew={() => { setIsLavorazioniListModalOpen(false); setIsCallModalOpen(true) }}
+        onNew={() => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) }}
+        onEdit={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsLavorazioniListModalOpen(false) }}
+        teamMembers={teamMembers}
+      />
+
+      <LavorazioneModal
+        isOpen={isLavorazioneModalOpen}
+        onClose={() => { setIsLavorazioneModalOpen(false); setEditingLavorazione(null) }}
+        onSave={async (data) => {
+          if (editingLavorazione) { await updateLavorazione(editingLavorazione.id, data) }
+          else { await addLavorazione(data) }
+        }}
+        editLavorazione={editingLavorazione}
         teamMembers={teamMembers}
       />
 
