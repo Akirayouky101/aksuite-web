@@ -11,13 +11,13 @@ interface RelatedItemsPanelProps {
 }
 
 const ENTITY_CONFIG = {
-  password: { icon: Lock, label: 'Password', color: 'text-indigo-400', bg: 'bg-blue-900/30', border: 'border-blue-700' },
+  password: { icon: Lock, label: 'Password', color: 'text-indigo-500', bg: 'bg-blue-50', border: 'border-blue-200' },
   call: { icon: Phone, label: 'Chiamata', color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-200' },
-  visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-400', bg: 'bg-pink-900/30', border: 'border-pink-700' },
-  task: { icon: CheckCircle2, label: 'Task', color: 'text-purple-400', bg: 'bg-purple-900/30', border: 'border-purple-700' },
-  note: { icon: FileText, label: 'Nota', color: 'text-yellow-400', bg: 'bg-yellow-900/30', border: 'border-yellow-700' },
-  event: { icon: Calendar, label: 'Evento', color: 'text-indigo-400', bg: 'bg-indigo-900/30', border: 'border-indigo-700' },
-  transaction: { icon: DollarSign, label: 'Transazione', color: 'text-green-400', bg: 'bg-green-900/30', border: 'border-green-700' }
+  visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-500', bg: 'bg-pink-50', border: 'border-pink-200' },
+  task: { icon: CheckCircle2, label: 'Task', color: 'text-purple-400', bg: 'bg-purple-50', border: 'border-purple-200' },
+  note: { icon: FileText, label: 'Nota', color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' },
+  event: { icon: Calendar, label: 'Evento', color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+  transaction: { icon: DollarSign, label: 'Transazione', color: 'text-emerald-600', bg: 'bg-green-50', border: 'border-green-200' }
 }
 
 const RELATION_LABELS = {
@@ -35,7 +35,7 @@ export default function RelatedItemsPanel({
 }: RelatedItemsPanelProps) {
   if (relatedItems.length === 0) {
     return (
-      <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-6 text-center">
+      <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-6 text-center">
         <Link2Off className="mx-auto text-gray-600 mb-3" size={48} />
         <p className="text-slate-400 text-sm">
           Nessun elemento collegato
@@ -55,7 +55,7 @@ export default function RelatedItemsPanel({
   }, {} as Record<EntityType, RelatedItem[]>)
 
   return (
-    <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4">
+    <div className="bg-slate-50/50 border border-slate-200/60 rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">
         <h4 className="font-bold text-slate-800 flex items-center gap-2">
           <Link2Off size={18} />
@@ -122,7 +122,7 @@ export default function RelatedItemsPanel({
                             onRemoveRelation(item.relation_id)
                           }
                         }}
-                        className="p-1.5 bg-red-500/80 hover:bg-red-500 text-slate-800 rounded transition-colors"
+                        className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded transition-colors"
                         title="Rimuovi collegamento"
                       >
                         <Link2Off size={14} />

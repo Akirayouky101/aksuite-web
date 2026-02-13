@@ -151,19 +151,19 @@ export default function EventModal({
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200"
+            className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200/60"
           >
             {/* Header */}
-            <div className={`${selectedColor.dark} p-6 border-b border-slate-200`}>
+            <div className={`${selectedColor.light} p-6 border-b border-slate-200`}>
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                   📅 {editEvent ? 'Modifica Evento' : 'Nuovo Evento'}
                 </h2>
                 <button
                   onClick={onClose}
-                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-rose-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
                 >
-                  <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+                  <X className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" />
                 </button>
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function EventModal({
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   placeholder="Es: Riunione, Compleanno, Scadenza..."
                   required
                 />
@@ -194,7 +194,7 @@ export default function EventModal({
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none resize-none"
                   placeholder="Aggiungi dettagli..."
                 />
               </div>
@@ -206,7 +206,7 @@ export default function EventModal({
                   id="all_day"
                   checked={formData.all_day}
                   onChange={(e) => setFormData(prev => ({ ...prev, all_day: e.target.checked }))}
-                  className="w-5 h-5 text-blue-600 bg-slate-50 border-slate-200 rounded focus:ring-indigo-400"
+                  className="w-5 h-5 text-blue-600 bg-slate-50/80 border-slate-200 rounded focus:ring-indigo-200"
                 />
                 <label htmlFor="all_day" className="text-slate-500 font-medium">
                   Evento giornata intera
@@ -223,7 +223,7 @@ export default function EventModal({
                     type={formData.all_day ? 'date' : 'datetime-local'}
                     value={formData.all_day ? formData.start_date.split('T')[0] : formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                     required
                   />
                 </div>
@@ -236,7 +236,7 @@ export default function EventModal({
                     type={formData.all_day ? 'date' : 'datetime-local'}
                     value={formData.all_day && formData.end_date ? formData.end_date.split('T')[0] : formData.end_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -250,7 +250,7 @@ export default function EventModal({
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   placeholder="Es: Ufficio, Casa, Online..."
                 />
               </div>
@@ -268,7 +268,7 @@ export default function EventModal({
                       onClick={() => setFormData(prev => ({ ...prev, color: color.name }))}
                       className={`w-10 h-10 rounded-lg ${color.class} ${
                         formData.color === color.name
-                          ? 'ring-4 ring-white ring-offset-2 ring-offset-gray-900'
+                          ? 'ring-4 ring-white ring-offset-2 ring-offset-white'
                           : 'opacity-60 hover:opacity-100'
                       } transition-all`}
                     />
@@ -288,7 +288,7 @@ export default function EventModal({
                       is_recurring: e.target.checked,
                       recurring_type: e.target.checked ? 'weekly' : null
                     }))}
-                    className="w-5 h-5 text-blue-600 bg-slate-50 border-slate-200 rounded focus:ring-indigo-400"
+                    className="w-5 h-5 text-blue-600 bg-slate-50/80 border-slate-200 rounded focus:ring-indigo-200"
                   />
                   <label htmlFor="is_recurring" className="text-slate-500 font-medium flex items-center gap-2">
                     <Repeat size={16} /> Evento ricorrente
@@ -299,7 +299,7 @@ export default function EventModal({
                   <select
                     value={formData.recurring_type || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, recurring_type: e.target.value || null }))}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   >
                     {RECURRING_TYPES.slice(1).map(type => (
                       <option key={type.value} value={type.value}>
@@ -318,7 +318,7 @@ export default function EventModal({
                 <select
                   value={formData.reminder_minutes}
                   onChange={(e) => setFormData(prev => ({ ...prev, reminder_minutes: parseInt(e.target.value) }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                 >
                   {REMINDER_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -358,7 +358,7 @@ export default function EventModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-lg font-medium transition-colors"
+                  className="px-6 py-3 bg-slate-50 hover:bg-slate-100 text-white rounded-xl font-medium transition-colors"
                 >
                   Annulla
                 </button>

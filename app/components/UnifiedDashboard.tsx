@@ -145,32 +145,32 @@ export default function UnifiedDashboard({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border-2 border-red-500/50 rounded-xl p-5"
+          className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-rose-200/60 rounded-xl p-5"
         >
           <div className="flex items-start gap-4">
             <div className="p-3 bg-red-500/20 rounded-lg">
-              <AlertTriangle className="w-8 h-8 text-red-400 animate-pulse" />
+              <AlertTriangle className="w-8 h-8 text-rose-500 animate-pulse" />
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-slate-800 mb-2">⚠️ Attenzione Richiesta!</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 {urgentCalls > 0 && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+                  <div className="bg-rose-50 border border-red-500/30 rounded-lg px-3 py-2">
                     <div className="text-red-300 font-semibold">{urgentCalls} Chiamate Urgenti</div>
                   </div>
                 )}
                 {followUpToday > 0 && (
-                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg px-3 py-2">
+                  <div className="bg-orange-50 border border-orange-500/30 rounded-lg px-3 py-2">
                     <div className="text-orange-300 font-semibold">{followUpToday} Follow-up Oggi</div>
                   </div>
                 )}
                 {urgentTasks > 0 && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+                  <div className="bg-rose-50 border border-red-500/30 rounded-lg px-3 py-2">
                     <div className="text-red-300 font-semibold">{urgentTasks} Task Urgenti</div>
                   </div>
                 )}
                 {overdueTasks > 0 && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+                  <div className="bg-rose-50 border border-red-500/30 rounded-lg px-3 py-2">
                     <div className="text-red-300 font-semibold">{overdueTasks} Task Scaduti</div>
                   </div>
                 )}
@@ -186,10 +186,10 @@ export default function UnifiedDashboard({
         <motion.div
           whileHover={{ scale: 1.05 }}
           onClick={onOpenPasswords}
-          className="bg-gradient-to-br from-red-900/50 to-orange-900/50 border-2 border-orange-500/50 rounded-xl p-4 cursor-pointer group"
+          className="bg-gradient-to-br from-rose-50 to-orange-50 border border-orange-200/60 rounded-xl p-4 cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-3">
-            <Lock className="w-8 h-8 text-orange-400 group-hover:scale-110 transition-transform" />
+            <Lock className="w-8 h-8 text-orange-500 group-hover:scale-110 transition-transform" />
             <span className="text-lg font-bold text-slate-800">{totalPasswords}</span>
           </div>
           <div className="text-sm text-orange-200 font-bold mb-1">Password Salvate</div>
@@ -205,7 +205,7 @@ export default function UnifiedDashboard({
         <motion.div
           whileHover={{ scale: 1.05 }}
           onClick={onOpenCalls}
-          className="bg-gradient-to-br from-indigo-50 to-indigo-50 border-2 border-indigo-300 rounded-xl p-4 cursor-pointer group"
+          className="bg-gradient-to-br from-indigo-50 to-indigo-50 border border-indigo-200/60 rounded-xl p-4 cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-3">
             <Phone className="w-8 h-8 text-indigo-500 group-hover:scale-110 transition-transform" />
@@ -221,7 +221,7 @@ export default function UnifiedDashboard({
         <motion.div
           whileHover={{ scale: 1.05 }}
           onClick={onOpenTasks}
-          className="bg-gradient-to-br from-violet-50 to-pink-50 border-2 border-purple-500/50 rounded-xl p-4 cursor-pointer group"
+          className="bg-gradient-to-br from-violet-50 to-pink-50 border border-violet-200/60 rounded-xl p-4 cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-3">
             <CheckCircle2 className="w-8 h-8 text-purple-400 group-hover:scale-110 transition-transform" />
@@ -237,11 +237,11 @@ export default function UnifiedDashboard({
         <motion.div
           whileHover={{ scale: 1.05 }}
           onClick={onOpenBudget}
-          className={`bg-gradient-to-br ${balance >= 0 ? 'from-green-900/50 to-emerald-900/50 border-green-500/50' : 'from-red-900/50 to-pink-50 border-red-500/50'} border-2 rounded-xl p-4 cursor-pointer group`}
+          className={`bg-gradient-to-br ${balance >= 0 ? 'from-emerald-50 to-teal-50 border-emerald-200/60' : 'from-rose-50 to-pink-50 border-rose-200/60'} border-2 rounded-xl p-4 cursor-pointer group`}
         >
           <div className="flex items-center justify-between mb-3">
-            <DollarSign className={`w-8 h-8 ${balance >= 0 ? 'text-green-400' : 'text-red-400'} group-hover:scale-110 transition-transform`} />
-            <span className={`text-lg font-bold ${balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <DollarSign className={`w-8 h-8 ${balance >= 0 ? 'text-green-400' : 'text-rose-500'} group-hover:scale-110 transition-transform`} />
+            <span className={`text-lg font-bold ${balance >= 0 ? 'text-green-400' : 'text-rose-500'}`}>
               {balance >= 0 ? '+' : ''}{balance.toLocaleString()}€
             </span>
           </div>
@@ -255,7 +255,7 @@ export default function UnifiedDashboard({
       {/* Quick Actions */}
       <div>
         <h2 className="text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-yellow-400" />
+          <Zap className="w-5 h-5 text-yellow-600" />
           Azioni Rapide
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -293,7 +293,7 @@ export default function UnifiedDashboard({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNewTransaction}
-            className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-green-700 hover:to-emerald-700 text-slate-800 rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
+            className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
           >
             <Plus className="w-5 h-5" />
             Nuova Transazione
@@ -304,7 +304,7 @@ export default function UnifiedDashboard({
       {/* Progress & Activity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Task Progress */}
-        <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-purple-500/50 rounded-xl p-5">
+        <div className="bg-gradient-to-br from-white/70 to-slate-50 border border-violet-200/60 rounded-xl p-5">
           <h3 className="text-xl font-bold text-purple-300 mb-4 flex items-center gap-2">
             <Target className="w-5 h-5" />
             Completamento Task
@@ -336,7 +336,7 @@ export default function UnifiedDashboard({
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-indigo-300 rounded-xl p-5">
+        <div className="bg-gradient-to-br from-white/70 to-slate-50 border border-indigo-200/60 rounded-xl p-5">
           <h3 className="text-xl font-bold text-indigo-500 mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5" />
             Attività Recenti
@@ -344,7 +344,7 @@ export default function UnifiedDashboard({
           <div className="space-y-3">
             <div className="flex items-center gap-3 text-sm">
               <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <Lock className="w-4 h-4 text-orange-400" />
+                <Lock className="w-4 h-4 text-orange-500" />
               </div>
               <div className="flex-1">
                 <div className="text-slate-800 font-semibold">{totalPasswords} Password</div>
@@ -365,7 +365,7 @@ export default function UnifiedDashboard({
             {tasksTodayDue > 0 && (
               <div className="flex items-center gap-3 text-sm">
                 <div className="w-8 h-8 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-yellow-400" />
+                  <Calendar className="w-4 h-4 text-yellow-600" />
                 </div>
                 <div className="flex-1">
                   <div className="text-slate-800 font-semibold">{tasksTodayDue} Task</div>
@@ -376,7 +376,7 @@ export default function UnifiedDashboard({
             
             <div className="flex items-center gap-3 text-sm">
               <div className={`w-8 h-8 ${balance >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'} rounded-lg flex items-center justify-center`}>
-                <TrendingUp className={`w-4 h-4 ${balance >= 0 ? 'text-green-400' : 'text-red-400'}`} />
+                <TrendingUp className={`w-4 h-4 ${balance >= 0 ? 'text-green-400' : 'text-rose-500'}`} />
               </div>
               <div className="flex-1">
                 <div className="text-slate-800 font-semibold">{balance >= 0 ? '+' : ''}{balance.toLocaleString()}€</div>
@@ -389,14 +389,14 @@ export default function UnifiedDashboard({
 
       {/* Today's Focus */}
       {(tasksTodayDue > 0 || followUpToday > 0) && (
-        <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-yellow-500/50 rounded-xl p-5">
+        <div className="bg-gradient-to-br from-white/70 to-slate-50 border border-amber-200/60 rounded-xl p-5">
           <h3 className="text-xl font-bold text-yellow-300 mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5" />
             Focus di Oggi
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tasksTodayDue > 0 && (
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+              <div className="bg-yellow-50 border border-yellow-500/30 rounded-lg p-4">
                 <div className="text-yellow-300 font-semibold mb-1">{tasksTodayDue} Task in Scadenza</div>
                 <button
                   onClick={onOpenTasks}
@@ -408,7 +408,7 @@ export default function UnifiedDashboard({
             )}
             
             {followUpToday > 0 && (
-              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+              <div className="bg-orange-50 border border-orange-500/30 rounded-lg p-4">
                 <div className="text-orange-300 font-semibold mb-1">{followUpToday} Follow-up da Fare</div>
                 <button
                   onClick={onOpenCalls}

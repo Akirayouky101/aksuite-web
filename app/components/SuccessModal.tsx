@@ -54,7 +54,7 @@ export default function SuccessModal({
             <div className="hidden" />
             
             {/* Main modal */}
-            <div className="relative bg-white rounded-2xl border border-slate-200 shadow-2xl p-8 overflow-hidden">
+            <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50 p-8 overflow-hidden">
               
               {/* Subtle background glow */}
               <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl" />

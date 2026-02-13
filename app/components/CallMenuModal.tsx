@@ -14,7 +14,7 @@ export default function CallMenuModal({ isOpen, onClose, onSelectNew, onSelectLi
 
   return (
     <div className="fixed inset-0 bg-slate-900/30  z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
@@ -27,7 +27,7 @@ export default function CallMenuModal({ isOpen, onClose, onSelectNew, onSelectLi
           </button>
         </div>
         <div className="p-4 space-y-2">
-          <button onClick={() => { onSelectNew(); onClose() }} className="w-full flex items-center gap-3 p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-all text-left group">
+          <button onClick={() => { onSelectNew(); onClose() }} className="w-full flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white border border-slate-200/40 hover:border-slate-200 transition-all text-left group">
             <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
               <Plus className="w-5 h-5 text-indigo-400" />
             </div>
@@ -36,7 +36,7 @@ export default function CallMenuModal({ isOpen, onClose, onSelectNew, onSelectLi
               <p className="text-xs text-slate-400">Registra una chiamata cliente</p>
             </div>
           </button>
-          <button onClick={() => { onSelectList(); onClose() }} className="w-full flex items-center gap-3 p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-all text-left group">
+          <button onClick={() => { onSelectList(); onClose() }} className="w-full flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white border border-slate-200/40 hover:border-slate-200 transition-all text-left group">
             <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
               <List className="w-5 h-5 text-indigo-500" />
             </div>

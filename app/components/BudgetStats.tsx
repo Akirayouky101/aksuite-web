@@ -105,7 +105,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
             <p className="text-slate-400 text-xs mb-1">Entrate</p>
             <p className="text-2xl font-bold text-green-400">€{monthlyStats.currentIncome.toFixed(0)}</p>
             {monthlyStats.incomeTrend !== 0 && (
-              <div className={`flex items-center gap-1 text-xs mt-1 ${monthlyStats.incomeTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <div className={`flex items-center gap-1 text-xs mt-1 ${monthlyStats.incomeTrend > 0 ? 'text-green-400' : 'text-rose-500'}`}>
                 {monthlyStats.incomeTrend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                 <span>{Math.abs(monthlyStats.incomeTrend).toFixed(1)}%</span>
               </div>
@@ -114,9 +114,9 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
 
           <div className="bg-slate-1000 rounded-lg p-4">
             <p className="text-slate-400 text-xs mb-1">Uscite</p>
-            <p className="text-2xl font-bold text-red-400">€{monthlyStats.currentExpenses.toFixed(0)}</p>
+            <p className="text-2xl font-bold text-rose-500">€{monthlyStats.currentExpenses.toFixed(0)}</p>
             {monthlyStats.expensesTrend !== 0 && (
-              <div className={`flex items-center gap-1 text-xs mt-1 ${monthlyStats.expensesTrend > 0 ? 'text-red-400' : 'text-green-400'}`}>
+              <div className={`flex items-center gap-1 text-xs mt-1 ${monthlyStats.expensesTrend > 0 ? 'text-rose-500' : 'text-green-400'}`}>
                 {monthlyStats.expensesTrend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                 <span>{Math.abs(monthlyStats.expensesTrend).toFixed(1)}%</span>
               </div>
@@ -125,7 +125,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
 
           <div className="bg-slate-1000 rounded-lg p-4">
             <p className="text-slate-400 text-xs mb-1">Bilancio</p>
-            <p className={`text-2xl font-bold ${monthlyStats.currentBalance >= 0 ? 'text-indigo-400' : 'text-orange-400'}`}>
+            <p className={`text-2xl font-bold ${monthlyStats.currentBalance >= 0 ? 'text-indigo-500' : 'text-orange-500'}`}>
               €{monthlyStats.currentBalance.toFixed(0)}
             </p>
           </div>
@@ -160,7 +160,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                       cat.type === 'income' 
                         ? 'bg-green-500/20 text-green-400' 
-                        : 'bg-red-500/20 text-red-400'
+                        : 'bg-red-500/20 text-rose-500'
                     }`}>
                       {index + 1}
                     </div>
@@ -197,14 +197,14 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
       {/* Insight rapidi */}
       <div className="bg-gradient-to-br from-indigo-500/10 to-violet-600/10 rounded-xl p-6 border border-indigo-500/30">
         <div className="flex items-center gap-3 mb-4">
-          <BarChart3 className="w-6 h-6 text-indigo-400" />
+          <BarChart3 className="w-6 h-6 text-indigo-500" />
           <h3 className="text-lg font-semibold text-slate-800">Insight Rapidi</h3>
         </div>
 
         <div className="space-y-3">
           {monthlyStats.currentExpenses > monthlyStats.currentIncome && (
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
-              <p className="text-orange-400 font-medium">⚠️ Attenzione</p>
+            <div className="bg-orange-50 border border-orange-500/30 rounded-lg p-4">
+              <p className="text-orange-500 font-medium">⚠️ Attenzione</p>
               <p className="text-slate-400 text-sm mt-1">
                 Le tue uscite superano le entrate di €{(monthlyStats.currentExpenses - monthlyStats.currentIncome).toFixed(0)} questo mese
               </p>
@@ -221,8 +221,8 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
           )}
 
           {monthlyStats.expensesTrend < -10 && (
-            <div className="bg-blue-500/10 border border-indigo-500/30 rounded-lg p-4">
-              <p className="text-indigo-400 font-medium">👏 Bravissimo!</p>
+            <div className="bg-blue-50 border border-indigo-500/30 rounded-lg p-4">
+              <p className="text-indigo-500 font-medium">👏 Bravissimo!</p>
               <p className="text-slate-400 text-sm mt-1">
                 Hai ridotto le spese del {Math.abs(monthlyStats.expensesTrend).toFixed(1)}% rispetto al mese scorso
               </p>

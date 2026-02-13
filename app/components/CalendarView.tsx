@@ -26,7 +26,7 @@ const MONTHS = [
 ]
 
 const COLORS = {
-  blue: 'bg-blue-500/20 border-indigo-500 text-indigo-400',
+  blue: 'bg-blue-500/20 border-indigo-500 text-indigo-500',
   green: 'bg-green-500/20 border-green-500 text-green-300',
   red: 'bg-red-500/20 border-red-500 text-red-300',
   purple: 'bg-purple-500/20 border-purple-500 text-purple-300',
@@ -161,12 +161,12 @@ export default function CalendarView({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col border border-slate-200"
+            className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col border border-slate-200/60"
           >
             {/* Header */}
-            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-purple-900/30">
+            <div className="p-6 border-b border-slate-200 bg-gradient-to-r ">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
                   📅 Calendario Eventi
                 </h2>
                 <button
@@ -206,7 +206,7 @@ export default function CalendarView({
 
                 <button
                   onClick={onAdd}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-green-700 hover:to-emerald-700 text-slate-800 rounded-lg font-medium transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-violet-600  text-white rounded-xl font-medium transition-all flex items-center gap-2"
                 >
                   <Plus size={20} />
                   Nuovo Evento
@@ -256,7 +256,7 @@ export default function CalendarView({
                               ? 'bg-blue-600 border-indigo-300 text-slate-800 font-bold'
                               : isSelected
                               ? 'bg-purple-600/30 border-purple-400 text-slate-800'
-                              : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                              : 'bg-slate-50/80 border-slate-200 text-slate-500 hover:bg-slate-100'
                           }`}
                         >
                           <div className="text-sm">{date.getDate()}</div>
@@ -293,7 +293,7 @@ export default function CalendarView({
                 </div>
 
                 {/* Events and Tasks List for Selected Date */}
-                <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200">
+                <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200/60">
                   <h4 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <CalendarIcon size={20} />
                     {selectedDate 
@@ -399,7 +399,7 @@ export default function CalendarView({
                               task.is_completed 
                                 ? 'bg-green-500/10 border-green-500' 
                                 : task.priority === 'urgent' || task.priority === 'high'
-                                ? 'bg-red-500/10 border-red-500'
+                                ? 'bg-rose-50 border-red-500'
                                 : 'bg-indigo-50 border-indigo-300'
                             }`}
                           >
@@ -416,7 +416,7 @@ export default function CalendarView({
                                     task.priority === 'urgent' ? 'bg-red-500/20 text-red-300' :
                                     task.priority === 'high' ? 'bg-orange-500/20 text-orange-300' :
                                     task.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                                    'bg-blue-500/20 text-indigo-400'
+                                    'bg-blue-500/20 text-indigo-500'
                                   }`}>
                                     {task.priority === 'urgent' ? '🔴 Urgente' :
                                      task.priority === 'high' ? '🟠 Alta' :
@@ -424,7 +424,7 @@ export default function CalendarView({
                                   </span>
                                   <span className={`px-2 py-0.5 rounded ${
                                     task.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                                    task.status === 'in-progress' ? 'bg-blue-500/20 text-indigo-400' :
+                                    task.status === 'in-progress' ? 'bg-blue-500/20 text-indigo-500' :
                                     'bg-gray-500/20 text-slate-500'
                                   }`}>
                                     {task.status === 'completed' ? '✓ Completato' :

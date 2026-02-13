@@ -92,7 +92,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/40  z-50 overflow-hidden">
+      <div className="fixed inset-0 bg-slate-900/30  z-50 overflow-hidden">
         <div className="w-full h-full overflow-x-hidden overflow-y-auto flex items-center justify-center p-0 sm:p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -104,7 +104,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
           <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-indigo-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-white rounded-none sm:rounded-2xl w-full h-full sm:h-auto overflow-hidden border-0 sm:border border-slate-200 shadow-2xl flex flex-col">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-none sm:rounded-2xl w-full h-full sm:h-auto overflow-hidden border-0 sm:border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-green-50 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -134,7 +134,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                 onClick={() => setActiveTab('transactions')}
                 className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all ${
                   activeTab === 'transactions'
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-slate-800 shadow-lg shadow-indigo-500/25'
                     : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                 }`}
               >
@@ -144,7 +144,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                 onClick={() => setActiveTab('stats')}
                 className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all ${
                   activeTab === 'stats'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-slate-800 shadow-lg shadow-indigo-500/25'
                     : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                 }`}
               >
@@ -174,7 +174,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                       onClick={() => setDateFilter(option.value as DateFilter)}
                       className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         dateFilter === option.value
-                          ? 'bg-green-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                          ? 'bg-green-500 text-slate-800 shadow-lg shadow-indigo-500/25'
                           : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
@@ -225,7 +225,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                       onClick={() => setSelectedCategory('all')}
                       className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         selectedCategory === 'all'
-                          ? 'bg-violet-500 text-white shadow-lg shadow-indigo-200/50'
+                          ? 'bg-violet-500 text-white shadow-lg shadow-indigo-500/25'
                           : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
@@ -237,7 +237,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                         onClick={() => setSelectedCategory(cat)}
                         className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                           selectedCategory === cat
-                            ? 'bg-violet-500 text-white shadow-lg shadow-indigo-200/50'
+                            ? 'bg-violet-500 text-white shadow-lg shadow-indigo-500/25'
                             : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                         }`}
                       >

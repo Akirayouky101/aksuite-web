@@ -127,19 +127,19 @@ export default function NoteModal({
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200"
+            className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200/60"
           >
             {/* Header */}
-            <div className={`${selectedColor.dark} p-6 border-b border-slate-200`}>
+            <div className={`${selectedColor.light} p-6 border-b border-slate-200`}>
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                   📝 {editNote ? 'Modifica Nota' : 'Nuova Nota'}
                 </h2>
                 <button
                   onClick={onClose}
-                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-rose-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
                 >
-                  <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+                  <X className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" />
                 </button>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function NoteModal({
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   placeholder="Inserisci il titolo della nota..."
                   required
                 />
@@ -170,7 +170,7 @@ export default function NoteModal({
                   value={formData.content}
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                   rows={10}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none resize-none"
                   placeholder="Scrivi qui il contenuto della nota..."
                 />
               </div>
@@ -185,7 +185,7 @@ export default function NoteModal({
                   <select
                     value={formData.folder}
                     onChange={(e) => setFormData(prev => ({ ...prev, folder: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   >
                     {FOLDERS.map(folder => (
                       <option key={folder} value={folder}>
@@ -206,7 +206,7 @@ export default function NoteModal({
                     className={`w-full px-4 py-3 rounded-lg font-medium transition-all ${
                       formData.is_pinned
                         ? 'bg-yellow-500 text-black'
-                        : 'bg-slate-50 text-slate-400 border border-slate-200'
+                        : 'bg-slate-50 text-slate-400 border border-slate-200/60'
                     }`}
                   >
                     {formData.is_pinned ? '📌 Fissata' : 'Fissa Nota'}
@@ -227,7 +227,7 @@ export default function NoteModal({
                       onClick={() => setFormData(prev => ({ ...prev, color: color.name }))}
                       className={`w-10 h-10 rounded-lg ${color.class} ${
                         formData.color === color.name
-                          ? 'ring-4 ring-white ring-offset-2 ring-offset-gray-900'
+                          ? 'ring-4 ring-white ring-offset-2 ring-offset-white'
                           : 'opacity-60 hover:opacity-100'
                       } transition-all`}
                     />
@@ -246,7 +246,7 @@ export default function NoteModal({
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    className="flex-1 px-4 py-2 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                     placeholder="Aggiungi tag..."
                   />
                   <button
@@ -261,7 +261,7 @@ export default function NoteModal({
                   {formData.tags.map(tag => (
                     <span
                       key={tag}
-                      className="px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-sm flex items-center gap-2 border border-slate-200"
+                      className="px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-sm flex items-center gap-2 border border-slate-200/60"
                     >
                       #{tag}
                       <button
@@ -306,7 +306,7 @@ export default function NoteModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-lg font-medium transition-colors"
+                  className="px-6 py-3 bg-slate-50 hover:bg-slate-100 text-white rounded-xl font-medium transition-colors"
                 >
                   Annulla
                 </button>

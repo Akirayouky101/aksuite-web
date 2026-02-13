@@ -74,7 +74,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-violet-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-2xl">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-pink-50">
               <div className="flex items-center gap-3">
@@ -128,7 +128,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   onClick={() => setSelectedFilter('all')}
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'all'
-                      ? 'bg-purple-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                      ? 'bg-purple-500 text-slate-800 shadow-lg shadow-indigo-500/25'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                   }`}
                 >
@@ -138,7 +138,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   onClick={() => setSelectedFilter('scheduled')}
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'scheduled'
-                      ? 'bg-blue-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                      ? 'bg-blue-500 text-slate-800 shadow-lg shadow-indigo-500/25'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                   }`}
                 >
@@ -158,7 +158,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   onClick={() => setSelectedFilter('completed')}
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'completed'
-                      ? 'bg-green-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                      ? 'bg-green-500 text-slate-800 shadow-lg shadow-indigo-500/25'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                   }`}
                 >

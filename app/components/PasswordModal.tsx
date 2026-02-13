@@ -94,7 +94,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
               <div className="hidden" />
               
               {/* MAIN MODAL! */}
-              <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden">
+              <div className="relative bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden">
                 {/* SPEED LINES BACKGROUND! */}
                 <div className="absolute inset-0 opacity-10">
                   {[...Array(15)].map((_, i) => (
@@ -185,7 +185,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       required
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                       placeholder="es. es. Il mio account"
                     />
                   </div>
@@ -201,7 +201,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         required
                         value={formData.username}
                         onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                         placeholder="tuo_username"
                       />
                     </div>
@@ -214,7 +214,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       <select
                         value={formData.category}
                         onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                       >
                         {categories.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -251,7 +251,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         required
                         value={formData.password}
                         onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                        className="w-full px-4 py-3 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 pr-12 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                         placeholder="••••••••••••"
                       />
                       <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -278,7 +278,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                       placeholder="https://esempio.com"
                     />
                   </div>
@@ -292,7 +292,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       value={formData.notes}
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                       rows={3}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all resize-none"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all resize-none"
                       placeholder="Aggiungi note, domande di sicurezza, ecc..."
                     />
                   </div>

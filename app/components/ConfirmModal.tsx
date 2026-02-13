@@ -54,7 +54,7 @@ export default function ConfirmModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/40  z-[100] flex items-center justify-center p-4 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/30  z-[100] flex items-center justify-center p-4 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -66,7 +66,7 @@ export default function ConfirmModal({
           <div className="hidden" />
           
           {/* Main modal */}
-          <div className={`relative bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden`}>
+          <div className={`relative bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50 overflow-hidden`}>
             {/* Header with icon */}
             <div className={`bg-slate-50/50 p-6 border-b border-slate-200`}>
               <div className="flex items-center gap-4">

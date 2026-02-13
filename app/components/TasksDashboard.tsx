@@ -78,7 +78,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
           className="bg-gradient-to-br from-indigo-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-4"
         >
           <div className="flex items-center justify-between mb-2">
-            <Circle className="w-8 h-8 text-indigo-400" />
+            <Circle className="w-8 h-8 text-indigo-500" />
             <span className="text-lg font-bold text-slate-800">{totalTasks}</span>
           </div>
           <div className="text-sm text-blue-200 font-bold">Totale Task</div>
@@ -86,10 +86,10 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
 
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-gradient-to-br from-yellow-900/50 to-orange-900/50 border-2 border-yellow-500/50 rounded-xl p-4"
+          className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl p-4"
         >
           <div className="flex items-center justify-between mb-2">
-            <Clock className="w-8 h-8 text-yellow-400" />
+            <Clock className="w-8 h-8 text-yellow-600" />
             <span className="text-lg font-bold text-slate-800">{todoTasks}</span>
           </div>
           <div className="text-sm text-yellow-200 font-bold">Da Fare</div>
@@ -97,7 +97,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
 
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-gradient-to-br from-violet-50 to-pink-50 border-2 border-purple-500/50 rounded-xl p-4"
+          className="bg-gradient-to-br from-violet-50 to-pink-50 border border-violet-200/60 rounded-xl p-4"
         >
           <div className="flex items-center justify-between mb-2">
             <TrendingUp className="w-8 h-8 text-purple-400" />
@@ -108,7 +108,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
 
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-gradient-to-br from-green-900/50 to-emerald-900/50 border-2 border-green-500/50 rounded-xl p-4"
+          className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl p-4"
         >
           <div className="flex items-center justify-between mb-2">
             <CheckCircle2 className="w-8 h-8 text-green-400" />
@@ -125,7 +125,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-red-500/20 to-pink-500/20 border-2 border-red-500/50 rounded-xl p-4 animate-pulse"
+              className="bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-rose-200/60 rounded-xl p-4 animate-pulse"
             >
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-6 h-6 text-red-300" />
@@ -141,7 +141,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-orange-500/20 to-yellow-500/20 border-2 border-orange-500/50 rounded-xl p-4"
+              className="bg-gradient-to-r from-orange-500/20 to-yellow-500/20 border border-orange-200/60 rounded-xl p-4"
             >
               <div className="flex items-center gap-3">
                 <Calendar className="w-6 h-6 text-orange-300" />
@@ -156,7 +156,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
       )}
 
       {/* Progress Bar */}
-      <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-indigo-300 rounded-xl p-5">
+      <div className="bg-gradient-to-br from-white/70 to-slate-50 border border-indigo-200/60 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xl font-bold text-indigo-500">Completamento Totale</h3>
           <span className="text-lg font-bold text-slate-800">{completionRate}%</span>
@@ -177,7 +177,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tasks per Categoria */}
-        <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-purple-500/50 rounded-xl p-5">
+        <div className="bg-gradient-to-br from-white/70 to-slate-50 border border-violet-200/60 rounded-xl p-5">
           <h3 className="text-xl font-bold text-purple-300 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             Task per Categoria
@@ -209,7 +209,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
         </div>
 
         {/* Tasks per Priorità */}
-        <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-orange-500/50 rounded-xl p-5">
+        <div className="bg-gradient-to-br from-white/70 to-slate-50 border border-orange-200/60 rounded-xl p-5">
           <h3 className="text-xl font-bold text-orange-300 mb-4 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             Task Attivi per Priorità

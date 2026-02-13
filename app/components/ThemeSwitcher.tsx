@@ -18,7 +18,7 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center shadow-2xl border-2 border-slate-200"
+        className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center shadow-2xl border-2 border-slate-200"
       >
         <Palette className="w-7 h-7 text-slate-800" strokeWidth={2.5} />
       </motion.button>
@@ -51,7 +51,7 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center">
                   <Zap className="w-6 h-6 text-slate-800" />
                 </div>
                 <div className="text-left flex-1">

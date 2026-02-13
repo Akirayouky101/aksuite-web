@@ -186,7 +186,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
           >
             <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 rounded-3xl hidden" />
             
-            <div className="relative bg-white rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200 shadow-2xl">
+            <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-pink-50">
                 <div className="flex items-center gap-3">
@@ -422,7 +422,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
 
                                 {/* Subtasks Progress */}
                                 {totalSubtasks > 0 && (
-                                  <div className="bg-white rounded-lg p-3">
+                                  <div className="bg-white/60 rounded-lg p-3">
                                     <div className="flex items-center justify-between mb-2">
                                       <span className="text-sm text-slate-400 font-semibold">
                                         Sottotask: {completedSubtasks}/{totalSubtasks}

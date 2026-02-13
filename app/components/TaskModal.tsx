@@ -188,7 +188,7 @@ export default function TaskModal({
         >
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 rounded-3xl hidden" />
           
-          <div className="relative bg-white rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200 shadow-2xl">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
             <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-pink-50">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">
@@ -400,7 +400,7 @@ export default function TaskModal({
                   {formData.subtasks.map((subtask) => (
                     <div
                       key={subtask.id}
-                      className="flex items-center gap-2 p-2 bg-white rounded-lg"
+                      className="flex items-center gap-2 p-2 bg-white/60 rounded-lg"
                     >
                       <button
                         type="button"

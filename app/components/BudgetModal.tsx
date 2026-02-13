@@ -97,7 +97,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
           <div className="absolute -inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-indigo-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-white rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200 shadow-2xl">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-green-50">
             <div className="flex items-center gap-3">

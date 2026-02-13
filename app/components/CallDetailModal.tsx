@@ -76,7 +76,7 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/40  z-[90] flex items-center justify-center p-4 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/30  z-[90] flex items-center justify-center p-4 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 50 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -88,7 +88,7 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
           <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 via-violet-500 to-violet-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50 overflow-hidden max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="bg-gradient-to-r from-indigo-500 to-violet-600 p-6 border-b-2 border-indigo-300 flex-shrink-0">
               <div className="flex items-start justify-between">
@@ -125,7 +125,7 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
             <div className="p-6 space-y-6 overflow-y-auto overflow-x-hidden">
               {/* Type and Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                <div className="bg-white/70 rounded-xl p-4 border border-slate-200/50">
                   <div className="text-sm text-slate-400 mb-1">Tipo Chiamata</div>
                   <div className="text-xl font-bold text-slate-800">
                     {callTypeEmojis[call.call_type]} {callTypeLabels[call.call_type]}
@@ -140,7 +140,7 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
               </div>
 
               {/* Contact Info */}
-              <div className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-xl p-5 border border-slate-200">
+              <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl p-5 border border-slate-200">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                   <User className="w-5 h-5 text-indigo-400" />
                   Informazioni Contatto
@@ -180,7 +180,7 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
               </div>
 
               {/* Notes */}
-              <div className="bg-gradient-to-br from-violet-50 to-blue-900/30 rounded-xl p-5 border border-slate-200">
+              <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-xl p-5 border border-slate-200">
                 <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-purple-400" />
                   Note e Richiesta

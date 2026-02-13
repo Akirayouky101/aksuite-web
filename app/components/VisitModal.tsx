@@ -108,7 +108,7 @@ export default function VisitModal({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-white rounded-2xl border border-slate-200 shadow-2xl"
+          className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50"
         >
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-pink-50 ">

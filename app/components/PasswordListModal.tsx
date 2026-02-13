@@ -108,7 +108,7 @@ export default function PasswordListModal({
               <div className="hidden" />
               
               {/* Main modal */}
-              <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="relative bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="relative z-10 p-6 border-b border-slate-200 bg-white space-y-4">
                   <div className="flex items-center justify-between">
@@ -138,7 +138,7 @@ export default function PasswordListModal({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="🔍 Cerca per titolo, username, sito o categoria..."
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold placeholder-slate-400 focus:border-indigo-400 focus:outline-none transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-slate-400 focus:border-indigo-400 focus:outline-none transition-all"
                     />
                     {searchQuery && (
                       <button
@@ -360,7 +360,7 @@ export default function PasswordListModal({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedPassword(null)}
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] flex items-center justify-center p-4 overflow-y-auto"
+                className="fixed inset-0 bg-slate-900/30 backdrop-blur-md z-[60] flex items-center justify-center p-4 overflow-y-auto"
               >
                 <motion.div
                   initial={{ scale: 0.8, y: 50 }}
@@ -372,7 +372,7 @@ export default function PasswordListModal({
                   <div className="hidden" />
                   
                   {/* Modal content */}
-                  <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl p-8">
+                  <div className="relative bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 p-8">
                     {/* Close button */}
                     <motion.button
                       whileHover={{ scale: 1.1 }}
@@ -397,7 +397,7 @@ export default function PasswordListModal({
                     {/* Details */}
                     <div className="space-y-4">
                       {/* Username */}
-                      <div className="bg-white border border-slate-200 rounded-xl p-4">
+                      <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
                         <div className="text-sm text-indigo-500 font-bold mb-2">👤 USERNAME</div>
                         <div className="flex items-center justify-between gap-3">
                           <code className="text-xl text-slate-800 font-mono flex-1 break-all">
@@ -419,7 +419,7 @@ export default function PasswordListModal({
                       </div>
 
                       {/* Password */}
-                      <div className="bg-white border border-slate-200 rounded-xl p-4">
+                      <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
                         <div className="text-sm text-pink-400 font-bold mb-2">🔐 PASSWORD</div>
                         <div className="flex items-center justify-between gap-3">
                           <code className="text-xl text-slate-800 font-mono flex-1 break-all">
@@ -456,7 +456,7 @@ export default function PasswordListModal({
 
                       {/* Website */}
                       {selectedPassword.website && (
-                        <div className="bg-white border border-slate-200 rounded-xl p-4">
+                        <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
                           <div className="text-sm text-purple-400 font-bold mb-2">🌐 SITO WEB</div>
                           <a 
                             href={selectedPassword.website} 

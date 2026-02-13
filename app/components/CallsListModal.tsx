@@ -179,7 +179,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
           <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 via-violet-500 to-violet-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-2xl">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-indigo-50">
               <div className="flex items-center gap-3">
@@ -316,7 +316,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                   onClick={() => setSelectedFilter('all')}
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'all'
-                      ? 'bg-blue-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                      ? 'bg-blue-500 text-slate-800 shadow-lg shadow-indigo-500/25'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                   }`}
                 >
@@ -336,7 +336,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                   onClick={() => setSelectedFilter('completed')}
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'completed'
-                      ? 'bg-green-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                      ? 'bg-green-500 text-slate-800 shadow-lg shadow-indigo-500/25'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                   }`}
                 >
@@ -466,7 +466,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                             </div>
 
                             {/* Notes */}
-                            <div className="bg-white rounded-lg p-3">
+                            <div className="bg-white/60 rounded-lg p-3">
                               <div className="flex items-start gap-2">
                                 <MessageSquare className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
                                 <p className="text-sm text-slate-400">{call.notes}</p>

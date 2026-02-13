@@ -22,13 +22,13 @@ interface RelationManagerProps {
 }
 
 const ENTITY_CONFIG = {
-  password: { icon: Lock, label: 'Password', color: 'text-indigo-400', bg: 'bg-blue-900/30' },
+  password: { icon: Lock, label: 'Password', color: 'text-indigo-500', bg: 'bg-blue-50' },
   call: { icon: Phone, label: 'Chiamata', color: 'text-indigo-500', bg: 'bg-indigo-50' },
-  visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-400', bg: 'bg-pink-900/30' },
-  task: { icon: CheckCircle2, label: 'Task', color: 'text-purple-400', bg: 'bg-purple-900/30' },
-  note: { icon: FileText, label: 'Nota', color: 'text-yellow-400', bg: 'bg-yellow-900/30' },
-  event: { icon: Calendar, label: 'Evento', color: 'text-indigo-400', bg: 'bg-indigo-900/30' },
-  transaction: { icon: DollarSign, label: 'Transazione', color: 'text-green-400', bg: 'bg-green-900/30' }
+  visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-500', bg: 'bg-pink-50' },
+  task: { icon: CheckCircle2, label: 'Task', color: 'text-violet-500', bg: 'bg-purple-50' },
+  note: { icon: FileText, label: 'Nota', color: 'text-yellow-600', bg: 'bg-yellow-50' },
+  event: { icon: Calendar, label: 'Evento', color: 'text-indigo-500', bg: 'bg-indigo-50' },
+  transaction: { icon: DollarSign, label: 'Transazione', color: 'text-emerald-600', bg: 'bg-green-50' }
 }
 
 const RELATION_TYPES: { value: RelationType; label: string }[] = [
@@ -112,10 +112,10 @@ export default function RelationManager({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden border border-slate-200"
+              className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden border border-slate-200/60"
             >
               {/* Header */}
-              <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-purple-900/30">
+              <div className="p-6 border-b border-slate-200 bg-gradient-to-r ">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     <Link2 size={24} />
@@ -130,7 +130,7 @@ export default function RelationManager({
                 </div>
 
                 {/* Current Item */}
-                <div className={`${ENTITY_CONFIG[currentType].bg} border border-slate-200 rounded-lg p-3 flex items-center gap-3`}>
+                <div className={`${ENTITY_CONFIG[currentType].bg} border border-slate-200/60 rounded-lg p-3 flex items-center gap-3`}>
                   <Icon className={ENTITY_CONFIG[currentType].color} size={20} />
                   <div>
                     <div className="text-xs text-slate-400">{ENTITY_CONFIG[currentType].label} corrente</div>
@@ -159,7 +159,7 @@ export default function RelationManager({
                             className={`p-3 rounded-lg border-2 transition-all ${
                               selectedType === type
                                 ? `${config.bg} border-slate-300`
-                                : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                                : 'bg-slate-50/80 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
                             <TypeIcon className={`${config.color} mx-auto mb-1`} size={20} />
@@ -178,7 +178,7 @@ export default function RelationManager({
                   <select
                     value={relationType}
                     onChange={(e) => setRelationType(e.target.value as RelationType)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400"
+                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-200"
                   >
                     {RELATION_TYPES.map(type => (
                       <option key={type.value} value={type.value}>
@@ -200,7 +200,7 @@ export default function RelationManager({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={`Cerca ${ENTITY_CONFIG[selectedType].label.toLowerCase()}...`}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-400"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-indigo-200"
                     />
                   </div>
                 </div>
@@ -215,7 +215,7 @@ export default function RelationManager({
                     value={relationNotes}
                     onChange={(e) => setRelationNotes(e.target.value)}
                     placeholder="Es: Necessario per completare il task..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-400"
+                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-indigo-200"
                   />
                 </div>
 
@@ -239,7 +239,7 @@ export default function RelationManager({
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
                             onClick={() => handleAddRelation(item.id)}
-                            className={`w-full ${ENTITY_CONFIG[selectedType].bg} hover:bg-slate-100 border border-slate-200 rounded-lg p-3 text-left transition-all flex items-center gap-3`}
+                            className={`w-full ${ENTITY_CONFIG[selectedType].bg} hover:bg-slate-100 border border-slate-200/60 rounded-lg p-3 text-left transition-all flex items-center gap-3`}
                           >
                             <ItemIcon className={ENTITY_CONFIG[selectedType].color} size={18} />
                             <div className="flex-1">

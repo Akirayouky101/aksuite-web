@@ -65,7 +65,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
   const strength = generatedPassword ? calculateStrength(generatedPassword) : null
 
   return (
-    <div className="bg-gradient-to-br from-violet-50 to-blue-900/30 border-2 border-purple-500/50 rounded-xl p-4 space-y-4">
+    <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200/60 rounded-xl p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-purple-300">🎲 Generatore Password</h3>
         <motion.button
