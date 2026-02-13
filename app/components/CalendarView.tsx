@@ -26,7 +26,7 @@ const MONTHS = [
 ]
 
 const COLORS = {
-  blue: 'bg-blue-500/20 border-blue-500 text-blue-300',
+  blue: 'bg-blue-500/20 border-teal-500 text-teal-300',
   green: 'bg-green-500/20 border-green-500 text-green-300',
   red: 'bg-red-500/20 border-red-500 text-red-300',
   purple: 'bg-purple-500/20 border-purple-500 text-purple-300',
@@ -156,7 +156,7 @@ export default function CalendarView({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -188,7 +188,7 @@ export default function CalendarView({
                   </button>
                   <button
                     onClick={goToToday}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-medium transition-colors"
                   >
                     Oggi
                   </button>
@@ -206,7 +206,7 @@ export default function CalendarView({
 
                 <button
                   onClick={onAdd}
-                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
                 >
                   <Plus size={20} />
                   Nuovo Evento
@@ -253,7 +253,7 @@ export default function CalendarView({
                           onClick={() => setSelectedDate(date)}
                           className={`aspect-square rounded-lg border-2 p-2 relative transition-all ${
                             isToday(date)
-                              ? 'bg-blue-600 border-blue-400 text-white font-bold'
+                              ? 'bg-blue-600 border-teal-400 text-white font-bold'
                               : isSelected
                               ? 'bg-purple-600/30 border-purple-400 text-white'
                               : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
@@ -308,7 +308,7 @@ export default function CalendarView({
                       <p>Nessun evento o task per questa data</p>
                       <button
                         onClick={onAdd}
-                        className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                        className="mt-4 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-medium transition-colors"
                       >
                         Aggiungi Evento
                       </button>
@@ -416,7 +416,7 @@ export default function CalendarView({
                                     task.priority === 'urgent' ? 'bg-red-500/20 text-red-300' :
                                     task.priority === 'high' ? 'bg-orange-500/20 text-orange-300' :
                                     task.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                                    'bg-blue-500/20 text-blue-300'
+                                    'bg-blue-500/20 text-teal-300'
                                   }`}>
                                     {task.priority === 'urgent' ? '🔴 Urgente' :
                                      task.priority === 'high' ? '🟠 Alta' :
@@ -424,7 +424,7 @@ export default function CalendarView({
                                   </span>
                                   <span className={`px-2 py-0.5 rounded ${
                                     task.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                                    task.status === 'in-progress' ? 'bg-blue-500/20 text-blue-300' :
+                                    task.status === 'in-progress' ? 'bg-blue-500/20 text-teal-300' :
                                     'bg-gray-500/20 text-gray-300'
                                   }`}>
                                     {task.status === 'completed' ? '✓ Completato' :

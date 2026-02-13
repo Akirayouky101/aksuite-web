@@ -74,7 +74,7 @@ export default function BudgetLimitsViewModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -82,11 +82,10 @@ export default function BudgetLimitsViewModal({
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-5xl w-full overflow-x-hidden"
         >
-          {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-orange-500/30 shadow-2xl">
+          <div className="relative bg-[#131920] rounded-2xl max-h-[90vh] overflow-hidden border-2 border-orange-500/30 shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-orange-900/30 to-red-900/30">
               <div className="flex items-center gap-3">
@@ -95,7 +94,7 @@ export default function BudgetLimitsViewModal({
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">Limiti Budget</h2>
-                  <p className="text-sm text-slate-400">{limits.length} limiti configurati</p>
+                  <p className="text-sm text-white/40">{limits.length} limiti configurati</p>
                 </div>
               </div>
               <button
@@ -140,8 +139,8 @@ export default function BudgetLimitsViewModal({
               {limits.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">⚠️</div>
-                  <p className="text-slate-400 text-lg">Nessun limite impostato</p>
-                  <p className="text-slate-500 text-sm mt-2">Imposta limiti per controllare le tue spese!</p>
+                  <p className="text-white/40 text-lg">Nessun limite impostato</p>
+                  <p className="text-white/30 text-sm mt-2">Imposta limiti per controllare le tue spese!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -174,19 +173,19 @@ export default function BudgetLimitsViewModal({
                                   {statusInfo.text}
                                 </span>
                                 {!limit.is_active && (
-                                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-500/20 text-slate-400">
+                                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-500/20 text-white/40">
                                     ⏸️ Disattivato
                                   </span>
                                 )}
                               </div>
 
-                              <p className="text-slate-400 text-sm mb-3">
+                              <p className="text-white/40 text-sm mb-3">
                                 Limite: €{limit.limit_amount.toFixed(2)} {periodLabels[limit.period]}
                               </p>
 
                               {/* Progress Bar */}
                               <div className="relative">
-                                <div className="w-full bg-slate-800 rounded-full h-3 mb-2">
+                                <div className="w-full bg-white/[0.04] rounded-full h-3 mb-2">
                                   <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${percentage}%` }}
@@ -197,7 +196,7 @@ export default function BudgetLimitsViewModal({
 
                                 {/* Stats */}
                                 <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-300">
+                                  <span className="text-white/50">
                                     Speso: <span className="font-bold text-white">€{limit.current_spending.toFixed(2)}</span>
                                   </span>
                                   <span className={`font-bold ${
@@ -210,7 +209,7 @@ export default function BudgetLimitsViewModal({
                                 </div>
 
                                 {limit.status !== 'exceeded' && (
-                                  <div className="text-slate-400 text-xs mt-1">
+                                  <div className="text-white/40 text-xs mt-1">
                                     Disponibile: <span className="text-white font-semibold">€{limit.remaining_amount.toFixed(2)}</span>
                                   </div>
                                 )}
@@ -236,7 +235,7 @@ export default function BudgetLimitsViewModal({
                               {limit.is_active ? (
                                 <ToggleRight className="w-5 h-5 text-orange-400" />
                               ) : (
-                                <ToggleLeft className="w-5 h-5 text-slate-500" />
+                                <ToggleLeft className="w-5 h-5 text-white/30" />
                               )}
                             </button>
 
@@ -259,12 +258,12 @@ export default function BudgetLimitsViewModal({
 
               {/* Info box */}
               {limits.length > 0 && (
-                <div className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                <div className="mt-6 bg-blue-500/10 border border-teal-500/30 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">💡</div>
                     <div>
-                      <p className="text-blue-300 font-medium mb-1">Suggerimento</p>
-                      <p className="text-slate-400 text-sm">
+                      <p className="text-teal-300 font-medium mb-1">Suggerimento</p>
+                      <p className="text-white/40 text-sm">
                         I limiti ti aiutano a controllare le spese. Riceverai notifiche quando ti avvicini o superi il budget impostato.
                         Puoi disattivare temporaneamente un limite senza eliminarlo.
                       </p>

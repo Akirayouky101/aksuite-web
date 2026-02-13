@@ -22,7 +22,7 @@ interface RelationManagerProps {
 }
 
 const ENTITY_CONFIG = {
-  password: { icon: Lock, label: 'Password', color: 'text-blue-400', bg: 'bg-blue-900/30' },
+  password: { icon: Lock, label: 'Password', color: 'text-teal-400', bg: 'bg-blue-900/30' },
   call: { icon: Phone, label: 'Chiamata', color: 'text-cyan-400', bg: 'bg-cyan-900/30' },
   visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-400', bg: 'bg-pink-900/30' },
   task: { icon: CheckCircle2, label: 'Task', color: 'text-purple-400', bg: 'bg-purple-900/30' },
@@ -107,7 +107,7 @@ export default function RelationManager({
 
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -178,7 +178,7 @@ export default function RelationManager({
                   <select
                     value={relationType}
                     onChange={(e) => setRelationType(e.target.value as RelationType)}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
                   >
                     {RELATION_TYPES.map(type => (
                       <option key={type.value} value={type.value}>
@@ -200,7 +200,7 @@ export default function RelationManager({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={`Cerca ${ENTITY_CONFIG[selectedType].label.toLowerCase()}...`}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-teal-500"
                     />
                   </div>
                 </div>
@@ -215,7 +215,7 @@ export default function RelationManager({
                     value={relationNotes}
                     onChange={(e) => setRelationNotes(e.target.value)}
                     placeholder="Es: Necessario per completare il task..."
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, LayoutDashboard,
   DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
-  TrendingUp, Clock, Calendar, Menu, X
+  TrendingUp, Clock, Calendar, Menu, X, Shield, Zap, ArrowUpRight
 } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
@@ -43,7 +43,6 @@ import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
 export default function Home() {
-  // Modal states
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isListModalOpen, setIsListModalOpen] = useState(false)
@@ -69,7 +68,6 @@ export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Data states
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const [editingNote, setEditingNote] = useState<any>(null)
@@ -77,7 +75,6 @@ export default function Home() {
   const [editingCall, setEditingCall] = useState<any>(null)
   const [editingVisit, setEditingVisit] = useState<any>(null)
 
-  // Hooks
   const { passwords, addPassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
@@ -91,7 +88,6 @@ export default function Home() {
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
-  // Computed
   const stats = getStats()
   const pendingCalls = calls.filter(c => c.status === 'pending').length
   const activeTasks = tasks.filter(t => !t.is_completed).length
@@ -101,7 +97,6 @@ export default function Home() {
     return eventDate.toDateString() === today.toDateString()
   }).length
 
-  // Effects
   useEffect(() => {
     const guard = initConsoleGuard()
     setConsoleGuard(guard)
@@ -127,411 +122,368 @@ export default function Home() {
     await supabase.auth.signOut()
   }
 
-  // ── LOGIN SCREEN ──
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+      <div className="min-h-screen bg-[#0a0e14] flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl" />
+        <div className="w-full max-w-sm relative z-10">
+          <div className="bg-[#131920]/80 backdrop-blur-xl rounded-2xl border border-white/[0.06] p-8 shadow-2xl">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/20">
-                <Lock className="w-8 h-8 text-white" />
+              <div className="w-14 h-14 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/20">
+                <Shield className="w-7 h-7 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">AK Suite</h1>
-              <p className="text-slate-500 mt-2">Accedi al tuo pannello di controllo</p>
+              <h1 className="text-2xl font-bold text-white tracking-tight">AK Suite</h1>
+              <p className="text-white/40 mt-2 text-sm">Gestione professionale sicura</p>
             </div>
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+              className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 active:scale-[0.98]"
             >
               <LogIn className="w-5 h-5" />
               Accedi
             </button>
-            <p className="text-center text-sm text-slate-400 mt-6">Ambiente protetto e sicuro</p>
+            <p className="text-center text-xs text-white/20 mt-6">Ambiente crittografato end-to-end</p>
           </div>
         </div>
-        <AuthModal
-          isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
-          onSuccess={() => setIsAuthModalOpen(false)}
-        />
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onSuccess={() => setIsAuthModalOpen(false)} />
       </div>
     )
   }
 
-  // ── NAV CONFIG ──
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, onClick: () => setIsDashboardOpen(true), color: 'text-blue-600' },
-    { id: 'passwords', label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), color: 'text-amber-600' },
-    { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => setIsCallMenuModalOpen(true), color: 'text-green-600', badge: pendingCalls },
-    { id: 'visits', label: 'Visite', icon: UserCheck, onClick: () => setIsVisitsListModalOpen(true), color: 'text-purple-600' },
-    { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => setIsTasksListModalOpen(true), color: 'text-cyan-600', badge: activeTasks },
-    { id: 'notes', label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), color: 'text-yellow-600' },
-    { id: 'calendar', label: 'Calendario', icon: Calendar, onClick: () => setIsCalendarViewOpen(true), color: 'text-indigo-600', badge: todayEvents },
-    { id: 'budget', label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), color: 'text-emerald-600' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, onClick: () => setIsDashboardOpen(true), accent: 'from-teal-400 to-cyan-400' },
+    { id: 'passwords', label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), accent: 'from-amber-400 to-orange-400' },
+    { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => setIsCallMenuModalOpen(true), accent: 'from-green-400 to-emerald-400', badge: pendingCalls },
+    { id: 'visits', label: 'Visite', icon: UserCheck, onClick: () => setIsVisitsListModalOpen(true), accent: 'from-violet-400 to-purple-400' },
+    { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => setIsTasksListModalOpen(true), accent: 'from-cyan-400 to-blue-400', badge: activeTasks },
+    { id: 'notes', label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), accent: 'from-yellow-400 to-amber-400' },
+    { id: 'calendar', label: 'Calendario', icon: Calendar, onClick: () => setIsCalendarViewOpen(true), accent: 'from-indigo-400 to-violet-400', badge: todayEvents },
+    { id: 'budget', label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), accent: 'from-emerald-400 to-teal-400' },
   ]
 
   const quickActions = [
-    { label: 'Nuova Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true), color: 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200' },
-    { label: 'Nuovo Task', icon: CheckSquare, onClick: () => setIsTaskModalOpen(true), color: 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border-cyan-200' },
-    { label: 'Nuova Nota', icon: StickyNote, onClick: () => { setEditingNote(null); setIsNoteModalOpen(true) }, color: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border-yellow-200' },
-    { label: 'Nuovo Evento', icon: Calendar, onClick: () => { setEditingEvent(null); setIsEventModalOpen(true) }, color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200' },
-    { label: 'Nuova Visita', icon: UserCheck, onClick: () => { setEditingVisit(null); setIsVisitModalOpen(true) }, color: 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200' },
-    { label: 'Transazione', icon: DollarSign, onClick: () => setIsBudgetModalOpen(true), color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200' },
+    { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true), cls: 'text-green-400 hover:bg-green-400/10 border-green-400/20' },
+    { label: 'Task', icon: CheckSquare, onClick: () => setIsTaskModalOpen(true), cls: 'text-cyan-400 hover:bg-cyan-400/10 border-cyan-400/20' },
+    { label: 'Nota', icon: StickyNote, onClick: () => { setEditingNote(null); setIsNoteModalOpen(true) }, cls: 'text-yellow-400 hover:bg-yellow-400/10 border-yellow-400/20' },
+    { label: 'Evento', icon: Calendar, onClick: () => { setEditingEvent(null); setIsEventModalOpen(true) }, cls: 'text-indigo-400 hover:bg-indigo-400/10 border-indigo-400/20' },
+    { label: 'Visita', icon: UserCheck, onClick: () => { setEditingVisit(null); setIsVisitModalOpen(true) }, cls: 'text-violet-400 hover:bg-violet-400/10 border-violet-400/20' },
+    { label: 'Transazione', icon: DollarSign, onClick: () => setIsBudgetModalOpen(true), cls: 'text-emerald-400 hover:bg-emerald-400/10 border-emerald-400/20' },
   ]
 
-  // ── MAIN LAYOUT ──
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* TOP BAR */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 lg:px-6 h-16">
+    <div className="min-h-screen bg-[#0a0e14] text-white">
+      <header className="bg-[#0d1117]/80 backdrop-blur-xl border-b border-white/[0.06] sticky top-0 z-40">
+        <div className="flex items-center justify-between px-4 lg:px-6 h-14">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
-              title="Menu"
-            >
-              <Menu className="w-5 h-5 text-slate-600" />
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 rounded-lg hover:bg-white/5 transition-colors" title="Menu">
+              <Menu className="w-5 h-5 text-white/60" />
             </button>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-                <LayoutDashboard className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-lg flex items-center justify-center">
+                <Zap className="w-4 h-4 text-white" />
               </div>
-              <span className="text-lg font-bold text-slate-900">AK Suite</span>
+              <span className="text-base font-bold text-white tracking-tight">AK Suite</span>
+              <span className="hidden sm:inline text-xs text-white/20 font-medium ml-1">v2.0</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-slate-600" />
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs text-white/40">Online</span>
+            </div>
+            <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 text-sm text-white/50 hover:text-white/80 hover:bg-white/5 rounded-lg transition-all">
+              <div className="w-7 h-7 bg-white/[0.06] rounded-full flex items-center justify-center border border-white/[0.06]">
+                <User className="w-3.5 h-3.5 text-white/50" />
               </div>
-              <span className="hidden sm:inline font-medium">{userProfile?.full_name || user.email}</span>
-              <LogOut className="w-4 h-4 text-slate-400" />
+              <span className="hidden sm:inline text-xs font-medium">{userProfile?.full_name || user.email}</span>
+              <LogOut className="w-3.5 h-3.5 text-white/30" />
             </button>
           </div>
         </div>
       </header>
 
       <div className="flex">
-        {/* SIDEBAR OVERLAY (mobile) */}
         {sidebarOpen && (
-          <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
         )}
 
-        {/* SIDEBAR */}
-        <aside className={`fixed lg:sticky top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white border-r border-slate-200 z-40 transition-transform duration-200 overflow-y-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-          <nav className="p-3 space-y-1">
-            <p className="px-3 pt-2 pb-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Navigazione</p>
+        <aside className={`fixed lg:sticky top-14 left-0 h-[calc(100vh-3.5rem)] w-60 bg-[#0d1117]/95 backdrop-blur-xl border-r border-white/[0.06] z-40 transition-transform duration-200 overflow-y-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+          <nav className="p-3 space-y-0.5">
+            <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-white/20 uppercase tracking-[0.15em]">Navigazione</p>
             {navItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => { item.onClick(); setSidebarOpen(false) }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors group"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium text-white/50 hover:text-white hover:bg-white/[0.04] transition-all group"
               >
-                <item.icon className={`w-5 h-5 ${item.color}`} />
+                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.accent} flex items-center justify-center opacity-70 group-hover:opacity-100 transition-opacity shadow-sm`}>
+                  <item.icon className="w-4 h-4 text-white" />
+                </div>
                 <span className="flex-1">{item.label}</span>
                 {item.badge && item.badge > 0 ? (
-                  <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">
+                  <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-bold border border-teal-500/20">
                     {item.badge}
                   </span>
                 ) : null}
-                <ChevronRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             ))}
-
-            <div className="border-t border-slate-100 my-3" />
-            <p className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Crea Nuovo</p>
+            <div className="border-t border-white/[0.04] my-3" />
+            <p className="px-3 pt-1 pb-2 text-[10px] font-semibold text-white/20 uppercase tracking-[0.15em]">Crea Nuovo</p>
             {quickActions.map((action, i) => (
               <button
                 key={i}
                 onClick={() => { action.onClick(); setSidebarOpen(false) }}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs text-white/30 hover:text-white/60 transition-all border border-transparent hover:border-white/[0.04]"
               >
-                <Plus className="w-4 h-4 text-slate-400" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>{action.label}</span>
               </button>
             ))}
           </nav>
         </aside>
 
-        {/* MAIN CONTENT */}
-        <main className="flex-1 p-4 lg:p-6 min-h-[calc(100vh-4rem)]">
-          {/* Welcome */}
+        <main className="flex-1 p-4 lg:p-6 min-h-[calc(100vh-3.5rem)]">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">
-              Buongiorno{userProfile?.full_name ? `, ${userProfile.full_name}` : ''}
+            <h2 className="text-xl font-bold text-white/90 tracking-tight">
+              Bentornato{userProfile?.full_name ? `, ${userProfile.full_name}` : ''}
             </h2>
-            <p className="text-slate-500 mt-1">Ecco il riepilogo della tua giornata</p>
+            <p className="text-white/30 mt-1 text-sm">Panoramica operativa</p>
           </div>
 
-          {/* STATS CARDS */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <button onClick={() => setIsCallMenuModalOpen(true)} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:shadow-md transition-shadow">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <button onClick={() => setIsCallMenuModalOpen(true)} className="group bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] p-4 text-left hover:border-green-400/20 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                  <Phone className="w-5 h-5 text-green-600" />
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/10">
+                  <Phone className="w-4 h-4 text-white" />
                 </div>
-                {pendingCalls > 0 && (
-                  <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">{pendingCalls} in attesa</span>
-                )}
+                {pendingCalls > 0 && <span className="text-[10px] font-semibold text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">{pendingCalls} pending</span>}
               </div>
-              <p className="text-2xl font-bold text-slate-900">{calls.length}</p>
-              <p className="text-sm text-slate-500">Chiamate</p>
+              <p className="text-2xl font-bold text-white/90 tabular-nums">{calls.length}</p>
+              <p className="text-xs text-white/30 mt-0.5">Chiamate</p>
             </button>
-
-            <button onClick={() => setIsTasksListModalOpen(true)} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:shadow-md transition-shadow">
+            <button onClick={() => setIsTasksListModalOpen(true)} className="group bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] p-4 text-left hover:border-cyan-400/20 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center">
-                  <CheckSquare className="w-5 h-5 text-cyan-600" />
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/10">
+                  <CheckSquare className="w-4 h-4 text-white" />
                 </div>
-                {activeTasks > 0 && (
-                  <span className="text-xs font-medium text-cyan-600 bg-cyan-50 px-2 py-1 rounded-full">{activeTasks} attivi</span>
-                )}
+                {activeTasks > 0 && <span className="text-[10px] font-semibold text-cyan-300 bg-cyan-400/10 px-2 py-0.5 rounded-full border border-cyan-400/20">{activeTasks} attivi</span>}
               </div>
-              <p className="text-2xl font-bold text-slate-900">{tasks.length}</p>
-              <p className="text-sm text-slate-500">Task</p>
+              <p className="text-2xl font-bold text-white/90 tabular-nums">{tasks.length}</p>
+              <p className="text-xs text-white/30 mt-0.5">Task</p>
             </button>
-
-            <button onClick={() => setIsCalendarViewOpen(true)} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:shadow-md transition-shadow">
+            <button onClick={() => setIsCalendarViewOpen(true)} className="group bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] p-4 text-left hover:border-indigo-400/20 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-indigo-600" />
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/10">
+                  <Calendar className="w-4 h-4 text-white" />
                 </div>
-                {todayEvents > 0 && (
-                  <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{todayEvents} oggi</span>
-                )}
+                {todayEvents > 0 && <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-400/10 px-2 py-0.5 rounded-full border border-indigo-400/20">{todayEvents} oggi</span>}
               </div>
-              <p className="text-2xl font-bold text-slate-900">{events.length}</p>
-              <p className="text-sm text-slate-500">Eventi</p>
+              <p className="text-2xl font-bold text-white/90 tabular-nums">{events.length}</p>
+              <p className="text-xs text-white/30 mt-0.5">Eventi</p>
             </button>
-
-            <button onClick={() => setIsBudgetMenuModalOpen(true)} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:shadow-md transition-shadow">
+            <button onClick={() => setIsBudgetMenuModalOpen(true)} className="group bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] p-4 text-left hover:border-emerald-400/20 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-emerald-600" />
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                  <DollarSign className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <p className={`text-2xl font-bold ${stats.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              <p className={`text-2xl font-bold tabular-nums ${stats.balance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 {stats.balance >= 0 ? '+' : ''}{stats.balance.toFixed(0)}€
               </p>
-              <p className="text-sm text-slate-500">Bilancio</p>
+              <p className="text-xs text-white/30 mt-0.5">Bilancio</p>
             </button>
           </div>
 
-          {/* QUICK ACTIONS */}
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Azioni Rapide</h3>
+            <h3 className="text-[10px] font-semibold text-white/20 uppercase tracking-[0.15em] mb-3">Azioni Rapide</h3>
             <div className="flex flex-wrap gap-2">
               {quickActions.map((action, i) => (
-                <button
-                  key={i}
-                  onClick={action.onClick}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${action.color}`}
-                >
-                  <action.icon className="w-4 h-4" />
+                <button key={i} onClick={action.onClick} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${action.cls}`}>
+                  <action.icon className="w-3.5 h-3.5" />
                   {action.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* TWO COLUMN PANELS */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Chiamate recenti */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-green-600" />
-                  Chiamate Recenti
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+                <h3 className="text-sm font-semibold text-white/70 flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-green-400" /> Chiamate Recenti
                 </h3>
-                <button onClick={() => setIsCallsListModalOpen(true)} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  Vedi tutte
+                <button onClick={() => setIsCallsListModalOpen(true)} className="text-xs text-teal-400 hover:text-teal-300 font-medium flex items-center gap-0.5">
+                  Tutte <ArrowUpRight className="w-3 h-3" />
                 </button>
               </div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-white/[0.03]">
                 {calls.slice(0, 4).map(call => (
-                  <div key={call.id} className="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div key={call.id} className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-slate-900 truncate">{call.caller_name}</p>
-                      <p className="text-sm text-slate-500 truncate">{call.company || call.phone || '\u2014'}</p>
+                      <p className="text-sm font-medium text-white/80 truncate">{call.caller_name}</p>
+                      <p className="text-xs text-white/30 truncate">{call.company || call.phone || '\u2014'}</p>
                     </div>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ml-3 ${
-                      call.status === 'completed' ? 'bg-green-50 text-green-700' :
-                      call.status === 'cancelled' ? 'bg-red-50 text-red-700' :
-                      'bg-amber-50 text-amber-700'
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-3 border ${
+                      call.status === 'completed' ? 'text-emerald-300 bg-emerald-400/10 border-emerald-400/20' :
+                      call.status === 'cancelled' ? 'text-red-300 bg-red-400/10 border-red-400/20' :
+                      'text-amber-300 bg-amber-400/10 border-amber-400/20'
                     }`}>
                       {call.status === 'completed' ? 'Completata' : call.status === 'cancelled' ? 'Annullata' : 'In attesa'}
                     </span>
                   </div>
                 ))}
                 {calls.length === 0 && (
-                  <div className="px-5 py-8 text-center text-slate-400">
-                    <Phone className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Nessuna chiamata</p>
+                  <div className="px-4 py-8 text-center">
+                    <Phone className="w-6 h-6 mx-auto mb-2 text-white/10" />
+                    <p className="text-xs text-white/20">Nessuna chiamata</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Task attivi */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                  <CheckSquare className="w-4 h-4 text-cyan-600" />
-                  Task Attivi
+            <div className="bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+                <h3 className="text-sm font-semibold text-white/70 flex items-center gap-2">
+                  <CheckSquare className="w-3.5 h-3.5 text-cyan-400" /> Task Attivi
                 </h3>
-                <button onClick={() => setIsTasksListModalOpen(true)} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  Vedi tutti
+                <button onClick={() => setIsTasksListModalOpen(true)} className="text-xs text-teal-400 hover:text-teal-300 font-medium flex items-center gap-0.5">
+                  Tutti <ArrowUpRight className="w-3 h-3" />
                 </button>
               </div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-white/[0.03]">
                 {tasks.filter(t => !t.is_completed).slice(0, 4).map(task => (
-                  <div key={task.id} className="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div key={task.id} className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-slate-900 truncate">{task.title}</p>
+                      <p className="text-sm font-medium text-white/80 truncate">{task.title}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {task.due_date && (
-                          <span className="text-xs text-slate-500 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                          <span className="text-[10px] text-white/30 flex items-center gap-0.5">
+                            <Clock className="w-2.5 h-2.5" />
                             {new Date(task.due_date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
                           </span>
                         )}
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          task.priority === 'urgent' ? 'bg-red-50 text-red-700' :
-                          task.priority === 'high' ? 'bg-orange-50 text-orange-700' :
-                          task.priority === 'medium' ? 'bg-yellow-50 text-yellow-700' :
-                          'bg-slate-100 text-slate-600'
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
+                          task.priority === 'urgent' ? 'text-red-300 bg-red-400/10 border-red-400/20' :
+                          task.priority === 'high' ? 'text-orange-300 bg-orange-400/10 border-orange-400/20' :
+                          task.priority === 'medium' ? 'text-yellow-300 bg-yellow-400/10 border-yellow-400/20' :
+                          'text-white/30 bg-white/5 border-white/10'
                         }`}>
                           {task.priority === 'urgent' ? 'Urgente' : task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Media' : 'Bassa'}
                         </span>
                       </div>
                     </div>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ml-3 ${
-                      task.status === 'in-progress' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-3 border ${
+                      task.status === 'in-progress' ? 'text-blue-300 bg-blue-400/10 border-blue-400/20' : 'text-white/30 bg-white/5 border-white/10'
                     }`}>
                       {task.status === 'in-progress' ? 'In corso' : 'Da fare'}
                     </span>
                   </div>
                 ))}
                 {tasks.filter(t => !t.is_completed).length === 0 && (
-                  <div className="px-5 py-8 text-center text-slate-400">
-                    <CheckSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Nessun task attivo</p>
+                  <div className="px-4 py-8 text-center">
+                    <CheckSquare className="w-6 h-6 mx-auto mb-2 text-white/10" />
+                    <p className="text-xs text-white/20">Nessun task attivo</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Note recenti */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                  <StickyNote className="w-4 h-4 text-yellow-600" />
-                  Note Recenti
+            <div className="bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+                <h3 className="text-sm font-semibold text-white/70 flex items-center gap-2">
+                  <StickyNote className="w-3.5 h-3.5 text-yellow-400" /> Note Recenti
                 </h3>
-                <button onClick={() => setIsNotesListModalOpen(true)} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  Vedi tutte
+                <button onClick={() => setIsNotesListModalOpen(true)} className="text-xs text-teal-400 hover:text-teal-300 font-medium flex items-center gap-0.5">
+                  Tutte <ArrowUpRight className="w-3 h-3" />
                 </button>
               </div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-white/[0.03]">
                 {notes.slice(0, 3).map(note => (
-                  <div
-                    key={note.id}
-                    onClick={() => { setEditingNote(note); setIsNoteModalOpen(true) }}
-                    className="px-5 py-3 hover:bg-slate-50 transition-colors cursor-pointer"
-                  >
-                    <p className="font-medium text-slate-900 truncate">{note.title}</p>
-                    <p className="text-sm text-slate-500 truncate mt-0.5">{note.content?.replace(/<[^>]*>/g, '').substring(0, 80) || '\u2014'}</p>
+                  <div key={note.id} onClick={() => { setEditingNote(note); setIsNoteModalOpen(true) }} className="px-4 py-3 hover:bg-white/[0.02] transition-colors cursor-pointer">
+                    <p className="text-sm font-medium text-white/80 truncate">{note.title}</p>
+                    <p className="text-xs text-white/25 truncate mt-0.5">{note.content?.replace(/<[^>]*>/g, '').substring(0, 80) || '\u2014'}</p>
                   </div>
                 ))}
                 {notes.length === 0 && (
-                  <div className="px-5 py-8 text-center text-slate-400">
-                    <StickyNote className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Nessuna nota</p>
+                  <div className="px-4 py-8 text-center">
+                    <StickyNote className="w-6 h-6 mx-auto mb-2 text-white/10" />
+                    <p className="text-xs text-white/20">Nessuna nota</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Visite recenti */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-purple-600" />
-                  Visite Recenti
+            <div className="bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+                <h3 className="text-sm font-semibold text-white/70 flex items-center gap-2">
+                  <UserCheck className="w-3.5 h-3.5 text-violet-400" /> Visite Recenti
                 </h3>
-                <button onClick={() => setIsVisitsListModalOpen(true)} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  Vedi tutte
+                <button onClick={() => setIsVisitsListModalOpen(true)} className="text-xs text-teal-400 hover:text-teal-300 font-medium flex items-center gap-0.5">
+                  Tutte <ArrowUpRight className="w-3 h-3" />
                 </button>
               </div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-white/[0.03]">
                 {visits.slice(0, 3).map(visit => (
-                  <div key={visit.id} className="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div key={visit.id} className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-slate-900 truncate">{visit.visitor_name}</p>
-                      <p className="text-sm text-slate-500 truncate">{visit.company || visit.visit_type}</p>
+                      <p className="text-sm font-medium text-white/80 truncate">{visit.visitor_name}</p>
+                      <p className="text-xs text-white/30 truncate">{visit.company || visit.visit_type}</p>
                     </div>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ml-3 ${
-                      visit.status === 'completed' ? 'bg-green-50 text-green-700' :
-                      visit.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
-                      visit.status === 'cancelled' ? 'bg-red-50 text-red-700' :
-                      'bg-slate-100 text-slate-600'
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-3 border ${
+                      visit.status === 'completed' ? 'text-emerald-300 bg-emerald-400/10 border-emerald-400/20' :
+                      visit.status === 'in_progress' ? 'text-blue-300 bg-blue-400/10 border-blue-400/20' :
+                      visit.status === 'cancelled' ? 'text-red-300 bg-red-400/10 border-red-400/20' :
+                      'text-white/30 bg-white/5 border-white/10'
                     }`}>
                       {visit.status === 'completed' ? 'Completata' : visit.status === 'in_progress' ? 'In corso' : visit.status === 'cancelled' ? 'Annullata' : 'Programmata'}
                     </span>
                   </div>
                 ))}
                 {visits.length === 0 && (
-                  <div className="px-5 py-8 text-center text-slate-400">
-                    <UserCheck className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Nessuna visita</p>
+                  <div className="px-4 py-8 text-center">
+                    <UserCheck className="w-6 h-6 mx-auto mb-2 text-white/10" />
+                    <p className="text-xs text-white/20">Nessuna visita</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* PASSWORD + BILANCIO ROW */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <button onClick={() => setIsMenuModalOpen(true)} className="bg-white rounded-xl border border-slate-200 p-5 text-left hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-amber-600" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+            <button onClick={() => setIsMenuModalOpen(true)} className="group bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] p-4 text-left hover:border-amber-400/20 transition-all">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/10">
+                  <Lock className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Vault Password</h3>
-                  <p className="text-sm text-slate-500">{passwords.length} password salvate</p>
+                  <h3 className="text-sm font-semibold text-white/80">Vault Password</h3>
+                  <p className="text-xs text-white/30">{passwords.length} salvate</p>
                 </div>
               </div>
-              <span className="flex items-center text-sm text-blue-600 font-medium">
-                Gestisci <ChevronRight className="w-4 h-4 ml-1" />
+              <span className="flex items-center text-xs text-teal-400 font-medium group-hover:text-teal-300">
+                Gestisci <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
               </span>
             </button>
-
-            <button onClick={() => setIsBudgetMenuModalOpen(true)} className="bg-white rounded-xl border border-slate-200 p-5 text-left hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+            <button onClick={() => setIsBudgetMenuModalOpen(true)} className="group bg-[#131920]/60 backdrop-blur rounded-xl border border-white/[0.06] p-4 text-left hover:border-emerald-400/20 transition-all">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                  <TrendingUp className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Bilancio Familiare</h3>
-                  <p className="text-sm text-slate-500">{transactions.length} transazioni</p>
+                  <h3 className="text-sm font-semibold text-white/80">Bilancio Familiare</h3>
+                  <p className="text-xs text-white/30">{transactions.length} transazioni</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-sm">
-                <span className="text-green-600 font-medium">+{stats.totalIncome.toFixed(0)}€ entrate</span>
-                <span className="text-red-500 font-medium">-{stats.totalExpenses.toFixed(0)}€ uscite</span>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="text-emerald-400 font-medium">+{stats.totalIncome.toFixed(0)}€</span>
+                <span className="text-red-400 font-medium">-{stats.totalExpenses.toFixed(0)}€</span>
               </div>
             </button>
           </div>
         </main>
       </div>
 
-      {/* ALL MODALS */}
       <PasswordMenuModal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}
         onSelectNew={() => setIsPasswordModalOpen(true)} onSelectList={() => setIsListModalOpen(true)} />
       <PasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)}
@@ -613,12 +565,12 @@ export default function Home() {
         onUpdate={updateTask} onAdd={async (task) => { await addTask(task) }} />
 
       {isDashboardOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-gray-900 rounded-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-[#0d1117] rounded-2xl border border-white/[0.06] relative">
             <button onClick={() => setIsDashboardOpen(false)}
-              className="absolute top-4 right-4 z-10 w-10 h-10 rounded-xl bg-white/10 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 flex items-center justify-center transition-all"
+              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/30 flex items-center justify-center transition-all"
               title="Chiudi">
-              <X className="w-5 h-5 text-white" />
+              <X className="w-4 h-4 text-white/60" />
             </button>
             <UnifiedDashboard passwords={passwords} calls={calls} tasks={tasks} transactions={transactions}
               onOpenPasswords={() => { setIsDashboardOpen(false); setIsMenuModalOpen(true) }}

@@ -35,7 +35,7 @@ interface TasksListModalProps {
 
 const statusColors = {
   todo: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', text: 'text-yellow-300' },
-  'in-progress': { bg: 'bg-blue-500/20', border: 'border-blue-500/30', text: 'text-blue-300' },
+  'in-progress': { bg: 'bg-blue-500/20', border: 'border-teal-500/30', text: 'text-teal-300' },
   completed: { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-300' }
 }
 
@@ -176,7 +176,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
   return (
     <>
       <AnimatePresence>
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-x-hidden">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-x-hidden">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -186,7 +186,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
           >
             <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl blur-2xl opacity-30" />
             
-            <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-purple-500/30 shadow-2xl">
+            <div className="relative bg-[#131920] rounded-2xl max-h-[90vh] overflow-hidden border border-white/[0.08] shadow-2xl">
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-purple-900/30 to-pink-900/30">
                 <div className="flex items-center gap-3">
@@ -195,7 +195,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-white">Task Manager</h2>
-                    <p className="text-sm text-slate-400">{tasks.length} task registrati</p>
+                    <p className="text-sm text-white/40">{tasks.length} task registrati</p>
                   </div>
                 </div>
                 <button
@@ -203,23 +203,23 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                   className="group relative w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
                   aria-label="Chiudi"
                 >
-                  <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+                  <X className="w-5 h-5 text-white/40 group-hover:text-red-400 transition-colors" />
                 </button>
               </div>
 
               {/* New Task Button + Dashboard Toggle */}
-              <div className="p-4 border-b border-white/10 bg-slate-800/50 space-y-2">
+              <div className="p-4 border-b border-white/10 bg-white/[0.03] space-y-2">
                 <button
                   onClick={() => setShowTaskModal(true)}
-                  className="w-full px-4 py-3 rounded-lg font-bold text-base transition-all bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/30 flex items-center justify-center gap-2"
+                  className="w-full px-4 py-3 rounded-lg font-bold text-base transition-all bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/30 flex items-center justify-center gap-2"
                 >
                   <Plus className="w-5 h-5" />
-                  ✨ Nuovo Task
+                  Nuovo Task
                 </button>
                 
                 <button
                   onClick={() => setShowDashboard(!showDashboard)}
-                  className="w-full px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                  className="w-full px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-purple-700 hover:to-pink-700 text-white"
                 >
                   {showDashboard ? '📊 Nascondi Dashboard' : '📊 Mostra Dashboard'}
                 </button>
@@ -227,27 +227,27 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
 
               {/* Dashboard */}
               {showDashboard && (
-                <div className="p-6 border-b border-white/10 bg-slate-800/30">
+                <div className="p-6 border-b border-white/10 bg-white/[0.04]/30">
                   <TasksDashboard tasks={tasks} />
                 </div>
               )}
 
               {/* Search and Export */}
-              <div className="p-4 border-b border-white/10 bg-slate-800/50 space-y-3">
+              <div className="p-4 border-b border-white/10 bg-white/[0.03] space-y-3">
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Cerca per titolo, descrizione, tag..."
-                      className="w-full pl-10 pr-10 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none text-sm"
+                      className="w-full pl-10 pr-10 py-2 bg-white/[0.06] text-white rounded-lg border border-white/[0.08] focus:border-teal-500/50 focus:outline-none text-sm"
                     />
                     {searchTerm && (
                       <button
                         onClick={() => setSearchTerm('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -255,7 +255,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                   </div>
                   <button
                     onClick={exportToCSV}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold text-sm flex items-center gap-2 transition-all"
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-green-700 hover:to-emerald-700 text-white font-semibold text-sm flex items-center gap-2 transition-all"
                     title="Esporta in CSV"
                   >
                     <Download className="w-4 h-4" />
@@ -263,18 +263,18 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                   </button>
                 </div>
                 
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-white/40">
                   {filteredTasks.length} di {tasks.length} task
                 </div>
               </div>
 
               {/* Filters */}
-              <div className="p-4 border-b border-white/10 bg-slate-800/50 space-y-3">
+              <div className="p-4 border-b border-white/10 bg-white/[0.03] space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none text-sm"
+                    className="px-3 py-2 bg-white/[0.06] text-white rounded-lg border border-white/[0.08] focus:border-teal-500/50 focus:outline-none text-sm"
                   >
                     <option value="all">Tutte le categorie</option>
                     <option value="lavoro">💼 Lavoro</option>
@@ -287,7 +287,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                   <select
                     value={selectedPriority}
                     onChange={(e) => setSelectedPriority(e.target.value)}
-                    className="px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none text-sm"
+                    className="px-3 py-2 bg-white/[0.06] text-white rounded-lg border border-white/[0.08] focus:border-orange-500 focus:outline-none text-sm"
                   >
                     <option value="all">Tutte le priorità</option>
                     <option value="urgente">🔴 Urgente</option>
@@ -299,7 +299,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                   <select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none text-sm"
+                    className="px-3 py-2 bg-white/[0.06] text-white rounded-lg border border-white/[0.08] focus:border-teal-500/50 focus:outline-none text-sm"
                   >
                     <option value="all">Tutti gli stati</option>
                     <option value="todo">📋 Da Fare</option>
@@ -310,7 +310,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-pink-500 focus:outline-none text-sm"
+                    className="px-3 py-2 bg-white/[0.06] text-white rounded-lg border border-white/[0.08] focus:border-pink-500 focus:outline-none text-sm"
                   >
                     <option value="date">📅 Data Creazione</option>
                     <option value="priority">⚡ Priorità</option>
@@ -321,7 +321,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                     onClick={() => setShowCompleted(!showCompleted)}
                     className={`px-3 py-2 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
                       showCompleted
-                        ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        ? 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08]'
                         : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
                     }`}
                   >
@@ -336,7 +336,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                 {filteredTasks.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">✓</div>
-                    <p className="text-slate-400 text-lg">
+                    <p className="text-white/40 text-lg">
                       {tasks.length === 0 
                         ? 'Nessun task registrato'
                         : 'Nessun task con questi filtri'
@@ -370,7 +370,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                                 {task.is_completed ? (
                                   <CheckCircle2 className="w-6 h-6 text-green-400" />
                                 ) : (
-                                  <Circle className="w-6 h-6 text-slate-500 hover:text-slate-300" />
+                                  <Circle className="w-6 h-6 text-white/30 hover:text-white/50" />
                                 )}
                               </button>
 
@@ -382,7 +382,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                      <h3 className={`text-xl font-bold ${task.is_completed ? 'text-slate-500 line-through' : 'text-white'}`}>
+                                      <h3 className={`text-xl font-bold ${task.is_completed ? 'text-white/30 line-through' : 'text-white'}`}>
                                         {task.title}
                                       </h3>
                                       <span className={`px-2 py-1 rounded text-xs font-bold ${priorityColors[task.priority]}`}>
@@ -400,7 +400,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                                       )}
                                     </div>
                                     {task.description && (
-                                      <p className="text-sm text-slate-300 mt-1">{task.description}</p>
+                                      <p className="text-sm text-white/50 mt-1">{task.description}</p>
                                     )}
                                   </div>
                                 </div>
@@ -422,16 +422,16 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
 
                                 {/* Subtasks Progress */}
                                 {totalSubtasks > 0 && (
-                                  <div className="bg-slate-800/50 rounded-lg p-3">
+                                  <div className="bg-white/[0.03] rounded-lg p-3">
                                     <div className="flex items-center justify-between mb-2">
-                                      <span className="text-sm text-slate-300 font-semibold">
+                                      <span className="text-sm text-white/50 font-semibold">
                                         Sottotask: {completedSubtasks}/{totalSubtasks}
                                       </span>
-                                      <span className="text-sm text-slate-400">
+                                      <span className="text-sm text-white/40">
                                         {Math.round((completedSubtasks / totalSubtasks) * 100)}%
                                       </span>
                                     </div>
-                                    <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
                                       <div
                                         className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
                                         style={{ width: `${(completedSubtasks / totalSubtasks) * 100}%` }}
@@ -442,14 +442,14 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
 
                                 {/* Due Date */}
                                 {task.due_date && (
-                                  <div className={`flex items-center gap-2 text-sm ${overdue ? 'text-red-300' : 'text-slate-300'}`}>
+                                  <div className={`flex items-center gap-2 text-sm ${overdue ? 'text-red-300' : 'text-white/50'}`}>
                                     <Calendar className="w-4 h-4" />
                                     <span>Scadenza: {formatDate(task.due_date)}</span>
                                   </div>
                                 )}
 
                                 {/* Meta */}
-                                <div className="flex items-center gap-4 text-xs text-slate-400">
+                                <div className="flex items-center gap-4 text-xs text-white/40">
                                   <div className="flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
                                     Creato il {formatDate(task.created_at)}
@@ -465,10 +465,10 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                             <div className="flex flex-col gap-2">
                               <button
                                 onClick={() => handleEdit(task)}
-                                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg transition-colors"
+                                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-teal-500/30 rounded-lg transition-colors"
                                 title="Modifica"
                               >
-                                <Edit className="w-5 h-5 text-blue-400" />
+                                <Edit className="w-5 h-5 text-teal-400" />
                               </button>
                               <button
                                 onClick={() => handleDelete(task.id)}

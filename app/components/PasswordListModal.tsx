@@ -94,27 +94,26 @@ export default function PasswordListModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             {/* Modal Container */}
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, rotate: 180 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden"
             >
-              {/* Glow effect */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-3xl blur-2xl opacity-50 animate-pulse" />
+              <div className="hidden" />
               
               {/* Main modal */}
-              <div className="relative bg-gradient-to-br from-slate-900 via-blue-900/50 to-purple-900/50 border-4 border-cyan-400 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="relative bg-[#131920] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="relative z-10 p-6 border-b-2 border-cyan-400/50 bg-black/30 space-y-4">
+                <div className="relative z-10 p-6 border-b border-white/[0.06] bg-white/[0.03] space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-3xl font-black bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-500 bg-clip-text text-transparent">
+                      <h2 className="text-lg font-bold text-white/90">
                         📋 ELENCO PASSWORD
                       </h2>
                       <p className="text-cyan-100 font-bold mt-1">
@@ -122,10 +121,10 @@ export default function PasswordListModal({
                       </p>
                     </div>
                     <motion.button
-                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={onClose}
-                      className="w-10 h-10 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center"
+                      className="w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/30 flex items-center justify-center"
                     >
                       <X className="w-6 h-6 text-white" strokeWidth={3} />
                     </motion.button>
@@ -139,7 +138,7 @@ export default function PasswordListModal({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="🔍 Cerca per titolo, username, sito o categoria..."
-                      className="w-full pl-12 pr-4 py-3 bg-black/50 border-2 border-cyan-400/50 rounded-xl text-white font-bold placeholder-cyan-300/50 focus:border-cyan-400 focus:outline-none transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white font-bold placeholder-white/20 focus:border-teal-500/50 focus:outline-none transition-all"
                     />
                     {searchQuery && (
                       <button
@@ -160,7 +159,7 @@ export default function PasswordListModal({
                       className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${
                         showFavoritesOnly 
                           ? 'bg-yellow-500 text-black' 
-                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                          : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08]'
                       }`}
                     >
                       <Star className={`w-4 h-4 ${showFavoritesOnly ? 'fill-black' : ''}`} />
@@ -173,7 +172,7 @@ export default function PasswordListModal({
                       <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="px-3 py-2 bg-slate-700 border-2 border-cyan-400/50 rounded-lg text-white font-bold text-sm focus:border-cyan-400 focus:outline-none"
+                        className="px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white font-bold text-sm focus:border-teal-500/50 focus:outline-none"
                       >
                         {categories.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -187,7 +186,7 @@ export default function PasswordListModal({
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as any)}
-                        className="px-3 py-2 bg-slate-700 border-2 border-cyan-400/50 rounded-lg text-white font-bold text-sm focus:border-cyan-400 focus:outline-none"
+                        className="px-3 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white font-bold text-sm focus:border-teal-500/50 focus:outline-none"
                       >
                         <option value="date">Data (recenti)</option>
                         <option value="name">Nome (A-Z)</option>
@@ -202,7 +201,7 @@ export default function PasswordListModal({
                   {filteredPasswords.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="text-8xl mb-4">{searchQuery ? '🔍' : '🔒'}</div>
-                      <h3 className="text-2xl font-black text-cyan-300 mb-2">
+                      <h3 className="text-base font-bold text-cyan-300 mb-2">
                         {searchQuery ? 'Nessun risultato' : 'Nessuna password salvata'}
                       </h3>
                       <p className="text-cyan-100">
@@ -221,7 +220,7 @@ export default function PasswordListModal({
                         >
                           <div 
                             onClick={() => setSelectedPassword(pwd)}
-                            className="bg-gradient-to-r from-slate-800/90 to-blue-900/50 border-2 border-cyan-400/50 rounded-xl p-4 hover:border-cyan-400 transition-all cursor-pointer hover:bg-slate-800/70"
+                            className="bg-gradient-to-r from-slate-800/90 to-blue-900/50 border border-white/[0.08] rounded-xl p-4 hover:border-cyan-400 transition-all cursor-pointer hover:bg-white/[0.04]/70"
                           >
                             <div className="flex items-start gap-4">
                               {/* Emoji */}
@@ -235,7 +234,7 @@ export default function PasswordListModal({
                                     {pwd.isFavorite && (
                                       <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                                     )}
-                                    <h3 className="text-xl font-black text-cyan-300">
+                                    <h3 className="text-xl font-bold text-cyan-300">
                                       {pwd.title}
                                     </h3>
                                   </div>
@@ -310,7 +309,7 @@ export default function PasswordListModal({
                                         href={pwd.website} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="text-blue-300 hover:text-blue-200 font-mono text-sm flex items-center gap-1 hover:underline"
+                                        className="text-teal-300 hover:text-blue-200 font-mono text-sm flex items-center gap-1 hover:underline"
                                       >
                                         {pwd.website}
                                         <ExternalLink className="w-3 h-3" />
@@ -346,9 +345,9 @@ export default function PasswordListModal({
                   )}
                 </div>
 
-                {/* Danger tape */}
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-cyan-400 via-black to-cyan-400 opacity-70" />
-                <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-cyan-400 via-black to-cyan-400 opacity-70" />
+                {/* Top/bottom accent lines */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/30 to-transparent" />
               </div>
             </motion.div>
           </motion.div>
@@ -370,17 +369,16 @@ export default function PasswordListModal({
                   onClick={(e) => e.stopPropagation()}
                   className="relative w-full max-w-2xl my-8"
                 >
-                  {/* Glow effect */}
-                  <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl blur-2xl opacity-60 animate-pulse" />
+                  <div className="hidden" />
                   
                   {/* Modal content */}
-                  <div className="relative bg-gradient-to-br from-slate-900 via-purple-900/50 to-pink-900/50 border-4 border-pink-400 rounded-2xl shadow-2xl p-8">
+                  <div className="relative bg-[#131920] border-4 border-pink-400 rounded-2xl shadow-2xl p-8">
                     {/* Close button */}
                     <motion.button
-                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => setSelectedPassword(null)}
-                      className="absolute top-4 right-4 w-10 h-10 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center"
+                      className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/30 flex items-center justify-center"
                     >
                       <X className="w-6 h-6 text-white" strokeWidth={3} />
                     </motion.button>
@@ -388,10 +386,10 @@ export default function PasswordListModal({
                     {/* Emoji */}
                     <div className="text-center mb-6">
                       <div className="text-8xl mb-4">{selectedPassword.emoji}</div>
-                      <h2 className="text-4xl font-black bg-gradient-to-r from-pink-300 via-purple-400 to-cyan-300 bg-clip-text text-transparent mb-2">
+                      <h2 className="text-4xl font-bold text-white/90 mb-2">
                         {selectedPassword.title}
                       </h2>
-                      <span className="inline-block px-4 py-2 bg-purple-500/30 border-2 border-purple-400/50 rounded-full text-sm font-bold text-purple-200">
+                      <span className="inline-block px-4 py-2 bg-purple-500/30 border border-white/[0.08] rounded-full text-sm font-bold text-purple-200">
                         {selectedPassword.category}
                       </span>
                     </div>
@@ -399,7 +397,7 @@ export default function PasswordListModal({
                     {/* Details */}
                     <div className="space-y-4">
                       {/* Username */}
-                      <div className="bg-black/30 border-2 border-cyan-400/30 rounded-xl p-4">
+                      <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
                         <div className="text-sm text-cyan-400 font-bold mb-2">👤 USERNAME</div>
                         <div className="flex items-center justify-between gap-3">
                           <code className="text-xl text-white font-mono flex-1 break-all">
@@ -409,7 +407,7 @@ export default function PasswordListModal({
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => copyToClipboard(selectedPassword.username, `detail-user`)}
-                            className="p-3 bg-cyan-500/20 hover:bg-cyan-500/30 border-2 border-cyan-400/50 rounded-lg shrink-0"
+                            className="p-3 bg-cyan-500/20 hover:bg-cyan-500/30 border border-white/[0.08] rounded-lg shrink-0"
                           >
                             {copiedId === `detail-user` ? (
                               <span className="text-green-400 font-bold">✓ Copiato!</span>
@@ -421,7 +419,7 @@ export default function PasswordListModal({
                       </div>
 
                       {/* Password */}
-                      <div className="bg-black/30 border-2 border-pink-400/30 rounded-xl p-4">
+                      <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
                         <div className="text-sm text-pink-400 font-bold mb-2">🔐 PASSWORD</div>
                         <div className="flex items-center justify-between gap-3">
                           <code className="text-xl text-white font-mono flex-1 break-all">
@@ -432,7 +430,7 @@ export default function PasswordListModal({
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => togglePasswordVisibility(selectedPassword.id)}
-                              className="p-3 bg-pink-500/20 hover:bg-pink-500/30 border-2 border-pink-400/50 rounded-lg"
+                              className="p-3 bg-pink-500/20 hover:bg-pink-500/30 border border-white/[0.08] rounded-lg"
                             >
                               {visiblePasswords.has(selectedPassword.id) ? (
                                 <EyeOff className="w-5 h-5 text-pink-400" />
@@ -444,7 +442,7 @@ export default function PasswordListModal({
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => copyToClipboard(selectedPassword.password, `detail-pass`)}
-                              className="p-3 bg-pink-500/20 hover:bg-pink-500/30 border-2 border-pink-400/50 rounded-lg"
+                              className="p-3 bg-pink-500/20 hover:bg-pink-500/30 border border-white/[0.08] rounded-lg"
                             >
                               {copiedId === `detail-pass` ? (
                                 <span className="text-green-400 font-bold">✓</span>
@@ -458,13 +456,13 @@ export default function PasswordListModal({
 
                       {/* Website */}
                       {selectedPassword.website && (
-                        <div className="bg-black/30 border-2 border-purple-400/30 rounded-xl p-4">
+                        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
                           <div className="text-sm text-purple-400 font-bold mb-2">🌐 SITO WEB</div>
                           <a 
                             href={selectedPassword.website} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-xl text-blue-300 hover:text-blue-200 font-mono flex items-center gap-2 hover:underline break-all"
+                            className="text-xl text-teal-300 hover:text-blue-200 font-mono flex items-center gap-2 hover:underline break-all"
                           >
                             {selectedPassword.website}
                             <ExternalLink className="w-5 h-5 shrink-0" />
@@ -494,7 +492,7 @@ export default function PasswordListModal({
                               setSelectedPassword(null)
                             }
                           }}
-                          className="w-full py-4 bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 rounded-xl text-red-300 font-black text-lg flex items-center justify-center gap-2"
+                          className="w-full py-4 bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 rounded-xl text-red-300 font-bold text-lg flex items-center justify-center gap-2"
                         >
                           <Trash2 className="w-5 h-5" />
                           ELIMINA PASSWORD

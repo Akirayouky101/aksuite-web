@@ -123,7 +123,7 @@ export default function NotesListModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -151,10 +151,10 @@ export default function NotesListModal({
               <div className="flex flex-wrap gap-3 mb-4">
                 <button
                   onClick={onAdd}
-                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
                 >
                   <Plus size={20} />
-                  ✨ Nuova Nota
+                  Nuova Nota
                 </button>
 
                 <button
@@ -221,7 +221,7 @@ export default function NotesListModal({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Cerca nelle note..."
-                  className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
 
@@ -240,7 +240,7 @@ export default function NotesListModal({
                     <select
                       value={selectedFolder}
                       onChange={(e) => setSelectedFolder(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
                     >
                       {folders.map(folder => (
                         <option key={folder} value={folder}>
@@ -257,7 +257,7 @@ export default function NotesListModal({
                     <select
                       value={selectedTag}
                       onChange={(e) => setSelectedTag(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
                     >
                       {tags.map(tag => (
                         <option key={tag} value={tag}>
@@ -281,9 +281,9 @@ export default function NotesListModal({
                   {notes.length === 0 && (
                     <button
                       onClick={onAdd}
-                      className="mt-4 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all"
+                      className="mt-4 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all"
                     >
-                      ✨ Crea la tua prima nota
+                      Crea la tua prima nota
                     </button>
                   )}
                 </div>
@@ -338,7 +338,7 @@ export default function NotesListModal({
                             {note.tags.map(tag => (
                               <span
                                 key={tag}
-                                className="px-2 py-1 bg-blue-900/50 text-blue-300 rounded-full text-xs"
+                                className="px-2 py-1 bg-blue-900/50 text-teal-300 rounded-full text-xs"
                               >
                                 #{tag}
                               </span>
@@ -360,7 +360,7 @@ export default function NotesListModal({
                           </button>
                           <button
                             onClick={() => onEdit(note)}
-                            className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm"
+                            className="flex-1 px-3 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-medium transition-colors text-sm"
                           >
                             <Edit size={16} className="inline" />
                           </button>
@@ -370,7 +370,7 @@ export default function NotesListModal({
                                 onDelete(note.id)
                               }
                             }}
-                            className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors text-sm"
+                            className="flex-1 px-3 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg font-medium transition-colors text-sm"
                           >
                             <Trash2 size={16} className="inline" />
                           </button>

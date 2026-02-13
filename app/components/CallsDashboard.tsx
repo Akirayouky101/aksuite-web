@@ -65,11 +65,11 @@ export default function CallsDashboard({ calls }: CallsDashboardProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-gradient-to-br from-blue-900/50 to-cyan-900/50 border-2 border-blue-500/50 rounded-xl p-4"
+          className="bg-gradient-to-br from-blue-900/50 to-cyan-900/50 border-2 border-teal-500/50 rounded-xl p-4"
         >
           <div className="flex items-center justify-between mb-2">
-            <Phone className="w-8 h-8 text-blue-400" />
-            <span className="text-3xl font-black text-white">{totalCalls}</span>
+            <Phone className="w-8 h-8 text-teal-400" />
+            <span className="text-lg font-bold text-white">{totalCalls}</span>
           </div>
           <div className="text-sm text-blue-200 font-bold">Totale Chiamate</div>
         </motion.div>
@@ -80,7 +80,7 @@ export default function CallsDashboard({ calls }: CallsDashboardProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <Clock className="w-8 h-8 text-yellow-400" />
-            <span className="text-3xl font-black text-white">{pendingCalls}</span>
+            <span className="text-lg font-bold text-white">{pendingCalls}</span>
           </div>
           <div className="text-sm text-yellow-200 font-bold">In Attesa</div>
         </motion.div>
@@ -91,7 +91,7 @@ export default function CallsDashboard({ calls }: CallsDashboardProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <CheckCircle className="w-8 h-8 text-green-400" />
-            <span className="text-3xl font-black text-white">{completedCalls}</span>
+            <span className="text-lg font-bold text-white">{completedCalls}</span>
           </div>
           <div className="text-sm text-green-200 font-bold">Completate</div>
         </motion.div>
@@ -102,7 +102,7 @@ export default function CallsDashboard({ calls }: CallsDashboardProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <AlertTriangle className="w-8 h-8 text-red-400" />
-            <span className="text-3xl font-black text-white">{urgentCalls}</span>
+            <span className="text-lg font-bold text-white">{urgentCalls}</span>
           </div>
           <div className="text-sm text-red-200 font-bold">Urgenti</div>
         </motion.div>
@@ -129,7 +129,7 @@ export default function CallsDashboard({ calls }: CallsDashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Chiamate per Tipo */}
         <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-purple-500/50 rounded-xl p-5">
-          <h3 className="text-xl font-black text-purple-300 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-purple-300 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             Chiamate per Tipo
           </h3>
@@ -137,10 +137,10 @@ export default function CallsDashboard({ calls }: CallsDashboardProps) {
             {Object.entries(callsByType).map(([type, count]) => (
               <div key={type}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-slate-300 capitalize">{type}</span>
+                  <span className="text-sm text-white/50 capitalize">{type}</span>
                   <span className="text-sm font-bold text-white">{count}</span>
                 </div>
-                <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-3 bg-white/[0.06] rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${maxType > 0 ? (count / maxType) * 100 : 0}%` }}
@@ -161,7 +161,7 @@ export default function CallsDashboard({ calls }: CallsDashboardProps) {
 
         {/* Chiamate per Priorità */}
         <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-cyan-500/50 rounded-xl p-5">
-          <h3 className="text-xl font-black text-cyan-300 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-cyan-300 mb-4 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             Chiamate per Priorità
           </h3>
@@ -169,10 +169,10 @@ export default function CallsDashboard({ calls }: CallsDashboardProps) {
             {Object.entries(callsByPriority).map(([priority, count]) => (
               <div key={priority}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-slate-300 capitalize">{priority}</span>
+                  <span className="text-sm text-white/50 capitalize">{priority}</span>
                   <span className="text-sm font-bold text-white">{count}</span>
                 </div>
-                <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-3 bg-white/[0.06] rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${maxPriority > 0 ? (count / maxPriority) * 100 : 0}%` }}

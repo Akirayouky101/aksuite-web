@@ -86,7 +86,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -94,11 +94,10 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-2xl w-full overflow-x-hidden"
         >
-          {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-green-500/30 shadow-2xl">
+          <div className="relative bg-[#131920] rounded-2xl max-h-[90vh] overflow-hidden border border-white/[0.08] shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-green-900/30 to-emerald-900/30">
             <div className="flex items-center gap-3">
@@ -107,7 +106,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-white">Bilancio Familiare</h2>
-                <p className="text-sm text-slate-400">Gestisci entrate e uscite</p>
+                <p className="text-sm text-white/40">Gestisci entrate e uscite</p>
               </div>
             </div>
             <button
@@ -158,21 +157,21 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
 
               {/* Amount */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Importo (€)</label>
+                <label className="block text-sm font-medium text-white/50 mb-2">Importo (€)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="0.00"
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Categoria</label>
+                <label className="block text-sm font-medium text-white/50 mb-2">Categoria</label>
                 <div className="grid grid-cols-3 gap-2">
                   {categories.map((cat) => (
                     <button
@@ -197,20 +196,20 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Descrizione</label>
+                <label className="block text-sm font-medium text-white/50 mb-2">Descrizione</label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Es: Spesa al supermercato"
                 />
               </div>
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Data</label>
+                <label className="block text-sm font-medium text-white/50 mb-2">Data</label>
                 <input
                   type="date"
                   value={date}
@@ -226,7 +225,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl py-4 font-semibold hover:shadow-lg hover:shadow-green-500/50 transition-all"
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl py-4 font-semibold hover:shadow-lg hover:shadow-green-500/50 transition-all"
               >
                 Salva Movimento
               </motion.button>

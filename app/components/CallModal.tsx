@@ -153,7 +153,7 @@ export default function CallModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -161,11 +161,10 @@ export default function CallModal({
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-2xl w-full overflow-x-hidden"
         >
-          {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-blue-500/30 shadow-2xl">
+          <div className="relative bg-[#131920] rounded-2xl max-h-[90vh] overflow-hidden border border-white/[0.08] shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-blue-900/30 to-cyan-900/30">
               <div className="flex items-center gap-3">
@@ -174,7 +173,7 @@ export default function CallModal({
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">Nuova Chiamata</h2>
-                  <p className="text-sm text-slate-400">Registra chiamata cliente</p>
+                  <p className="text-sm text-white/40">Registra chiamata cliente</p>
                 </div>
               </div>
               <button
@@ -182,7 +181,7 @@ export default function CallModal({
                 className="group relative w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
                 aria-label="Chiudi"
               >
-                <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+                <X className="w-5 h-5 text-white/40 group-hover:text-red-400 transition-colors" />
               </button>
             </div>
 
@@ -201,7 +200,7 @@ export default function CallModal({
                       value={callerName}
                       onChange={(e) => setCallerName(e.target.value)}
                       required
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder-white/20 focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                       placeholder="Mario Rossi"
                     />
                   </div>
@@ -215,7 +214,7 @@ export default function CallModal({
                       type="text"
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder-white/20 focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                       placeholder="Nome Azienda"
                     />
                   </div>
@@ -233,7 +232,7 @@ export default function CallModal({
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       required
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder-white/20 focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                       placeholder="+39 123 456 7890"
                     />
                   </div>
@@ -247,7 +246,7 @@ export default function CallModal({
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder-white/20 focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                       placeholder="email@esempio.it"
                     />
                   </div>
@@ -265,7 +264,7 @@ export default function CallModal({
                         className={`px-4 py-3 rounded-lg border-2 transition-all font-semibold text-sm ${
                           callType === type.value
                             ? `border-${type.color}-500 bg-${type.color}-500/20 text-${type.color}-300`
-                            : 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                            : 'border-white/[0.06] bg-white/[0.04] text-white/50 hover:bg-white/[0.06]'
                         }`}
                       >
                         {type.label}
@@ -286,7 +285,7 @@ export default function CallModal({
                         className={`px-4 py-3 rounded-lg border-2 transition-all font-semibold text-sm ${
                           priority === p.value
                             ? `border-${p.color}-500 bg-${p.color}-500/20 text-white`
-                            : 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                            : 'border-white/[0.06] bg-white/[0.04] text-white/50 hover:bg-white/[0.06]'
                         }`}
                       >
                         {p.label}
@@ -306,7 +305,7 @@ export default function CallModal({
                     onChange={(e) => setNotes(e.target.value)}
                     required
                     rows={4}
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all resize-none"
+                    className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder-white/20 focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all resize-none"
                     placeholder="Descrivi la richiesta del cliente..."
                   />
                 </div>
@@ -318,7 +317,7 @@ export default function CallModal({
                       type="checkbox"
                       checked={followUp}
                       onChange={(e) => setFollowUp(e.target.checked)}
-                      className="w-5 h-5 rounded border-slate-700 bg-slate-800 text-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                      className="w-5 h-5 rounded border-white/[0.06] bg-white/[0.04] text-blue-500 focus:ring-2 focus:ring-teal-500/30"
                       aria-label="Richiede Follow-up"
                     />
                     <span className="text-white font-semibold">
@@ -341,7 +340,7 @@ export default function CallModal({
                         type="date"
                         value={followUpDate}
                         onChange={(e) => setFollowUpDate(e.target.value)}
-                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                        className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                       />
                     </motion.div>
                   )}
@@ -349,7 +348,7 @@ export default function CallModal({
 
                 {/* Collegamenti Multi-Entità */}
                 {editCall?.id && (
-                  <div className="space-y-3 pt-4 border-t border-slate-700">
+                  <div className="space-y-3 pt-4 border-t border-white/[0.06]">
                     <h4 className="text-base font-bold text-white flex items-center gap-2">
                       🔗 Collegamenti
                     </h4>
@@ -376,7 +375,7 @@ export default function CallModal({
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isSaving}
-                  className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? '⏳ Salvataggio...' : editCall ? '✏️ Aggiorna Chiamata' : '💾 Salva Chiamata'}
                 </motion.button>

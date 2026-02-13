@@ -28,9 +28,9 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
           initial={{ opacity: 0, y: -20, scale: 0.8 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.8 }}
-          className="absolute right-0 mt-4 w-64 bg-slate-900/95 backdrop-blur-xl border-2 border-violet-400/50 rounded-2xl p-4 shadow-2xl"
+          className="absolute right-0 mt-4 w-64 bg-[#131920]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 shadow-2xl"
         >
-          <h3 className="text-white font-black text-lg mb-4 flex items-center gap-2">
+          <h3 className="text-white/90 font-bold text-lg mb-4 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-400" />
             Choose Theme
           </h3>

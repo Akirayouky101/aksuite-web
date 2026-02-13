@@ -11,7 +11,7 @@ interface RelatedItemsPanelProps {
 }
 
 const ENTITY_CONFIG = {
-  password: { icon: Lock, label: 'Password', color: 'text-blue-400', bg: 'bg-blue-900/30', border: 'border-blue-700' },
+  password: { icon: Lock, label: 'Password', color: 'text-teal-400', bg: 'bg-blue-900/30', border: 'border-blue-700' },
   call: { icon: Phone, label: 'Chiamata', color: 'text-cyan-400', bg: 'bg-cyan-900/30', border: 'border-cyan-700' },
   visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-400', bg: 'bg-pink-900/30', border: 'border-pink-700' },
   task: { icon: CheckCircle2, label: 'Task', color: 'text-purple-400', bg: 'bg-purple-900/30', border: 'border-purple-700' },
@@ -110,7 +110,7 @@ export default function RelatedItemsPanel({
                       {onNavigate && (
                         <button
                           onClick={() => onNavigate(item.type, item.id)}
-                          className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                          className="p-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded transition-colors"
                           title="Vai a"
                         >
                           <ExternalLink size={14} />
@@ -122,7 +122,7 @@ export default function RelatedItemsPanel({
                             onRemoveRelation(item.relation_id)
                           }
                         }}
-                        className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                        className="p-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded transition-colors"
                         title="Rimuovi collegamento"
                       >
                         <Link2Off size={14} />

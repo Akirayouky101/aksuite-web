@@ -35,13 +35,13 @@ export default function SuccessModal({
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-x-hidden"
+          className="fixed inset-0 bg-white/[0.04] backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-x-hidden"
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0, rotate: -180, opacity: 0 }}
-            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            exit={{ scale: 0, rotate: 180, opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
             transition={{ 
               type: 'spring', 
               stiffness: 400, 
@@ -51,11 +51,10 @@ export default function SuccessModal({
             onClick={(e) => e.stopPropagation()}
             className="relative max-w-md w-full overflow-x-hidden"
           >
-            {/* Glow effect */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 rounded-3xl blur-2xl opacity-60 animate-pulse" />
+            <div className="hidden" />
             
             {/* Main modal */}
-            <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border-4 border-green-400 shadow-2xl p-8 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-white/[0.08] shadow-2xl p-8 overflow-hidden">
               
               {/* Animated circles background */}
               <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/20 rounded-full blur-3xl animate-pulse" />
@@ -78,7 +77,7 @@ export default function SuccessModal({
                   <div className="relative">
                     {/* Rotating ring */}
                     <motion.div
-                      animate={{ rotate: 360 }}
+                      animate={{ opacity: 1 }}
                       transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                       className="absolute inset-0 rounded-full border-4 border-t-green-400 border-r-emerald-400 border-b-teal-400 border-l-green-500"
                       style={{ width: '100px', height: '100px' }}
@@ -95,7 +94,7 @@ export default function SuccessModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-3xl font-black text-white mb-3 drop-shadow-lg"
+                  className="text-lg font-bold text-white mb-3 drop-shadow-lg"
                 >
                   {title}
                 </motion.h2>
@@ -105,7 +104,7 @@ export default function SuccessModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="text-lg text-slate-200 leading-relaxed"
+                  className="text-lg text-white/70 leading-relaxed"
                 >
                   {message}
                 </motion.p>
@@ -113,7 +112,7 @@ export default function SuccessModal({
                 {/* Progress bar (if auto-dismiss) */}
                 {autoDismiss && (
                   <motion.div
-                    className="mt-6 h-1 bg-slate-700 rounded-full overflow-hidden"
+                    className="mt-6 h-1 bg-white/[0.06] rounded-full overflow-hidden"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}

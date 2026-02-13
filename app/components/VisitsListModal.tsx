@@ -17,7 +17,7 @@ interface VisitsListModalProps {
 }
 
 const statusColors = {
-  scheduled: { bg: 'bg-blue-500/20', border: 'border-blue-500/30', text: 'text-blue-300', icon: Calendar },
+  scheduled: { bg: 'bg-blue-500/20', border: 'border-teal-500/30', text: 'text-teal-300', icon: Calendar },
   in_progress: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', text: 'text-yellow-300', icon: Clock },
   completed: { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-300', icon: CheckCircle },
   cancelled: { bg: 'bg-red-500/20', border: 'border-red-500/30', text: 'text-red-300', icon: AlertCircle }
@@ -63,7 +63,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -71,11 +71,10 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-6xl w-full my-8"
         >
-          {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl overflow-hidden border-2 border-purple-500/30 shadow-2xl">
+          <div className="relative bg-[#131920] rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-purple-900/30 to-pink-900/30">
               <div className="flex items-center gap-3">
@@ -84,14 +83,14 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">Registro Visite</h2>
-                  <p className="text-sm text-slate-400">{visits.length} visite registrate</p>
+                  <p className="text-sm text-white/40">{visits.length} visite registrate</p>
                 </div>
               </div>
               <div className="flex gap-2">
                 {onNew && (
                   <button
                     onClick={onNew}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold flex items-center gap-2 transition-all shadow-lg"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-purple-700 hover:to-pink-700 text-white font-semibold flex items-center gap-2 transition-all shadow-lg"
                     title="Aggiungi nuova visita"
                   >
                     <Plus className="w-5 h-5" />
@@ -103,34 +102,34 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   className="group relative w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
                   title="Chiudi"
                 >
-                  <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+                  <X className="w-5 h-5 text-white/40 group-hover:text-red-400 transition-colors" />
                 </button>
               </div>
             </div>
 
             {/* Search */}
-            <div className="p-4 border-b border-white/10 bg-slate-800/50">
+            <div className="p-4 border-b border-white/10 bg-white/[0.03]">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Cerca per nome, azienda, telefono..."
-                className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none"
+                className="w-full px-4 py-2 bg-white/[0.06] text-white rounded-lg border border-white/[0.08] focus:border-teal-500/50 focus:outline-none"
               />
-              <div className="text-xs text-slate-400 mt-2">
+              <div className="text-xs text-white/40 mt-2">
                 {filteredVisits.length} di {visits.length} visite
               </div>
             </div>
 
             {/* Status Filters */}
-            <div className="p-4 border-b border-white/10 bg-slate-800/50">
+            <div className="p-4 border-b border-white/10 bg-white/[0.03]">
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setSelectedFilter('all')}
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'all'
                       ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/50'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08]'
                   }`}
                 >
                   🌟 Tutte ({visits.length})
@@ -140,7 +139,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'scheduled'
                       ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/50'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08]'
                   }`}
                 >
                   📅 Programmate ({visits.filter(v => v.status === 'scheduled').length})
@@ -150,7 +149,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'in_progress'
                       ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/50'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08]'
                   }`}
                 >
                   ⏳ In Corso ({visits.filter(v => v.status === 'in_progress').length})
@@ -160,7 +159,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'completed'
                       ? 'bg-green-500 text-white shadow-lg shadow-green-500/50'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08]'
                   }`}
                 >
                   ✅ Completate ({visits.filter(v => v.status === 'completed').length})
@@ -173,8 +172,8 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
               {filteredVisits.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">👥</div>
-                  <p className="text-xl text-slate-400 mb-2">Nessuna visita trovata</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-xl text-white/40 mb-2">Nessuna visita trovata</p>
+                  <p className="text-sm text-white/30">
                     {searchTerm ? 'Prova a modificare i criteri di ricerca' : 'Aggiungi la prima visita per iniziare'}
                   </p>
                 </div>
@@ -208,13 +207,13 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                             </div>
 
                             {visit.company && (
-                              <div className="flex items-center gap-2 text-slate-300 mb-2">
+                              <div className="flex items-center gap-2 text-white/50 mb-2">
                                 <Building2 className="w-4 h-4" />
                                 <span className="text-sm">{visit.company}</span>
                               </div>
                             )}
 
-                            <div className="flex flex-wrap gap-3 text-sm text-slate-400 mb-3">
+                            <div className="flex flex-wrap gap-3 text-sm text-white/40 mb-3">
                               {visit.phone && (
                                 <div className="flex items-center gap-1">
                                   <Phone className="w-3.5 h-3.5" />
@@ -231,7 +230,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
 
                             <div className="flex items-center gap-2 mb-2">
                               <Calendar className="w-4 h-4 text-cyan-400" />
-                              <span className={`text-sm font-semibold ${isToday ? 'text-cyan-300' : isPast ? 'text-slate-400' : 'text-white'}`}>
+                              <span className={`text-sm font-semibold ${isToday ? 'text-cyan-300' : isPast ? 'text-white/40' : 'text-white'}`}>
                                 {visitDate.toLocaleDateString('it-IT', { 
                                   weekday: 'long', 
                                   year: 'numeric', 
@@ -249,7 +248,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                             </div>
 
                             {visit.notes && (
-                              <p className="text-sm text-slate-400 mt-2 line-clamp-2">{visit.notes}</p>
+                              <p className="text-sm text-white/40 mt-2 line-clamp-2">{visit.notes}</p>
                             )}
 
                             <div className="flex items-center gap-2 mt-3">
@@ -257,7 +256,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                                 <StatusIcon className="w-3.5 h-3.5" />
                                 {statusLabels[visit.status]}
                               </span>
-                              <span className="px-3 py-1 rounded-lg bg-slate-700 text-slate-300 text-xs font-semibold">
+                              <span className="px-3 py-1 rounded-lg bg-white/[0.06] text-white/50 text-xs font-semibold">
                                 {visit.visit_type === 'riunione' && '🤝 Riunione'}
                                 {visit.visit_type === 'colloquio' && '💼 Colloquio'}
                                 {visit.visit_type === 'consegna' && '📦 Consegna'}
@@ -295,7 +294,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                                 {visit.status === 'in_progress' && (
                                   <button
                                     onClick={() => onStatusChange(visit.id, 'completed')}
-                                    className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors"
+                                    className="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-colors"
                                     title="Segna come Completata"
                                   >
                                     ✅ Completa
@@ -321,7 +320,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                               <button
                                 onClick={() => setDeleteConfirmId(visit.id)}
                                 disabled={deletingId === visit.id}
-                                className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                                className="px-3 py-1.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
                                 title="Elimina visita"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

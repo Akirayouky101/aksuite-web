@@ -53,7 +53,7 @@ export default function RecurringListModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -61,11 +61,10 @@ export default function RecurringListModal({
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-4xl w-full overflow-x-hidden"
         >
-          {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-purple-500/30 shadow-2xl">
+          <div className="relative bg-[#131920] rounded-2xl max-h-[90vh] overflow-hidden border border-white/[0.08] shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-purple-900/30 to-pink-900/30">
               <div className="flex items-center gap-3">
@@ -74,7 +73,7 @@ export default function RecurringListModal({
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">Transazioni Ricorrenti</h2>
-                  <p className="text-sm text-slate-400">{recurring.length} automatiche attive</p>
+                  <p className="text-sm text-white/40">{recurring.length} automatiche attive</p>
                 </div>
               </div>
               <button
@@ -91,8 +90,8 @@ export default function RecurringListModal({
               {recurring.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">🔄</div>
-                  <p className="text-slate-400 text-lg">Nessuna transazione ricorrente</p>
-                  <p className="text-slate-500 text-sm mt-2">Crea una per automatizzare stipendi, affitti e bollette!</p>
+                  <p className="text-white/40 text-lg">Nessuna transazione ricorrente</p>
+                  <p className="text-white/30 text-sm mt-2">Crea una per automatizzare stipendi, affitti e bollette!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -129,7 +128,7 @@ export default function RecurringListModal({
                                 {getFrequencyDetails(rec)}
                               </span>
                               {!rec.is_active && (
-                                <span className="px-2 py-1 rounded-lg text-xs font-bold bg-slate-500/20 text-slate-400">
+                                <span className="px-2 py-1 rounded-lg text-xs font-bold bg-slate-500/20 text-white/40">
                                   ⏸️ In pausa
                                 </span>
                               )}
@@ -139,7 +138,7 @@ export default function RecurringListModal({
                               {rec.description}
                             </h3>
 
-                            <div className="flex items-center gap-4 text-sm text-slate-400">
+                            <div className="flex items-center gap-4 text-sm text-white/40">
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
                                 <span>Prossima: {formatNextDate(rec.next_date)}</span>
@@ -169,7 +168,7 @@ export default function RecurringListModal({
                             {rec.is_active ? (
                               <ToggleRight className="w-5 h-5 text-purple-400" />
                             ) : (
-                              <ToggleLeft className="w-5 h-5 text-slate-500" />
+                              <ToggleLeft className="w-5 h-5 text-white/30" />
                             )}
                           </button>
 
@@ -191,12 +190,12 @@ export default function RecurringListModal({
 
               {/* Info box */}
               {recurring.length > 0 && (
-                <div className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                <div className="mt-6 bg-blue-500/10 border border-teal-500/30 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">ℹ️</div>
                     <div>
-                      <p className="text-blue-300 font-medium mb-1">Come funziona?</p>
-                      <p className="text-slate-400 text-sm">
+                      <p className="text-teal-300 font-medium mb-1">Come funziona?</p>
+                      <p className="text-white/40 text-sm">
                         Le transazioni ricorrenti vengono create automaticamente nella data indicata. 
                         Puoi metterle in pausa usando il toggle o eliminarle definitivamente.
                       </p>

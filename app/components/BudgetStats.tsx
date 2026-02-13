@@ -101,8 +101,8 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-slate-900/50 rounded-lg p-4">
-            <p className="text-slate-400 text-xs mb-1">Entrate</p>
+          <div className="bg-[#131920]/50 rounded-lg p-4">
+            <p className="text-white/40 text-xs mb-1">Entrate</p>
             <p className="text-2xl font-bold text-green-400">€{monthlyStats.currentIncome.toFixed(0)}</p>
             {monthlyStats.incomeTrend !== 0 && (
               <div className={`flex items-center gap-1 text-xs mt-1 ${monthlyStats.incomeTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -112,8 +112,8 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
             )}
           </div>
 
-          <div className="bg-slate-900/50 rounded-lg p-4">
-            <p className="text-slate-400 text-xs mb-1">Uscite</p>
+          <div className="bg-[#131920]/50 rounded-lg p-4">
+            <p className="text-white/40 text-xs mb-1">Uscite</p>
             <p className="text-2xl font-bold text-red-400">€{monthlyStats.currentExpenses.toFixed(0)}</p>
             {monthlyStats.expensesTrend !== 0 && (
               <div className={`flex items-center gap-1 text-xs mt-1 ${monthlyStats.expensesTrend > 0 ? 'text-red-400' : 'text-green-400'}`}>
@@ -123,17 +123,17 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
             )}
           </div>
 
-          <div className="bg-slate-900/50 rounded-lg p-4">
-            <p className="text-slate-400 text-xs mb-1">Bilancio</p>
-            <p className={`text-2xl font-bold ${monthlyStats.currentBalance >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+          <div className="bg-[#131920]/50 rounded-lg p-4">
+            <p className="text-white/40 text-xs mb-1">Bilancio</p>
+            <p className={`text-2xl font-bold ${monthlyStats.currentBalance >= 0 ? 'text-teal-400' : 'text-orange-400'}`}>
               €{monthlyStats.currentBalance.toFixed(0)}
             </p>
           </div>
 
-          <div className="bg-slate-900/50 rounded-lg p-4">
-            <p className="text-slate-400 text-xs mb-1">Media giornaliera</p>
+          <div className="bg-[#131920]/50 rounded-lg p-4">
+            <p className="text-white/40 text-xs mb-1">Media giornaliera</p>
             <p className="text-2xl font-bold text-cyan-400">€{monthlyStats.avgDaily.toFixed(0)}</p>
-            <p className="text-slate-500 text-xs mt-1">{monthlyStats.transactionCount} transazioni</p>
+            <p className="text-white/30 text-xs mt-1">{monthlyStats.transactionCount} transazioni</p>
           </div>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-slate-900/50 rounded-lg p-4"
+                className="bg-[#131920]/50 rounded-lg p-4"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
@@ -166,17 +166,17 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
                     </div>
                     <div>
                       <p className="text-white font-medium">{cat.category}</p>
-                      <p className="text-slate-500 text-xs">{cat.count} transazioni</p>
+                      <p className="text-white/30 text-xs">{cat.count} transazioni</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-white font-bold">€{cat.total.toFixed(0)}</p>
-                    <p className="text-slate-400 text-xs">{cat.percentage.toFixed(1)}%</p>
+                    <p className="text-white/40 text-xs">{cat.percentage.toFixed(1)}%</p>
                   </div>
                 </div>
                 
                 {/* Barra di progresso */}
-                <div className="w-full bg-slate-800 rounded-full h-2">
+                <div className="w-full bg-white/[0.04] rounded-full h-2">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${cat.percentage}%` }}
@@ -205,7 +205,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
           {monthlyStats.currentExpenses > monthlyStats.currentIncome && (
             <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
               <p className="text-orange-400 font-medium">⚠️ Attenzione</p>
-              <p className="text-slate-300 text-sm mt-1">
+              <p className="text-white/50 text-sm mt-1">
                 Le tue uscite superano le entrate di €{(monthlyStats.currentExpenses - monthlyStats.currentIncome).toFixed(0)} questo mese
               </p>
             </div>
@@ -213,17 +213,17 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
 
           {monthlyStats.incomeTrend > 10 && (
             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-              <p className="text-green-400 font-medium">✨ Ottimo!</p>
-              <p className="text-slate-300 text-sm mt-1">
+              <p className="text-green-400 font-medium">Ottimo!</p>
+              <p className="text-white/50 text-sm mt-1">
                 Le tue entrate sono aumentate del {monthlyStats.incomeTrend.toFixed(1)}% rispetto al mese scorso
               </p>
             </div>
           )}
 
           {monthlyStats.expensesTrend < -10 && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-              <p className="text-blue-400 font-medium">👏 Bravissimo!</p>
-              <p className="text-slate-300 text-sm mt-1">
+            <div className="bg-blue-500/10 border border-teal-500/30 rounded-lg p-4">
+              <p className="text-teal-400 font-medium">👏 Bravissimo!</p>
+              <p className="text-white/50 text-sm mt-1">
                 Hai ridotto le spese del {Math.abs(monthlyStats.expensesTrend).toFixed(1)}% rispetto al mese scorso
               </p>
             </div>
@@ -231,8 +231,8 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
 
           {monthlyStats.currentBalance > 0 && monthlyStats.transactionCount > 5 && (
             <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-              <p className="text-purple-400 font-medium">💪 Continua così!</p>
-              <p className="text-slate-300 text-sm mt-1">
+              <p className="text-purple-400 font-medium">Continua così!</p>
+              <p className="text-white/50 text-sm mt-1">
                 Hai un bilancio positivo di €{monthlyStats.currentBalance.toFixed(0)} questo mese
               </p>
             </div>

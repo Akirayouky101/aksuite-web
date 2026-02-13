@@ -75,11 +75,11 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-gradient-to-br from-blue-900/50 to-cyan-900/50 border-2 border-blue-500/50 rounded-xl p-4"
+          className="bg-gradient-to-br from-blue-900/50 to-cyan-900/50 border-2 border-teal-500/50 rounded-xl p-4"
         >
           <div className="flex items-center justify-between mb-2">
-            <Circle className="w-8 h-8 text-blue-400" />
-            <span className="text-3xl font-black text-white">{totalTasks}</span>
+            <Circle className="w-8 h-8 text-teal-400" />
+            <span className="text-lg font-bold text-white">{totalTasks}</span>
           </div>
           <div className="text-sm text-blue-200 font-bold">Totale Task</div>
         </motion.div>
@@ -90,7 +90,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <Clock className="w-8 h-8 text-yellow-400" />
-            <span className="text-3xl font-black text-white">{todoTasks}</span>
+            <span className="text-lg font-bold text-white">{todoTasks}</span>
           </div>
           <div className="text-sm text-yellow-200 font-bold">Da Fare</div>
         </motion.div>
@@ -101,7 +101,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <TrendingUp className="w-8 h-8 text-purple-400" />
-            <span className="text-3xl font-black text-white">{inProgressTasks}</span>
+            <span className="text-lg font-bold text-white">{inProgressTasks}</span>
           </div>
           <div className="text-sm text-purple-200 font-bold">In Corso</div>
         </motion.div>
@@ -112,7 +112,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <CheckCircle2 className="w-8 h-8 text-green-400" />
-            <span className="text-3xl font-black text-white">{completedTasks}</span>
+            <span className="text-lg font-bold text-white">{completedTasks}</span>
           </div>
           <div className="text-sm text-green-200 font-bold">Completati</div>
         </motion.div>
@@ -158,10 +158,10 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
       {/* Progress Bar */}
       <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-cyan-500/50 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xl font-black text-cyan-300">Completamento Totale</h3>
-          <span className="text-3xl font-black text-white">{completionRate}%</span>
+          <h3 className="text-xl font-bold text-cyan-300">Completamento Totale</h3>
+          <span className="text-lg font-bold text-white">{completionRate}%</span>
         </div>
-        <div className="h-6 bg-slate-700 rounded-full overflow-hidden">
+        <div className="h-6 bg-white/[0.06] rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${completionRate}%` }}
@@ -169,7 +169,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"
           />
         </div>
-        <div className="text-sm text-slate-400 mt-2">
+        <div className="text-sm text-white/40 mt-2">
           {completedTasks} di {totalTasks} task completati
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tasks per Categoria */}
         <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-purple-500/50 rounded-xl p-5">
-          <h3 className="text-xl font-black text-purple-300 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-purple-300 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             Task per Categoria
           </h3>
@@ -186,10 +186,10 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             {Object.entries(tasksByCategory).map(([category, count]) => (
               <div key={category}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-slate-300 capitalize">{category}</span>
+                  <span className="text-sm text-white/50 capitalize">{category}</span>
                   <span className="text-sm font-bold text-white">{count}</span>
                 </div>
-                <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-3 bg-white/[0.06] rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${maxCategory > 0 ? (count / maxCategory) * 100 : 0}%` }}
@@ -210,7 +210,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
 
         {/* Tasks per Priorità */}
         <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-orange-500/50 rounded-xl p-5">
-          <h3 className="text-xl font-black text-orange-300 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-orange-300 mb-4 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             Task Attivi per Priorità
           </h3>
@@ -218,10 +218,10 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             {Object.entries(tasksByPriority).map(([priority, count]) => (
               <div key={priority}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-slate-300 capitalize">{priority}</span>
+                  <span className="text-sm text-white/50 capitalize">{priority}</span>
                   <span className="text-sm font-bold text-white">{count}</span>
                 </div>
-                <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-3 bg-white/[0.06] rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${maxPriority > 0 ? (count / maxPriority) * 100 : 0}%` }}

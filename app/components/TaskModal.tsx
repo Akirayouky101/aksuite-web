@@ -178,7 +178,7 @@ export default function TaskModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -188,7 +188,7 @@ export default function TaskModal({
         >
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl blur-2xl opacity-30" />
           
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-purple-500/30 shadow-2xl">
+          <div className="relative bg-[#131920] rounded-2xl max-h-[90vh] overflow-hidden border border-white/[0.08] shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-purple-900/30 to-pink-900/30">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">
@@ -198,21 +198,21 @@ export default function TaskModal({
                   <h2 className="text-2xl font-bold text-white">
                     {editTask ? 'Modifica Task' : 'Nuovo Task'}
                   </h2>
-                  <p className="text-sm text-slate-400">Organizza le tue attività</p>
+                  <p className="text-sm text-white/40">Organizza le tue attività</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
                 className="group relative w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
               >
-                <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+                <X className="w-5 h-5 text-white/40 group-hover:text-red-400 transition-colors" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
               {/* Titolo */}
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   Titolo *
                 </label>
                 <input
@@ -221,13 +221,13 @@ export default function TaskModal({
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Es. Completare presentazione progetto"
                   required
-                  className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                 />
               </div>
 
               {/* Descrizione */}
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   Descrizione
                 </label>
                 <textarea
@@ -235,20 +235,20 @@ export default function TaskModal({
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Dettagli del task..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none resize-none"
+                  className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none resize-none"
                 />
               </div>
 
               {/* Categoria e Priorità */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="block text-sm font-semibold text-white/50 mb-2">
                     Categoria
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none"
+                    className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                   >
                     <option value="lavoro">💼 Lavoro</option>
                     <option value="personale">👤 Personale</option>
@@ -259,13 +259,13 @@ export default function TaskModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="block text-sm font-semibold text-white/50 mb-2">
                     Priorità
                   </label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none"
+                    className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                   >
                     <option value="bassa">🟢 Bassa</option>
                     <option value="media">🟡 Media</option>
@@ -278,13 +278,13 @@ export default function TaskModal({
               {/* Status e Data Scadenza */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="block text-sm font-semibold text-white/50 mb-2">
                     Stato
                   </label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as 'todo' | 'in-progress' | 'completed' })}
-                    className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none"
+                    className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                   >
                     <option value="todo">📋 Da Fare</option>
                     <option value="in-progress">🔄 In Corso</option>
@@ -293,14 +293,14 @@ export default function TaskModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  <label className="block text-sm font-semibold text-white/50 mb-2">
                     Scadenza
                   </label>
                   <input
                     type="date"
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none"
+                    className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                   />
                 </div>
               </div>
@@ -312,9 +312,9 @@ export default function TaskModal({
                     type="checkbox"
                     checked={formData.is_recurring}
                     onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
-                    className="w-5 h-5 rounded border-slate-700 text-purple-500 focus:ring-purple-500"
+                    className="w-5 h-5 rounded border-white/[0.06] text-purple-500 focus:ring-teal-500"
                   />
-                  <span className="text-sm font-semibold text-slate-300">
+                  <span className="text-sm font-semibold text-white/50">
                     🔄 Task Ricorrente
                   </span>
                 </label>
@@ -323,7 +323,7 @@ export default function TaskModal({
                   <select
                     value={formData.recurring_type}
                     onChange={(e) => setFormData({ ...formData, recurring_type: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none"
+                    className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                   >
                     <option value="">Seleziona frequenza</option>
                     <option value="daily">📅 Giornaliero</option>
@@ -335,7 +335,7 @@ export default function TaskModal({
 
               {/* Tags */}
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   🏷️ Tag
                 </label>
                 <div className="flex gap-2 mb-2">
@@ -345,12 +345,12 @@ export default function TaskModal({
                     onChange={(e) => setNewTag(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                     placeholder="Aggiungi tag..."
-                    className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none text-sm"
+                    className="flex-1 px-4 py-2 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none text-sm"
                   />
                   <button
                     type="button"
                     onClick={addTag}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors"
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-semibold transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -376,7 +376,7 @@ export default function TaskModal({
 
               {/* Subtasks */}
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   ✓ Sottotask
                 </label>
                 <div className="flex gap-2 mb-3">
@@ -386,7 +386,7 @@ export default function TaskModal({
                     onChange={(e) => setNewSubtask(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSubtask())}
                     placeholder="Aggiungi sottotask..."
-                    className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-purple-500 focus:outline-none text-sm"
+                    className="flex-1 px-4 py-2 bg-white/[0.04] text-white rounded-lg border border-white/[0.06] focus:border-teal-500/50 focus:outline-none text-sm"
                   />
                   <button
                     type="button"
@@ -400,7 +400,7 @@ export default function TaskModal({
                   {formData.subtasks.map((subtask) => (
                     <div
                       key={subtask.id}
-                      className="flex items-center gap-2 p-2 bg-slate-800/50 rounded-lg"
+                      className="flex items-center gap-2 p-2 bg-white/[0.03] rounded-lg"
                     >
                       <button
                         type="button"
@@ -410,10 +410,10 @@ export default function TaskModal({
                         {subtask.completed ? (
                           <CheckCircle2 className="w-5 h-5 text-green-400" />
                         ) : (
-                          <Circle className="w-5 h-5 text-slate-500" />
+                          <Circle className="w-5 h-5 text-white/30" />
                         )}
                       </button>
-                      <span className={`flex-1 text-sm ${subtask.completed ? 'text-slate-500 line-through' : 'text-slate-300'}`}>
+                      <span className={`flex-1 text-sm ${subtask.completed ? 'text-white/30 line-through' : 'text-white/50'}`}>
                         {subtask.title}
                       </span>
                       <button
@@ -456,14 +456,14 @@ export default function TaskModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition-colors"
+                  className="flex-1 px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg font-semibold transition-colors"
                 >
                   Annulla
                 </button>
                 <button
                   type="submit"
                   disabled={saving || !formData.title.trim()}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? 'Salvataggio...' : editTask ? 'Aggiorna' : 'Crea Task'}
                 </button>

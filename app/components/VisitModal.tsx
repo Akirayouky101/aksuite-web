@@ -102,13 +102,13 @@ export default function VisitModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-slate-900 rounded-2xl border-2 border-purple-500/30 shadow-2xl"
+          className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-[#131920] rounded-2xl border border-white/[0.08] shadow-2xl"
         >
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-purple-900/50 to-pink-900/50 backdrop-blur-sm">
@@ -120,14 +120,14 @@ export default function VisitModal({
                 <h2 className="text-2xl font-bold text-white">
                   {editVisit ? '✏️ Modifica Visita' : '➕ Nuova Visita'}
                 </h2>
-                <p className="text-sm text-slate-400">Registra visitatori in ufficio</p>
+                <p className="text-sm text-white/40">Registra visitatori in ufficio</p>
               </div>
             </div>
             <button
               onClick={onClose}
               className="group relative w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
             >
-              <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+              <X className="w-5 h-5 text-white/40 group-hover:text-red-400 transition-colors" />
             </button>
           </div>
 
@@ -135,7 +135,7 @@ export default function VisitModal({
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {/* Visitor Name */}
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
+              <label className="block text-sm font-semibold text-white/50 mb-2">
                 <UserCheck className="w-4 h-4 inline mr-2" />
                 Nome Visitatore *
               </label>
@@ -143,7 +143,7 @@ export default function VisitModal({
                 type="text"
                 value={visitorName}
                 onChange={(e) => setVisitorName(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                 placeholder="Mario Rossi"
                 required
               />
@@ -151,7 +151,7 @@ export default function VisitModal({
 
             {/* Company */}
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
+              <label className="block text-sm font-semibold text-white/50 mb-2">
                 <Building2 className="w-4 h-4 inline mr-2" />
                 Azienda
               </label>
@@ -159,7 +159,7 @@ export default function VisitModal({
                 type="text"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                 placeholder="Acme Corporation"
               />
             </div>
@@ -167,7 +167,7 @@ export default function VisitModal({
             {/* Contact Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   <Phone className="w-4 h-4 inline mr-2" />
                   Telefono
                 </label>
@@ -175,12 +175,12 @@ export default function VisitModal({
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                   placeholder="+39 123 456 7890"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   <Mail className="w-4 h-4 inline mr-2" />
                   Email
                 </label>
@@ -188,7 +188,7 @@ export default function VisitModal({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                   placeholder="mario.rossi@example.com"
                 />
               </div>
@@ -197,13 +197,13 @@ export default function VisitModal({
             {/* Type and Priority Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   📋 Tipo Visita *
                 </label>
                 <select
                   value={visitType}
                   onChange={(e) => setVisitType(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                   required
                 >
                   <option value="riunione">🤝 Riunione</option>
@@ -214,14 +214,14 @@ export default function VisitModal({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   <AlertTriangle className="w-4 h-4 inline mr-2" />
                   Priorità
                 </label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                 >
                   <option value="urgente">🔴 Urgente</option>
                   <option value="alta">🟠 Alta</option>
@@ -233,7 +233,7 @@ export default function VisitModal({
 
             {/* Visit Date */}
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
+              <label className="block text-sm font-semibold text-white/50 mb-2">
                 <Calendar className="w-4 h-4 inline mr-2" />
                 Data e Ora Visita *
               </label>
@@ -241,7 +241,7 @@ export default function VisitModal({
                 type="datetime-local"
                 value={visitDate}
                 onChange={(e) => setVisitDate(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                 required
               />
             </div>
@@ -249,13 +249,13 @@ export default function VisitModal({
             {/* Status (only when editing) */}
             {editVisit && (
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                <label className="block text-sm font-semibold text-white/50 mb-2">
                   📊 Stato
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as any)}
-                  className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none"
                 >
                   <option value="scheduled">📅 Programmata</option>
                   <option value="in_progress">⏳ In Corso</option>
@@ -267,14 +267,14 @@ export default function VisitModal({
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
+              <label className="block text-sm font-semibold text-white/50 mb-2">
                 <FileText className="w-4 h-4 inline mr-2" />
                 Note
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 text-white rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none resize-none"
+                className="w-full px-4 py-3 bg-white/[0.04] text-white rounded-xl border border-white/[0.06] focus:border-teal-500/50 focus:outline-none resize-none"
                 rows={3}
                 placeholder="Motivo della visita, argomenti da discutere..."
               />
@@ -286,7 +286,7 @@ export default function VisitModal({
                 type="checkbox"
                 checked={followUp}
                 onChange={(e) => setFollowUp(e.target.checked)}
-                className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-orange-500 focus:ring-orange-500"
+                className="w-5 h-5 rounded bg-white/[0.06] border-white/[0.08] text-orange-500 focus:ring-orange-500"
                 id="followUp"
               />
               <label htmlFor="followUp" className="text-sm font-semibold text-orange-300 cursor-pointer flex-1">
@@ -298,7 +298,7 @@ export default function VisitModal({
                   type="datetime-local"
                   value={followUpDate}
                   onChange={(e) => setFollowUpDate(e.target.value)}
-                  className="px-3 py-2 bg-slate-800 text-white rounded-lg border border-orange-500/50 focus:border-orange-500 focus:outline-none text-sm"
+                  className="px-3 py-2 bg-white/[0.04] text-white rounded-lg border border-orange-500/50 focus:border-orange-500 focus:outline-none text-sm"
                 />
               )}
             </div>
@@ -318,7 +318,7 @@ export default function VisitModal({
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg shadow-lg hover:shadow-purple-500/50 transition-all"
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg shadow-lg hover:shadow-purple-500/50 transition-all"
             >
               {editVisit ? '✏️ Aggiorna Visita' : '💾 Salva Visita'}
             </button>

@@ -79,22 +79,22 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             {/* MODAL CONTAINER! */}
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, rotate: 180 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-2xl"
             >
               {/* DANGER GLOW! */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-3xl blur-2xl opacity-50 animate-pulse" />
+              <div className="hidden" />
               
               {/* MAIN MODAL! */}
-              <div className="relative bg-gradient-to-br from-slate-900 via-red-900/50 to-orange-900/50 border-4 border-yellow-400 rounded-2xl shadow-2xl overflow-hidden">
+              <div className="relative bg-[#131920] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden">
                 {/* SPEED LINES BACKGROUND! */}
                 <div className="absolute inset-0 opacity-10">
                   {[...Array(15)].map((_, i) => (
@@ -120,28 +120,28 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                 </div>
 
                 {/* HEADER! */}
-                <div className="relative z-10 p-6 border-b-2 border-yellow-400/50 bg-black/30">
+                <div className="relative z-10 p-6 border-b border-white/[0.06] bg-white/[0.03]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <motion.div
-                        animate={{ rotate: 360 }}
+                        animate={{ opacity: 1 }}
                         transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                         className="w-12 h-12 bg-gradient-to-br from-red-500 to-yellow-500 rounded-xl flex items-center justify-center"
                       >
                         <Lock className="w-6 h-6 text-white" strokeWidth={3} />
                       </motion.div>
                       <div>
-                        <h2 className="text-3xl font-black bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent">
-                          ⚡ AGGIUNGI NUOVA PASSWORD ⚡
+                        <h2 className="text-lg font-bold text-white/90">
+                          Aggiungi Nuova Password
                         </h2>
                         <p className="text-yellow-100 font-bold">MODALITÀ SICUREZZA MASSIMA!</p>
                       </div>
                     </div>
                     <motion.button
-                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={onClose}
-                      className="w-10 h-10 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center"
+                      className="w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/30 flex items-center justify-center"
                     >
                       <X className="w-6 h-6 text-white" strokeWidth={3} />
                     </motion.button>
@@ -153,7 +153,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                   {/* EMOJI SELECTOR! */}
                   <div>
                     <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider">
-                      🎯 Scegli la tua Icona!
+                      Scegli Icona
                     </label>
                     <div className="grid grid-cols-6 gap-2">
                       {emojis.map((emoji) => (
@@ -185,8 +185,8 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       required
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
-                      placeholder="es. Il mio Account Super Segreto 💀"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-teal-500/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                      placeholder="es. es. Il mio account"
                     />
                   </div>
 
@@ -201,7 +201,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         required
                         value={formData.username}
                         onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                        className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-teal-500/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                         placeholder="tuo_username"
                       />
                     </div>
@@ -214,7 +214,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       <select
                         value={formData.category}
                         onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                        className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white font-bold focus:border-teal-500/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                       >
                         {categories.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -251,7 +251,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         required
                         value={formData.password}
                         onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                        className="w-full px-4 py-3 pr-12 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 pr-12 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-teal-500/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                         placeholder="••••••••••••"
                       />
                       <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -278,7 +278,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                      className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-teal-500/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
                       placeholder="https://esempio.com"
                     />
                   </div>
@@ -292,7 +292,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       value={formData.notes}
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                       rows={3}
-                      className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all resize-none"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-teal-500/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all resize-none"
                       placeholder="Aggiungi note, domande di sicurezza, ecc..."
                     />
                   </div>
@@ -320,24 +320,24 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                     className="w-full relative group overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative px-6 py-4 bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 rounded-xl border-2 border-yellow-400 flex items-center justify-center gap-3">
+                    <div className="relative px-6 py-4 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-xl border border-teal-400/30 flex items-center justify-center gap-3">
                       {isSaving ? (
                         <>
                           <motion.div
-                            animate={{ rotate: 360 }}
+                            animate={{ opacity: 1 }}
                             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                           >
                             <Zap className="w-6 h-6 text-white" />
                           </motion.div>
-                          <span className="text-white font-black text-xl uppercase tracking-wider">
+                          <span className="text-white/90 font-bold text-xl uppercase tracking-wider">
                             SALVATAGGIO... 💥
                           </span>
                         </>
                       ) : (
                         <>
                           <Lock className="w-6 h-6 text-white" strokeWidth={3} />
-                          <span className="text-white font-black text-xl uppercase tracking-wider">
-                            🔥 SALVA PASSWORD 🔥
+                          <span className="text-white/90 font-bold text-xl uppercase tracking-wider">
+                            Salva Password
                           </span>
                         </>
                       )}
@@ -345,9 +345,9 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                   </motion.button>
                 </form>
 
-                {/* DANGER TAPE! */}
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-70" />
-                <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-70" />
+                {/* Top/bottom accent lines */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/30 to-transparent" />
               </div>
             </motion.div>
           </motion.div>

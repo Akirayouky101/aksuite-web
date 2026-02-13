@@ -69,7 +69,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-purple-300">🎲 Generatore Password</h3>
         <motion.button
-          whileHover={{ scale: 1.05, rotate: 180 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleGenerate}
           className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg font-bold text-white flex items-center gap-2"
@@ -87,7 +87,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
               type="text"
               value={generatedPassword}
               readOnly
-              className="flex-1 px-4 py-3 bg-black/50 border-2 border-purple-400/50 rounded-lg text-white font-mono text-lg"
+              className="flex-1 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white font-mono text-lg"
             />
             <button
               onClick={copyPassword}
@@ -102,7 +102,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
           {strength && (
             <div className="space-y-1">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-300">Forza Password:</span>
+                <span className="text-white/50">Forza Password:</span>
                 <span className={`font-bold ${
                   strength.color === 'red' ? 'text-red-400' :
                   strength.color === 'yellow' ? 'text-yellow-400' :
@@ -111,7 +111,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
                   {strength.label}
                 </span>
               </div>
-              <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: strength.width }}
@@ -130,7 +130,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
       {/* Length Slider */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm text-slate-300">Lunghezza: {length}</label>
+          <label className="text-sm text-white/50">Lunghezza: {length}</label>
         </div>
         <input
           type="range"
@@ -138,7 +138,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
           max="32"
           value={length}
           onChange={(e) => setLength(Number(e.target.value))}
-          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+          className="w-full h-2 bg-white/[0.06] rounded-lg appearance-none cursor-pointer accent-purple-500"
         />
       </div>
 
@@ -151,7 +151,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
             onChange={(e) => setIncludeUppercase(e.target.checked)}
             className="w-4 h-4 rounded accent-purple-500"
           />
-          <span className="text-slate-300">Maiuscole (A-Z)</span>
+          <span className="text-white/50">Maiuscole (A-Z)</span>
         </label>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
@@ -160,7 +160,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
             onChange={(e) => setIncludeLowercase(e.target.checked)}
             className="w-4 h-4 rounded accent-purple-500"
           />
-          <span className="text-slate-300">Minuscole (a-z)</span>
+          <span className="text-white/50">Minuscole (a-z)</span>
         </label>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
@@ -169,7 +169,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
             onChange={(e) => setIncludeNumbers(e.target.checked)}
             className="w-4 h-4 rounded accent-purple-500"
           />
-          <span className="text-slate-300">Numeri (0-9)</span>
+          <span className="text-white/50">Numeri (0-9)</span>
         </label>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
@@ -178,7 +178,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
             onChange={(e) => setIncludeSymbols(e.target.checked)}
             className="w-4 h-4 rounded accent-purple-500"
           />
-          <span className="text-slate-300">Simboli (!@#$)</span>
+          <span className="text-white/50">Simboli (!@#$)</span>
         </label>
       </div>
     </div>

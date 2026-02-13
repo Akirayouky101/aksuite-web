@@ -104,7 +104,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -112,11 +112,10 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-2xl w-full overflow-x-hidden"
         >
-          {/* Glow effect */}
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl blur-2xl opacity-30" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-purple-500/30 shadow-2xl">
+          <div className="relative bg-[#131920] rounded-2xl max-h-[90vh] overflow-hidden border border-white/[0.08] shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-purple-900/30 to-pink-900/30">
               <div className="flex items-center gap-3">
@@ -125,7 +124,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">Transazione Ricorrente</h2>
-                  <p className="text-sm text-slate-400">Automatica ogni mese/settimana</p>
+                  <p className="text-sm text-white/40">Automatica ogni mese/settimana</p>
                 </div>
               </div>
               <button
@@ -185,7 +184,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   required
                 />
               </div>
@@ -207,7 +206,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                       className={`p-3 rounded-lg text-sm font-medium transition-all ${
                         frequency === freq.value
                           ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/50'
-                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.06]'
                       }`}
                     >
                       {freq.label}
@@ -223,7 +222,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                   <select
                     value={dayOfWeek}
                     onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value={1}>Lunedì</option>
                     <option value={2}>Martedì</option>
@@ -245,7 +244,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                     max="31"
                     value={dayOfMonth}
                     onChange={(e) => setDayOfMonth(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
               )}
@@ -285,7 +284,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Es: Stipendio mensile, Affitto, Netflix..."
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   required
                 />
               </div>
