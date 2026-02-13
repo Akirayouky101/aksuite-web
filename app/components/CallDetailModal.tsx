@@ -76,7 +76,7 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[90] flex items-center justify-center p-4 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/40  z-[90] flex items-center justify-center p-4 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 50 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -85,19 +85,19 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-3xl w-full overflow-x-hidden"
         >
-          <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-3xl blur-2xl opacity-40" />
+          <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 via-violet-500 to-violet-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-[#131920] rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="relative bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-6 border-b-2 border-teal-400 flex-shrink-0">
+            <div className="bg-gradient-to-r from-indigo-500 to-violet-600 p-6 border-b-2 border-indigo-300 flex-shrink-0">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4 flex-1">
                   <div className="text-5xl">
                     {callTypeEmojis[call.call_type] || '📞'}
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-3">
+                    <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-3">
                       {call.caller_name}
                       <span className={`px-3 py-1 rounded-lg text-sm font-bold border-2 ${priorityColors[call.priority]}`}>
                         {call.priority.toUpperCase()}
@@ -113,10 +113,10 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-12 h-12 bg-slate-200 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
                   aria-label="Chiudi"
                 >
-                  <X className="w-7 h-7 text-white" strokeWidth={3} />
+                  <X className="w-7 h-7 text-slate-800" strokeWidth={3} />
                 </button>
               </div>
             </div>
@@ -125,14 +125,14 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
             <div className="p-6 space-y-6 overflow-y-auto overflow-x-hidden">
               {/* Type and Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]">
-                  <div className="text-sm text-white/40 mb-1">Tipo Chiamata</div>
-                  <div className="text-xl font-bold text-white">
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                  <div className="text-sm text-slate-400 mb-1">Tipo Chiamata</div>
+                  <div className="text-xl font-bold text-slate-800">
                     {callTypeEmojis[call.call_type]} {callTypeLabels[call.call_type]}
                   </div>
                 </div>
-                <div className={`${statusColors[call.status].bg} rounded-xl p-4 border border-white/[0.08]`}>
-                  <div className="text-sm text-white/40 mb-1">Stato</div>
+                <div className={`${statusColors[call.status].bg} rounded-xl p-4 border border-slate-200`}>
+                  <div className="text-sm text-slate-400 mb-1">Stato</div>
                   <div className={`text-xl font-bold ${statusColors[call.status].text}`}>
                     {statusColors[call.status].label}
                   </div>
@@ -140,21 +140,21 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
               </div>
 
               {/* Contact Info */}
-              <div className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-xl p-5 border border-white/[0.08]">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5 text-teal-400" />
+              <div className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-xl p-5 border border-slate-200">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <User className="w-5 h-5 text-indigo-400" />
                   Informazioni Contatto
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-teal-400" />
+                      <Phone className="w-5 h-5 text-indigo-400" />
                     </div>
                     <div>
-                      <div className="text-xs text-white/40">Telefono</div>
+                      <div className="text-xs text-slate-400">Telefono</div>
                       <a 
                         href={`tel:${call.phone}`} 
-                        className="text-lg font-semibold text-teal-300 hover:text-blue-200 transition-colors"
+                        className="text-lg font-semibold text-indigo-400 hover:text-blue-200 transition-colors"
                       >
                         {call.phone}
                       </a>
@@ -162,14 +162,14 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
                   </div>
                   {call.email && (
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
-                        <Mail className="w-5 h-5 text-cyan-400" />
+                      <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-indigo-500" />
                       </div>
                       <div>
-                        <div className="text-xs text-white/40">Email</div>
+                        <div className="text-xs text-slate-400">Email</div>
                         <a 
                           href={`mailto:${call.email}`} 
-                          className="text-lg font-semibold text-cyan-300 hover:text-cyan-200 transition-colors"
+                          className="text-lg font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
                         >
                           {call.email}
                         </a>
@@ -180,12 +180,12 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
               </div>
 
               {/* Notes */}
-              <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-xl p-5 border border-white/[0.08]">
-                <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+              <div className="bg-gradient-to-br from-violet-50 to-blue-900/30 rounded-xl p-5 border border-slate-200">
+                <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-purple-400" />
                   Note e Richiesta
                 </h3>
-                <p className="text-base text-white/70 leading-relaxed whitespace-pre-wrap">
+                <p className="text-base text-slate-600 leading-relaxed whitespace-pre-wrap">
                   {call.notes}
                 </p>
               </div>
@@ -199,7 +199,7 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
                     </div>
                     <div>
                       <div className="text-sm text-orange-200 font-semibold">Follow-up Programmato</div>
-                      <div className="text-xl font-bold text-white">
+                      <div className="text-xl font-bold text-slate-800">
                         {formatFollowUpDate(call.follow_up_date)}
                       </div>
                     </div>
@@ -208,15 +208,15 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
               )}
 
               {/* Call Date */}
-              <div className="flex items-center gap-3 text-sm text-white/40 bg-white/[0.04]/30 rounded-lg p-4">
+              <div className="flex items-center gap-3 text-sm text-slate-400 bg-slate-50 rounded-lg p-4">
                 <Clock className="w-4 h-4" />
                 <span>Chiamata ricevuta il {formatDate(call.call_date)}</span>
               </div>
             </div>
 
             {/* Decorative borders */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 opacity-70" />
-            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 opacity-70" />
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-indigo-400 via-violet-400 to-violet-400 opacity-70" />
+            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-indigo-400 via-violet-400 to-violet-400 opacity-70" />
           </div>
         </motion.div>
       </div>

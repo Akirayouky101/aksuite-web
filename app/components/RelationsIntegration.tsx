@@ -82,8 +82,8 @@ export default function RelationsIntegration({
   // Don't show for new items (no entityId yet)
   if (!entityId) {
     return (
-      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-        <p className="text-gray-400 text-sm text-center">
+      <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4">
+        <p className="text-slate-400 text-sm text-center">
           💡 Salva prima questo elemento per poter creare collegamenti
         </p>
       </div>
@@ -94,8 +94,8 @@ export default function RelationsIntegration({
     <div className="space-y-4">
       {/* Related Items Panel */}
       {loading ? (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 text-center">
-          <div className="text-gray-400">Caricamento collegamenti...</div>
+        <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-6 text-center">
+          <div className="text-slate-400">Caricamento collegamenti...</div>
         </div>
       ) : (
         <RelatedItemsPanel

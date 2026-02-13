@@ -104,7 +104,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/30  flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -112,27 +112,27 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-2xl w-full overflow-x-hidden"
         >
-          <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl blur-2xl opacity-30" />
+          <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-[#131920] rounded-2xl max-h-[90vh] overflow-hidden border border-white/[0.08] shadow-2xl">
+          <div className="relative bg-white rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200 shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-purple-900/30 to-pink-900/30">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-pink-50">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">
                   🔄
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Transazione Ricorrente</h2>
-                  <p className="text-sm text-white/40">Automatica ogni mese/settimana</p>
+                  <h2 className="text-2xl font-bold text-slate-800">Transazione Ricorrente</h2>
+                  <p className="text-sm text-slate-400">Automatica ogni mese/settimana</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                className="w-10 h-10 rounded-lg bg-slate-100 hover:bg-slate-100 flex items-center justify-center transition-colors"
                 aria-label="Chiudi"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-5 h-5 text-slate-800" />
               </button>
             </div>
 
@@ -140,7 +140,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {/* Type Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">Tipo</label>
+                <label className="block text-sm font-semibold text-slate-800 mb-3">Tipo</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -150,12 +150,12 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                     }}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       type === 'income'
-                        ? 'bg-green-500/20 border-green-500 shadow-lg shadow-green-500/50'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                        ? 'bg-green-500/20 border-green-500 shadow-lg shadow-indigo-200/50'
+                        : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                     }`}
                   >
                     <span className="text-2xl mb-2 block">💚</span>
-                    <span className="text-white font-medium">Entrata</span>
+                    <span className="text-slate-800 font-medium">Entrata</span>
                   </button>
                   <button
                     type="button"
@@ -166,32 +166,32 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                     className={`p-4 rounded-xl border-2 transition-all ${
                       type === 'expense'
                         ? 'bg-red-500/20 border-red-500 shadow-lg shadow-red-500/50'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                        : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                     }`}
                   >
                     <span className="text-2xl mb-2 block">❤️</span>
-                    <span className="text-white font-medium">Uscita</span>
+                    <span className="text-slate-800 font-medium">Uscita</span>
                   </button>
                 </div>
               </div>
 
               {/* Amount */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-2">Importo (€)</label>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">Importo (€)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   required
                 />
               </div>
 
               {/* Frequency */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">Frequenza</label>
+                <label className="block text-sm font-semibold text-slate-800 mb-3">Frequenza</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {[
                     { value: 'daily', label: '📆 Giornaliera', icon: '📆' },
@@ -205,8 +205,8 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                       onClick={() => setFrequency(freq.value as any)}
                       className={`p-3 rounded-lg text-sm font-medium transition-all ${
                         frequency === freq.value
-                          ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/50'
-                          : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.06]'
+                          ? 'bg-purple-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                          : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
                       {freq.label}
@@ -218,11 +218,11 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
               {/* Day Selection */}
               {frequency === 'weekly' && (
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-white mb-2">Giorno della settimana</label>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Giorno della settimana</label>
                   <select
                     value={dayOfWeek}
                     onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   >
                     <option value={1}>Lunedì</option>
                     <option value={2}>Martedì</option>
@@ -237,21 +237,21 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
               {(frequency === 'monthly' || frequency === 'yearly') && (
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-white mb-2">Giorno del mese (1-31)</label>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Giorno del mese (1-31)</label>
                   <input
                     type="number"
                     min="1"
                     max="31"
                     value={dayOfMonth}
                     onChange={(e) => setDayOfMonth(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   />
                 </div>
               )}
 
               {/* Category */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">Categoria</label>
+                <label className="block text-sm font-semibold text-slate-800 mb-3">Categoria</label>
                 <div className="grid grid-cols-3 gap-2">
                   {categories.map((cat) => (
                     <button
@@ -266,11 +266,11 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                           ? type === 'income'
                             ? 'bg-green-500/20 border-green-500 shadow-lg'
                             : 'bg-red-500/20 border-red-500 shadow-lg'
-                          : 'bg-white/5 border-white/10 hover:border-white/20'
+                          : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                       }`}
                     >
                       <span className="text-2xl block mb-1">{cat.emoji}</span>
-                      <span className="text-white text-xs font-medium">{cat.name}</span>
+                      <span className="text-slate-800 text-xs font-medium">{cat.name}</span>
                     </button>
                   ))}
                 </div>
@@ -278,13 +278,13 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
               {/* Description */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-2">Descrizione</label>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">Descrizione</label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Es: Stipendio mensile, Affitto, Netflix..."
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   required
                 />
               </div>
@@ -293,7 +293,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
               <button
                 type="submit"
                 disabled={isSaving || !amount || !category || !description}
-                className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 text-slate-800 font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-indigo-200/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? 'Salvataggio...' : '🔄 Crea Ricorrente'}
               </button>

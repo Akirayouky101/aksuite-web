@@ -92,7 +92,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-hidden">
+      <div className="fixed inset-0 bg-slate-900/40  z-50 overflow-hidden">
         <div className="w-full h-full overflow-x-hidden overflow-y-auto flex items-center justify-center p-0 sm:p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -101,27 +101,27 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
           onClick={(e) => e.stopPropagation()}
           className="relative w-full h-full sm:h-auto sm:max-w-6xl sm:max-h-[95vh]"
         >
-          <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl blur-2xl opacity-20" />
+          <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-indigo-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-[#131920] rounded-none sm:rounded-2xl w-full h-full sm:h-auto overflow-hidden border-0 sm:border border-white/[0.08] shadow-2xl flex flex-col">
+          <div className="relative bg-white rounded-none sm:rounded-2xl w-full h-full sm:h-auto overflow-hidden border-0 sm:border border-slate-200 shadow-2xl flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-white/10 bg-gradient-to-r from-green-900/30 to-emerald-900/30 shrink-0">
+            <div className="flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-green-50 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-lg sm:text-xl md:text-2xl">
                 📊
               </div>
               <div>
-                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">Bilancio</h2>
-                <p className="text-xs text-white/40 hidden md:block">Tutte le tue transazioni</p>
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-slate-800">Bilancio</h2>
+                <p className="text-xs text-slate-400 hidden md:block">Tutte le tue transazioni</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors shrink-0"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-slate-100 hover:bg-slate-100 flex items-center justify-center transition-colors shrink-0"
               aria-label="Chiudi"
             >
-              <X className="w-5 h-5 text-white" />
+              <X className="w-5 h-5 text-slate-800" />
             </button>
           </div>
 
@@ -134,8 +134,8 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                 onClick={() => setActiveTab('transactions')}
                 className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all ${
                   activeTab === 'transactions'
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50'
-                    : 'bg-white/[0.04] text-white/40 hover:bg-white/[0.06]'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                    : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                 }`}
               >
                 💳 Transazioni
@@ -144,8 +144,8 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                 onClick={() => setActiveTab('stats')}
                 className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all ${
                   activeTab === 'stats'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
-                    : 'bg-white/[0.04] text-white/40 hover:bg-white/[0.06]'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                    : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                 }`}
               >
                 📊 Statistiche
@@ -174,8 +174,8 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                       onClick={() => setDateFilter(option.value as DateFilter)}
                       className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         dateFilter === option.value
-                          ? 'bg-green-500 text-white shadow-lg shadow-green-500/50'
-                          : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.06]'
+                          ? 'bg-green-500 text-slate-800 shadow-lg shadow-indigo-200/50'
+                          : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
                       {option.label}
@@ -201,8 +201,8 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                       onClick={() => setTypeFilter(option.value as TypeFilter)}
                       className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         typeFilter === option.value
-                          ? `bg-${option.color}-500 text-white shadow-lg`
-                          : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.06]'
+                          ? `bg-${option.color}-500 text-slate-800 shadow-lg`
+                          : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
                       <span className="hidden sm:inline">{option.label}</span>
@@ -218,15 +218,15 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                   <summary className="flex items-center gap-1 sm:gap-2 cursor-pointer list-none">
                     <Filter className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                     <span className="text-xs sm:text-sm text-green-300 font-semibold">Categoria</span>
-                    <span className="ml-auto text-xs text-white/40 group-open:rotate-180 transition-transform">▼</span>
+                    <span className="ml-auto text-xs text-slate-400 group-open:rotate-180 transition-transform">▼</span>
                   </summary>
                   <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
                     <button
                       onClick={() => setSelectedCategory('all')}
                       className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         selectedCategory === 'all'
-                          ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/50'
-                          : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.06]'
+                          ? 'bg-violet-500 text-white shadow-lg shadow-indigo-200/50'
+                          : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
                       🌟 Tutte
@@ -237,8 +237,8 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                         onClick={() => setSelectedCategory(cat)}
                         className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                           selectedCategory === cat
-                            ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/50'
-                            : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.06]'
+                            ? 'bg-violet-500 text-white shadow-lg shadow-indigo-200/50'
+                            : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                         }`}
                       >
                         {cat}
@@ -259,7 +259,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 text-green-400" />
                   <span className="text-xs sm:text-sm text-green-300">Entrate</span>
                 </div>
-                <p className="text-lg sm:text-xl md:text-3xl font-bold text-white">€{filteredStats.totalIncome.toFixed(2)}</p>
+                <p className="text-lg sm:text-xl md:text-3xl font-bold text-slate-800">€{filteredStats.totalIncome.toFixed(2)}</p>
               </motion.div>
 
               <motion.div
@@ -270,22 +270,22 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                   <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 text-red-400" />
                   <span className="text-xs sm:text-sm text-red-300">Uscite</span>
                 </div>
-                <p className="text-lg sm:text-xl md:text-3xl font-bold text-white">€{filteredStats.totalExpenses.toFixed(2)}</p>
+                <p className="text-lg sm:text-xl md:text-3xl font-bold text-slate-800">€{filteredStats.totalExpenses.toFixed(2)}</p>
               </motion.div>
 
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 className={`bg-gradient-to-br ${
                   filteredStats.balance >= 0
-                    ? 'from-blue-500/20 to-cyan-600/20 border-teal-500/30'
+                    ? 'from-indigo-500/20 to-violet-600/20 border-indigo-500/30'
                     : 'from-orange-500/20 to-red-600/20 border-orange-500/30'
                 } rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border`}
               >
                 <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-1">
-                  <DollarSign className={`w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 ${filteredStats.balance >= 0 ? 'text-teal-400' : 'text-orange-400'}`} />
-                  <span className={`text-xs sm:text-sm ${filteredStats.balance >= 0 ? 'text-teal-300' : 'text-orange-300'}`}>Bilancio</span>
+                  <DollarSign className={`w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 ${filteredStats.balance >= 0 ? 'text-indigo-400' : 'text-orange-400'}`} />
+                  <span className={`text-xs sm:text-sm ${filteredStats.balance >= 0 ? 'text-indigo-400' : 'text-orange-300'}`}>Bilancio</span>
                 </div>
-                <p className="text-lg sm:text-xl md:text-3xl font-bold text-white">€{filteredStats.balance.toFixed(2)}</p>
+                <p className="text-lg sm:text-xl md:text-3xl font-bold text-slate-800">€{filteredStats.balance.toFixed(2)}</p>
               </motion.div>
             </div>
 
@@ -293,13 +293,13 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
             {filteredTransactions.length === 0 ? (
               <div className="text-center py-6 sm:py-8 md:py-12">
                 <div className="text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">💰</div>
-                <p className="text-white/40 text-sm sm:text-base md:text-lg">
+                <p className="text-slate-400 text-sm sm:text-base md:text-lg">
                   {transactions.length === 0 
                     ? 'Nessuna transazione salvata'
                     : 'Nessuna transazione con questi filtri'
                   }
                 </p>
-                <p className="text-white/30 text-xs sm:text-sm mt-2">
+                <p className="text-slate-400 text-xs sm:text-sm mt-2">
                   {transactions.length === 0
                     ? 'Aggiungi un movimento per iniziare!'
                     : 'Prova a cambiare i filtri sopra'
@@ -309,7 +309,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
             ) : (
               <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
                 <div className="flex items-center justify-between mb-2 sm:mb-3 md:mb-4">
-                  <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-white">
+                  <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-slate-800">
                     Transazioni ({filteredTransactions.length})
                   </h3>
                   {(dateFilter !== 'all' || typeFilter !== 'all' || selectedCategory !== 'all') && (
@@ -319,7 +319,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                         setTypeFilter('all')
                         setSelectedCategory('all')
                       }}
-                      className="text-xs sm:text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                      className="text-xs sm:text-sm text-indigo-500 hover:text-indigo-500 transition-colors"
                     >
                       Cancella
                     </button>
@@ -341,12 +341,12 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                       <div className="text-xl sm:text-2xl md:text-3xl shrink-0">{transaction.emoji}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-                          <h4 className="font-semibold text-white text-xs sm:text-sm md:text-base truncate">{transaction.description}</h4>
-                          <span className="hidden md:inline text-xs px-2 py-0.5 sm:py-1 rounded-full bg-white/10 text-white/50 shrink-0">
+                          <h4 className="font-semibold text-slate-800 text-xs sm:text-sm md:text-base truncate">{transaction.description}</h4>
+                          <span className="hidden md:inline text-xs px-2 py-0.5 sm:py-1 rounded-full bg-slate-100 text-slate-400 shrink-0">
                             {transaction.category}
                           </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-white/40 truncate">
+                        <p className="text-xs sm:text-sm text-slate-400 truncate">
                           {new Date(transaction.date).toLocaleDateString('it-IT', {
                             day: 'numeric',
                             month: 'short',

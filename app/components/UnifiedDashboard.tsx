@@ -127,14 +127,14 @@ export default function UnifiedDashboard({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400">
+          <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-violet-500">
             Dashboard Unificata
           </h1>
-          <p className="text-white/40 mt-1">Panoramica completa di tutte le tue attività</p>
+          <p className="text-slate-400 mt-1">Panoramica completa di tutte le tue attività</p>
         </div>
         <div className="text-right">
-          <div className="text-sm text-white/40">Oggi</div>
-          <div className="text-lg font-bold text-white">
+          <div className="text-sm text-slate-400">Oggi</div>
+          <div className="text-lg font-bold text-slate-800">
             {new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function UnifiedDashboard({
               <AlertTriangle className="w-8 h-8 text-red-400 animate-pulse" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-white mb-2">⚠️ Attenzione Richiesta!</h3>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">⚠️ Attenzione Richiesta!</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 {urgentCalls > 0 && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
@@ -190,7 +190,7 @@ export default function UnifiedDashboard({
         >
           <div className="flex items-center justify-between mb-3">
             <Lock className="w-8 h-8 text-orange-400 group-hover:scale-110 transition-transform" />
-            <span className="text-lg font-bold text-white">{totalPasswords}</span>
+            <span className="text-lg font-bold text-slate-800">{totalPasswords}</span>
           </div>
           <div className="text-sm text-orange-200 font-bold mb-1">Password Salvate</div>
           {favoritePasswords > 0 && (
@@ -205,14 +205,14 @@ export default function UnifiedDashboard({
         <motion.div
           whileHover={{ scale: 1.05 }}
           onClick={onOpenCalls}
-          className="bg-gradient-to-br from-blue-900/50 to-cyan-900/50 border-2 border-cyan-500/50 rounded-xl p-4 cursor-pointer group"
+          className="bg-gradient-to-br from-indigo-50 to-indigo-50 border-2 border-indigo-300 rounded-xl p-4 cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-3">
-            <Phone className="w-8 h-8 text-cyan-400 group-hover:scale-110 transition-transform" />
-            <span className="text-lg font-bold text-white">{totalCalls}</span>
+            <Phone className="w-8 h-8 text-indigo-500 group-hover:scale-110 transition-transform" />
+            <span className="text-lg font-bold text-slate-800">{totalCalls}</span>
           </div>
-          <div className="text-sm text-cyan-200 font-bold mb-1">Chiamate Totali</div>
-          <div className="text-xs text-cyan-300">
+          <div className="text-sm text-indigo-500 font-bold mb-1">Chiamate Totali</div>
+          <div className="text-xs text-indigo-500">
             {pendingCalls} in attesa
           </div>
         </motion.div>
@@ -221,11 +221,11 @@ export default function UnifiedDashboard({
         <motion.div
           whileHover={{ scale: 1.05 }}
           onClick={onOpenTasks}
-          className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 border-2 border-purple-500/50 rounded-xl p-4 cursor-pointer group"
+          className="bg-gradient-to-br from-violet-50 to-pink-50 border-2 border-purple-500/50 rounded-xl p-4 cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-3">
             <CheckCircle2 className="w-8 h-8 text-purple-400 group-hover:scale-110 transition-transform" />
-            <span className="text-lg font-bold text-white">{totalTasks}</span>
+            <span className="text-lg font-bold text-slate-800">{totalTasks}</span>
           </div>
           <div className="text-sm text-purple-200 font-bold mb-1">Task Totali</div>
           <div className="text-xs text-purple-300">
@@ -237,7 +237,7 @@ export default function UnifiedDashboard({
         <motion.div
           whileHover={{ scale: 1.05 }}
           onClick={onOpenBudget}
-          className={`bg-gradient-to-br ${balance >= 0 ? 'from-green-900/50 to-emerald-900/50 border-green-500/50' : 'from-red-900/50 to-pink-900/50 border-red-500/50'} border-2 rounded-xl p-4 cursor-pointer group`}
+          className={`bg-gradient-to-br ${balance >= 0 ? 'from-green-900/50 to-emerald-900/50 border-green-500/50' : 'from-red-900/50 to-pink-50 border-red-500/50'} border-2 rounded-xl p-4 cursor-pointer group`}
         >
           <div className="flex items-center justify-between mb-3">
             <DollarSign className={`w-8 h-8 ${balance >= 0 ? 'text-green-400' : 'text-red-400'} group-hover:scale-110 transition-transform`} />
@@ -245,8 +245,8 @@ export default function UnifiedDashboard({
               {balance >= 0 ? '+' : ''}{balance.toLocaleString()}€
             </span>
           </div>
-          <div className="text-sm text-white/70 font-bold mb-1">Bilancio Mensile</div>
-          <div className="text-xs text-white/50">
+          <div className="text-sm text-slate-600 font-bold mb-1">Bilancio Mensile</div>
+          <div className="text-xs text-slate-400">
             {totalTransactions} transazioni
           </div>
         </motion.div>
@@ -254,7 +254,7 @@ export default function UnifiedDashboard({
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
           <Zap className="w-5 h-5 text-yellow-400" />
           Azioni Rapide
         </h2>
@@ -263,7 +263,7 @@ export default function UnifiedDashboard({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNewPassword}
-            className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
+            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
           >
             <Plus className="w-5 h-5" />
             Nuova Password
@@ -273,7 +273,7 @@ export default function UnifiedDashboard({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNewCall}
-            className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
+            className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
           >
             <Plus className="w-5 h-5" />
             Nuova Chiamata
@@ -283,7 +283,7 @@ export default function UnifiedDashboard({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNewTask}
-            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
+            className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
           >
             <Plus className="w-5 h-5" />
             Nuovo Task
@@ -293,7 +293,7 @@ export default function UnifiedDashboard({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNewTransaction}
-            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
+            className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-green-700 hover:to-emerald-700 text-slate-800 rounded-lg p-4 font-semibold flex items-center justify-center gap-2 shadow-lg"
           >
             <Plus className="w-5 h-5" />
             Nuova Transazione
@@ -304,40 +304,40 @@ export default function UnifiedDashboard({
       {/* Progress & Activity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Task Progress */}
-        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-purple-500/50 rounded-xl p-5">
+        <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-purple-500/50 rounded-xl p-5">
           <h3 className="text-xl font-bold text-purple-300 mb-4 flex items-center gap-2">
             <Target className="w-5 h-5" />
             Completamento Task
           </h3>
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-white/50">Progresso Totale</span>
-              <span className="text-base font-bold text-white">{completionRate}%</span>
+              <span className="text-sm text-slate-400">Progresso Totale</span>
+              <span className="text-base font-bold text-slate-800">{completionRate}%</span>
             </div>
-            <div className="h-4 bg-white/[0.06] rounded-full overflow-hidden">
+            <div className="h-4 bg-slate-50 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${completionRate}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
-                className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500"
+                className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
               <div className="text-purple-300 text-xs mb-1">Attivi</div>
-              <div className="text-white font-bold text-xl">{activeTasks}</div>
+              <div className="text-slate-800 font-bold text-xl">{activeTasks}</div>
             </div>
             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
               <div className="text-green-300 text-xs mb-1">Completati</div>
-              <div className="text-white font-bold text-xl">{completedTasks}</div>
+              <div className="text-slate-800 font-bold text-xl">{completedTasks}</div>
             </div>
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-cyan-500/50 rounded-xl p-5">
-          <h3 className="text-xl font-bold text-cyan-300 mb-4 flex items-center gap-2">
+        <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-indigo-300 rounded-xl p-5">
+          <h3 className="text-xl font-bold text-indigo-500 mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5" />
             Attività Recenti
           </h3>
@@ -347,18 +347,18 @@ export default function UnifiedDashboard({
                 <Lock className="w-4 h-4 text-orange-400" />
               </div>
               <div className="flex-1">
-                <div className="text-white font-semibold">{totalPasswords} Password</div>
-                <div className="text-white/40 text-xs">nel vault</div>
+                <div className="text-slate-800 font-semibold">{totalPasswords} Password</div>
+                <div className="text-slate-400 text-xs">nel vault</div>
               </div>
             </div>
             
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center">
-                <Phone className="w-4 h-4 text-cyan-400" />
+              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <Phone className="w-4 h-4 text-indigo-500" />
               </div>
               <div className="flex-1">
-                <div className="text-white font-semibold">{pendingCalls} Chiamate</div>
-                <div className="text-white/40 text-xs">in attesa di gestione</div>
+                <div className="text-slate-800 font-semibold">{pendingCalls} Chiamate</div>
+                <div className="text-slate-400 text-xs">in attesa di gestione</div>
               </div>
             </div>
             
@@ -368,8 +368,8 @@ export default function UnifiedDashboard({
                   <Calendar className="w-4 h-4 text-yellow-400" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-white font-semibold">{tasksTodayDue} Task</div>
-                  <div className="text-white/40 text-xs">in scadenza oggi</div>
+                  <div className="text-slate-800 font-semibold">{tasksTodayDue} Task</div>
+                  <div className="text-slate-400 text-xs">in scadenza oggi</div>
                 </div>
               </div>
             )}
@@ -379,8 +379,8 @@ export default function UnifiedDashboard({
                 <TrendingUp className={`w-4 h-4 ${balance >= 0 ? 'text-green-400' : 'text-red-400'}`} />
               </div>
               <div className="flex-1">
-                <div className="text-white font-semibold">{balance >= 0 ? '+' : ''}{balance.toLocaleString()}€</div>
-                <div className="text-white/40 text-xs">bilancio questo mese</div>
+                <div className="text-slate-800 font-semibold">{balance >= 0 ? '+' : ''}{balance.toLocaleString()}€</div>
+                <div className="text-slate-400 text-xs">bilancio questo mese</div>
               </div>
             </div>
           </div>
@@ -389,7 +389,7 @@ export default function UnifiedDashboard({
 
       {/* Today's Focus */}
       {(tasksTodayDue > 0 || followUpToday > 0) && (
-        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-yellow-500/50 rounded-xl p-5">
+        <div className="bg-gradient-to-br from-white to-slate-900/90 border-2 border-yellow-500/50 rounded-xl p-5">
           <h3 className="text-xl font-bold text-yellow-300 mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5" />
             Focus di Oggi

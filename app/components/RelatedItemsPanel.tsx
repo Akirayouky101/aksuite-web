@@ -11,8 +11,8 @@ interface RelatedItemsPanelProps {
 }
 
 const ENTITY_CONFIG = {
-  password: { icon: Lock, label: 'Password', color: 'text-teal-400', bg: 'bg-blue-900/30', border: 'border-blue-700' },
-  call: { icon: Phone, label: 'Chiamata', color: 'text-cyan-400', bg: 'bg-cyan-900/30', border: 'border-cyan-700' },
+  password: { icon: Lock, label: 'Password', color: 'text-indigo-400', bg: 'bg-blue-900/30', border: 'border-blue-700' },
+  call: { icon: Phone, label: 'Chiamata', color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-200' },
   visit: { icon: UserCheck, label: 'Visita', color: 'text-pink-400', bg: 'bg-pink-900/30', border: 'border-pink-700' },
   task: { icon: CheckCircle2, label: 'Task', color: 'text-purple-400', bg: 'bg-purple-900/30', border: 'border-purple-700' },
   note: { icon: FileText, label: 'Nota', color: 'text-yellow-400', bg: 'bg-yellow-900/30', border: 'border-yellow-700' },
@@ -35,12 +35,12 @@ export default function RelatedItemsPanel({
 }: RelatedItemsPanelProps) {
   if (relatedItems.length === 0) {
     return (
-      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 text-center">
+      <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-6 text-center">
         <Link2Off className="mx-auto text-gray-600 mb-3" size={48} />
-        <p className="text-gray-400 text-sm">
+        <p className="text-slate-400 text-sm">
           Nessun elemento collegato
         </p>
-        <p className="text-gray-500 text-xs mt-1">
+        <p className="text-slate-500 text-xs mt-1">
           Usa il pulsante qui sotto per collegare password, chiamate, task, note o eventi
         </p>
       </div>
@@ -55,9 +55,9 @@ export default function RelatedItemsPanel({
   }, {} as Record<EntityType, RelatedItem[]>)
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+    <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="font-bold text-white flex items-center gap-2">
+        <h4 className="font-bold text-slate-800 flex items-center gap-2">
           <Link2Off size={18} />
           Collegamenti ({relatedItems.length})
         </h4>
@@ -71,7 +71,7 @@ export default function RelatedItemsPanel({
 
           return (
             <div key={type} className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-400">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-400">
                 <TypeIcon size={14} />
                 {config.label} ({items.length})
               </div>
@@ -88,15 +88,15 @@ export default function RelatedItemsPanel({
                     <div className="flex items-start gap-2 flex-1 min-w-0">
                       <TypeIcon className={`${config.color} flex-shrink-0 mt-0.5`} size={16} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-white font-medium text-sm truncate">
+                        <div className="text-slate-800 font-medium text-sm truncate">
                           {item.title}
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          <span className="text-xs px-2 py-0.5 bg-gray-900/50 text-gray-400 rounded">
+                          <span className="text-xs px-2 py-0.5 bg-slate-50/50 text-slate-400 rounded">
                             {RELATION_LABELS[item.relation_type]}
                           </span>
                           {item.notes && (
-                            <span className="text-xs px-2 py-0.5 bg-gray-900/50 text-gray-400 rounded truncate max-w-[200px]"
+                            <span className="text-xs px-2 py-0.5 bg-slate-50/50 text-slate-400 rounded truncate max-w-[200px]"
                               title={item.notes}
                             >
                               💭 {item.notes}
@@ -110,7 +110,7 @@ export default function RelatedItemsPanel({
                       {onNavigate && (
                         <button
                           onClick={() => onNavigate(item.type, item.id)}
-                          className="p-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded transition-colors"
+                          className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors"
                           title="Vai a"
                         >
                           <ExternalLink size={14} />
@@ -122,7 +122,7 @@ export default function RelatedItemsPanel({
                             onRemoveRelation(item.relation_id)
                           }
                         }}
-                        className="p-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded transition-colors"
+                        className="p-1.5 bg-red-500/80 hover:bg-red-500 text-slate-800 rounded transition-colors"
                         title="Rimuovi collegamento"
                       >
                         <Link2Off size={14} />
@@ -137,7 +137,7 @@ export default function RelatedItemsPanel({
       </div>
 
       {/* Quick Stats */}
-      <div className="mt-4 pt-4 border-t border-gray-700">
+      <div className="mt-4 pt-4 border-t border-slate-200">
         <div className="grid grid-cols-3 gap-2">
           {(Object.keys(groupedItems) as EntityType[]).slice(0, 3).map(type => {
             const config = ENTITY_CONFIG[type]
@@ -146,8 +146,8 @@ export default function RelatedItemsPanel({
             return (
               <div key={type} className={`${config.bg} border ${config.border} rounded px-2 py-1.5 flex items-center gap-1.5`}>
                 <TypeIcon className={config.color} size={14} />
-                <span className="text-white font-bold text-sm">{count}</span>
-                <span className="text-xs text-gray-400 truncate">{config.label}</span>
+                <span className="text-slate-800 font-bold text-sm">{count}</span>
+                <span className="text-xs text-slate-400 truncate">{config.label}</span>
               </div>
             )
           })}

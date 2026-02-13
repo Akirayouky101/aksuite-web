@@ -18,9 +18,9 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center shadow-2xl border-2 border-white/20"
+        className="w-14 h-14 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center shadow-2xl border-2 border-slate-200"
       >
-        <Palette className="w-7 h-7 text-white" strokeWidth={2.5} />
+        <Palette className="w-7 h-7 text-slate-800" strokeWidth={2.5} />
       </motion.button>
 
       {isOpen && (
@@ -28,10 +28,10 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
           initial={{ opacity: 0, y: -20, scale: 0.8 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.8 }}
-          className="absolute right-0 mt-4 w-64 bg-[#131920]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 shadow-2xl"
+          className="absolute right-0 mt-4 w-64 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 shadow-2xl"
         >
-          <h3 className="text-white/90 font-bold text-lg mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-violet-400" />
+          <h3 className="text-slate-800 font-bold text-lg mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-indigo-500" />
             Choose Theme
           </h3>
 
@@ -46,16 +46,16 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
               }}
               className={`w-full p-4 rounded-xl border-2 transition-all ${
                 currentTheme === 'geometric'
-                  ? 'border-violet-400 bg-violet-500/20'
-                  : 'border-white/20 hover:border-violet-400/50'
+                  ? 'border-violet-400 bg-indigo-100'
+                  : 'border-slate-200 hover:border-violet-400/50'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-lg flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-white" />
+                  <Zap className="w-6 h-6 text-slate-800" />
                 </div>
                 <div className="text-left flex-1">
-                  <div className="text-white font-bold">Geometric</div>
+                  <div className="text-slate-800 font-bold">Geometric</div>
                   <div className="text-xs text-violet-300">Minimal & Clean</div>
                 </div>
                 {currentTheme === 'geometric' && (
@@ -75,7 +75,7 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
               className={`w-full p-4 rounded-xl border-2 transition-all ${
                 currentTheme === 'anime'
                   ? 'border-red-400 bg-red-500/20'
-                  : 'border-white/20 hover:border-red-400/50'
+                  : 'border-slate-200 hover:border-red-400/50'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
                   <span className="text-2xl">�‍☠️</span>
                 </div>
                 <div className="text-left flex-1">
-                  <div className="text-white font-bold">One Piece</div>
+                  <div className="text-slate-800 font-bold">One Piece</div>
                   <div className="text-xs text-yellow-300">Straw Hat Pirates</div>
                 </div>
                 {currentTheme === 'anime' && (

@@ -27,7 +27,7 @@ const COLORS = {
   purple: { light: 'bg-purple-100 border-purple-300', dark: 'bg-purple-900/30 border-purple-700', text: 'text-purple-600' },
   pink: { light: 'bg-pink-100 border-pink-300', dark: 'bg-pink-900/30 border-pink-700', text: 'text-pink-600' },
   orange: { light: 'bg-orange-100 border-orange-300', dark: 'bg-orange-900/30 border-orange-700', text: 'text-orange-600' },
-  gray: { light: 'bg-gray-100 border-gray-300', dark: 'bg-gray-900/30 border-gray-700', text: 'text-gray-600' }
+  gray: { light: 'bg-gray-100 border-gray-300', dark: 'bg-slate-50 border-slate-200', text: 'text-gray-600' }
 }
 
 export default function NotesListModal({
@@ -123,25 +123,25 @@ export default function NotesListModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 ">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col border border-gray-700"
+            className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col border border-slate-200"
           >
             {/* Header */}
-            <div className="p-6 border-b border-gray-700 bg-gradient-to-r from-yellow-900/30 to-orange-900/30">
+            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-yellow-900/30 to-orange-900/30">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
                   📝 Note Manager
-                  <span className="text-lg font-normal text-gray-400">
+                  <span className="text-lg font-normal text-slate-400">
                     ({sortedNotes.length} {sortedNotes.length === 1 ? 'nota' : 'note'})
                   </span>
                 </h2>
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-slate-800 transition-colors"
                 >
                   <X size={24} />
                 </button>
@@ -151,7 +151,7 @@ export default function NotesListModal({
               <div className="flex flex-wrap gap-3 mb-4">
                 <button
                   onClick={onAdd}
-                  className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-green-700 hover:to-emerald-700 text-slate-800 rounded-lg font-medium transition-all flex items-center gap-2"
                 >
                   <Plus size={20} />
                   Nuova Nota
@@ -161,8 +161,8 @@ export default function NotesListModal({
                   onClick={() => setShowFilters(!showFilters)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                     showFilters
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      ? 'bg-blue-600 text-slate-800'
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
                   }`}
                 >
                   <Filter size={20} />
@@ -174,7 +174,7 @@ export default function NotesListModal({
                   className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                     showPinnedOnly
                       ? 'bg-yellow-600 text-black'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
                   }`}
                 >
                   <Pin size={20} />
@@ -186,8 +186,8 @@ export default function NotesListModal({
                     onClick={() => setViewMode('grid')}
                     className={`px-3 py-2 rounded-lg transition-colors ${
                       viewMode === 'grid'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        ? 'bg-blue-600 text-slate-800'
+                        : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                     }`}
                   >
                     <Grid size={20} />
@@ -196,8 +196,8 @@ export default function NotesListModal({
                     onClick={() => setViewMode('list')}
                     className={`px-3 py-2 rounded-lg transition-colors ${
                       viewMode === 'list'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        ? 'bg-blue-600 text-slate-800'
+                        : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                     }`}
                   >
                     <List size={20} />
@@ -206,7 +206,7 @@ export default function NotesListModal({
 
                 <button
                   onClick={exportNotes}
-                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
                   <Download size={20} />
                   Esporta CSV
@@ -215,13 +215,13 @@ export default function NotesListModal({
 
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Cerca nelle note..."
-                  className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 />
               </div>
 
@@ -234,13 +234,13 @@ export default function NotesListModal({
                   className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
                 >
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-medium text-slate-400 mb-2 flex items-center gap-2">
                       <Folder size={16} /> Cartella
                     </label>
                     <select
                       value={selectedFolder}
                       onChange={(e) => setSelectedFolder(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400"
                     >
                       {folders.map(folder => (
                         <option key={folder} value={folder}>
@@ -251,13 +251,13 @@ export default function NotesListModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-medium text-slate-400 mb-2 flex items-center gap-2">
                       <Tag size={16} /> Tag
                     </label>
                     <select
                       value={selectedTag}
                       onChange={(e) => setSelectedTag(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-400"
                     >
                       {tags.map(tag => (
                         <option key={tag} value={tag}>
@@ -275,13 +275,13 @@ export default function NotesListModal({
               {sortedNotes.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="text-6xl mb-4">📝</div>
-                  <p className="text-xl text-gray-400">
+                  <p className="text-xl text-slate-400">
                     {notes.length === 0 ? 'Nessuna nota salvata' : 'Nessuna nota trovata'}
                   </p>
                   {notes.length === 0 && (
                     <button
                       onClick={onAdd}
-                      className="mt-4 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium transition-all"
+                      className="mt-4 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-green-700 hover:to-emerald-700 text-slate-800 rounded-lg font-medium transition-all"
                     >
                       Crea la tua prima nota
                     </button>
@@ -311,22 +311,22 @@ export default function NotesListModal({
                         )}
 
                         {/* Title */}
-                        <h3 className="font-bold text-white text-lg mb-2 pr-8">
+                        <h3 className="font-bold text-slate-800 text-lg mb-2 pr-8">
                           {note.title}
                         </h3>
 
                         {/* Content Preview */}
-                        <p className="text-gray-300 text-sm mb-3 line-clamp-3">
+                        <p className="text-slate-500 text-sm mb-3 line-clamp-3">
                           {note.content || 'Nessun contenuto'}
                         </p>
 
                         {/* Metadata */}
                         <div className="flex flex-wrap gap-2 mb-3">
-                          <span className="px-2 py-1 bg-gray-800/50 text-gray-300 rounded text-xs flex items-center gap-1">
+                          <span className="px-2 py-1 bg-slate-50/50 text-slate-500 rounded text-xs flex items-center gap-1">
                             <Folder size={12} />
                             {note.folder}
                           </span>
-                          <span className="px-2 py-1 bg-gray-800/50 text-gray-300 rounded text-xs flex items-center gap-1">
+                          <span className="px-2 py-1 bg-slate-50/50 text-slate-500 rounded text-xs flex items-center gap-1">
                             <Calendar size={12} />
                             {formatDate(note.updated_at)}
                           </span>
@@ -338,7 +338,7 @@ export default function NotesListModal({
                             {note.tags.map(tag => (
                               <span
                                 key={tag}
-                                className="px-2 py-1 bg-blue-900/50 text-teal-300 rounded-full text-xs"
+                                className="px-2 py-1 bg-blue-900/50 text-indigo-400 rounded-full text-xs"
                               >
                                 #{tag}
                               </span>
@@ -353,14 +353,14 @@ export default function NotesListModal({
                             className={`flex-1 px-3 py-2 rounded-lg font-medium transition-colors text-sm ${
                               note.is_pinned
                                 ? 'bg-yellow-500 text-black hover:bg-yellow-600'
-                                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
                             }`}
                           >
                             <Pin size={16} className="inline" />
                           </button>
                           <button
                             onClick={() => onEdit(note)}
-                            className="flex-1 px-3 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-medium transition-colors text-sm"
+                            className="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors text-sm"
                           >
                             <Edit size={16} className="inline" />
                           </button>
@@ -370,7 +370,7 @@ export default function NotesListModal({
                                 onDelete(note.id)
                               }
                             }}
-                            className="flex-1 px-3 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg font-medium transition-colors text-sm"
+                            className="flex-1 px-3 py-2 bg-red-500/80 hover:bg-red-500 text-slate-800 rounded-lg font-medium transition-colors text-sm"
                           >
                             <Trash2 size={16} className="inline" />
                           </button>
