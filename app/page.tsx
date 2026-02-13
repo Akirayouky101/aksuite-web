@@ -598,33 +598,35 @@ export default function Home() {
         isOpen={isCallModalOpen}
         onClose={() => { setIsCallModalOpen(false); setEditingCall(null) }}
         onSave={async (callData) => {
+          // Separa i campi lavorazione dai dati della chiamata
+          const { has_lavorazione, lavorazione_date, lavorazione_time, lavorazione_description, lavorazione_assignee, ...cleanCallData } = callData
           let callId: string | undefined
-          if (editingCall) { await updateCall(editingCall.id, callData); callId = editingCall.id }
-          else { const newCall = await addCall(callData); callId = newCall?.id }
-          if (callData.follow_up && callData.follow_up_date && callId) {
+          if (editingCall) { await updateCall(editingCall.id, cleanCallData); callId = editingCall.id }
+          else { const newCall = await addCall(cleanCallData); callId = newCall?.id }
+          if (cleanCallData.follow_up && cleanCallData.follow_up_date && callId) {
             const newTask = await addTask({
-              title: `Follow-up: ${callData.caller_name || 'Chiamata'}`,
-              description: `Follow-up chiamata da ${callData.caller_name || 'contatto'}${callData.company ? ` (${callData.company})` : ''}`,
-              due_date: callData.follow_up_date, priority: callData.priority || 'medium',
+              title: `Follow-up: ${cleanCallData.caller_name || 'Chiamata'}`,
+              description: `Follow-up chiamata da ${cleanCallData.caller_name || 'contatto'}${cleanCallData.company ? ` (${cleanCallData.company})` : ''}`,
+              due_date: cleanCallData.follow_up_date, priority: cleanCallData.priority || 'medium',
               status: 'todo', category: 'follow_up', is_recurring: false, recurring_type: null, tags: [], subtasks: []
             })
             if (newTask?.id) await addRelation('call', callId, 'task', newTask.id, 'related', 'Auto follow-up')
           }
-          if (callData.has_lavorazione && callId) {
+          if (has_lavorazione && callId) {
             await addLavorazione({
               call_id: callId,
-              title: `Lavorazione: ${callData.caller_name || 'Chiamata'}${callData.company ? ` - ${callData.company}` : ''}`,
-              description: callData.lavorazione_description || '',
-              assigned_to: callData.lavorazione_assignee || '',
-              scheduled_date: callData.lavorazione_date || null,
-              scheduled_time: callData.lavorazione_time || null,
+              title: `Lavorazione: ${cleanCallData.caller_name || 'Chiamata'}${cleanCallData.company ? ` - ${cleanCallData.company}` : ''}`,
+              description: lavorazione_description || '',
+              assigned_to: lavorazione_assignee || '',
+              scheduled_date: lavorazione_date || null,
+              scheduled_time: lavorazione_time || null,
               status: 'da_fare',
-              priority: callData.priority || 'media',
-              address: callData.address || '',
-              city: callData.city || '',
-              zip_code: callData.zip_code || '',
-              province: callData.province || '',
-              notes: callData.notes || '',
+              priority: cleanCallData.priority || 'media',
+              address: cleanCallData.address || '',
+              city: cleanCallData.city || '',
+              zip_code: cleanCallData.zip_code || '',
+              province: cleanCallData.province || '',
+              notes: cleanCallData.notes || '',
               completed_at: null,
             })
           }
