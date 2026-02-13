@@ -79,6 +79,19 @@ export function useLavorazioneTimeline() {
     setEntries(prev => prev.filter(e => e.id !== id))
   }
 
+  const updateEntry = async (id: string, updates: { description?: string; event_type?: TimelineEntry['event_type']; created_by_name?: string }) => {
+    const { data, error } = await supabase
+      .from('lavorazioni_timeline')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    setEntries(prev => prev.map(e => e.id === id ? data : e))
+    return data
+  }
+
   const clearTimeline = () => {
     setEntries([])
   }
@@ -89,6 +102,7 @@ export function useLavorazioneTimeline() {
     loadTimeline,
     addEntry,
     deleteEntry,
+    updateEntry,
     clearTimeline
   }
 }

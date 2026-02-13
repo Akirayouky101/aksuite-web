@@ -99,7 +99,7 @@ export default function Home() {
   const { addRelation, removeRelation, getRelatedItems } = useRelations()
   const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
   const { lavorazioni, addLavorazione, updateLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
-  const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, clearTimeline } = useLavorazioneTimeline()
+  const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, updateEntry: updateTimelineEntry, clearTimeline } = useLavorazioneTimeline()
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
@@ -618,7 +618,7 @@ export default function Home() {
             if (newTask?.id) await addRelation('call', callId, 'task', newTask.id, 'related', 'Auto follow-up')
           }
           if (has_lavorazione && callId) {
-            await addLavorazione({
+            const newLav = await addLavorazione({
               call_id: callId,
               title: `Lavorazione: ${cleanCallData.caller_name || 'Chiamata'}${cleanCallData.company ? ` - ${cleanCallData.company}` : ''}`,
               description: lavorazione_description || '',
@@ -634,6 +634,17 @@ export default function Home() {
               notes: cleanCallData.notes || '',
               completed_at: null,
             })
+            // Auto-create first timeline entry from the call
+            if (newLav?.id) {
+              try {
+                await addTimelineEntry({
+                  lavorazione_id: newLav.id,
+                  description: `Lavorazione creata da chiamata di ${cleanCallData.caller_name || 'contatto'}${cleanCallData.company ? ` (${cleanCallData.company})` : ''}. ${cleanCallData.notes ? 'Note: ' + cleanCallData.notes : ''}`.trim(),
+                  event_type: 'chiamata_cliente',
+                  created_by_name: cleanCallData.caller_name || ''
+                })
+              } catch (e) { console.error('Auto-timeline error:', e) }
+            }
           }
         }}
         editCall={editingCall} availableItems={availableRelationItems}
@@ -675,6 +686,7 @@ export default function Home() {
         loading={timelineLoading}
         onAddEntry={addTimelineEntry}
         onDeleteEntry={deleteTimelineEntry}
+        onUpdateEntry={updateTimelineEntry}
         teamMembers={teamMembers}
       />
 
@@ -696,7 +708,7 @@ export default function Home() {
             if (newTask?.id) await addRelation('visit', visitId, 'task', newTask.id, 'related', 'Auto follow-up')
           }
           if (has_lavorazione && visitId) {
-            await addLavorazione({
+            const newLav = await addLavorazione({
               call_id: null,
               title: `Lavorazione: ${cleanVisitData.visitor_name || 'Visita'}${cleanVisitData.company ? ` - ${cleanVisitData.company}` : ''}`,
               description: lavorazione_description || '',
@@ -712,6 +724,17 @@ export default function Home() {
               notes: cleanVisitData.notes || '',
               completed_at: null,
             })
+            // Auto-create first timeline entry from the visit
+            if (newLav?.id) {
+              try {
+                await addTimelineEntry({
+                  lavorazione_id: newLav.id,
+                  description: `Lavorazione creata da visita di ${cleanVisitData.visitor_name || 'visitatore'}${cleanVisitData.company ? ` (${cleanVisitData.company})` : ''}. ${cleanVisitData.notes ? 'Note: ' + cleanVisitData.notes : ''}`.trim(),
+                  event_type: 'nota',
+                  created_by_name: cleanVisitData.visitor_name || ''
+                })
+              } catch (e) { console.error('Auto-timeline error:', e) }
+            }
           }
         }}
         editVisit={editingVisit}
