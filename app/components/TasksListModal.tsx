@@ -34,16 +34,16 @@ interface TasksListModalProps {
 }
 
 const statusColors = {
-  todo: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', text: 'text-yellow-300' },
-  'in-progress': { bg: 'bg-blue-500/20', border: 'border-indigo-500/30', text: 'text-indigo-400' },
-  completed: { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-300' }
+  todo: { bg: 'bg-amber-50', border: 'border-amber-200/60', text: 'text-amber-600' },
+  'in-progress': { bg: 'bg-indigo-50', border: 'border-indigo-200/60', text: 'text-indigo-400' },
+  completed: { bg: 'bg-emerald-50', border: 'border-emerald-200/60', text: 'text-emerald-600' }
 }
 
 const priorityColors: Record<string, string> = {
-  bassa: 'bg-green-500/20 border-green-500/30 text-green-300',
-  media: 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300',
-  alta: 'bg-orange-500/20 border-orange-500/30 text-orange-300',
-  urgente: 'bg-red-500/20 border-red-500/30 text-red-300'
+  bassa: 'bg-emerald-50 border-emerald-200/60 text-emerald-600',
+  media: 'bg-amber-50 border-amber-200/60 text-amber-600',
+  alta: 'bg-orange-50 border-orange-200/60 text-orange-600',
+  urgente: 'bg-red-50 border-red-200/60 text-red-500'
 }
 
 const categoryEmojis: Record<string, string> = {
@@ -200,7 +200,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                 </div>
                 <button
                   onClick={onClose}
-                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
                   aria-label="Chiudi"
                 >
                   <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
@@ -211,7 +211,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
               <div className="p-4 border-b border-slate-200 bg-white space-y-2">
                 <button
                   onClick={() => setShowTaskModal(true)}
-                  className="w-full px-4 py-3 rounded-lg font-bold text-base transition-all bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-green-700 hover:to-emerald-700 text-slate-800 shadow-lg shadow-green-500/30 flex items-center justify-center gap-2"
+                  className="w-full px-4 py-3 rounded-lg font-bold text-base transition-all bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
                 >
                   <Plus className="w-5 h-5" />
                   Nuovo Task
@@ -357,7 +357,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
                           className={`rounded-xl border-2 p-4 ${statusColors[task.status].bg} ${statusColors[task.status].border} ${
-                            overdue ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-slate-900' : ''
+                            overdue ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-white' : ''
                           } transition-all`}
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -389,12 +389,12 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                                         {task.priority.toUpperCase()}
                                       </span>
                                       {task.is_recurring && (
-                                        <span className="px-2 py-1 rounded text-xs font-bold bg-purple-500/30 border border-purple-500/50 text-purple-300">
+                                        <span className="px-2 py-1 rounded text-xs font-bold bg-violet-50 border border-violet-200/60 text-violet-600">
                                           🔄 {task.recurring_type === 'daily' ? 'GIORNALIERO' : task.recurring_type === 'weekly' ? 'SETTIMANALE' : 'MENSILE'}
                                         </span>
                                       )}
                                       {overdue && (
-                                        <span className="px-2 py-1 rounded text-xs font-bold bg-red-500/30 border border-red-500/50 text-red-300 animate-pulse">
+                                        <span className="px-2 py-1 rounded text-xs font-bold bg-red-100 border border-red-200/60 text-red-500 animate-pulse">
                                           ⚠️ SCADUTO
                                         </span>
                                       )}
@@ -411,7 +411,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                                     {task.tags.map((tag) => (
                                       <span
                                         key={tag}
-                                        className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded text-xs font-semibold flex items-center gap-1"
+                                        className="px-2 py-1 bg-violet-50 border border-violet-200/60 text-violet-600 rounded text-xs font-semibold flex items-center gap-1"
                                       >
                                         <Tag className="w-3 h-3" />
                                         {tag}
@@ -442,7 +442,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
 
                                 {/* Due Date */}
                                 {task.due_date && (
-                                  <div className={`flex items-center gap-2 text-sm ${overdue ? 'text-red-300' : 'text-slate-400'}`}>
+                                  <div className={`flex items-center gap-2 text-sm ${overdue ? 'text-red-500' : 'text-slate-400'}`}>
                                     <Calendar className="w-4 h-4" />
                                     <span>Scadenza: {formatDate(task.due_date)}</span>
                                   </div>
@@ -465,7 +465,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                             <div className="flex flex-col gap-2">
                               <button
                                 onClick={() => handleEdit(task)}
-                                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-indigo-500/30 rounded-lg transition-colors"
+                                className="p-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 rounded-lg transition-colors"
                                 title="Modifica"
                               >
                                 <Edit className="w-5 h-5 text-indigo-400" />
@@ -473,7 +473,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                               <button
                                 onClick={() => handleDelete(task.id)}
                                 disabled={deletingId === task.id}
-                                className="p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg transition-colors disabled:opacity-50"
+                                className="p-2 bg-red-50 hover:bg-red-100 border border-red-200/60 rounded-lg transition-colors disabled:opacity-50"
                                 title="Elimina"
                               >
                                 <Trash2 className="w-5 h-5 text-red-400" />

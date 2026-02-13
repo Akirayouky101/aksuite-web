@@ -130,7 +130,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
                   }}
                   className={`p-4 rounded-xl border-2 transition-all ${
                     type === 'income'
-                      ? 'border-green-500 bg-green-500/20'
+                      ? 'border-green-500 bg-emerald-50'
                       : 'border-slate-200 bg-slate-100 hover:bg-slate-100'
                   }`}
                 >
@@ -146,7 +146,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
                   }}
                   className={`p-4 rounded-xl border-2 transition-all ${
                     type === 'expense'
-                      ? 'border-red-500 bg-red-500/20'
+                      ? 'border-red-500 bg-red-50'
                       : 'border-slate-200 bg-slate-100 hover:bg-slate-100'
                   }`}
                 >
@@ -183,7 +183,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
                       }}
                       className={`p-3 rounded-lg border transition-all ${
                         category === cat.name
-                          ? 'border-green-500 bg-green-500/20'
+                          ? 'border-green-500 bg-emerald-50'
                           : 'border-slate-200 bg-slate-100 hover:bg-slate-100'
                       }`}
                     >

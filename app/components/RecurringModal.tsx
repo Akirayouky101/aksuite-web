@@ -150,7 +150,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                     }}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       type === 'income'
-                        ? 'bg-green-500/20 border-green-500 shadow-lg shadow-indigo-500/25'
+                        ? 'bg-emerald-50 border-green-500 shadow-lg shadow-indigo-500/25'
                         : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                     }`}
                   >
@@ -165,7 +165,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                     }}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       type === 'expense'
-                        ? 'bg-red-500/20 border-red-500 shadow-lg shadow-red-500/50'
+                        ? 'bg-red-50 border-red-500 shadow-lg shadow-red-200/50'
                         : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                     }`}
                   >
@@ -264,8 +264,8 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                       className={`p-3 rounded-lg border-2 transition-all ${
                         category === cat.name
                           ? type === 'income'
-                            ? 'bg-green-500/20 border-green-500 shadow-lg'
-                            : 'bg-red-500/20 border-red-500 shadow-lg'
+                            ? 'bg-emerald-50 border-green-500 shadow-lg'
+                            : 'bg-red-50 border-red-500 shadow-lg'
                           : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                       }`}
                     >

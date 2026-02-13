@@ -94,7 +94,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
   return (
     <div className="space-y-6">
       {/* Statistiche mensili */}
-      <div className="bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-xl p-6 border border-purple-500/30">
+      <div className="bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-xl p-6 border border-violet-200/60">
         <div className="flex items-center gap-3 mb-4">
           <Calendar className="w-6 h-6 text-purple-400" />
           <h3 className="text-lg font-semibold text-slate-800">Statistiche Questo Mese</h3>
@@ -159,8 +159,8 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                       cat.type === 'income' 
-                        ? 'bg-green-500/20 text-green-400' 
-                        : 'bg-red-500/20 text-rose-500'
+                        ? 'bg-emerald-50 text-green-400' 
+                        : 'bg-red-50 text-rose-500'
                     }`}>
                       {index + 1}
                     </div>
@@ -195,7 +195,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
       )}
 
       {/* Insight rapidi */}
-      <div className="bg-gradient-to-br from-indigo-500/10 to-violet-600/10 rounded-xl p-6 border border-indigo-500/30">
+      <div className="bg-gradient-to-br from-indigo-500/10 to-violet-600/10 rounded-xl p-6 border border-indigo-200/60">
         <div className="flex items-center gap-3 mb-4">
           <BarChart3 className="w-6 h-6 text-indigo-500" />
           <h3 className="text-lg font-semibold text-slate-800">Insight Rapidi</h3>
@@ -203,7 +203,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
 
         <div className="space-y-3">
           {monthlyStats.currentExpenses > monthlyStats.currentIncome && (
-            <div className="bg-orange-50 border border-orange-500/30 rounded-lg p-4">
+            <div className="bg-orange-50 border border-orange-200/60 rounded-lg p-4">
               <p className="text-orange-500 font-medium">⚠️ Attenzione</p>
               <p className="text-slate-400 text-sm mt-1">
                 Le tue uscite superano le entrate di €{(monthlyStats.currentExpenses - monthlyStats.currentIncome).toFixed(0)} questo mese
@@ -212,7 +212,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
           )}
 
           {monthlyStats.incomeTrend > 10 && (
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+            <div className="bg-emerald-50 border border-emerald-200/60 rounded-lg p-4">
               <p className="text-green-400 font-medium">Ottimo!</p>
               <p className="text-slate-400 text-sm mt-1">
                 Le tue entrate sono aumentate del {monthlyStats.incomeTrend.toFixed(1)}% rispetto al mese scorso
@@ -221,7 +221,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
           )}
 
           {monthlyStats.expensesTrend < -10 && (
-            <div className="bg-blue-50 border border-indigo-500/30 rounded-lg p-4">
+            <div className="bg-blue-50 border border-indigo-200/60 rounded-lg p-4">
               <p className="text-indigo-500 font-medium">👏 Bravissimo!</p>
               <p className="text-slate-400 text-sm mt-1">
                 Hai ridotto le spese del {Math.abs(monthlyStats.expensesTrend).toFixed(1)}% rispetto al mese scorso
@@ -230,7 +230,7 @@ export default function BudgetStats({ transactions }: BudgetStatsProps) {
           )}
 
           {monthlyStats.currentBalance > 0 && monthlyStats.transactionCount > 5 && (
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+            <div className="bg-violet-50 border border-violet-200/60 rounded-lg p-4">
               <p className="text-purple-400 font-medium">Continua così!</p>
               <p className="text-slate-400 text-sm mt-1">
                 Hai un bilancio positivo di €{monthlyStats.currentBalance.toFixed(0)} questo mese

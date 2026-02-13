@@ -203,7 +203,7 @@ export default function TaskModal({
               </div>
               <button
                 onClick={onClose}
-                className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
               >
                 <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
               </button>
@@ -359,7 +359,7 @@ export default function TaskModal({
                   {formData.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-full text-xs font-semibold flex items-center gap-2"
+                      className="px-3 py-1 bg-violet-50 border border-violet-200/60 text-violet-600 rounded-full text-xs font-semibold flex items-center gap-2"
                     >
                       {tag}
                       <button
@@ -419,7 +419,7 @@ export default function TaskModal({
                       <button
                         type="button"
                         onClick={() => removeSubtask(subtask.id)}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-red-400 hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

@@ -178,7 +178,7 @@ export default function CallModal({
               </div>
               <button
                 onClick={onClose}
-                className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
                 aria-label="Chiudi"
               >
                 <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
@@ -263,7 +263,7 @@ export default function CallModal({
                         onClick={() => setCallType(type.value)}
                         className={`px-4 py-3 rounded-lg border-2 transition-all font-semibold text-sm ${
                           callType === type.value
-                            ? `border-${type.color}-500 bg-${type.color}-500/20 text-${type.color}-300`
+                            ? `border-${type.color}-400 bg-${type.color}-50 text-${type.color}-700`
                             : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-50'
                         }`}
                       >
@@ -284,7 +284,7 @@ export default function CallModal({
                         onClick={() => setPriority(p.value)}
                         className={`px-4 py-3 rounded-lg border-2 transition-all font-semibold text-sm ${
                           priority === p.value
-                            ? `border-${p.color}-500 bg-${p.color}-500/20 text-slate-800`
+                            ? `border-${p.color}-400 bg-${p.color}-50 text-${p.color}-700`
                             : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-50'
                         }`}
                       >

@@ -67,7 +67,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
   return (
     <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200/60 rounded-xl p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-purple-300">🎲 Generatore Password</h3>
+        <h3 className="text-lg font-bold text-violet-600">🎲 Generatore Password</h3>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

@@ -125,7 +125,7 @@ export default function VisitModal({
             </div>
             <button
               onClick={onClose}
-              className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+              className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
             >
               <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
             </button>
@@ -281,7 +281,7 @@ export default function VisitModal({
             </div>
 
             {/* Follow-up */}
-            <div className="flex items-center gap-3 p-4 bg-orange-500/10 rounded-xl border border-orange-500/30">
+            <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-xl border border-orange-200/60">
               <input
                 type="checkbox"
                 checked={followUp}
@@ -289,7 +289,7 @@ export default function VisitModal({
                 className="w-5 h-5 rounded bg-slate-50 border-slate-200 text-orange-500 focus:ring-orange-500"
                 id="followUp"
               />
-              <label htmlFor="followUp" className="text-sm font-semibold text-orange-300 cursor-pointer flex-1">
+              <label htmlFor="followUp" className="text-sm font-semibold text-orange-600 cursor-pointer flex-1">
                 <Clock className="w-4 h-4 inline mr-2" />
                 Richiede Follow-up
               </label>
@@ -298,7 +298,7 @@ export default function VisitModal({
                   type="datetime-local"
                   value={followUpDate}
                   onChange={(e) => setFollowUpDate(e.target.value)}
-                  className="px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-orange-500/50 focus:border-orange-500 focus:outline-none text-sm"
+                  className="px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-orange-200/60 focus:border-orange-500 focus:outline-none text-sm"
                 />
               )}
             </div>

@@ -124,7 +124,7 @@ export default function PasswordListModal({
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={onClose}
-                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/30 flex items-center justify-center"
+                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center"
                     >
                       <X className="w-6 h-6 text-slate-800" strokeWidth={3} />
                     </motion.button>
@@ -238,7 +238,7 @@ export default function PasswordListModal({
                                       {pwd.title}
                                     </h3>
                                   </div>
-                                  <span className="px-3 py-1 bg-purple-500/30 border border-purple-400/50 rounded-full text-xs font-bold text-purple-200">
+                                  <span className="px-3 py-1 bg-violet-50 border border-violet-200/60 rounded-full text-xs font-bold text-violet-500">
                                     {pwd.category}
                                   </span>
                                 </div>
@@ -309,7 +309,7 @@ export default function PasswordListModal({
                                         href={pwd.website} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="text-indigo-400 hover:text-blue-200 font-mono text-sm flex items-center gap-1 hover:underline"
+                                        className="text-indigo-400 hover:text-indigo-600 font-mono text-sm flex items-center gap-1 hover:underline"
                                       >
                                         {pwd.website}
                                         <ExternalLink className="w-3 h-3" />
@@ -330,7 +330,7 @@ export default function PasswordListModal({
                                         onDelete(pwd.id)
                                       }
                                     }}
-                                    className="p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-lg"
+                                    className="p-2 bg-red-50 hover:bg-red-100 border border-red-200/60 rounded-lg"
                                     title="Elimina password"
                                   >
                                     <Trash2 className="w-4 h-4 text-red-400" />
@@ -378,7 +378,7 @@ export default function PasswordListModal({
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => setSelectedPassword(null)}
-                      className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/30 flex items-center justify-center"
+                      className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center"
                     >
                       <X className="w-6 h-6 text-slate-800" strokeWidth={3} />
                     </motion.button>
@@ -389,7 +389,7 @@ export default function PasswordListModal({
                       <h2 className="text-4xl font-bold text-slate-800 mb-2">
                         {selectedPassword.title}
                       </h2>
-                      <span className="inline-block px-4 py-2 bg-purple-500/30 border border-slate-200 rounded-full text-sm font-bold text-purple-200">
+                      <span className="inline-block px-4 py-2 bg-violet-50 border border-violet-200/60 rounded-full text-sm font-bold text-violet-500">
                         {selectedPassword.category}
                       </span>
                     </div>
@@ -407,7 +407,7 @@ export default function PasswordListModal({
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => copyToClipboard(selectedPassword.username, `detail-user`)}
-                            className="p-3 bg-indigo-100 hover:bg-violet-500/30 border border-slate-200 rounded-lg shrink-0"
+                            className="p-3 bg-indigo-100 hover:bg-violet-100 border border-slate-200 rounded-lg shrink-0"
                           >
                             {copiedId === `detail-user` ? (
                               <span className="text-green-400 font-bold">✓ Copiato!</span>
@@ -430,7 +430,7 @@ export default function PasswordListModal({
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => togglePasswordVisibility(selectedPassword.id)}
-                              className="p-3 bg-pink-500/20 hover:bg-pink-500/30 border border-slate-200 rounded-lg"
+                              className="p-3 bg-pink-50 hover:bg-pink-100 border border-slate-200 rounded-lg"
                             >
                               {visiblePasswords.has(selectedPassword.id) ? (
                                 <EyeOff className="w-5 h-5 text-pink-400" />
@@ -442,7 +442,7 @@ export default function PasswordListModal({
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => copyToClipboard(selectedPassword.password, `detail-pass`)}
-                              className="p-3 bg-pink-500/20 hover:bg-pink-500/30 border border-slate-200 rounded-lg"
+                              className="p-3 bg-pink-50 hover:bg-pink-100 border border-slate-200 rounded-lg"
                             >
                               {copiedId === `detail-pass` ? (
                                 <span className="text-green-400 font-bold">✓</span>
@@ -462,7 +462,7 @@ export default function PasswordListModal({
                             href={selectedPassword.website} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-xl text-indigo-400 hover:text-blue-200 font-mono flex items-center gap-2 hover:underline break-all"
+                            className="text-xl text-indigo-400 hover:text-indigo-600 font-mono flex items-center gap-2 hover:underline break-all"
                           >
                             {selectedPassword.website}
                             <ExternalLink className="w-5 h-5 shrink-0" />
@@ -492,7 +492,7 @@ export default function PasswordListModal({
                               setSelectedPassword(null)
                             }
                           }}
-                          className="w-full py-4 bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 rounded-xl text-red-300 font-bold text-lg flex items-center justify-center gap-2"
+                          className="w-full py-4 bg-red-50 hover:bg-red-100 border-2 border-red-200/60 rounded-xl text-red-500 font-bold text-lg flex items-center justify-center gap-2"
                         >
                           <Trash2 className="w-5 h-5" />
                           ELIMINA PASSWORD

@@ -160,7 +160,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
               <div>
                 <div className="flex items-center gap-1 sm:gap-2 mb-1.5 sm:mb-2">
                   <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                  <span className="text-xs sm:text-sm text-green-300 font-semibold">Periodo</span>
+                  <span className="text-xs sm:text-sm text-emerald-600 font-semibold">Periodo</span>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   {[
@@ -188,7 +188,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
               <div>
                 <div className="flex items-center gap-1 sm:gap-2 mb-1.5 sm:mb-2">
                   <Filter className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                  <span className="text-xs sm:text-sm text-green-300 font-semibold">Tipo</span>
+                  <span className="text-xs sm:text-sm text-emerald-600 font-semibold">Tipo</span>
                 </div>
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {[
@@ -217,7 +217,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                 <details className="group">
                   <summary className="flex items-center gap-1 sm:gap-2 cursor-pointer list-none">
                     <Filter className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
-                    <span className="text-xs sm:text-sm text-green-300 font-semibold">Categoria</span>
+                    <span className="text-xs sm:text-sm text-emerald-600 font-semibold">Categoria</span>
                     <span className="ml-auto text-xs text-slate-400 group-open:rotate-180 transition-transform">▼</span>
                   </summary>
                   <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
@@ -253,22 +253,22 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
               <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-green-500/30"
+                className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-emerald-200/60"
               >
                 <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-1">
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 text-green-400" />
-                  <span className="text-xs sm:text-sm text-green-300">Entrate</span>
+                  <span className="text-xs sm:text-sm text-emerald-600">Entrate</span>
                 </div>
                 <p className="text-lg sm:text-xl md:text-3xl font-bold text-slate-800">€{filteredStats.totalIncome.toFixed(2)}</p>
               </motion.div>
 
               <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="bg-gradient-to-br from-red-500/20 to-rose-600/20 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-red-500/30"
+                className="bg-gradient-to-br from-red-50 to-rose-50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-red-200/60"
               >
                 <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-1">
                   <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 text-red-400" />
-                  <span className="text-xs sm:text-sm text-red-300">Uscite</span>
+                  <span className="text-xs sm:text-sm text-red-500">Uscite</span>
                 </div>
                 <p className="text-lg sm:text-xl md:text-3xl font-bold text-slate-800">€{filteredStats.totalExpenses.toFixed(2)}</p>
               </motion.div>
@@ -277,13 +277,13 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                 whileHover={{ scale: 1.02 }}
                 className={`bg-gradient-to-br ${
                   filteredStats.balance >= 0
-                    ? 'from-indigo-500/20 to-violet-600/20 border-indigo-500/30'
-                    : 'from-orange-500/20 to-red-600/20 border-orange-500/30'
+                    ? 'from-indigo-500/20 to-violet-600/20 border-indigo-200/60'
+                    : 'from-orange-500/20 to-red-600/20 border-orange-200/60'
                 } rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border`}
               >
                 <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 mb-1">
                   <DollarSign className={`w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 ${filteredStats.balance >= 0 ? 'text-indigo-400' : 'text-orange-400'}`} />
-                  <span className={`text-xs sm:text-sm ${filteredStats.balance >= 0 ? 'text-indigo-400' : 'text-orange-300'}`}>Bilancio</span>
+                  <span className={`text-xs sm:text-sm ${filteredStats.balance >= 0 ? 'text-indigo-400' : 'text-orange-600'}`}>Bilancio</span>
                 </div>
                 <p className="text-lg sm:text-xl md:text-3xl font-bold text-slate-800">€{filteredStats.balance.toFixed(2)}</p>
               </motion.div>
@@ -333,8 +333,8 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
                     transition={{ delay: index * 0.02 }}
                     className={`bg-gradient-to-br ${
                       transaction.type === 'income'
-                        ? 'from-green-500/10 to-emerald-600/10 border-green-500/30'
-                        : 'from-red-500/10 to-rose-600/10 border-red-500/30'
+                        ? 'from-green-500/10 to-emerald-600/10 border-emerald-200/60'
+                        : 'from-red-500/10 to-rose-600/10 border-red-200/60'
                     } rounded-lg sm:rounded-xl p-2.5 sm:p-3 md:p-4 border flex items-center justify-between group hover:scale-[1.01] transition-transform`}
                   >
                     <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
@@ -365,7 +365,7 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
 
                       <button
                         onClick={() => onDelete(transaction.id)}
-                        className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-lg bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all"
+                        className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                         aria-label="Elimina transazione"
                       >
                         <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-red-400" />

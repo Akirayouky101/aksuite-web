@@ -103,8 +103,8 @@ export default function RecurringListModal({
                       transition={{ delay: index * 0.05 }}
                       className={`group bg-gradient-to-br ${
                         rec.type === 'income'
-                          ? 'from-green-500/10 to-emerald-600/10 border-green-500/30'
-                          : 'from-red-500/10 to-rose-600/10 border-red-500/30'
+                          ? 'from-green-500/10 to-emerald-600/10 border-emerald-200/60'
+                          : 'from-red-500/10 to-rose-600/10 border-red-200/60'
                       } border-2 rounded-xl p-5 transition-all hover:shadow-lg ${
                         !rec.is_active ? 'opacity-50' : ''
                       }`}
@@ -119,16 +119,16 @@ export default function RecurringListModal({
                             <div className="flex items-center gap-2 mb-1">
                               <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
                                 rec.type === 'income'
-                                  ? 'bg-green-500/20 text-green-300'
-                                  : 'bg-red-500/20 text-red-300'
+                                  ? 'bg-emerald-50 text-emerald-600'
+                                  : 'bg-red-50 text-red-500'
                               }`}>
                                 {rec.category}
                               </span>
-                              <span className="px-2 py-1 rounded-lg text-xs font-bold bg-purple-500/20 text-purple-300">
+                              <span className="px-2 py-1 rounded-lg text-xs font-bold bg-violet-50 text-violet-600">
                                 {getFrequencyDetails(rec)}
                               </span>
                               {!rec.is_active && (
-                                <span className="px-2 py-1 rounded-lg text-xs font-bold bg-slate-500/20 text-slate-400">
+                                <span className="px-2 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-500">
                                   ⏸️ In pausa
                                 </span>
                               )}
@@ -161,7 +161,7 @@ export default function RecurringListModal({
                           {/* Toggle Active */}
                           <button
                             onClick={() => onToggleActive(rec.id)}
-                            className="w-10 h-10 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 flex items-center justify-center transition-all"
+                            className="w-10 h-10 rounded-lg bg-violet-50 hover:bg-violet-100 flex items-center justify-center transition-all"
                             aria-label={rec.is_active ? 'Disattiva' : 'Attiva'}
                             title={rec.is_active ? 'Metti in pausa' : 'Riattiva'}
                           >
@@ -175,7 +175,7 @@ export default function RecurringListModal({
                           {/* Delete */}
                           <button
                             onClick={() => onDelete(rec.id)}
-                            className="w-10 h-10 rounded-lg bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                            className="w-10 h-10 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                             aria-label="Elimina"
                             title="Elimina ricorrente"
                           >
@@ -190,7 +190,7 @@ export default function RecurringListModal({
 
               {/* Info box */}
               {recurring.length > 0 && (
-                <div className="mt-6 bg-blue-500/10 border border-indigo-500/30 rounded-xl p-4">
+                <div className="mt-6 bg-indigo-50 border border-indigo-200/60 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">ℹ️</div>
                     <div>

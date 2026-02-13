@@ -81,7 +81,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             <Circle className="w-8 h-8 text-indigo-500" />
             <span className="text-lg font-bold text-slate-800">{totalTasks}</span>
           </div>
-          <div className="text-sm text-blue-200 font-bold">Totale Task</div>
+          <div className="text-sm text-indigo-600 font-bold">Totale Task</div>
         </motion.div>
 
         <motion.div
@@ -92,7 +92,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             <Clock className="w-8 h-8 text-yellow-600" />
             <span className="text-lg font-bold text-slate-800">{todoTasks}</span>
           </div>
-          <div className="text-sm text-yellow-200 font-bold">Da Fare</div>
+          <div className="text-sm text-amber-500 font-bold">Da Fare</div>
         </motion.div>
 
         <motion.div
@@ -103,7 +103,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             <TrendingUp className="w-8 h-8 text-purple-400" />
             <span className="text-lg font-bold text-slate-800">{inProgressTasks}</span>
           </div>
-          <div className="text-sm text-purple-200 font-bold">In Corso</div>
+          <div className="text-sm text-violet-500 font-bold">In Corso</div>
         </motion.div>
 
         <motion.div
@@ -114,7 +114,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             <CheckCircle2 className="w-8 h-8 text-green-400" />
             <span className="text-lg font-bold text-slate-800">{completedTasks}</span>
           </div>
-          <div className="text-sm text-green-200 font-bold">Completati</div>
+          <div className="text-sm text-emerald-500 font-bold">Completati</div>
         </motion.div>
       </div>
 
@@ -125,13 +125,13 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-rose-200/60 rounded-xl p-4 animate-pulse"
+              className="bg-gradient-to-r from-red-50 to-rose-50 border border-rose-200/60 rounded-xl p-4 animate-pulse"
             >
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-6 h-6 text-red-300" />
+                <AlertTriangle className="w-6 h-6 text-red-500" />
                 <div>
                   <div className="text-lg font-bold text-slate-800">⚠️ Task Scaduti!</div>
-                  <div className="text-red-200">{overdueTasks} task in ritardo</div>
+                  <div className="text-red-400">{overdueTasks} task in ritardo</div>
                 </div>
               </div>
             </motion.div>
@@ -141,13 +141,13 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-orange-500/20 to-yellow-500/20 border border-orange-200/60 rounded-xl p-4"
+              className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/60 rounded-xl p-4"
             >
               <div className="flex items-center gap-3">
-                <Calendar className="w-6 h-6 text-orange-300" />
+                <Calendar className="w-6 h-6 text-orange-600" />
                 <div>
                   <div className="text-lg font-bold text-slate-800">📅 Task di Oggi</div>
-                  <div className="text-orange-200">{todayTasks} task in scadenza oggi</div>
+                  <div className="text-orange-500">{todayTasks} task in scadenza oggi</div>
                 </div>
               </div>
             </motion.div>
@@ -178,7 +178,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tasks per Categoria */}
         <div className="bg-gradient-to-br from-white/70 to-slate-50 border border-violet-200/60 rounded-xl p-5">
-          <h3 className="text-xl font-bold text-purple-300 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-violet-600 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             Task per Categoria
           </h3>
@@ -210,7 +210,7 @@ export default function TasksDashboard({ tasks }: TasksDashboardProps) {
 
         {/* Tasks per Priorità */}
         <div className="bg-gradient-to-br from-white/70 to-slate-50 border border-orange-200/60 rounded-xl p-5">
-          <h3 className="text-xl font-bold text-orange-300 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-orange-600 mb-4 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             Task Attivi per Priorità
           </h3>

@@ -30,11 +30,11 @@ export default function BudgetLimitsViewModal({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'exceeded':
-        return 'from-red-500/20 to-rose-600/20 border-red-500/50'
+        return 'from-red-50 to-rose-50 border-red-200/60'
       case 'warning':
-        return 'from-orange-500/20 to-yellow-600/20 border-orange-500/50'
+        return 'from-orange-50 to-amber-50 border-orange-200/60'
       default:
-        return 'from-green-500/20 to-emerald-600/20 border-green-500/30'
+        return 'from-emerald-50 to-green-50 border-emerald-200/60'
     }
   }
 
@@ -110,26 +110,26 @@ export default function BudgetLimitsViewModal({
             <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-red-500/20 to-rose-600/20 rounded-xl p-4 border border-red-500/30">
+                <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 border border-red-200/60">
                   <div className="flex items-center gap-2 mb-1">
                     <XCircle className="w-5 h-5 text-red-400" />
-                    <span className="text-red-300 font-semibold">Superati</span>
+                    <span className="text-red-500 font-semibold">Superati</span>
                   </div>
                   <p className="text-3xl font-bold text-slate-800">{exceeded.length}</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-500/20 to-yellow-600/20 rounded-xl p-4 border border-orange-500/30">
+                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-200/60">
                   <div className="flex items-center gap-2 mb-1">
                     <AlertTriangle className="w-5 h-5 text-orange-400" />
-                    <span className="text-orange-300 font-semibold">Attenzione</span>
+                    <span className="text-orange-600 font-semibold">Attenzione</span>
                   </div>
                   <p className="text-3xl font-bold text-slate-800">{warning.length}</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-xl p-4 border border-green-500/30">
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-200/60">
                   <div className="flex items-center gap-2 mb-1">
                     <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-green-300 font-semibold">OK</span>
+                    <span className="text-emerald-600 font-semibold">OK</span>
                   </div>
                   <p className="text-3xl font-bold text-slate-800">{ok.length}</p>
                 </div>
@@ -173,7 +173,7 @@ export default function BudgetLimitsViewModal({
                                   {statusInfo.text}
                                 </span>
                                 {!limit.is_active && (
-                                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-500/20 text-slate-400">
+                                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-500">
                                     ⏸️ Disattivato
                                   </span>
                                 )}
@@ -228,7 +228,7 @@ export default function BudgetLimitsViewModal({
                             {/* Toggle Active */}
                             <button
                               onClick={() => onToggleActive(limit.id)}
-                              className="w-10 h-10 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 flex items-center justify-center transition-all"
+                              className="w-10 h-10 rounded-lg bg-orange-50 hover:bg-orange-100 flex items-center justify-center transition-all"
                               aria-label={limit.is_active ? 'Disattiva' : 'Attiva'}
                               title={limit.is_active ? 'Disattiva limite' : 'Attiva limite'}
                             >
@@ -242,7 +242,7 @@ export default function BudgetLimitsViewModal({
                             {/* Delete */}
                             <button
                               onClick={() => onDelete(limit.id)}
-                              className="w-10 h-10 rounded-lg bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                              className="w-10 h-10 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                               aria-label="Elimina"
                               title="Elimina limite"
                             >
@@ -258,7 +258,7 @@ export default function BudgetLimitsViewModal({
 
               {/* Info box */}
               {limits.length > 0 && (
-                <div className="mt-6 bg-blue-500/10 border border-indigo-500/30 rounded-xl p-4">
+                <div className="mt-6 bg-indigo-50 border border-indigo-200/60 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">💡</div>
                     <div>

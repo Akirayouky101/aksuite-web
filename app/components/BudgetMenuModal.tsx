@@ -17,12 +17,12 @@ export default function BudgetMenuModal({ isOpen, onClose, onSelectNew, onSelect
   if (!isOpen) return null
 
   const items = [
-    { label: 'Nuovo Movimento', desc: 'Aggiungi entrata o uscita', icon: Plus, onClick: onSelectNew, color: 'bg-emerald-500/10 border-emerald-500/20', iconColor: 'text-emerald-400' },
+    { label: 'Nuovo Movimento', desc: 'Aggiungi entrata o uscita', icon: Plus, onClick: onSelectNew, color: 'bg-emerald-50 border-emerald-200/60', iconColor: 'text-emerald-400' },
     { label: 'Bilancio Completo', desc: 'Transazioni e totali', icon: BarChart3, onClick: onSelectView, color: 'bg-indigo-50 border-indigo-200', iconColor: 'text-indigo-500' },
-    ...(onSelectRecurring ? [{ label: 'Nuovo Ricorrente', desc: 'Automatizza movimenti', icon: Repeat, onClick: onSelectRecurring, color: 'bg-indigo-50 border-violet-500/20', iconColor: 'text-indigo-500' }] : []),
-    ...(onSelectRecurringList ? [{ label: 'Gestisci Ricorrenti', desc: 'Automazioni attive', icon: List, onClick: onSelectRecurringList, color: 'bg-indigo-500/10 border-indigo-500/20', iconColor: 'text-indigo-400' }] : []),
-    ...(onSelectLimit ? [{ label: 'Limite Budget', desc: 'Imposta tetto spesa', icon: AlertTriangle, onClick: onSelectLimit, color: 'bg-amber-500/10 border-amber-500/20', iconColor: 'text-amber-400' }] : []),
-    ...(onSelectLimitsList ? [{ label: 'Gestisci Limiti', desc: 'Vedi limiti e avvisi', icon: Target, onClick: onSelectLimitsList, color: 'bg-red-500/10 border-red-500/20', iconColor: 'text-red-400' }] : []),
+    ...(onSelectRecurring ? [{ label: 'Nuovo Ricorrente', desc: 'Automatizza movimenti', icon: Repeat, onClick: onSelectRecurring, color: 'bg-indigo-50 border-violet-200/60', iconColor: 'text-indigo-500' }] : []),
+    ...(onSelectRecurringList ? [{ label: 'Gestisci Ricorrenti', desc: 'Automazioni attive', icon: List, onClick: onSelectRecurringList, color: 'bg-indigo-50 border-indigo-200/60', iconColor: 'text-indigo-400' }] : []),
+    ...(onSelectLimit ? [{ label: 'Limite Budget', desc: 'Imposta tetto spesa', icon: AlertTriangle, onClick: onSelectLimit, color: 'bg-amber-50 border-amber-200/60', iconColor: 'text-amber-400' }] : []),
+    ...(onSelectLimitsList ? [{ label: 'Gestisci Limiti', desc: 'Vedi limiti e avvisi', icon: Target, onClick: onSelectLimitsList, color: 'bg-red-50 border-red-200/60', iconColor: 'text-red-400' }] : []),
   ]
 
   return (
@@ -35,7 +35,7 @@ export default function BudgetMenuModal({ isOpen, onClose, onSelectNew, onSelect
             </div>
             <h2 className="text-lg font-bold text-slate-800">Bilancio Familiare</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/30 flex items-center justify-center transition-all">
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all">
             <X className="w-4 h-4 text-slate-500" />
           </button>
         </div>

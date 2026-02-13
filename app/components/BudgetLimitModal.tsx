@@ -122,7 +122,7 @@ export default function BudgetLimitModal({
                         disabled={isDisabled}
                         className={`p-3 rounded-lg border-2 transition-all ${
                           category === cat.name
-                            ? 'bg-orange-500/20 border-orange-500 shadow-lg'
+                            ? 'bg-orange-50 border-orange-500 shadow-lg'
                             : isDisabled
                             ? 'bg-white border-slate-200 opacity-50 cursor-not-allowed'
                             : 'bg-slate-100 border-slate-200 hover:border-slate-200'
@@ -209,11 +209,11 @@ export default function BudgetLimitModal({
 
               {/* Preview */}
               {category && limitAmount && (
-                <div className="mb-6 bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/30 rounded-xl p-4">
+                <div className="mb-6 bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-200/60 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-orange-300 font-medium mb-1">Anteprima</p>
+                      <p className="text-orange-600 font-medium mb-1">Anteprima</p>
                       <p className="text-slate-400 text-sm">
                         Limite di <span className="text-slate-800 font-bold">€{parseFloat(limitAmount).toFixed(2)}</span> per{' '}
                         <span className="text-slate-800 font-bold">{category}</span>{' '}

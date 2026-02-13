@@ -141,7 +141,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={onClose}
-                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/30 flex items-center justify-center"
+                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center"
                     >
                       <X className="w-6 h-6 text-slate-800" strokeWidth={3} />
                     </motion.button>
@@ -152,7 +152,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                 <form onSubmit={handleSubmit} className="relative z-10 p-6 space-y-4">
                   {/* EMOJI SELECTOR! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider">
+                    <label className="block text-amber-600 font-bold mb-2 text-sm uppercase tracking-wider">
                       Scegli Icona
                     </label>
                     <div className="grid grid-cols-6 gap-2">
@@ -177,7 +177,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
 
                   {/* TITLE! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <label className="block text-amber-600 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                       <Sparkles className="w-4 h-4" /> Titolo
                     </label>
                     <input
@@ -185,7 +185,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       required
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                       placeholder="es. es. Il mio account"
                     />
                   </div>
@@ -193,7 +193,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                   <div className="grid grid-cols-2 gap-4">
                     {/* USERNAME! */}
                     <div>
-                      <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                      <label className="block text-amber-600 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                         <User className="w-4 h-4" /> Nome Utente
                       </label>
                       <input
@@ -201,20 +201,20 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         required
                         value={formData.username}
                         onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                         placeholder="tuo_username"
                       />
                     </div>
 
                     {/* CATEGORY! */}
                     <div>
-                      <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                      <label className="block text-amber-600 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                         <Tag className="w-4 h-4" /> Categoria
                       </label>
                       <select
                         value={formData.category}
                         onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                       >
                         {categories.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -225,7 +225,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
 
                   {/* PASSWORD! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2 justify-between">
+                    <label className="block text-amber-600 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2 justify-between">
                       <span className="flex items-center gap-2">
                         <Lock className="w-4 h-4" /> Password
                       </span>
@@ -251,7 +251,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         required
                         value={formData.password}
                         onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                        className="w-full px-4 py-3 pr-12 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 pr-12 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                         placeholder="••••••••••••"
                       />
                       <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -271,35 +271,35 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
 
                   {/* WEBSITE! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <label className="block text-amber-600 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                       <Globe className="w-4 h-4" /> Sito Web
                     </label>
                     <input
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                       placeholder="https://esempio.com"
                     />
                   </div>
 
                   {/* NOTES! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <label className="block text-amber-600 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                       <MessageSquare className="w-4 h-4" /> Note (opzionale)
                     </label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                       rows={3}
-                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-yellow-300/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all resize-none"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all resize-none"
                       placeholder="Aggiungi note, domande di sicurezza, ecc..."
                     />
                   </div>
 
                   {/* FAVORITE! */}
                   <div>
-                    <label className="flex items-center gap-3 cursor-pointer bg-gradient-to-r from-violet-50 to-pink-50 border-2 border-purple-500/50 rounded-xl p-4 hover:border-purple-400 transition-all">
+                    <label className="flex items-center gap-3 cursor-pointer bg-gradient-to-r from-violet-50 to-pink-50 border-2 border-violet-200/60 rounded-xl p-4 hover:border-purple-400 transition-all">
                       <input
                         type="checkbox"
                         checked={formData.isFavorite}
@@ -307,7 +307,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         className="w-5 h-5 rounded accent-yellow-500"
                       />
                       <Star className={`w-5 h-5 ${formData.isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-slate-400'}`} />
-                      <span className="text-yellow-300 font-bold">Aggiungi ai Preferiti</span>
+                      <span className="text-amber-600 font-bold">Aggiungi ai Preferiti</span>
                     </label>
                   </div>
 

@@ -26,14 +26,14 @@ const MONTHS = [
 ]
 
 const COLORS = {
-  blue: 'bg-blue-500/20 border-indigo-500 text-indigo-500',
-  green: 'bg-green-500/20 border-green-500 text-green-300',
-  red: 'bg-red-500/20 border-red-500 text-red-300',
-  purple: 'bg-purple-500/20 border-purple-500 text-purple-300',
-  orange: 'bg-orange-500/20 border-orange-500 text-orange-300',
-  pink: 'bg-pink-500/20 border-pink-500 text-pink-300',
-  yellow: 'bg-yellow-500/20 border-yellow-500 text-yellow-300',
-  gray: 'bg-gray-500/20 border-slate-300 text-slate-500'
+  blue: 'bg-indigo-50 border-indigo-500 text-indigo-500',
+  green: 'bg-emerald-50 border-green-500 text-emerald-600',
+  red: 'bg-red-50 border-red-500 text-red-500',
+  purple: 'bg-violet-50 border-purple-500 text-violet-600',
+  orange: 'bg-orange-50 border-orange-500 text-orange-600',
+  pink: 'bg-pink-50 border-pink-400 text-pink-600',
+  yellow: 'bg-amber-50 border-amber-400 text-amber-600',
+  gray: 'bg-slate-50 border-slate-300 text-slate-500'
 }
 
 export default function CalendarView({
@@ -371,7 +371,7 @@ export default function CalendarView({
                                 </span>
                               )}
                               {event.is_recurring && (
-                                <span className="flex items-center gap-1 bg-purple-500/20 px-2 py-0.5 rounded">
+                                <span className="flex items-center gap-1 bg-violet-50 px-2 py-0.5 rounded">
                                   <Repeat size={12} />
                                   Ricorrente
                                 </span>
@@ -397,7 +397,7 @@ export default function CalendarView({
                             transition={{ delay: (selectedDateEvents.length + index) * 0.05 }}
                             className={`border-l-4 rounded-lg p-3 mb-2 ${
                               task.is_completed 
-                                ? 'bg-green-500/10 border-green-500' 
+                                ? 'bg-emerald-50 border-green-500' 
                                 : task.priority === 'urgent' || task.priority === 'high'
                                 ? 'bg-rose-50 border-red-500'
                                 : 'bg-indigo-50 border-indigo-300'
@@ -413,19 +413,19 @@ export default function CalendarView({
                                 )}
                                 <div className="flex flex-wrap gap-2 text-xs mt-2">
                                   <span className={`px-2 py-0.5 rounded ${
-                                    task.priority === 'urgent' ? 'bg-red-500/20 text-red-300' :
-                                    task.priority === 'high' ? 'bg-orange-500/20 text-orange-300' :
-                                    task.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                                    'bg-blue-500/20 text-indigo-500'
+                                    task.priority === 'urgent' ? 'bg-red-50 text-red-500' :
+                                    task.priority === 'high' ? 'bg-orange-50 text-orange-600' :
+                                    task.priority === 'medium' ? 'bg-amber-50 text-amber-600' :
+                                    'bg-indigo-50 text-indigo-500'
                                   }`}>
                                     {task.priority === 'urgent' ? '🔴 Urgente' :
                                      task.priority === 'high' ? '🟠 Alta' :
                                      task.priority === 'medium' ? '🟡 Media' : '🔵 Bassa'}
                                   </span>
                                   <span className={`px-2 py-0.5 rounded ${
-                                    task.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                                    task.status === 'in-progress' ? 'bg-blue-500/20 text-indigo-500' :
-                                    'bg-gray-500/20 text-slate-500'
+                                    task.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                                    task.status === 'in-progress' ? 'bg-indigo-50 text-indigo-500' :
+                                    'bg-slate-100 text-slate-500'
                                   }`}>
                                     {task.status === 'completed' ? '✓ Completato' :
                                      task.status === 'in-progress' ? '⏳ In corso' : '📋 Da fare'}

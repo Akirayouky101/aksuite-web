@@ -56,7 +56,7 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
                 </div>
                 <div className="text-left flex-1">
                   <div className="text-slate-800 font-bold">Geometric</div>
-                  <div className="text-xs text-violet-300">Minimal & Clean</div>
+                  <div className="text-xs text-violet-500">Minimal & Clean</div>
                 </div>
                 {currentTheme === 'geometric' && (
                   <div className="w-3 h-3 bg-violet-400 rounded-full animate-pulse" />
@@ -74,7 +74,7 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
               }}
               className={`w-full p-4 rounded-xl border-2 transition-all ${
                 currentTheme === 'anime'
-                  ? 'border-red-400 bg-red-500/20'
+                  ? 'border-red-400 bg-red-50'
                   : 'border-slate-200 hover:border-red-400/50'
               }`}
             >
@@ -84,7 +84,7 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }: ThemeSwit
                 </div>
                 <div className="text-left flex-1">
                   <div className="text-slate-800 font-bold">One Piece</div>
-                  <div className="text-xs text-yellow-300">Straw Hat Pirates</div>
+                  <div className="text-xs text-amber-600">Straw Hat Pirates</div>
                 </div>
                 {currentTheme === 'anime' && (
                   <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse" />

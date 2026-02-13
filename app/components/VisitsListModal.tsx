@@ -17,10 +17,10 @@ interface VisitsListModalProps {
 }
 
 const statusColors = {
-  scheduled: { bg: 'bg-blue-500/20', border: 'border-indigo-500/30', text: 'text-indigo-400', icon: Calendar },
-  in_progress: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', text: 'text-yellow-300', icon: Clock },
-  completed: { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-300', icon: CheckCircle },
-  cancelled: { bg: 'bg-red-500/20', border: 'border-red-500/30', text: 'text-red-300', icon: AlertCircle }
+  scheduled: { bg: 'bg-indigo-50', border: 'border-indigo-200/60', text: 'text-indigo-400', icon: Calendar },
+  in_progress: { bg: 'bg-amber-50', border: 'border-amber-200/60', text: 'text-amber-600', icon: Clock },
+  completed: { bg: 'bg-emerald-50', border: 'border-emerald-200/60', text: 'text-emerald-600', icon: CheckCircle },
+  cancelled: { bg: 'bg-red-50', border: 'border-red-200/60', text: 'text-red-500', icon: AlertCircle }
 }
 
 const statusLabels = {
@@ -99,7 +99,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                 )}
                 <button
                   onClick={onClose}
-                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
                   title="Chiudi"
                 >
                   <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
@@ -148,7 +148,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                   onClick={() => setSelectedFilter('in_progress')}
                   className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                     selectedFilter === 'in_progress'
-                      ? 'bg-yellow-500 text-slate-800 shadow-lg shadow-yellow-500/50'
+                      ? 'bg-yellow-500 text-slate-800 shadow-lg shadow-amber-200/50'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                   }`}
                 >
@@ -200,7 +200,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                               <UserCheck className="w-5 h-5 text-purple-400 flex-shrink-0" />
                               <h3 className="text-xl font-bold text-slate-800 truncate">{visit.visitor_name}</h3>
                               {visit.follow_up && (
-                                <span className="px-2 py-1 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-300 text-xs font-semibold">
+                                <span className="px-2 py-1 rounded-full bg-orange-50 border border-orange-200/60 text-orange-600 text-xs font-semibold">
                                   📌 Follow-up
                                 </span>
                               )}
@@ -264,10 +264,10 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
                                 {visit.visit_type === 'altro' && '📋 Altro'}
                               </span>
                               <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                                visit.priority === 'urgente' ? 'bg-red-500/20 text-red-300' :
-                                visit.priority === 'alta' ? 'bg-orange-500/20 text-orange-300' :
-                                visit.priority === 'media' ? 'bg-yellow-500/20 text-yellow-300' :
-                                'bg-green-500/20 text-green-300'
+                                visit.priority === 'urgente' ? 'bg-red-50 text-red-500' :
+                                visit.priority === 'alta' ? 'bg-orange-50 text-orange-600' :
+                                visit.priority === 'media' ? 'bg-amber-50 text-amber-600' :
+                                'bg-emerald-50 text-emerald-600'
                               }`}>
                                 {visit.priority === 'urgente' && '🔴'}
                                 {visit.priority === 'alta' && '🟠'}

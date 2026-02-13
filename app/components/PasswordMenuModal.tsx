@@ -22,13 +22,13 @@ export default function PasswordMenuModal({ isOpen, onClose, onSelectNew, onSele
             </div>
             <h2 className="text-lg font-bold text-slate-800">Gestione Password</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-500/30 flex items-center justify-center transition-all">
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all">
             <X className="w-4 h-4 text-slate-500" />
           </button>
         </div>
         <div className="p-4 space-y-2">
           <button onClick={() => { onSelectNew(); onClose() }} className="w-full flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white border border-slate-200/40 hover:border-slate-200 transition-all text-left group">
-            <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-200/60 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
               <Plus className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
