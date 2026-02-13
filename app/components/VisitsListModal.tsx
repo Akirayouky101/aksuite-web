@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, UserCheck, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, Phone, Calendar, ExternalLink, Plus } from 'lucide-react'
+import { X, UserCheck, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, Phone, Calendar, ExternalLink, Plus, Users } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
 import type { Visit } from '../hooks/useVisits'
 
@@ -76,33 +76,33 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
           {/* Main modal */}
           <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-pink-50">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">
-                  👥
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <Users className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Registro Visite</h2>
-                  <p className="text-sm text-slate-400">{visits.length} visite registrate</p>
+                  <h2 className="text-lg font-bold text-slate-800">Registro Visite</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">{visits.length} visite registrate</p>
                 </div>
               </div>
               <div className="flex gap-2">
                 {onNew && (
                   <button
                     onClick={onNew}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold flex items-center gap-2 transition-all shadow-lg"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/25 text-sm"
                     title="Aggiungi nuova visita"
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4" />
                     Nuova Visita
                   </button>
                 )}
                 <button
                   onClick={onClose}
-                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
                   title="Chiudi"
+                  className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
                 >
-                  <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+                  <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
                 </button>
               </div>
             </div>

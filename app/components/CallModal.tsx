@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock, MapPin, UserPlus, Trash2, ChevronDown } from 'lucide-react'
+import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock, MapPin, UserPlus, Trash2, ChevronDown, Wrench } from 'lucide-react'
 import SuccessModal from './SuccessModal'
 import RelationsIntegration from './RelationsIntegration'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
@@ -104,6 +104,11 @@ export default function CallModal({
   const [showAddMember, setShowAddMember] = useState(false)
   const [newMemberName, setNewMemberName] = useState('')
   const [newMemberRole, setNewMemberRole] = useState('')
+  const [hasLavorazione, setHasLavorazione] = useState(false)
+  const [lavorazioneDate, setLavorazioneDate] = useState('')
+  const [lavorazioneTime, setLavorazioneTime] = useState('')
+  const [lavorazioneDesc, setLavorazioneDesc] = useState('')
+  const [lavorazioneAssignee, setLavorazioneAssignee] = useState('')
 
   useEffect(() => {
     if (editCall) {
@@ -127,6 +132,8 @@ export default function CallModal({
       setAssignedTo('')
       setCallType('informazioni'); setPriority('media')
       setNotes(''); setFollowUp(false); setFollowUpDate('')
+      setHasLavorazione(false); setLavorazioneDate(''); setLavorazioneTime('')
+      setLavorazioneDesc(''); setLavorazioneAssignee('')
     }
   }, [editCall, isOpen])
 
@@ -143,13 +150,21 @@ export default function CallModal({
         follow_up: followUp,
         follow_up_date: followUpDate || null,
         status: editCall?.status || 'pending',
-        call_date: editCall?.call_date || new Date().toISOString()
+        call_date: editCall?.call_date || new Date().toISOString(),
+        // Lavorazione
+        has_lavorazione: hasLavorazione,
+        lavorazione_date: hasLavorazione ? lavorazioneDate || null : null,
+        lavorazione_time: hasLavorazione ? lavorazioneTime || null : null,
+        lavorazione_description: hasLavorazione ? lavorazioneDesc : '',
+        lavorazione_assignee: hasLavorazione ? lavorazioneAssignee : ''
       })
       setCallerName(''); setCompany(''); setPhone(''); setEmail('')
       setAddress(''); setCity(''); setZipCode(''); setProvince('')
       setAssignedTo('')
       setCallType('informazioni'); setPriority('media')
       setNotes(''); setFollowUp(false); setFollowUpDate('')
+      setHasLavorazione(false); setLavorazioneDate(''); setLavorazioneTime('')
+      setLavorazioneDesc(''); setLavorazioneAssignee('')
       setShowSuccess(true)
       setTimeout(() => { setShowSuccess(false); onClose() }, 2500)
     } catch (error) {
@@ -196,7 +211,13 @@ export default function CallModal({
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-800">{editCall ? 'Modifica Chiamata' : 'Nuova Chiamata'}</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Registra chiamata cliente</p>
+                  <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+                    <Clock className="w-3 h-3" />
+                    {editCall
+                      ? `Registrata il ${new Date(editCall.call_date).toLocaleString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                      : `Oggi ${new Date().toLocaleString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                    }
+                  </p>
                 </div>
               </div>
               <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all">
@@ -409,6 +430,51 @@ export default function CallModal({
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                       <label className={labelClass}>Data Follow-up</label>
                       <input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} className={inputClass} />
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* ── Lavorazione / Intervento ── */}
+                <div className="space-y-2 pt-3 border-t border-slate-100/80">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked={hasLavorazione} onChange={(e) => setHasLavorazione(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-200 bg-slate-50 text-indigo-500 focus:ring-2 focus:ring-indigo-500/10" />
+                    <span className="text-sm text-slate-700 font-medium">
+                      <Wrench className="w-3.5 h-3.5 inline mr-1" /> Programma Lavorazione / Intervento
+                    </span>
+                  </label>
+                  {hasLavorazione && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                      className="bg-violet-50/50 rounded-xl p-4 border border-violet-200/40 space-y-3"
+                    >
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelClass}>Data Intervento</label>
+                          <input type="date" value={lavorazioneDate} onChange={(e) => setLavorazioneDate(e.target.value)} className={inputClass} />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Orario</label>
+                          <input type="time" value={lavorazioneTime} onChange={(e) => setLavorazioneTime(e.target.value)} className={inputClass} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={labelClass}>Descrizione Intervento</label>
+                        <input type="text" value={lavorazioneDesc} onChange={(e) => setLavorazioneDesc(e.target.value)} className={inputClass}
+                          placeholder="Es. Andare dalla Sig.ra Taldeitali per riparazione" />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Assegnato A</label>
+                        <div className="relative">
+                          <select value={lavorazioneAssignee} onChange={(e) => setLavorazioneAssignee(e.target.value)}
+                            className={inputClass + ' appearance-none pr-10'}>
+                            <option value="">— Seleziona —</option>
+                            {teamMembers.map((m) => (
+                              <option key={m.id} value={m.name}>{m.name}{m.role ? ` (${m.role})` : ''}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+                      </div>
                     </motion.div>
                   )}
                 </div>

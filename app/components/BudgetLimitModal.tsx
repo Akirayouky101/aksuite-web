@@ -85,24 +85,24 @@ export default function BudgetLimitModal({
           <div className="absolute -inset-4 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-orange-50 to-red-50">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-2xl">
-                  ⚠️
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <AlertTriangle className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Limite Budget</h2>
-                  <p className="text-sm text-slate-400">Imposta un tetto massimo di spesa</p>
+                  <h2 className="text-lg font-bold text-slate-800">Limite Budget</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Imposta un tetto massimo di spesa</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-lg bg-slate-100 hover:bg-slate-100 flex items-center justify-center transition-colors"
-                aria-label="Chiudi"
+                title="Chiudi"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
               >
-                <X className="w-5 h-5 text-slate-800" />
+                <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
               </button>
             </div>
 
@@ -110,7 +110,7 @@ export default function BudgetLimitModal({
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {/* Category Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-slate-800 mb-3">Categoria</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Categoria</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {commonCategories.map((cat) => {
                     const isDisabled = existingCategories.includes(cat.name)
@@ -141,7 +141,7 @@ export default function BudgetLimitModal({
 
               {/* Period */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-slate-800 mb-3">Periodo</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Periodo</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { value: 'daily', label: '📆 Giorno', desc: 'al giorno' },
@@ -228,13 +228,15 @@ export default function BudgetLimitModal({
               )}
 
               {/* Submit Button */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isSaving || !category || !limitAmount}
-                className="w-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-orange-200/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving ? 'Salvataggio...' : '⚠️ Imposta Limite'}
-              </button>
+                {isSaving ? 'Salvataggio...' : 'Imposta Limite'}
+              </motion.button>
             </form>
           </div>
         </motion.div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Eye, EyeOff, Copy, Trash2, Edit, ExternalLink, Search, Star, Filter, ArrowUpDown } from 'lucide-react'
+import { X, Eye, EyeOff, Copy, Trash2, Edit, ExternalLink, Search, Star, Filter, ArrowUpDown, KeyRound } from 'lucide-react'
 import { Password } from '../hooks/usePasswords'
 
 interface PasswordListModalProps {
@@ -110,24 +110,26 @@ export default function PasswordListModal({
               {/* Main modal */}
               <div className="relative bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="relative z-10 p-6 border-b border-slate-200 bg-white space-y-4">
+                <div className="relative z-10 px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0 space-y-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-800">
-                        📋 ELENCO PASSWORD
-                      </h2>
-                      <p className="text-indigo-600 font-bold mt-1">
-                        {filteredPasswords.length} di {passwords.length} password
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                        <KeyRound className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-slate-800">Elenco Password</h2>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {filteredPasswords.length} di {passwords.length} password
+                        </p>
+                      </div>
                     </div>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                    <button
                       onClick={onClose}
-                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center"
+                      title="Chiudi"
+                      className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
                     >
-                      <X className="w-6 h-6 text-slate-800" strokeWidth={3} />
-                    </motion.button>
+                      <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+                    </button>
                   </div>
 
                   {/* Search Bar */}

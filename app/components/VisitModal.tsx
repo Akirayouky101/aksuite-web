@@ -111,23 +111,23 @@ export default function VisitModal({
           className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50"
         >
           {/* Header */}
-          <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-pink-50 ">
+          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">
-                👥
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                <UserCheck className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">
-                  {editVisit ? '✏️ Modifica Visita' : '➕ Nuova Visita'}
+                <h2 className="text-lg font-bold text-slate-800">
+                  {editVisit ? 'Modifica Visita' : 'Nuova Visita'}
                 </h2>
-                <p className="text-sm text-slate-400">Registra visitatori in ufficio</p>
+                <p className="text-xs text-slate-400 mt-0.5">Registra visitatori in ufficio</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
             >
-              <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+              <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
             </button>
           </div>
 
@@ -135,7 +135,7 @@ export default function VisitModal({
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {/* Visitor Name */}
             <div>
-              <label className="block text-sm font-semibold text-slate-400 mb-2">
+              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                 <UserCheck className="w-4 h-4 inline mr-2" />
                 Nome Visitatore *
               </label>
@@ -151,7 +151,7 @@ export default function VisitModal({
 
             {/* Company */}
             <div>
-              <label className="block text-sm font-semibold text-slate-400 mb-2">
+              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                 <Building2 className="w-4 h-4 inline mr-2" />
                 Azienda
               </label>
@@ -167,7 +167,7 @@ export default function VisitModal({
             {/* Contact Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-400 mb-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   <Phone className="w-4 h-4 inline mr-2" />
                   Telefono
                 </label>
@@ -180,7 +180,7 @@ export default function VisitModal({
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-400 mb-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   <Mail className="w-4 h-4 inline mr-2" />
                   Email
                 </label>
@@ -197,7 +197,7 @@ export default function VisitModal({
             {/* Type and Priority Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-400 mb-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   📋 Tipo Visita *
                 </label>
                 <select
@@ -214,7 +214,7 @@ export default function VisitModal({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-400 mb-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   <AlertTriangle className="w-4 h-4 inline mr-2" />
                   Priorità
                 </label>
@@ -233,7 +233,7 @@ export default function VisitModal({
 
             {/* Visit Date */}
             <div>
-              <label className="block text-sm font-semibold text-slate-400 mb-2">
+              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                 <Calendar className="w-4 h-4 inline mr-2" />
                 Data e Ora Visita *
               </label>
@@ -249,7 +249,7 @@ export default function VisitModal({
             {/* Status (only when editing) */}
             {editVisit && (
               <div>
-                <label className="block text-sm font-semibold text-slate-400 mb-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   📊 Stato
                 </label>
                 <select
@@ -267,7 +267,7 @@ export default function VisitModal({
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-semibold text-slate-400 mb-2">
+              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                 <FileText className="w-4 h-4 inline mr-2" />
                 Note
               </label>
@@ -316,12 +316,14 @@ export default function VisitModal({
             )} */}
 
             {/* Submit Button */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               type="submit"
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold text-lg shadow-lg hover:shadow-indigo-200/50 transition-all"
+              className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
             >
               {editVisit ? '✏️ Aggiorna Visita' : '💾 Salva Visita'}
-            </button>
+            </motion.button>
           </form>
         </motion.div>
       </div>

@@ -106,22 +106,22 @@ export default function BudgetViewModal({ isOpen, onClose, transactions, onDelet
           {/* Main modal */}
           <div className="relative bg-white/90 backdrop-blur-2xl rounded-none sm:rounded-2xl w-full h-full sm:h-auto overflow-hidden border-0 sm:border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-green-50 shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-lg sm:text-xl md:text-2xl">
-                📊
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                <DollarSign className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-slate-800">Bilancio</h2>
-                <p className="text-xs text-slate-400 hidden md:block">Tutte le tue transazioni</p>
+                <h2 className="text-lg font-bold text-slate-800">Bilancio</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Tutte le tue transazioni</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-slate-100 hover:bg-slate-100 flex items-center justify-center transition-colors shrink-0"
-              aria-label="Chiudi"
+              title="Chiudi"
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all shrink-0"
             >
-              <X className="w-5 h-5 text-slate-800" />
+              <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
             </button>
           </div>
 

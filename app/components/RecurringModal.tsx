@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Repeat, Calendar } from 'lucide-react'
+import { X, Repeat, Calendar, RefreshCw } from 'lucide-react'
 
 interface RecurringModalProps {
   isOpen: boolean
@@ -115,24 +115,24 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-pink-50">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">
-                  🔄
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <RefreshCw className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Transazione Ricorrente</h2>
-                  <p className="text-sm text-slate-400">Automatica ogni mese/settimana</p>
+                  <h2 className="text-lg font-bold text-slate-800">Transazione Ricorrente</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Automatica ogni mese/settimana</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-lg bg-slate-100 hover:bg-slate-100 flex items-center justify-center transition-colors"
-                aria-label="Chiudi"
+                title="Chiudi"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
               >
-                <X className="w-5 h-5 text-slate-800" />
+                <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
               </button>
             </div>
 
@@ -140,7 +140,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {/* Type Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-slate-800 mb-3">Tipo</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Tipo</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -191,7 +191,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
               {/* Frequency */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-slate-800 mb-3">Frequenza</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Frequenza</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {[
                     { value: 'daily', label: '📆 Giornaliera', icon: '📆' },
@@ -251,7 +251,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
               {/* Category */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-slate-800 mb-3">Categoria</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Categoria</label>
                 <div className="grid grid-cols-3 gap-2">
                   {categories.map((cat) => (
                     <button
@@ -290,13 +290,15 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
               </div>
 
               {/* Submit Button */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isSaving || !amount || !category || !description}
-                className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 text-slate-800 font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-indigo-200/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving ? 'Salvataggio...' : '🔄 Crea Ricorrente'}
-              </button>
+                {isSaving ? 'Salvataggio...' : 'Crea Ricorrente'}
+              </motion.button>
             </form>
           </div>
         </motion.div>

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   X, Search, Filter, Grid, List, Pin, Edit, Trash2, 
-  Tag, Folder, Plus, Download, Calendar 
+  Tag, Folder, Plus, Download, Calendar, FileText 
 } from 'lucide-react'
 import { Note } from '../hooks/useNotes'
 
@@ -131,19 +131,25 @@ export default function NotesListModal({
             className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col border border-slate-200/60"
           >
             {/* Header */}
-            <div className="p-6 border-b border-slate-200 ">
+            <div className="px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-                  📝 Note Manager
-                  <span className="text-lg font-normal text-slate-400">
-                    ({sortedNotes.length} {sortedNotes.length === 1 ? 'nota' : 'note'})
-                  </span>
-                </h2>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-800">Note Manager</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {sortedNotes.length} {sortedNotes.length === 1 ? 'nota' : 'note'}
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={onClose}
-                  className="text-slate-400 hover:text-slate-800 transition-colors"
+                  title="Chiudi"
+                  className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
                 >
-                  <X size={24} />
+                  <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
                 </button>
               </div>
 

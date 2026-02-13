@@ -154,16 +154,23 @@ export default function EventModal({
             className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200/60"
           >
             {/* Header */}
-            <div className={`${selectedColor.light} p-6 border-b border-slate-200`}>
+            <div className="px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                  📅 {editEvent ? 'Modifica Evento' : 'Nuovo Evento'}
-                </h2>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-800">{editEvent ? 'Modifica Evento' : 'Nuovo Evento'}</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">Pianifica il tuo calendario</p>
+                  </div>
+                </div>
                 <button
                   onClick={onClose}
-                  className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-rose-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  title="Chiudi"
+                  className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
                 >
-                  <X className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" />
+                  <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
                 </button>
               </div>
             </div>
@@ -353,23 +360,15 @@ export default function EventModal({
             )}
 
             {/* Footer */}
-            <div className="p-6 border-t border-slate-200 bg-slate-50/50">
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-3 bg-slate-50 hover:bg-slate-100 text-white rounded-xl font-medium transition-colors"
-                >
-                  Annulla
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
-                >
-                  <Save size={20} />
-                  {editEvent ? 'Aggiorna Evento' : 'Salva Evento'}
-                </button>
-              </div>
+            <div className="px-6 py-4 border-t border-slate-200/60 bg-white/40 flex-shrink-0">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSubmit}
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
+              >
+                {editEvent ? 'Aggiorna Evento' : 'Salva Evento'}
+              </motion.button>
             </div>
           </motion.div>
         </div>
