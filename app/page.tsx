@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Lock, LogIn, LogOut, User, Phone, UserCheck, LayoutDashboard,
+  Lock, LogIn, LogOut, User, Phone, UserCheck,
   DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
   Search, Bell, Settings, MapPin, FileText
@@ -28,7 +28,6 @@ import NoteModal from './components/NoteModal'
 import NotesListModal from './components/NotesListModal'
 import EventModal from './components/EventModal'
 import CalendarView from './components/CalendarView'
-import UnifiedDashboard from './components/UnifiedDashboard'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -66,7 +65,6 @@ export default function Home() {
   const [isNotesListModalOpen, setIsNotesListModalOpen] = useState(false)
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [isCalendarViewOpen, setIsCalendarViewOpen] = useState(false)
-  const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -166,7 +164,6 @@ export default function Home() {
   // NAVIGATION & ACTIONS CONFIG
   // ═══════════════════════════════════════════
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, onClick: () => setIsDashboardOpen(true), count: null },
     { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => setIsCallMenuModalOpen(true), count: calls.length, badge: pendingCalls },
     { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => setIsTasksListModalOpen(true), count: tasks.length, badge: activeTasks },
     { id: 'calendar', label: 'Calendario', icon: Calendar, onClick: () => setIsCalendarViewOpen(true), count: events.length, badge: todayEvents },
@@ -297,9 +294,6 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={() => setIsDashboardOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Dashboard">
-                  <LayoutDashboard className="w-[18px] h-[18px]" />
-                </button>
                 <button onClick={() => setIsCalendarViewOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Calendario">
                   <Calendar className="w-[18px] h-[18px]" />
                 </button>
@@ -642,28 +636,6 @@ export default function Home() {
       <TasksListModal isOpen={isTasksListModalOpen} onClose={() => setIsTasksListModalOpen(false)}
         tasks={tasks} onDelete={deleteTask} onToggleComplete={toggleComplete}
         onUpdate={updateTask} onAdd={async (task) => { await addTask(task) }} />
-
-      {isDashboardOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4">
-          <div className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50 relative">
-            <button onClick={() => setIsDashboardOpen(false)}
-              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all text-slate-400"
-              title="Chiudi">
-              <X className="w-4 h-4" />
-            </button>
-            <UnifiedDashboard passwords={passwords} calls={calls} tasks={tasks} transactions={transactions}
-              onOpenPasswords={() => { setIsDashboardOpen(false); setIsMenuModalOpen(true) }}
-              onOpenCalls={() => { setIsDashboardOpen(false); setIsCallMenuModalOpen(true) }}
-              onOpenTasks={() => { setIsDashboardOpen(false); setIsTasksListModalOpen(true) }}
-              onOpenBudget={() => { setIsDashboardOpen(false); setIsBudgetMenuModalOpen(true) }}
-              onNewPassword={() => { setIsDashboardOpen(false); setIsPasswordModalOpen(true) }}
-              onNewCall={() => { setIsDashboardOpen(false); setIsCallModalOpen(true) }}
-              onNewTask={() => { setIsDashboardOpen(false); setIsTaskModalOpen(true) }}
-              onNewTransaction={() => { setIsDashboardOpen(false); setIsBudgetModalOpen(true) }}
-            />
-          </div>
-        </div>
-      )}
 
       <NoteModal isOpen={isNoteModalOpen}
         onClose={() => { setIsNoteModalOpen(false); setEditingNote(null) }}
