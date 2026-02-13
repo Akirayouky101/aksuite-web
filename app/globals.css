@@ -8,3 +8,12 @@ body {
   overflow-x: hidden;
   text-transform: uppercase;
 }
+
+input,
+textarea,
+select,
+option,
+button,
+::placeholder {
+  text-transform: uppercase;
+}
