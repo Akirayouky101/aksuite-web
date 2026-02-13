@@ -5,7 +5,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck,
   DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText
+  Search, Bell, Settings, MapPin, FileText, Wrench
 } from 'lucide-react'
 import PasswordModal from './components/PasswordModal'
 import PasswordMenuModal from './components/PasswordMenuModal'
@@ -28,6 +28,7 @@ import NoteModal from './components/NoteModal'
 import NotesListModal from './components/NotesListModal'
 import EventModal from './components/EventModal'
 import CalendarView from './components/CalendarView'
+import LavorazioniListModal from './components/LavorazioniListModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -40,6 +41,7 @@ import { useNotes } from './hooks/useNotes'
 import { useEvents } from './hooks/useEvents'
 import { useRelations } from './hooks/useRelations'
 import { useTeamMembers } from './hooks/useTeamMembers'
+import { useLavorazioni } from './hooks/useLavorazioni'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -66,6 +68,7 @@ export default function Home() {
   const [isNotesListModalOpen, setIsNotesListModalOpen] = useState(false)
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [isCalendarViewOpen, setIsCalendarViewOpen] = useState(false)
+  const [isLavorazioniListModalOpen, setIsLavorazioniListModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -88,6 +91,7 @@ export default function Home() {
   const { events, addEvent, updateEvent, deleteEvent } = useEvents()
   const { addRelation, removeRelation, getRelatedItems } = useRelations()
   const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
+  const { lavorazioni, addLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
@@ -165,8 +169,11 @@ export default function Home() {
   // ═══════════════════════════════════════════
   // NAVIGATION & ACTIONS CONFIG
   // ═══════════════════════════════════════════
+  const activeLavorazioni = lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length
+
   const navItems = [
     { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => setIsCallMenuModalOpen(true), count: calls.length, badge: pendingCalls },
+    { id: 'lavorazioni', label: 'Lavorazioni', icon: Wrench, onClick: () => setIsLavorazioniListModalOpen(true), count: lavorazioni.length, badge: activeLavorazioni },
     { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => setIsTasksListModalOpen(true), count: tasks.length, badge: activeTasks },
     { id: 'calendar', label: 'Calendario', icon: Calendar, onClick: () => setIsCalendarViewOpen(true), count: events.length, badge: todayEvents },
     { id: 'budget', label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length },
@@ -599,6 +606,24 @@ export default function Home() {
             })
             if (newTask?.id) await addRelation('call', callId, 'task', newTask.id, 'related', 'Auto follow-up')
           }
+          if (callData.has_lavorazione && callId) {
+            await addLavorazione({
+              call_id: callId,
+              title: `Lavorazione: ${callData.caller_name || 'Chiamata'}${callData.company ? ` - ${callData.company}` : ''}`,
+              description: callData.lavorazione_description || '',
+              assigned_to: callData.lavorazione_assignee || '',
+              scheduled_date: callData.lavorazione_date || null,
+              scheduled_time: callData.lavorazione_time || null,
+              status: 'da_fare',
+              priority: callData.priority || 'media',
+              address: callData.address || '',
+              city: callData.city || '',
+              zip_code: callData.zip_code || '',
+              province: callData.province || '',
+              notes: callData.notes || '',
+              completed_at: null,
+            })
+          }
         }}
         editCall={editingCall} availableItems={availableRelationItems}
         onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems}
@@ -607,6 +632,16 @@ export default function Home() {
       <CallsListModal isOpen={isCallsListModalOpen} onClose={() => setIsCallsListModalOpen(false)}
         calls={calls} onDelete={deleteCall} onStatusChange={updateCallStatus}
         onEdit={(call) => { setEditingCall(call); setIsCallModalOpen(true); setIsCallsListModalOpen(false) }} />
+
+      <LavorazioniListModal
+        isOpen={isLavorazioniListModalOpen}
+        onClose={() => setIsLavorazioniListModalOpen(false)}
+        lavorazioni={lavorazioni}
+        onToggleStatus={toggleLavorazioneStatus}
+        onDelete={deleteLavorazione}
+        onNew={() => { setIsLavorazioniListModalOpen(false); setIsCallModalOpen(true) }}
+        teamMembers={teamMembers}
+      />
 
       <VisitModal
         isOpen={isVisitModalOpen}
