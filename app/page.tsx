@@ -39,6 +39,7 @@ import { useTasks } from './hooks/useTasks'
 import { useNotes } from './hooks/useNotes'
 import { useEvents } from './hooks/useEvents'
 import { useRelations } from './hooks/useRelations'
+import { useTeamMembers } from './hooks/useTeamMembers'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -86,6 +87,7 @@ export default function Home() {
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
   const { events, addEvent, updateEvent, deleteEvent } = useEvents()
   const { addRelation, removeRelation, getRelatedItems } = useRelations()
+  const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
@@ -600,6 +602,7 @@ export default function Home() {
         }}
         editCall={editingCall} availableItems={availableRelationItems}
         onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems}
+        teamMembers={teamMembers} onAddTeamMember={addTeamMember} onDeleteTeamMember={deleteTeamMember}
       />
       <CallsListModal isOpen={isCallsListModalOpen} onClose={() => setIsCallsListModalOpen(false)}
         calls={calls} onDelete={deleteCall} onStatusChange={updateCallStatus}

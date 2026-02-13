@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, Mail, Building2, Calendar, Clock, MessageSquare, User } from 'lucide-react'
+import { X, Phone, Mail, Building2, Calendar, Clock, MessageSquare, User, MapPin } from 'lucide-react'
 
 interface Call {
   id: string
@@ -16,6 +16,11 @@ interface Call {
   follow_up_date: string | null
   status: 'pending' | 'completed' | 'cancelled'
   call_date: string
+  address?: string
+  city?: string
+  zip_code?: string
+  province?: string
+  assigned_to?: string
 }
 
 interface CallDetailModalProps {
@@ -158,6 +163,39 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
                   )}
                 </div>
               </div>
+
+              {/* Indirizzo */}
+              {(call.address || call.city || call.province || call.zip_code) && (
+                <div className="bg-white/70 rounded-xl p-4 border border-slate-200/40">
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5" />
+                    Indirizzo Cliente
+                  </h3>
+                  <div className="space-y-1.5">
+                    {call.address && (
+                      <p className="text-sm font-semibold text-slate-700">{call.address}</p>
+                    )}
+                    <p className="text-sm text-slate-500">
+                      {[call.city, call.province && `(${call.province})`, call.zip_code].filter(Boolean).join(' ')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Assegnata A */}
+              {call.assigned_to && (
+                <div className="bg-indigo-50/60 rounded-xl p-4 border border-indigo-200/40">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center border border-indigo-200/60">
+                      <User className="w-4 h-4 text-indigo-500" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-indigo-400 uppercase tracking-wider font-medium">Assegnata A</div>
+                      <div className="text-sm font-bold text-indigo-700">{call.assigned_to}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Note */}
               {call.notes && (

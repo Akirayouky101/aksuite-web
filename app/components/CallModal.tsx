@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock } from 'lucide-react'
+import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock, MapPin, UserPlus, Trash2, ChevronDown } from 'lucide-react'
 import SuccessModal from './SuccessModal'
 import RelationsIntegration from './RelationsIntegration'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
@@ -13,6 +13,11 @@ interface Call {
   company: string
   phone: string
   email: string
+  address: string
+  city: string
+  zip_code: string
+  province: string
+  assigned_to: string
   call_type: string
   priority: string
   notes: string
@@ -22,11 +27,20 @@ interface Call {
   call_date: string
 }
 
+interface TeamMember {
+  id: string
+  name: string
+  role: string
+}
+
 interface CallModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (call: any) => Promise<void>
   editCall?: Call | null
+  teamMembers?: TeamMember[]
+  onAddTeamMember?: (name: string, role: string) => Promise<any>
+  onDeleteTeamMember?: (id: string) => Promise<void>
   // Relazioni
   availableItems?: {
     passwords?: any[]
@@ -62,6 +76,9 @@ export default function CallModal({
   onClose, 
   onSave, 
   editCall,
+  teamMembers = [],
+  onAddTeamMember,
+  onDeleteTeamMember,
   availableItems,
   onAddRelation,
   onRemoveRelation,
@@ -72,6 +89,11 @@ export default function CallModal({
   const [company, setCompany] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
+  const [zipCode, setZipCode] = useState('')
+  const [province, setProvince] = useState('')
+  const [assignedTo, setAssignedTo] = useState('')
   const [callType, setCallType] = useState('informazioni')
   const [priority, setPriority] = useState('media')
   const [notes, setNotes] = useState('')
@@ -79,69 +101,57 @@ export default function CallModal({
   const [followUpDate, setFollowUpDate] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [newMemberName, setNewMemberName] = useState('')
+  const [newMemberRole, setNewMemberRole] = useState('')
 
-  // Load edit data
   useEffect(() => {
     if (editCall) {
       setCallerName(editCall.caller_name)
       setCompany(editCall.company)
       setPhone(editCall.phone)
       setEmail(editCall.email)
+      setAddress(editCall.address || '')
+      setCity(editCall.city || '')
+      setZipCode(editCall.zip_code || '')
+      setProvince(editCall.province || '')
+      setAssignedTo(editCall.assigned_to || '')
       setCallType(editCall.call_type)
       setPriority(editCall.priority)
       setNotes(editCall.notes)
       setFollowUp(editCall.follow_up)
       setFollowUpDate(editCall.follow_up_date || '')
     } else {
-      // Reset form for new call
-      setCallerName('')
-      setCompany('')
-      setPhone('')
-      setEmail('')
-      setCallType('informazioni')
-      setPriority('media')
-      setNotes('')
-      setFollowUp(false)
-      setFollowUpDate('')
+      setCallerName(''); setCompany(''); setPhone(''); setEmail('')
+      setAddress(''); setCity(''); setZipCode(''); setProvince('')
+      setAssignedTo('')
+      setCallType('informazioni'); setPriority('media')
+      setNotes(''); setFollowUp(false); setFollowUpDate('')
     }
   }, [editCall, isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
-    
     try {
       await onSave({
         caller_name: callerName,
-        company,
-        phone,
-        email,
-        call_type: callType,
-        priority,
-        notes,
+        company, phone, email,
+        address, city, zip_code: zipCode, province,
+        assigned_to: assignedTo,
+        call_type: callType, priority, notes,
         follow_up: followUp,
         follow_up_date: followUpDate || null,
-        status: 'pending',
-        call_date: new Date().toISOString()
+        status: editCall?.status || 'pending',
+        call_date: editCall?.call_date || new Date().toISOString()
       })
-      
-      // Reset form
-      setCallerName('')
-      setCompany('')
-      setPhone('')
-      setEmail('')
-      setCallType('informazioni')
-      setPriority('media')
-      setNotes('')
-      setFollowUp(false)
-      setFollowUpDate('')
-      
-      // Show success modal instead of closing immediately
+      setCallerName(''); setCompany(''); setPhone(''); setEmail('')
+      setAddress(''); setCity(''); setZipCode(''); setProvince('')
+      setAssignedTo('')
+      setCallType('informazioni'); setPriority('media')
+      setNotes(''); setFollowUp(false); setFollowUpDate('')
       setShowSuccess(true)
-      setTimeout(() => {
-        setShowSuccess(false)
-        onClose()
-      }, 2500)
+      setTimeout(() => { setShowSuccess(false); onClose() }, 2500)
     } catch (error) {
       console.error('Error saving call:', error)
     } finally {
@@ -149,207 +159,264 @@ export default function CallModal({
     }
   }
 
+  const handleAddMember = async () => {
+    if (!newMemberName.trim() || !onAddTeamMember) return
+    try {
+      await onAddTeamMember(newMemberName.trim(), newMemberRole.trim())
+      setNewMemberName('')
+      setNewMemberRole('')
+      setShowAddMember(false)
+    } catch (error) {
+      console.error('Error adding team member:', error)
+    }
+  }
+
+  const inputClass = "w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all text-sm"
+  const labelClass = "block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5"
+
   if (!isOpen) return null
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/30  flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative max-w-2xl w-full overflow-x-hidden"
+          className="relative max-w-2xl w-full"
         >
-          <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 via-violet-500 to-violet-500 rounded-3xl hidden" />
-          
-          {/* Main modal */}
-          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
+          <div className="bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-indigo-50">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl">
-                  📞
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <Phone className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Nuova Chiamata</h2>
-                  <p className="text-sm text-slate-400">Registra chiamata cliente</p>
+                  <h2 className="text-lg font-bold text-slate-800">{editCall ? 'Modifica Chiamata' : 'Nuova Chiamata'}</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Registra chiamata cliente</p>
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="group relative w-10 h-10 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all duration-200 hover:scale-110"
-                aria-label="Chiudi"
-              >
-                <X className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" />
+              <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all">
+                <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Caller Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-2">
-                      <User className="w-4 h-4 inline mr-2" />
-                      Nome Chiamante *
-                    </label>
-                    <input
-                      type="text"
-                      value={callerName}
-                      onChange={(e) => setCallerName(e.target.value)}
-                      required
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                      placeholder="Mario Rossi"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-2">
-                      <Building2 className="w-4 h-4 inline mr-2" />
-                      Azienda
-                    </label>
-                    <input
-                      type="text"
-                      value={company}
-                      onChange={(e) => setCompany(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                      placeholder="Nome Azienda"
-                    />
-                  </div>
-                </div>
-
-                {/* Contact Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-2">
-                      <Phone className="w-4 h-4 inline mr-2" />
-                      Telefono *
-                    </label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                      placeholder="+39 123 456 7890"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-2">
-                      <Mail className="w-4 h-4 inline mr-2" />
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                      placeholder="email@esempio.it"
-                    />
-                  </div>
-                </div>
-
-                {/* Call Type */}
+            <div className="p-6 overflow-y-auto flex-1">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                
+                {/* ── Dati Chiamante ── */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-3">Tipo Chiamata</label>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5" /> Dati Chiamante
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelClass}>Nome *</label>
+                      <input type="text" value={callerName} onChange={(e) => setCallerName(e.target.value)} required className={inputClass} placeholder="Mario Rossi" />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Azienda</label>
+                      <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} className={inputClass} placeholder="Nome Azienda" />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Telefono *</label>
+                      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClass} placeholder="+39 123 456 7890" />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Email</label>
+                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="email@esempio.it" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Indirizzo Cliente ── */}
+                <div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5" /> Indirizzo Cliente
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className={labelClass}>Indirizzo</label>
+                      <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} placeholder="Via Roma 1" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-1">
+                        <label className={labelClass}>CAP</label>
+                        <input type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} className={inputClass} placeholder="00100" maxLength={5} />
+                      </div>
+                      <div className="col-span-1">
+                        <label className={labelClass}>Città</label>
+                        <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} placeholder="Roma" />
+                      </div>
+                      <div className="col-span-1">
+                        <label className={labelClass}>Provincia</label>
+                        <input type="text" value={province} onChange={(e) => setProvince(e.target.value)} className={inputClass} placeholder="RM" maxLength={2} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Assegna A ── */}
+                <div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <UserPlus className="w-3.5 h-3.5" /> Assegna A
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <select
+                        value={assignedTo}
+                        onChange={(e) => setAssignedTo(e.target.value)}
+                        className={inputClass + ' appearance-none pr-10'}
+                      >
+                        <option value="">— Nessuno —</option>
+                        {teamMembers.map((m) => (
+                          <option key={m.id} value={m.name}>
+                            {m.name}{m.role ? ` (${m.role})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                    
+                    {/* Add new member inline */}
+                    {!showAddMember ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddMember(true)}
+                        className="text-xs text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1 transition-colors"
+                      >
+                        <UserPlus className="w-3 h-3" />
+                        Aggiungi membro al team
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="bg-indigo-50/50 rounded-xl p-3 border border-indigo-200/40 space-y-2"
+                      >
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={newMemberName}
+                            onChange={(e) => setNewMemberName(e.target.value)}
+                            className={inputClass}
+                            placeholder="Nome"
+                          />
+                          <input
+                            type="text"
+                            value={newMemberRole}
+                            onChange={(e) => setNewMemberRole(e.target.value)}
+                            className={inputClass}
+                            placeholder="Ruolo (opzionale)"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleAddMember}
+                            disabled={!newMemberName.trim()}
+                            className="px-3 py-1.5 bg-indigo-500 text-white rounded-lg text-xs font-medium hover:bg-indigo-600 transition-all disabled:opacity-50"
+                          >
+                            Aggiungi
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setShowAddMember(false); setNewMemberName(''); setNewMemberRole('') }}
+                            className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-medium hover:bg-slate-200 transition-all"
+                          >
+                            Annulla
+                          </button>
+                        </div>
+                        {/* Members list for deletion */}
+                        {teamMembers.length > 0 && (
+                          <div className="pt-2 border-t border-indigo-200/40 space-y-1">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Membri esistenti:</span>
+                            {teamMembers.map(m => (
+                              <div key={m.id} className="flex items-center justify-between py-1">
+                                <span className="text-xs text-slate-600">{m.name}{m.role ? ` — ${m.role}` : ''}</span>
+                                {onDeleteTeamMember && (
+                                  <button type="button" onClick={() => onDeleteTeamMember(m.id)} className="p-1 hover:bg-red-50 rounded transition-colors">
+                                    <Trash2 className="w-3 h-3 text-red-400" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Tipo Chiamata ── */}
+                <div>
+                  <label className={labelClass}>Tipo Chiamata</label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {callTypes.map((type) => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => setCallType(type.value)}
-                        className={`px-4 py-3 rounded-lg border-2 transition-all font-semibold text-sm ${
+                      <button key={type.value} type="button" onClick={() => setCallType(type.value)}
+                        className={`px-3 py-2.5 rounded-xl border transition-all font-medium text-xs ${
                           callType === type.value
-                            ? `border-${type.color}-400 bg-${type.color}-50 text-${type.color}-700`
-                            : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-50'
-                        }`}
-                      >
+                            ? 'bg-indigo-50 border-indigo-200/60 text-indigo-600'
+                            : 'border-slate-200/60 bg-white/50 text-slate-400 hover:bg-slate-50'
+                        }`}>
                         {type.label}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Priority */}
+                {/* ── Priorità ── */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-3">Priorità</label>
+                  <label className={labelClass}>Priorità</label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {priorities.map((p) => (
-                      <button
-                        key={p.value}
-                        type="button"
-                        onClick={() => setPriority(p.value)}
-                        className={`px-4 py-3 rounded-lg border-2 transition-all font-semibold text-sm ${
+                      <button key={p.value} type="button" onClick={() => setPriority(p.value)}
+                        className={`px-3 py-2.5 rounded-xl border transition-all font-medium text-xs ${
                           priority === p.value
-                            ? `border-${p.color}-400 bg-${p.color}-50 text-${p.color}-700`
-                            : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-50'
-                        }`}
-                      >
+                            ? 'bg-indigo-50 border-indigo-200/60 text-indigo-600'
+                            : 'border-slate-200/60 bg-white/50 text-slate-400 hover:bg-slate-50'
+                        }`}>
                         {p.label}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Notes */}
+                {/* ── Note ── */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-2">
-                    <MessageSquare className="w-4 h-4 inline mr-2" />
+                  <label className={labelClass}>
+                    <MessageSquare className="w-3.5 h-3.5 inline mr-1" />
                     Note / Richiesta *
                   </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    required
-                    rows={4}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all resize-none"
-                    placeholder="Descrivi la richiesta del cliente..."
-                  />
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} required rows={3}
+                    className={inputClass + ' resize-none'} placeholder="Descrivi la richiesta del cliente..." />
                 </div>
 
-                {/* Follow Up */}
-                <div className="space-y-3">
+                {/* ── Follow Up ── */}
+                <div className="space-y-2">
                   <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={followUp}
-                      onChange={(e) => setFollowUp(e.target.checked)}
-                      className="w-5 h-5 rounded border-slate-200 bg-slate-50 text-blue-500 focus:ring-2 focus:ring-indigo-100"
-                      aria-label="Richiede Follow-up"
-                    />
-                    <span className="text-slate-800 font-semibold">
-                      <Calendar className="w-4 h-4 inline mr-2" />
-                      Richiede Follow-up
+                    <input type="checkbox" checked={followUp} onChange={(e) => setFollowUp(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-200 bg-slate-50 text-indigo-500 focus:ring-2 focus:ring-indigo-500/10" />
+                    <span className="text-sm text-slate-700 font-medium">
+                      <Calendar className="w-3.5 h-3.5 inline mr-1" /> Richiede Follow-up
                     </span>
                   </label>
-
                   {followUp && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                    >
-                      <label className="block text-sm font-semibold text-slate-800 mb-2">
-                        <Clock className="w-4 h-4 inline mr-2" />
-                        Data Follow-up
-                      </label>
-                      <input
-                        type="date"
-                        value={followUpDate}
-                        onChange={(e) => setFollowUpDate(e.target.value)}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                      />
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                      <label className={labelClass}>Data Follow-up</label>
+                      <input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} className={inputClass} />
                     </motion.div>
                   )}
                 </div>
 
-                {/* Collegamenti Multi-Entità */}
+                {/* ── Relazioni ── */}
                 {editCall?.id && (
-                  <div className="space-y-3 pt-4 border-t border-slate-200">
-                    <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <div className="space-y-3 pt-4 border-t border-slate-100/80">
+                    <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                       🔗 Collegamenti
                     </h4>
                     <RelationsIntegration
@@ -357,10 +424,8 @@ export default function CallModal({
                       entityId={editCall.id}
                       entityTitle={callerName}
                       availableItems={availableItems || {}}
-                      onAddRelation={(targetType, targetId, relationType, notes) => {
-                        if (onAddRelation && editCall?.id) {
-                          onAddRelation('call', editCall.id, targetType, targetId, relationType, notes)
-                        }
+                      onAddRelation={(targetType, targetId, relationType, relNotes) => {
+                        if (onAddRelation && editCall?.id) onAddRelation('call', editCall.id, targetType, targetId, relationType, relNotes)
                       }}
                       onRemoveRelation={onRemoveRelation || (async () => {})}
                       getRelatedItems={getRelatedItems || (async () => [])}
@@ -369,13 +434,13 @@ export default function CallModal({
                   </div>
                 )}
 
-                {/* Submit Button */}
+                {/* ── Submit ── */}
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                   type="submit"
                   disabled={isSaving}
-                  className="w-full py-4 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   {isSaving ? '⏳ Salvataggio...' : editCall ? '✏️ Aggiorna Chiamata' : '💾 Salva Chiamata'}
                 </motion.button>
@@ -384,13 +449,7 @@ export default function CallModal({
           </div>
         </motion.div>
 
-        {/* Success Modal */}
-        <SuccessModal
-          isOpen={showSuccess}
-          onClose={() => setShowSuccess(false)}
-          title="Chiamata Salvata!"
-          message="La chiamata è stata registrata con successo nel sistema."
-        />
+        <SuccessModal isOpen={showSuccess} onClose={() => setShowSuccess(false)} title="Chiamata Salvata!" message="La chiamata è stata registrata con successo." />
       </div>
     </AnimatePresence>
   )

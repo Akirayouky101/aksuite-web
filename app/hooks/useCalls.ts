@@ -10,6 +10,11 @@ export interface Call {
   company: string
   phone: string
   email: string
+  address: string
+  city: string
+  zip_code: string
+  province: string
+  assigned_to: string
   call_type: string
   priority: string
   notes: string

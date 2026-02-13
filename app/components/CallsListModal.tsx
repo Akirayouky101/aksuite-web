@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle } from 'lucide-react'
+import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle, MapPin, User } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
 import CallDetailModal from './CallDetailModal'
 
@@ -19,6 +19,11 @@ interface Call {
   follow_up_date: string | null
   status: 'pending' | 'completed' | 'cancelled'
   call_date: string
+  address?: string
+  city?: string
+  zip_code?: string
+  province?: string
+  assigned_to?: string
 }
 
 interface CallsListModalProps {
@@ -92,7 +97,10 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
         !call.company.toLowerCase().includes(term) &&
         !call.phone.includes(term) &&
         !call.email.toLowerCase().includes(term) &&
-        !call.notes.toLowerCase().includes(term)
+        !call.notes.toLowerCase().includes(term) &&
+        !(call.address || '').toLowerCase().includes(term) &&
+        !(call.city || '').toLowerCase().includes(term) &&
+        !(call.assigned_to || '').toLowerCase().includes(term)
       ) return false
     }
     if (selectedType !== 'all' && call.call_type !== selectedType) return false
@@ -114,11 +122,12 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
 
   // CSV Export
   const exportToCSV = () => {
-    const headers = ['Data', 'Nome', 'Azienda', 'Telefono', 'Email', 'Tipo', 'Priorità', 'Stato', 'Note', 'Follow-up', 'Data Follow-up']
+    const headers = ['Data', 'Nome', 'Azienda', 'Telefono', 'Email', 'Tipo', 'Priorità', 'Stato', 'Indirizzo', 'Città', 'CAP', 'Provincia', 'Assegnata A', 'Note', 'Follow-up', 'Data Follow-up']
     const rows = filteredCalls.map(call => [
       new Date(call.call_date).toLocaleString('it-IT'),
       call.caller_name, call.company, call.phone, call.email,
       call.call_type, call.priority, call.status,
+      call.address || '', call.city || '', call.zip_code || '', call.province || '', call.assigned_to || '',
       call.notes.replace(/"/g, '""'),
       call.follow_up ? 'Sì' : 'No',
       call.follow_up_date ? new Date(call.follow_up_date).toLocaleDateString('it-IT') : ''
@@ -483,6 +492,25 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                             </a>
                           )}
                         </div>
+
+                        {/* Address + Assigned */}
+                        {(call.address || call.city || call.assigned_to) && (
+                          <div className="flex items-center gap-4 text-xs text-slate-400 mb-2 flex-wrap">
+                            {(call.address || call.city) && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-violet-400" />
+                                {[call.address, call.city, call.province].filter(Boolean).join(', ')}
+                                {call.zip_code && ` (${call.zip_code})`}
+                              </span>
+                            )}
+                            {call.assigned_to && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-500 font-medium">
+                                <User className="w-3 h-3" />
+                                {call.assigned_to}
+                              </span>
+                            )}
+                          </div>
+                        )}
 
                         {/* Notes */}
                         {call.notes && (
