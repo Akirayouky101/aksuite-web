@@ -64,7 +64,7 @@ export default function ClientModal({ isOpen, onClose, onSave, editingClient }: 
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4"
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[60] flex items-center justify-center p-2 sm:p-4"
         onClick={onClose}
       >
         <motion.div
