@@ -33,6 +33,7 @@ import LavorazioneModal from './components/LavorazioneModal'
 import LavorazioneTimelineModal from './components/LavorazioneTimelineModal'
 import ClientModal from './components/ClientModal'
 import ClientsListModal from './components/ClientsListModal'
+import SearchModal from './components/SearchModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -81,6 +82,7 @@ export default function Home() {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false)
   const [isClientsListModalOpen, setIsClientsListModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<any>(null)
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -183,6 +185,18 @@ export default function Home() {
     }
     loadProfile()
   }, [user])
+
+  // ═══ Cmd+K Global Search Shortcut ═══
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setIsSearchModalOpen(prev => !prev)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -363,6 +377,9 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                <button onClick={() => setIsSearchModalOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Cerca (⌘K)">
+                  <Search className="w-[18px] h-[18px]" />
+                </button>
                 <button onClick={() => setIsCalendarViewOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Calendario">
                   <Calendar className="w-[18px] h-[18px]" />
                 </button>
@@ -832,6 +849,16 @@ export default function Home() {
       <ClientsListModal isOpen={isClientsListModalOpen} onClose={() => setIsClientsListModalOpen(false)}
         clients={clients} onDelete={deleteClient} onToggleFavorite={toggleClientFavorite}
         onEdit={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientsListModalOpen(false) }} />
+
+      <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}
+        calls={calls} lavorazioni={lavorazioni} tasks={tasks} notes={notes} events={events} clients={clients} visits={visits}
+        onOpenCall={(call) => { setEditingCall(call); setIsCallModalOpen(true) }}
+        onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true) }}
+        onOpenTask={() => setIsTasksListModalOpen(true)}
+        onOpenNote={(note) => { setEditingNote(note); setIsNoteModalOpen(true) }}
+        onOpenEvent={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
+        onOpenClient={(client) => { setEditingClient(client); setIsClientModalOpen(true) }}
+        onOpenVisit={() => setIsVisitsListModalOpen(true)} />
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => setIsAuthModalOpen(false)} />
