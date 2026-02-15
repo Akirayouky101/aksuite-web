@@ -36,6 +36,7 @@ import ClientModal from './components/ClientModal'
 import ClientsListModal from './components/ClientsListModal'
 import SearchModal from './components/SearchModal'
 import TodayDashboard from './components/TodayDashboard'
+import NotificationBar from './components/NotificationBar'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -399,6 +400,14 @@ export default function Home() {
 
           {/* Content */}
           <div className="p-4 lg:p-8 space-y-6">
+            {/* ═══ NOTIFICATION BAR ═══ */}
+            <NotificationBar
+              calls={calls} tasks={tasks} events={events}
+              onOpenCalls={() => setIsCallsListModalOpen(true)}
+              onOpenTasks={() => setIsTasksListModalOpen(true)}
+              onOpenCalendar={() => setIsCalendarViewOpen(true)}
+            />
+
             {/* ═══ TODAY DASHBOARD ═══ */}
             <TodayDashboard
               calls={calls} lavorazioni={lavorazioni} tasks={tasks} events={events} visits={visits}
