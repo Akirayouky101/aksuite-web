@@ -34,6 +34,7 @@ import LavorazioneTimelineModal from './components/LavorazioneTimelineModal'
 import ClientModal from './components/ClientModal'
 import ClientsListModal from './components/ClientsListModal'
 import SearchModal from './components/SearchModal'
+import TodayDashboard from './components/TodayDashboard'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -395,6 +396,16 @@ export default function Home() {
 
           {/* Content */}
           <div className="p-4 lg:p-8 space-y-6">
+            {/* ═══ TODAY DASHBOARD ═══ */}
+            <TodayDashboard
+              calls={calls} lavorazioni={lavorazioni} tasks={tasks} events={events} visits={visits}
+              onOpenCall={(call) => { setEditingCall(call); setIsCallModalOpen(true) }}
+              onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true) }}
+              onOpenTasksList={() => setIsTasksListModalOpen(true)}
+              onOpenCalendar={() => setIsCalendarViewOpen(true)}
+              onOpenVisitsList={() => setIsVisitsListModalOpen(true)}
+            />
+
             {/* ═══ STAT CARDS ═══ */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {statCards.map((card) => (
