@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Clock, Trash2, Send, ChevronDown, History, Pencil, Check } from 'lucide-react'
+import { X, Clock, Trash2, Send, ChevronDown, History, Pencil, Check, Camera, Image as ImageIcon, ZoomIn } from 'lucide-react'
 import { Lavorazione } from '../hooks/useLavorazioni'
 import { TimelineEntry, EVENT_TYPES } from '../hooks/useLavorazioneTimeline'
 
@@ -12,9 +12,10 @@ interface LavorazioneTimelineModalProps {
   lavorazione: Lavorazione | null
   entries: TimelineEntry[]
   loading: boolean
-  onAddEntry: (entry: { lavorazione_id: string; description: string; event_type: TimelineEntry['event_type']; created_by_name: string }) => Promise<any>
+  onAddEntry: (entry: { lavorazione_id: string; description: string; event_type: TimelineEntry['event_type']; created_by_name: string; image_url?: string | null }) => Promise<any>
   onDeleteEntry: (id: string) => Promise<void>
   onUpdateEntry?: (id: string, updates: { description?: string; event_type?: TimelineEntry['event_type']; created_by_name?: string }) => Promise<any>
+  onUploadPhoto?: (file: File, lavorazioneId: string) => Promise<string | null>
   teamMembers?: Array<{ id: string; name: string; role: string }>
 }
 
@@ -26,7 +27,7 @@ const statusLabels: Record<string, string> = {
 }
 
 export default function LavorazioneTimelineModal({
-  isOpen, onClose, lavorazione, entries, loading, onAddEntry, onDeleteEntry, onUpdateEntry, teamMembers = []
+  isOpen, onClose, lavorazione, entries, loading, onAddEntry, onDeleteEntry, onUpdateEntry, onUploadPhoto, teamMembers = []
 }: LavorazioneTimelineModalProps) {
   const [description, setDescription] = useState('')
   const [eventType, setEventType] = useState<TimelineEntry['event_type']>('nota')
@@ -40,7 +41,11 @@ export default function LavorazioneTimelineModal({
   const [editCreatedByName, setEditCreatedByName] = useState('')
   const [showEditTypeDropdown, setShowEditTypeDropdown] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [viewingImage, setViewingImage] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -52,18 +57,25 @@ export default function LavorazioneTimelineModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!description.trim()) return
+    if (!description.trim() && !selectedPhoto) return
     setSubmitting(true)
     try {
+      let imageUrl: string | null = null
+      if (selectedPhoto && onUploadPhoto) {
+        imageUrl = await onUploadPhoto(selectedPhoto, lavorazione.id)
+      }
       await onAddEntry({
         lavorazione_id: lavorazione.id,
-        description: description.trim(),
+        description: description.trim() || (selectedPhoto ? 'Foto allegata' : ''),
         event_type: eventType,
-        created_by_name: createdByName.trim()
+        created_by_name: createdByName.trim(),
+        image_url: imageUrl
       })
       setDescription('')
       setEventType('nota')
       setCreatedByName('')
+      setSelectedPhoto(null)
+      setPhotoPreview(null)
     } catch (error) {
       console.error('Error adding timeline entry:', error)
     } finally {
@@ -286,8 +298,16 @@ export default function LavorazioneTimelineModal({
                                       </span>
                                     </div>
                                     <p className="text-sm text-slate-700 leading-relaxed">{entry.description}</p>
+                                    {entry.image_url && (
+                                      <button onClick={() => setViewingImage(entry.image_url)} className="mt-2 relative group/img rounded-lg overflow-hidden border border-slate-200/60 inline-block">
+                                        <img src={entry.image_url} alt="Foto" className="max-h-32 rounded-lg object-cover" />
+                                        <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-all flex items-center justify-center">
+                                          <ZoomIn className="w-5 h-5 text-white opacity-0 group-hover/img:opacity-100 transition-all" />
+                                        </div>
+                                      </button>
+                                    )}
                                     {entry.created_by_name && (
-                                      <p className="text-xs text-slate-400 mt-1.5">— {entry.created_by_name}</p>
+                                      <p className="text-xs text-slate-400 mt-1.5">&mdash; {entry.created_by_name}</p>
                                     )}
                                   </div>
                                   {/* Action buttons */}
@@ -356,14 +376,55 @@ export default function LavorazioneTimelineModal({
                     placeholder="Descrivi cosa è successo..."
                     className="flex-1 px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
                     disabled={submitting} />
-                  <button type="submit" disabled={!description.trim() || submitting}
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" title="Seleziona foto"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        setSelectedPhoto(file)
+                        const reader = new FileReader()
+                        reader.onload = (ev) => setPhotoPreview(ev.target?.result as string)
+                        reader.readAsDataURL(file)
+                      }
+                    }} />
+                  <button type="button" onClick={() => fileInputRef.current?.click()} title="Allega foto"
+                    className={`px-3 py-3 rounded-xl border transition-all flex items-center justify-center ${selectedPhoto ? 'bg-emerald-50 border-emerald-300 text-emerald-600' : 'bg-slate-50 border-slate-200/60 text-slate-400 hover:text-indigo-500 hover:border-indigo-200'}`}>
+                    <Camera className="w-4 h-4" />
+                  </button>
+                  <button type="submit" disabled={(!description.trim() && !selectedPhoto) || submitting}
                     className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                     <Send className={`w-4 h-4 ${submitting ? 'animate-pulse' : ''}`} />
                     <span className="font-bold text-sm hidden sm:inline">Aggiungi</span>
                   </button>
                 </div>
+                {photoPreview && (
+                  <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-200/60">
+                    <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-slate-200/40" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-600 font-medium truncate">{selectedPhoto?.name}</p>
+                      <p className="text-[10px] text-slate-400">{selectedPhoto ? `${(selectedPhoto.size / 1024).toFixed(0)} KB` : ''}</p>
+                    </div>
+                    <button type="button" onClick={() => { setSelectedPhoto(null); setPhotoPreview(null) }} title="Rimuovi foto"
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </form>
             </div>
+
+            {/* Image Lightbox */}
+            {viewingImage && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+                onClick={() => setViewingImage(null)}>
+                <div className="relative max-w-4xl max-h-[90vh]">
+                  <img src={viewingImage} alt="Foto" className="max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl" />
+                  <button onClick={() => setViewingImage(null)} title="Chiudi"
+                    className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

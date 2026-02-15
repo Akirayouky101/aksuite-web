@@ -10,6 +10,7 @@ export interface TimelineEntry {
   description: string
   event_type: 'nota' | 'chiamata_cliente' | 'presa_in_carico' | 'sopralluogo' | 'lavoro_in_corso' | 'consegna' | 'materiale' | 'problema' | 'completamento' | 'altro'
   created_by_name: string
+  image_url: string | null
   created_at: string
 }
 
@@ -54,6 +55,7 @@ export function useLavorazioneTimeline() {
     description: string
     event_type: TimelineEntry['event_type']
     created_by_name: string
+    image_url?: string | null
   }) => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) throw new Error('User not authenticated')
@@ -96,6 +98,22 @@ export function useLavorazioneTimeline() {
     setEntries([])
   }
 
+  const uploadPhoto = async (file: File, lavorazioneId: string): Promise<string | null> => {
+    try {
+      const ext = file.name.split('.').pop()
+      const fileName = `${lavorazioneId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('timeline-photos')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage.from('timeline-photos').getPublicUrl(fileName)
+      return data.publicUrl
+    } catch (error) {
+      console.error('Error uploading photo:', error)
+      return null
+    }
+  }
+
   return {
     entries,
     loading,
@@ -103,6 +121,7 @@ export function useLavorazioneTimeline() {
     addEntry,
     deleteEntry,
     updateEntry,
+    uploadPhoto,
     clearTimeline
   }
 }

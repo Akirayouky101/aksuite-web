@@ -114,7 +114,7 @@ export default function Home() {
   const { addRelation, removeRelation, getRelatedItems } = useRelations()
   const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
   const { lavorazioni, addLavorazione, updateLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
-  const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, updateEntry: updateTimelineEntry, clearTimeline } = useLavorazioneTimeline()
+  const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, updateEntry: updateTimelineEntry, uploadPhoto: uploadTimelinePhoto, clearTimeline } = useLavorazioneTimeline()
   const { clients, addClient, updateClient, deleteClient, toggleFavorite: toggleClientFavorite } = useClients()
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
@@ -766,6 +766,7 @@ export default function Home() {
         onAddEntry={addTimelineEntry}
         onDeleteEntry={deleteTimelineEntry}
         onUpdateEntry={updateTimelineEntry}
+        onUploadPhoto={uploadTimelinePhoto}
         teamMembers={teamMembers}
       />
 
