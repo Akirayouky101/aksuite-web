@@ -92,10 +92,10 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // ═══ BADGE "SEEN" TRACKING ═══
-  const [seenCalls, setSeenCalls] = useState(0)
-  const [seenLavorazioni, setSeenLavorazioni] = useState(0)
-  const [seenTasks, setSeenTasks] = useState(0)
-  const [seenEvents, setSeenEvents] = useState(0)
+  const [seenCalls, setSeenCalls] = useState<number | null>(null)
+  const [seenLavorazioni, setSeenLavorazioni] = useState<number | null>(null)
+  const [seenTasks, setSeenTasks] = useState<number | null>(null)
+  const [seenEvents, setSeenEvents] = useState<number | null>(null)
 
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
@@ -163,13 +163,30 @@ export default function Home() {
     return eventDate.toDateString() === today.toDateString()
   }).length
 
-  // Badge = nuovi dall'ultima apertura
-  const badgeCalls = Math.max(0, pendingCalls - seenCalls)
-  const badgeLavorazioni = Math.max(0, lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length - seenLavorazioni)
-  const badgeTasks = Math.max(0, activeTasks - seenTasks)
-  const badgeEvents = Math.max(0, todayEvents - seenEvents)
+  const activeLavorazioni = lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length
+
+  // Badge = nuovi dall'ultima apertura (null = primo caricamento, badge 0)
+  const badgeCalls = seenCalls === null ? 0 : Math.max(0, pendingCalls - seenCalls)
+  const badgeLavorazioni = seenLavorazioni === null ? 0 : Math.max(0, activeLavorazioni - seenLavorazioni)
+  const badgeTasks = seenTasks === null ? 0 : Math.max(0, activeTasks - seenTasks)
+  const badgeEvents = seenEvents === null ? 0 : Math.max(0, todayEvents - seenEvents)
 
   // ═══ EFFECTS ═══
+
+  // Inizializza badge "seen" al primo caricamento dati (no badge fasulli)
+  useEffect(() => {
+    if (calls.length > 0 && seenCalls === null) setSeenCalls(pendingCalls)
+  }, [calls, pendingCalls, seenCalls])
+  useEffect(() => {
+    if (lavorazioni.length > 0 && seenLavorazioni === null) setSeenLavorazioni(activeLavorazioni)
+  }, [lavorazioni, activeLavorazioni, seenLavorazioni])
+  useEffect(() => {
+    if (tasks.length > 0 && seenTasks === null) setSeenTasks(activeTasks)
+  }, [tasks, activeTasks, seenTasks])
+  useEffect(() => {
+    if (events.length > 0 && seenEvents === null) setSeenEvents(todayEvents)
+  }, [events, todayEvents, seenEvents])
+
   useEffect(() => {
     const guard = initConsoleGuard()
     setConsoleGuard(guard)
@@ -246,7 +263,6 @@ export default function Home() {
   // ═══════════════════════════════════════════
   // NAVIGATION & ACTIONS CONFIG
   // ═══════════════════════════════════════════
-  const activeLavorazioni = lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length
 
   const navItems = [
     { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, count: calls.length, badge: badgeCalls },
@@ -323,12 +339,12 @@ export default function Home() {
               >
                 <item.icon className="w-[18px] h-[18px]" />
                 <span className="flex-1 text-left">{item.label}</span>
-                {item.badge && item.badge > 0 ? (
-                  <span className="min-w-[22px] h-[22px] px-1.5 flex items-center justify-center rounded-full bg-indigo-500 text-white text-[10px] font-bold shadow-sm">
+                {item.badge !== undefined && item.badge > 0 ? (
+                  <span className="min-w-[22px] h-[22px] px-1.5 flex items-center justify-center rounded-full bg-indigo-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
                     {item.badge}
                   </span>
-                ) : item.count !== null ? (
-                  <span className="text-xs px-2 py-0.5 rounded-full text-slate-400">{item.count}</span>
+                ) : item.count != null ? (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100/60 text-slate-400">{item.count}</span>
                 ) : null}
               </button>
             ))}
