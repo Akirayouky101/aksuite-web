@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle, MapPin, User } from 'lucide-react'
+import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle, MapPin, User, Wrench } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
 import CallDetailModal from './CallDetailModal'
 
@@ -17,7 +17,7 @@ interface Call {
   notes: string
   follow_up: boolean
   follow_up_date: string | null
-  status: 'pending' | 'completed' | 'cancelled'
+  status: 'pending' | 'in_corso' | 'completed' | 'cancelled'
   call_date: string
   address?: string
   city?: string
@@ -37,6 +37,7 @@ interface CallsListModalProps {
 
 const statusConfig = {
   pending: { bg: 'bg-amber-50', border: 'border-amber-200/60', text: 'text-amber-600', dot: 'bg-amber-400', label: 'In Attesa', icon: Clock },
+  in_corso: { bg: 'bg-indigo-50', border: 'border-indigo-200/60', text: 'text-indigo-600', dot: 'bg-indigo-400', label: 'In Corso', icon: Wrench },
   completed: { bg: 'bg-emerald-50', border: 'border-emerald-200/60', text: 'text-emerald-600', dot: 'bg-emerald-400', label: 'Completata', icon: CheckCircle },
   cancelled: { bg: 'bg-red-50', border: 'border-red-200/60', text: 'text-red-500', dot: 'bg-red-400', label: 'Annullata', icon: AlertCircle }
 }
@@ -70,6 +71,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
 
   // Stats
   const pendingCount = calls.filter(c => c.status === 'pending').length
+  const inCorsoCount = calls.filter(c => c.status === 'in_corso').length
   const completedCount = calls.filter(c => c.status === 'completed').length
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -195,7 +197,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
             {/* ── Mini Stats Row ── */}
             <div className="px-6 py-3 border-b border-slate-100/80 bg-slate-50/50 flex-shrink-0">
               <button onClick={() => setShowStats(!showStats)} className="w-full">
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-5 gap-3">
                   <div className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-slate-200/40">
                     <div className="w-2 h-2 rounded-full bg-indigo-400" />
                     <span className="text-xs text-slate-500">Totale</span>
@@ -205,6 +207,11 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                     <div className="w-2 h-2 rounded-full bg-amber-400" />
                     <span className="text-xs text-slate-500">In Attesa</span>
                     <span className="text-sm font-bold text-amber-600 ml-auto">{pendingCount}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-slate-200/40">
+                    <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                    <span className="text-xs text-slate-500">In Corso</span>
+                    <span className="text-sm font-bold text-indigo-600 ml-auto">{inCorsoCount}</span>
                   </div>
                   <div className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-slate-200/40">
                     <div className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -353,6 +360,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                 {[
                   { key: 'all' as const, label: 'Tutte', count: calls.length },
                   { key: 'pending' as const, label: 'In Attesa', count: pendingCount },
+                  { key: 'in_corso' as const, label: 'In Corso', count: inCorsoCount },
                   { key: 'completed' as const, label: 'Completate', count: completedCount },
                 ].map(tab => (
                   <button
@@ -432,7 +440,7 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                             <span className={`px-2 py-1 rounded-lg text-[10px] font-medium ${status.bg} ${status.text} border ${status.border}`}>
                               {status.label}
                             </span>
-                            {call.status === 'pending' && (
+                            {(call.status === 'pending' || call.status === 'in_corso') && (
                               <button
                                 onClick={() => onStatusChange(call.id, 'completed')}
                                 className="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 flex items-center justify-center transition-all"

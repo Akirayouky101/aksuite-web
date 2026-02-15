@@ -104,10 +104,11 @@ export default function Home() {
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
   // ═══ SYNC: Lavorazione status → Call status ═══
-  const lavStatusToCallStatus = (lavStatus: string): 'pending' | 'completed' | 'cancelled' => {
+  const lavStatusToCallStatus = (lavStatus: string): 'pending' | 'in_corso' | 'completed' | 'cancelled' => {
+    if (lavStatus === 'in_corso') return 'in_corso'
     if (lavStatus === 'completata') return 'completed'
     if (lavStatus === 'annullata') return 'cancelled'
-    return 'pending' // da_fare, in_corso → pending
+    return 'pending' // da_fare → pending
   }
 
   const syncCallStatus = async (lavorazioneId: string, newLavStatus?: string) => {
@@ -134,7 +135,7 @@ export default function Home() {
   }
 
   const stats = getStats()
-  const pendingCalls = calls.filter(c => c.status === 'pending').length
+  const pendingCalls = calls.filter(c => c.status === 'pending' || c.status === 'in_corso').length
   const activeTasks = tasks.filter(t => !t.is_completed).length
   const todayEvents = events.filter(e => {
     const today = new Date()

@@ -20,7 +20,7 @@ export interface Call {
   notes: string
   follow_up: boolean
   follow_up_date: string | null
-  status: 'pending' | 'completed' | 'cancelled'
+  status: 'pending' | 'in_corso' | 'completed' | 'cancelled'
   call_date: string
   user_id: string
   created_at: string

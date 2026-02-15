@@ -14,7 +14,7 @@ interface Call {
   notes: string
   follow_up: boolean
   follow_up_date: string | null
-  status: 'pending' | 'completed' | 'cancelled'
+  status: 'pending' | 'in_corso' | 'completed' | 'cancelled'
   call_date: string
   address?: string
   city?: string
@@ -46,6 +46,7 @@ const priorityConfig: Record<string, { bg: string; text: string }> = {
 
 const statusConfig = {
   pending: { bg: 'bg-amber-50', border: 'border-amber-200/60', text: 'text-amber-600', label: 'In Attesa', icon: '⏳' },
+  in_corso: { bg: 'bg-indigo-50', border: 'border-indigo-200/60', text: 'text-indigo-600', label: 'In Corso', icon: '🔧' },
   completed: { bg: 'bg-emerald-50', border: 'border-emerald-200/60', text: 'text-emerald-600', label: 'Completata', icon: '✅' },
   cancelled: { bg: 'bg-red-50', border: 'border-red-200/60', text: 'text-red-500', label: 'Annullata', icon: '❌' }
 }
