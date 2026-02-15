@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Lock, LogIn, LogOut, User, Phone, UserCheck,
+  Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
   Search, Bell, Settings, MapPin, FileText, Wrench
@@ -31,6 +31,8 @@ import CalendarView from './components/CalendarView'
 import LavorazioniListModal from './components/LavorazioniListModal'
 import LavorazioneModal from './components/LavorazioneModal'
 import LavorazioneTimelineModal from './components/LavorazioneTimelineModal'
+import ClientModal from './components/ClientModal'
+import ClientsListModal from './components/ClientsListModal'
 import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
@@ -45,6 +47,7 @@ import { useRelations } from './hooks/useRelations'
 import { useTeamMembers } from './hooks/useTeamMembers'
 import { useLavorazioni } from './hooks/useLavorazioni'
 import { useLavorazioneTimeline } from './hooks/useLavorazioneTimeline'
+import { useClients } from './hooks/useClients'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -75,6 +78,9 @@ export default function Home() {
   const [isLavorazioneModalOpen, setIsLavorazioneModalOpen] = useState(false)
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false)
   const [timelineLavorazione, setTimelineLavorazione] = useState<any>(null)
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false)
+  const [isClientsListModalOpen, setIsClientsListModalOpen] = useState(false)
+  const [editingClient, setEditingClient] = useState<any>(null)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -106,6 +112,7 @@ export default function Home() {
   const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
   const { lavorazioni, addLavorazione, updateLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
   const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, updateEntry: updateTimelineEntry, clearTimeline } = useLavorazioneTimeline()
+  const { clients, addClient, updateClient, deleteClient, toggleFavorite: toggleClientFavorite } = useClients()
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
@@ -230,6 +237,7 @@ export default function Home() {
     { id: 'budget', label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length },
     { id: 'passwords', label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length },
     { id: 'notes', label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length },
+    { id: 'clients', label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length },
     { id: 'visits', label: 'Visite', icon: MapPin, onClick: () => setIsVisitsListModalOpen(true), count: visits.length },
   ]
 
@@ -816,6 +824,14 @@ export default function Home() {
         events={events} tasks={tasks} onDelete={deleteEvent}
         onEdit={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
         onAdd={() => { setEditingEvent(null); setIsEventModalOpen(true) }} />
+
+      <ClientModal isOpen={isClientModalOpen}
+        onClose={() => { setIsClientModalOpen(false); setEditingClient(null) }}
+        onSave={async (data) => { if (editingClient) { await updateClient(editingClient.id, data) } else { await addClient(data) } }}
+        editingClient={editingClient} />
+      <ClientsListModal isOpen={isClientsListModalOpen} onClose={() => setIsClientsListModalOpen(false)}
+        clients={clients} onDelete={deleteClient} onToggleFavorite={toggleClientFavorite}
+        onEdit={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientsListModalOpen(false) }} />
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => setIsAuthModalOpen(false)} />
