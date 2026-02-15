@@ -639,7 +639,7 @@ export default function Home() {
           let callId: string | undefined
           if (editingCall) { await updateCall(editingCall.id, cleanCallData); callId = editingCall.id }
           else { const newCall = await addCall(cleanCallData); callId = newCall?.id }
-          if (cleanCallData.follow_up && cleanCallData.follow_up_date && callId) {
+          if (!editingCall && cleanCallData.follow_up && cleanCallData.follow_up_date && callId) {
             const newTask = await addTask({
               title: `Follow-up: ${cleanCallData.caller_name || 'Chiamata'}`,
               description: `Follow-up chiamata da ${cleanCallData.caller_name || 'contatto'}${cleanCallData.company ? ` (${cleanCallData.company})` : ''}`,
@@ -729,7 +729,7 @@ export default function Home() {
           let visitId: string | undefined
           if (editingVisit) { await updateVisit(editingVisit.id, cleanVisitData); visitId = editingVisit.id }
           else { const newVisit = await addVisit(cleanVisitData); visitId = newVisit?.id }
-          if (cleanVisitData.follow_up && cleanVisitData.follow_up_date && visitId) {
+          if (!editingVisit && cleanVisitData.follow_up && cleanVisitData.follow_up_date && visitId) {
             const newTask = await addTask({
               title: `Follow-up: ${cleanVisitData.visitor_name || 'Visita'}`,
               description: `Follow-up visita di ${cleanVisitData.visitor_name || 'visitatore'}${cleanVisitData.company ? ` (${cleanVisitData.company})` : ''}`,
