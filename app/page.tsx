@@ -78,6 +78,12 @@ export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // ═══ BADGE "SEEN" TRACKING ═══
+  const [seenCalls, setSeenCalls] = useState(0)
+  const [seenLavorazioni, setSeenLavorazioni] = useState(0)
+  const [seenTasks, setSeenTasks] = useState(0)
+  const [seenEvents, setSeenEvents] = useState(0)
+
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const [editingNote, setEditingNote] = useState<any>(null)
@@ -142,6 +148,12 @@ export default function Home() {
     const eventDate = new Date(e.start_date)
     return eventDate.toDateString() === today.toDateString()
   }).length
+
+  // Badge = nuovi dall'ultima apertura
+  const badgeCalls = Math.max(0, pendingCalls - seenCalls)
+  const badgeLavorazioni = Math.max(0, lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length - seenLavorazioni)
+  const badgeTasks = Math.max(0, activeTasks - seenTasks)
+  const badgeEvents = Math.max(0, todayEvents - seenEvents)
 
   // ═══ EFFECTS ═══
   useEffect(() => {
@@ -211,10 +223,10 @@ export default function Home() {
   const activeLavorazioni = lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length
 
   const navItems = [
-    { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => setIsCallMenuModalOpen(true), count: calls.length, badge: pendingCalls },
-    { id: 'lavorazioni', label: 'Lavorazioni', icon: Wrench, onClick: () => setIsLavorazioniListModalOpen(true), count: lavorazioni.length, badge: activeLavorazioni },
-    { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => setIsTasksListModalOpen(true), count: tasks.length, badge: activeTasks },
-    { id: 'calendar', label: 'Calendario', icon: Calendar, onClick: () => setIsCalendarViewOpen(true), count: events.length, badge: todayEvents },
+    { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, count: calls.length, badge: badgeCalls },
+    { id: 'lavorazioni', label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni },
+    { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks },
+    { id: 'calendar', label: 'Calendario', icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, count: events.length, badge: badgeEvents },
     { id: 'budget', label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length },
     { id: 'passwords', label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length },
     { id: 'notes', label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length },
@@ -233,9 +245,9 @@ export default function Home() {
 
   // Stat cards config
   const statCards = [
-    { label: 'Chiamate', value: calls.length, icon: Phone, onClick: () => setIsCallMenuModalOpen(true), gradient: 'from-blue-500 to-indigo-600', badgeText: pendingCalls > 0 ? `${pendingCalls} pending` : null, badgeStyle: 'text-amber-600 bg-amber-50' },
-    { label: 'Task', value: tasks.length, icon: CheckSquare, onClick: () => setIsTasksListModalOpen(true), gradient: 'from-amber-500 to-orange-600', badgeText: activeTasks > 0 ? `${activeTasks} attivi` : null, badgeStyle: 'text-blue-600 bg-blue-50' },
-    { label: 'Eventi', value: events.length, icon: Calendar, onClick: () => setIsCalendarViewOpen(true), gradient: 'from-rose-500 to-pink-600', badgeText: todayEvents > 0 ? `${todayEvents} oggi` : null, badgeStyle: 'text-rose-600 bg-rose-50' },
+    { label: 'Chiamate', value: calls.length, icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, gradient: 'from-blue-500 to-indigo-600', badgeText: badgeCalls > 0 ? `${badgeCalls} nuove` : null, badgeStyle: 'text-amber-600 bg-amber-50' },
+    { label: 'Task', value: tasks.length, icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, gradient: 'from-amber-500 to-orange-600', badgeText: badgeTasks > 0 ? `${badgeTasks} nuovi` : null, badgeStyle: 'text-blue-600 bg-blue-50' },
+    { label: 'Eventi', value: events.length, icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, gradient: 'from-rose-500 to-pink-600', badgeText: badgeEvents > 0 ? `${badgeEvents} oggi` : null, badgeStyle: 'text-rose-600 bg-rose-50' },
     { label: 'Bilancio', value: `${stats.balance >= 0 ? '+' : ''}${stats.balance.toFixed(0)}€`, icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), gradient: 'from-emerald-500 to-teal-600', isBalance: true, balancePositive: stats.balance >= 0 },
   ]
 
