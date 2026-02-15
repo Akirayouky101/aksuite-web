@@ -178,7 +178,7 @@ export default function TaskModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/30  z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-slate-900/30  z-50 flex items-center justify-center p-2 sm:p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -189,7 +189,7 @@ export default function TaskModal({
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 rounded-3xl hidden" />
           
           <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
                   <CheckCircle2 className="w-5 h-5 text-white" />
@@ -209,7 +209,7 @@ export default function TaskModal({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-5">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5">
               {/* Titolo */}
               <div>
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">

@@ -319,7 +319,7 @@ export default function Home() {
               <button
                 key={item.id}
                 onClick={() => { item.onClick(); setSidebarOpen(false) }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-500 hover:text-slate-700 hover:bg-white/50 border border-transparent hover:border-slate-200/40"
+                className="w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-xl text-sm font-medium transition-all text-slate-500 hover:text-slate-700 hover:bg-white/50 active:bg-white/70 border border-transparent hover:border-slate-200/40"
               >
                 <item.icon className="w-[18px] h-[18px]" />
                 <span className="flex-1 text-left">{item.label}</span>
@@ -375,31 +375,31 @@ export default function Home() {
                   <Menu className="w-5 h-5" />
                 </button>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+                  <h2 className="text-lg sm:text-2xl font-bold text-slate-800 tracking-tight">
                     Bentornato{userProfile?.full_name ? `, ${userProfile.full_name}` : ''}
                   </h2>
-                  <p className="text-slate-400 text-sm mt-0.5">Ecco la tua panoramica operativa di oggi.</p>
+                  <p className="text-slate-400 text-xs sm:text-sm mt-0.5 hidden sm:block">Ecco la tua panoramica operativa di oggi.</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => setIsSearchModalOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Cerca (⌘K)">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button onClick={() => setIsSearchModalOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm active:scale-95 transition-all" title="Cerca (⌘K)">
                   <Search className="w-[18px] h-[18px]" />
                 </button>
-                <button onClick={() => setIsCalendarViewOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Calendario">
+                <button onClick={() => setIsCalendarViewOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm active:scale-95 transition-all" title="Calendario">
                   <Calendar className="w-[18px] h-[18px]" />
                 </button>
                 <button
                   onClick={() => setIsCallModalOpen(true)}
-                  className="hidden sm:flex px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all items-center gap-1.5"
+                  className="w-10 h-10 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 active:scale-95 transition-all flex items-center justify-center gap-1.5"
                 >
-                  <Plus className="w-4 h-4" />Nuovo
+                  <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuovo</span>
                 </button>
               </div>
             </div>
           </header>
 
           {/* Content */}
-          <div className="p-4 lg:p-8 space-y-6">
+          <div className="p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
             {/* ═══ NOTIFICATION BAR ═══ */}
             <NotificationBar
               calls={calls} tasks={tasks} events={events}
@@ -419,16 +419,16 @@ export default function Home() {
             />
 
             {/* ═══ STAT CARDS ═══ */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {statCards.map((card) => (
                 <button
                   key={card.label}
                   onClick={card.onClick}
-                  className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 transition-all"
+                  className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-4 sm:p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 transition-all active:scale-[0.98]"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg shadow-slate-200/50`}>
-                      <card.icon className="w-5 h-5 text-white" />
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg shadow-slate-200/50`}>
+                      <card.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     {card.badgeText && (
                       <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${card.badgeStyle}`}>
@@ -436,7 +436,7 @@ export default function Home() {
                       </span>
                     )}
                   </div>
-                  <p className={`text-2xl font-bold tabular-nums ${card.isBalance ? (card.balancePositive ? 'text-emerald-600' : 'text-rose-500') : 'text-slate-800'}`}>
+                  <p className={`text-xl sm:text-2xl font-bold tabular-nums ${card.isBalance ? (card.balancePositive ? 'text-emerald-600' : 'text-rose-500') : 'text-slate-800'}`}>
                     {card.value}
                   </p>
                   <p className="text-slate-400 text-sm mt-1">{card.label}</p>
@@ -445,11 +445,11 @@ export default function Home() {
             </div>
 
             {/* ═══ MAIN GRID: Activities + Quick Actions ═══ */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Recent Calls — 2 cols */}
-              <div className="lg:col-span-2 bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100/80 flex items-center justify-between">
-                  <h3 className="text-slate-800 font-semibold flex items-center gap-2">
+              <div className="md:col-span-2 bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
+                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
                     <Phone className="w-4 h-4 text-indigo-500" />
                     Chiamate Recenti
                   </h3>
@@ -459,7 +459,7 @@ export default function Home() {
                 </div>
                 <div className="divide-y divide-slate-100/80">
                   {calls.slice(0, 5).map(call => (
-                    <div key={call.id} className="px-6 py-4 flex items-center gap-4 hover:bg-white/60 transition-colors cursor-pointer">
+                    <div key={call.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
                       <div className="w-9 h-9 rounded-lg bg-slate-100/80 flex items-center justify-center shrink-0">
                         <Phone className="w-4 h-4 text-slate-500" />
                       </div>
@@ -486,20 +486,20 @@ export default function Home() {
               </div>
 
               {/* Quick Actions Panel — 1 col */}
-              <div className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100/80">
-                  <h3 className="text-slate-800 font-semibold">Azioni Rapide</h3>
+              <div className="md:col-span-2 lg:col-span-1 bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80">
+                  <h3 className="text-slate-800 font-semibold text-sm sm:text-base">Azioni Rapide</h3>
                 </div>
-                <div className="p-4 space-y-2">
+                <div className="p-3 sm:p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-1 gap-2">
                   {quickActions.map((action, i) => (
                     <button
                       key={i}
                       onClick={action.onClick}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 border border-slate-200/40 hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all text-left"
+                      className="w-full flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3 rounded-xl bg-white/50 border border-slate-200/40 hover:bg-white hover:border-slate-200 hover:shadow-sm active:scale-[0.98] transition-all text-left"
                     >
-                      <action.icon className="w-4 h-4 text-indigo-500" />
-                      <span className="text-slate-600 text-sm font-medium">{action.label}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300 ml-auto" />
+                      <action.icon className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <span className="text-slate-600 text-xs sm:text-sm font-medium truncate">{action.label}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300 ml-auto shrink-0 hidden sm:block" />
                     </button>
                   ))}
                 </div>
@@ -507,11 +507,11 @@ export default function Home() {
             </div>
 
             {/* ═══ DATA PANELS: Tasks + Notes ═══ */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Tasks */}
               <div className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100/80 flex items-center justify-between">
-                  <h3 className="text-slate-800 font-semibold flex items-center gap-2">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
+                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
                     <CheckSquare className="w-4 h-4 text-indigo-500" />
                     Task Attivi
                   </h3>
@@ -521,7 +521,7 @@ export default function Home() {
                 </div>
                 <div className="divide-y divide-slate-100/80">
                   {tasks.filter(t => !t.is_completed).slice(0, 4).map(task => (
-                    <div key={task.id} className="px-6 py-4 flex items-center gap-4 hover:bg-white/60 transition-colors cursor-pointer">
+                    <div key={task.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
                       <div className="w-9 h-9 rounded-lg bg-slate-100/80 flex items-center justify-center shrink-0">
                         <CheckSquare className="w-4 h-4 text-slate-500" />
                       </div>
@@ -557,8 +557,8 @@ export default function Home() {
 
               {/* Notes */}
               <div className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100/80 flex items-center justify-between">
-                  <h3 className="text-slate-800 font-semibold flex items-center gap-2">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
+                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
                     <StickyNote className="w-4 h-4 text-indigo-500" />
                     Note Recenti
                   </h3>
@@ -568,7 +568,7 @@ export default function Home() {
                 </div>
                 <div className="divide-y divide-slate-100/80">
                   {notes.slice(0, 4).map(note => (
-                    <div key={note.id} onClick={() => { setEditingNote(note); setIsNoteModalOpen(true) }} className="px-6 py-4 hover:bg-white/60 transition-colors cursor-pointer">
+                    <div key={note.id} onClick={() => { setEditingNote(note); setIsNoteModalOpen(true) }} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
                       <p className="text-slate-700 text-sm font-medium truncate">{note.title}</p>
                       <p className="text-slate-400 text-xs mt-1 truncate">{note.content?.replace(/<[^>]*>/g, '').substring(0, 80) || '\u2014'}</p>
                     </div>
@@ -584,11 +584,11 @@ export default function Home() {
             </div>
 
             {/* ═══ BOTTOM PANELS: Visits + Password/Budget ═══ */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Visits */}
-              <div className="lg:col-span-2 bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100/80 flex items-center justify-between">
-                  <h3 className="text-slate-800 font-semibold flex items-center gap-2">
+              <div className="md:col-span-2 bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
+                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
                     <MapPin className="w-4 h-4 text-indigo-500" />
                     Visite Recenti
                   </h3>
@@ -598,7 +598,7 @@ export default function Home() {
                 </div>
                 <div className="divide-y divide-slate-100/80">
                   {visits.slice(0, 4).map(visit => (
-                    <div key={visit.id} className="px-6 py-4 flex items-center gap-4 hover:bg-white/60 transition-colors cursor-pointer">
+                    <div key={visit.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
                       <div className="w-9 h-9 rounded-lg bg-slate-100/80 flex items-center justify-center shrink-0">
                         <MapPin className="w-4 h-4 text-slate-500" />
                       </div>
@@ -626,11 +626,11 @@ export default function Home() {
               </div>
 
               {/* Password + Budget cards */}
-              <div className="space-y-4">
-                <button onClick={() => setIsMenuModalOpen(true)} className="w-full bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 transition-all">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-slate-200/50">
-                      <Lock className="w-5 h-5 text-white" />
+              <div className="grid grid-cols-2 md:grid-cols-1 gap-3 sm:gap-4">
+                <button onClick={() => setIsMenuModalOpen(true)} className="w-full bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-4 sm:p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 active:scale-[0.98] transition-all">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-slate-200/50">
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     <div>
                       <h3 className="text-slate-700 text-sm font-semibold">Vault Password</h3>
@@ -642,10 +642,10 @@ export default function Home() {
                   </span>
                 </button>
 
-                <button onClick={() => setIsBudgetMenuModalOpen(true)} className="w-full bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 transition-all">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-slate-200/50">
-                      <TrendingUp className="w-5 h-5 text-white" />
+                <button onClick={() => setIsBudgetMenuModalOpen(true)} className="w-full bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-4 sm:p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 active:scale-[0.98] transition-all">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-slate-200/50">
+                      <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     <div>
                       <h3 className="text-slate-700 text-sm font-semibold">Bilancio Familiare</h3>

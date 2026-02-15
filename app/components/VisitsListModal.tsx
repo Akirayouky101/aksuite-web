@@ -63,7 +63,7 @@ export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onS
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/30  z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 bg-slate-900/30  z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
