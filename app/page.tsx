@@ -31,6 +31,7 @@ import CalendarView from './components/CalendarView'
 import LavorazioniListModal from './components/LavorazioniListModal'
 import LavorazioneModal from './components/LavorazioneModal'
 import LavorazioneTimelineModal from './components/LavorazioneTimelineModal'
+import LavorazioneReportModal from './components/LavorazioneReportModal'
 import ClientModal from './components/ClientModal'
 import ClientsListModal from './components/ClientsListModal'
 import SearchModal from './components/SearchModal'
@@ -80,6 +81,8 @@ export default function Home() {
   const [isLavorazioneModalOpen, setIsLavorazioneModalOpen] = useState(false)
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false)
   const [timelineLavorazione, setTimelineLavorazione] = useState<any>(null)
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [reportLavorazione, setReportLavorazione] = useState<any>(null)
   const [isClientModalOpen, setIsClientModalOpen] = useState(false)
   const [isClientsListModalOpen, setIsClientsListModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<any>(null)
@@ -743,6 +746,7 @@ export default function Home() {
         onNew={() => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) }}
         onEdit={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsLavorazioniListModalOpen(false) }}
         onViewTimeline={(lav) => { setTimelineLavorazione(lav); loadTimeline(lav.id); setIsTimelineModalOpen(true) }}
+        onReport={(lav) => { setReportLavorazione(lav); loadTimeline(lav.id); setIsReportModalOpen(true) }}
         teamMembers={teamMembers}
       />
 
@@ -768,6 +772,14 @@ export default function Home() {
         onUpdateEntry={updateTimelineEntry}
         onUploadPhoto={uploadTimelinePhoto}
         teamMembers={teamMembers}
+      />
+
+      <LavorazioneReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => { setIsReportModalOpen(false); setReportLavorazione(null) }}
+        lavorazione={reportLavorazione}
+        entries={timelineEntries}
+        userProfile={userProfile}
       />
 
       <VisitModal
