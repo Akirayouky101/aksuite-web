@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wrench, User, Calendar, Clock, MapPin, FileText, AlertTriangle, Building2, StickyNote, Hash } from 'lucide-react'
+import { X, Wrench, User, Calendar, Clock, MapPin, FileText, AlertTriangle, Building2, StickyNote, Hash, Users, Copy } from 'lucide-react'
 import type { Lavorazione } from '../hooks/useLavorazioni'
+import type { Client } from '../hooks/useClients'
 
 interface TeamMember {
   id: string
@@ -17,6 +18,7 @@ interface LavorazioneModalProps {
   onSave: (data: any) => Promise<any>
   editLavorazione?: Lavorazione | null
   teamMembers?: TeamMember[]
+  clients?: Client[]
 }
 
 export default function LavorazioneModal({
@@ -24,7 +26,8 @@ export default function LavorazioneModal({
   onClose,
   onSave,
   editLavorazione,
-  teamMembers = []
+  teamMembers = [],
+  clients = []
 }: LavorazioneModalProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -38,6 +41,7 @@ export default function LavorazioneModal({
   const [zipCode, setZipCode] = useState('')
   const [province, setProvince] = useState('')
   const [notes, setNotes] = useState('')
+  const [clientId, setClientId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -54,6 +58,7 @@ export default function LavorazioneModal({
       setZipCode(editLavorazione.zip_code || '')
       setProvince(editLavorazione.province || '')
       setNotes(editLavorazione.notes || '')
+      setClientId(editLavorazione.client_id || null)
     } else {
       resetForm()
     }
@@ -72,6 +77,7 @@ export default function LavorazioneModal({
     setZipCode('')
     setProvince('')
     setNotes('')
+    setClientId(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,6 +99,7 @@ export default function LavorazioneModal({
         province,
         notes,
         call_id: editLavorazione?.call_id || null,
+        client_id: clientId || null,
         completed_at: status === 'completata' ? new Date().toISOString() : null,
       }
 
@@ -157,6 +164,41 @@ export default function LavorazioneModal({
                 required
               />
             </div>
+
+            {/* Cliente */}
+            {clients.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                  <Users className="w-4 h-4 inline mr-2" />
+                  Cliente (dalla Rubrica)
+                </label>
+                <select
+                  value={clientId || ''}
+                  onChange={(e) => {
+                    const id = e.target.value || null
+                    setClientId(id)
+                    if (id) {
+                      const client = clients.find(c => c.id === id)
+                      if (client) {
+                        if (!address && client.address) setAddress(client.address)
+                        if (!city && client.city) setCity(client.city)
+                        if (!zipCode && client.zip_code) setZipCode(client.zip_code)
+                        if (!province && client.province) setProvince(client.province)
+                      }
+                    }
+                  }}
+                  title="Seleziona cliente"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-800 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
+                >
+                  <option value="">-- Nessun cliente --</option>
+                  {clients.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}{c.company ? ` (${c.company})` : ''}{c.city ? ` - ${c.city}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Descrizione */}
             <div>

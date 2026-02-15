@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wrench, Search, Download, Plus, Calendar, Clock, MapPin, User, Trash2, Pencil, CheckCircle2, Circle, AlertCircle, ArrowUpDown, History, FileText } from 'lucide-react'
+import { X, Wrench, Search, Download, Plus, Calendar, Clock, MapPin, User, Trash2, Pencil, CheckCircle2, Circle, AlertCircle, ArrowUpDown, History, FileText, Copy, Users } from 'lucide-react'
 import { Lavorazione } from '../hooks/useLavorazioni'
+import { Client } from '../hooks/useClients'
 
 interface LavorazioniListModalProps {
   isOpen: boolean
@@ -15,7 +16,9 @@ interface LavorazioniListModalProps {
   onEdit?: (lavorazione: Lavorazione) => void
   onViewTimeline?: (lavorazione: Lavorazione) => void
   onReport?: (lavorazione: Lavorazione) => void
+  onDuplicate?: (lavorazione: Lavorazione) => void
   teamMembers?: Array<{ id: string; name: string; role: string }>
+  clients?: Client[]
 }
 
 const statusConfig = {
@@ -33,7 +36,7 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
 }
 
 export default function LavorazioniListModal({
-  isOpen, onClose, lavorazioni, onToggleStatus, onDelete, onNew, onEdit, onViewTimeline, onReport, teamMembers = []
+  isOpen, onClose, lavorazioni, onToggleStatus, onDelete, onNew, onEdit, onViewTimeline, onReport, onDuplicate, teamMembers = [], clients = []
 }: LavorazioniListModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -52,16 +55,25 @@ export default function LavorazioniListModal({
     annullata: lavorazioni.filter(l => l.status === 'annullata').length,
   }
 
+  // Helper to get client name
+  const getClientName = (clientId: string | null) => {
+    if (!clientId) return null
+    const client = clients.find(c => c.id === clientId)
+    return client ? (client.company || client.name) : null
+  }
+
   // Filtering
   let filtered = lavorazioni.filter(l => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
+      const clientName = getClientName(l.client_id)?.toLowerCase() || ''
       if (
         !l.title.toLowerCase().includes(term) &&
         !l.description.toLowerCase().includes(term) &&
         !l.assigned_to.toLowerCase().includes(term) &&
         !l.address.toLowerCase().includes(term) &&
-        !l.city.toLowerCase().includes(term)
+        !l.city.toLowerCase().includes(term) &&
+        !clientName.includes(term)
       ) return false
     }
     if (filterStatus !== 'all' && l.status !== filterStatus) return false
@@ -87,9 +99,9 @@ export default function LavorazioniListModal({
 
   // CSV Export
   const exportCSV = () => {
-    const headers = ['Titolo', 'Descrizione', 'Assegnatario', 'Data', 'Ora', 'Stato', 'Priorità', 'Indirizzo', 'Città', 'Note', 'Creata il']
+    const headers = ['Titolo', 'Cliente', 'Descrizione', 'Assegnatario', 'Data', 'Ora', 'Stato', 'Priorità', 'Indirizzo', 'Città', 'Note', 'Creata il']
     const rows = filtered.map(l => [
-      l.title, l.description, l.assigned_to,
+      l.title, getClientName(l.client_id) || '', l.description, l.assigned_to,
       l.scheduled_date ? new Date(l.scheduled_date).toLocaleDateString('it-IT') : '',
       l.scheduled_time ? l.scheduled_time.substring(0, 5) : '',
       statusConfig[l.status]?.label || l.status,
@@ -275,6 +287,14 @@ export default function LavorazioniListModal({
                                 </span>
                               </div>
 
+                              {/* Client */}
+                              {getClientName(lav.client_id) && (
+                                <div className="flex items-center gap-1.5 text-sm text-indigo-500">
+                                  <Users className="w-3.5 h-3.5" />
+                                  <span className="font-medium">{getClientName(lav.client_id)}</span>
+                                </div>
+                              )}
+
                               {/* Description */}
                               {lav.description && (
                                 <p className="text-sm text-slate-400">{lav.description}</p>
@@ -354,6 +374,14 @@ export default function LavorazioniListModal({
                                 className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 rounded-lg transition-colors flex items-center gap-1.5">
                                 <FileText className="w-4 h-4 text-emerald-500" />
                                 <span className="text-xs font-bold text-emerald-600 hidden md:inline">Report</span>
+                              </button>
+                            )}
+                            {/* Duplica */}
+                            {onDuplicate && (
+                              <button onClick={() => onDuplicate(lav)} title="Duplica lavorazione"
+                                className="px-3 py-2 bg-sky-50 hover:bg-sky-100 border border-sky-200/60 rounded-lg transition-colors flex items-center gap-1.5">
+                                <Copy className="w-4 h-4 text-sky-500" />
+                                <span className="text-xs font-bold text-sky-600 hidden md:inline">Duplica</span>
                               </button>
                             )}
                             {/* Delete */}

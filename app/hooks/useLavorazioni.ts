@@ -8,6 +8,7 @@ export interface Lavorazione {
   id: string
   user_id: string
   call_id: string | null
+  client_id: string | null
   title: string
   description: string
   assigned_to: string

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Users, Search, Star, Phone, Mail, MapPin, Building2, Trash2, Edit3, PhoneCall, Plus, User } from 'lucide-react'
+import { X, Users, Search, Star, Phone, Mail, MapPin, Building2, Trash2, Edit3, PhoneCall, Plus, User, History } from 'lucide-react'
 import { Client } from '../hooks/useClients'
 
 interface ClientsListModalProps {
@@ -210,6 +210,12 @@ export default function ClientsListModal({ isOpen, onClose, clients, onDelete, o
                             className="px-2.5 py-1 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200/60 text-violet-600 text-xs font-medium flex items-center gap-1 transition-all">
                             <Edit3 className="w-3 h-3" /> Modifica
                           </button>
+                          {onSelectClient && (
+                            <button onClick={(e) => { e.stopPropagation(); onSelectClient(client) }}
+                              className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 text-indigo-600 text-xs font-medium flex items-center gap-1 transition-all">
+                              <History className="w-3 h-3" /> Storico
+                            </button>
+                          )}
                           <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(client.id) }}
                             className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition-all ${
                               client.is_favorite ? 'bg-amber-50 hover:bg-amber-100 border border-amber-200/60 text-amber-600' : 'bg-slate-50 hover:bg-slate-100 border border-slate-200/60 text-slate-500'

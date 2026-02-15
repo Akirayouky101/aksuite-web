@@ -34,6 +34,8 @@ import LavorazioneTimelineModal from './components/LavorazioneTimelineModal'
 import LavorazioneReportModal from './components/LavorazioneReportModal'
 import ClientModal from './components/ClientModal'
 import ClientsListModal from './components/ClientsListModal'
+import ClientDetailModal from './components/ClientDetailModal'
+import PreventivoModal from './components/PreventivoModal'
 import SearchModal from './components/SearchModal'
 import TodayDashboard from './components/TodayDashboard'
 import NotificationBar from './components/NotificationBar'
@@ -87,6 +89,9 @@ export default function Home() {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false)
   const [isClientsListModalOpen, setIsClientsListModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<any>(null)
+  const [isClientDetailOpen, setIsClientDetailOpen] = useState(false)
+  const [detailClient, setDetailClient] = useState<any>(null)
+  const [isPreventivoModalOpen, setIsPreventivoModalOpen] = useState(false)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -283,6 +288,7 @@ export default function Home() {
     { label: 'Nota', icon: StickyNote, onClick: () => { setEditingNote(null); setIsNoteModalOpen(true) } },
     { label: 'Evento', icon: Calendar, onClick: () => { setEditingEvent(null); setIsEventModalOpen(true) } },
     { label: 'Visita', icon: UserCheck, onClick: () => { setEditingVisit(null); setIsVisitModalOpen(true) } },
+    { label: 'Preventivo', icon: FileText, onClick: () => setIsPreventivoModalOpen(true) },
     { label: 'Transazione', icon: DollarSign, onClick: () => setIsBudgetModalOpen(true) },
   ]
 
@@ -727,6 +733,7 @@ export default function Home() {
           if (has_lavorazione && callId) {
             const newLav = await addLavorazione({
               call_id: callId,
+              client_id: null,
               title: `Lavorazione: ${cleanCallData.caller_name || 'Chiamata'}${cleanCallData.company ? ` - ${cleanCallData.company}` : ''}`,
               description: lavorazione_description || '',
               assigned_to: lavorazione_assignee || '',
@@ -772,7 +779,32 @@ export default function Home() {
         onEdit={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsLavorazioniListModalOpen(false) }}
         onViewTimeline={(lav) => { setTimelineLavorazione(lav); loadTimeline(lav.id); setIsTimelineModalOpen(true) }}
         onReport={(lav) => { setReportLavorazione(lav); loadTimeline(lav.id); setIsReportModalOpen(true) }}
+        onDuplicate={async (lav) => {
+          const duplicated = await addLavorazione({
+            call_id: lav.call_id,
+            client_id: lav.client_id,
+            title: `${lav.title} (copia)`,
+            description: lav.description,
+            assigned_to: lav.assigned_to,
+            scheduled_date: lav.scheduled_date,
+            scheduled_time: lav.scheduled_time,
+            status: 'da_fare',
+            priority: lav.priority,
+            address: lav.address,
+            city: lav.city,
+            zip_code: lav.zip_code,
+            province: lav.province,
+            notes: lav.notes,
+            completed_at: null,
+          })
+          if (duplicated) {
+            setEditingLavorazione(duplicated)
+            setIsLavorazioneModalOpen(true)
+            setIsLavorazioniListModalOpen(false)
+          }
+        }}
         teamMembers={teamMembers}
+        clients={clients}
       />
 
       <LavorazioneModal
@@ -784,6 +816,7 @@ export default function Home() {
         }}
         editLavorazione={editingLavorazione}
         teamMembers={teamMembers}
+        clients={clients}
       />
 
       <LavorazioneTimelineModal
@@ -827,6 +860,7 @@ export default function Home() {
           if (has_lavorazione && visitId) {
             const newLav = await addLavorazione({
               call_id: null,
+              client_id: null,
               title: `Lavorazione: ${cleanVisitData.visitor_name || 'Visita'}${cleanVisitData.company ? ` - ${cleanVisitData.company}` : ''}`,
               description: lavorazione_description || '',
               assigned_to: lavorazione_assignee || '',
@@ -898,7 +932,18 @@ export default function Home() {
       <ClientsListModal isOpen={isClientsListModalOpen} onClose={() => setIsClientsListModalOpen(false)}
         clients={clients} onDelete={deleteClient} onToggleFavorite={toggleClientFavorite}
         onAdd={() => { setEditingClient(null); setIsClientModalOpen(true) }}
-        onEdit={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientsListModalOpen(false) }} />
+        onEdit={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientsListModalOpen(false) }}
+        onSelectClient={(client) => { setDetailClient(client); setIsClientDetailOpen(true) }} />
+      <ClientDetailModal
+        isOpen={isClientDetailOpen}
+        onClose={() => { setIsClientDetailOpen(false); setDetailClient(null) }}
+        client={detailClient}
+        calls={calls}
+        lavorazioni={lavorazioni}
+        visits={visits}
+        onEditClient={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientDetailOpen(false) }}
+        onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsClientDetailOpen(false) }}
+      />
 
       <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}
         calls={calls} lavorazioni={lavorazioni} tasks={tasks} notes={notes} events={events} clients={clients} visits={visits}
@@ -912,6 +957,13 @@ export default function Home() {
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => setIsAuthModalOpen(false)} />
+
+      <PreventivoModal
+        isOpen={isPreventivoModalOpen}
+        onClose={() => setIsPreventivoModalOpen(false)}
+        clients={clients}
+        lavorazioni={lavorazioni}
+      />
     </div>
   )
 }
