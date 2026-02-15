@@ -881,6 +881,7 @@ export default function Home() {
         editingClient={editingClient} />
       <ClientsListModal isOpen={isClientsListModalOpen} onClose={() => setIsClientsListModalOpen(false)}
         clients={clients} onDelete={deleteClient} onToggleFavorite={toggleClientFavorite}
+        onAdd={() => { setEditingClient(null); setIsClientModalOpen(true) }}
         onEdit={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientsListModalOpen(false) }} />
 
       <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}
