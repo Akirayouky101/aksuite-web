@@ -103,6 +103,36 @@ export default function Home() {
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
 
+  // ═══ SYNC: Lavorazione status → Call status ═══
+  const lavStatusToCallStatus = (lavStatus: string): 'pending' | 'completed' | 'cancelled' => {
+    if (lavStatus === 'completata') return 'completed'
+    if (lavStatus === 'annullata') return 'cancelled'
+    return 'pending' // da_fare, in_corso → pending
+  }
+
+  const syncCallStatus = async (lavorazioneId: string, newLavStatus?: string) => {
+    const lav = lavorazioni.find(l => l.id === lavorazioneId)
+    if (!lav?.call_id) return
+    const status = newLavStatus || lav.status
+    const callStatus = lavStatusToCallStatus(status)
+    try { await updateCallStatus(lav.call_id, callStatus) } catch (e) { console.error('Sync call status error:', e) }
+  }
+
+  const handleToggleLavorazioneStatus = async (id: string) => {
+    const lav = lavorazioni.find(l => l.id === id)
+    if (!lav) return
+    // Calculate what the next status will be
+    const nextStatus: Record<string, string> = { da_fare: 'in_corso', in_corso: 'completata', completata: 'da_fare', annullata: 'da_fare' }
+    const newStatus = nextStatus[lav.status] || 'da_fare'
+    await toggleLavorazioneStatus(id)
+    if (lav.call_id) await syncCallStatus(id, newStatus)
+  }
+
+  const handleUpdateLavorazione = async (id: string, data: any) => {
+    await updateLavorazione(id, data)
+    if (data.status) await syncCallStatus(id, data.status)
+  }
+
   const stats = getStats()
   const pendingCalls = calls.filter(c => c.status === 'pending').length
   const activeTasks = tasks.filter(t => !t.is_completed).length
@@ -659,7 +689,7 @@ export default function Home() {
         isOpen={isLavorazioniListModalOpen}
         onClose={() => setIsLavorazioniListModalOpen(false)}
         lavorazioni={lavorazioni}
-        onToggleStatus={toggleLavorazioneStatus}
+        onToggleStatus={handleToggleLavorazioneStatus}
         onDelete={deleteLavorazione}
         onNew={() => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) }}
         onEdit={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsLavorazioniListModalOpen(false) }}
@@ -671,7 +701,7 @@ export default function Home() {
         isOpen={isLavorazioneModalOpen}
         onClose={() => { setIsLavorazioneModalOpen(false); setEditingLavorazione(null) }}
         onSave={async (data) => {
-          if (editingLavorazione) { await updateLavorazione(editingLavorazione.id, data) }
+          if (editingLavorazione) { await handleUpdateLavorazione(editingLavorazione.id, data) }
           else { await addLavorazione(data) }
         }}
         editLavorazione={editingLavorazione}
