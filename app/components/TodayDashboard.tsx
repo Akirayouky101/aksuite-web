@@ -1,6 +1,6 @@
 'use client'
 
-import { Phone, Wrench, CheckSquare, Calendar, MapPin, Clock, AlertTriangle, ArrowRight, Zap, Sun } from 'lucide-react'
+import { Phone, Wrench, CheckSquare, Calendar, MapPin, Clock, AlertTriangle, ArrowRight, Zap, Sun, PhoneCall, Check, BarChart3, TrendingUp } from 'lucide-react'
 
 interface TodayDashboardProps {
   calls: any[]
@@ -13,9 +13,11 @@ interface TodayDashboardProps {
   onOpenTasksList?: () => void
   onOpenCalendar?: () => void
   onOpenVisitsList?: () => void
+  onToggleTask?: (id: string) => void
+  onToggleLavorazioneStatus?: (id: string) => void
 }
 
-export default function TodayDashboard({ calls, lavorazioni, tasks, events, visits, onOpenCall, onOpenLavorazione, onOpenTasksList, onOpenCalendar, onOpenVisitsList }: TodayDashboardProps) {
+export default function TodayDashboard({ calls, lavorazioni, tasks, events, visits, onOpenCall, onOpenLavorazione, onOpenTasksList, onOpenCalendar, onOpenVisitsList, onToggleTask, onToggleLavorazioneStatus }: TodayDashboardProps) {
   const today = new Date()
   const todayStr = today.toDateString()
 
@@ -54,7 +56,31 @@ export default function TodayDashboard({ calls, lavorazioni, tasks, events, visi
   })
 
   const totalItems = todayCalls.length + todayEvents.length + overdueTasks.length + activeLav.length + todayVisits.length
-  if (totalItems === 0) return null
+
+  // Weekly stats
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - today.getDay() + 1) // Monday
+  weekStart.setHours(0, 0, 0, 0)
+  const weekCalls = calls.filter(c => {
+    const d = new Date(c.call_date || c.created_at)
+    return d >= weekStart && d <= today
+  }).length
+  const weekCompletedLav = lavorazioni.filter(l => {
+    if (l.status !== 'completata' || !l.completed_at) return false
+    const d = new Date(l.completed_at)
+    return d >= weekStart && d <= today
+  }).length
+  const weekVisits = visits.filter(v => {
+    const d = new Date(v.visit_date || v.created_at)
+    return d >= weekStart && d <= today
+  }).length
+  const weekCompletedTasks = tasks.filter(t => {
+    if (!t.is_completed || !t.completed_at) return false
+    const d = new Date(t.completed_at)
+    return d >= weekStart && d <= today
+  }).length
+
+  if (totalItems === 0 && weekCalls === 0) return null
 
   const formatTime = (dateStr: string) => {
     try { return new Date(dateStr).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) } catch { return '' }
@@ -100,16 +126,23 @@ export default function TodayDashboard({ calls, lavorazioni, tasks, events, visi
             </div>
             <div className="divide-y divide-slate-100/60">
               {todayCalls.map(c => (
-                <button key={c.id} onClick={() => onOpenCall?.(c)} className="w-full px-3.5 py-2.5 text-left hover:bg-blue-50/30 transition-colors flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-3 h-3 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-slate-700 truncate">{c.caller_name}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{c.company || c.phone}</p>
-                  </div>
+                <div key={c.id} className="w-full px-3.5 py-2.5 hover:bg-blue-50/30 transition-colors flex items-center gap-2.5">
+                  <button onClick={() => onOpenCall?.(c)} className="flex items-center gap-2.5 flex-1 min-w-0 text-left">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-3 h-3 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-slate-700 truncate">{c.caller_name}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{c.company || c.phone}</p>
+                    </div>
+                  </button>
+                  {c.phone && (
+                    <a href={`tel:${c.phone}`} title="Chiama" className="w-6 h-6 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/50 flex items-center justify-center flex-shrink-0 transition-colors">
+                      <PhoneCall className="w-3 h-3 text-emerald-600" />
+                    </a>
+                  )}
                   <ArrowRight className="w-3 h-3 text-slate-300 flex-shrink-0" />
-                </button>
+                </div>
               ))}
             </div>
           </div>
@@ -165,6 +198,12 @@ export default function TodayDashboard({ calls, lavorazioni, tasks, events, visi
                       {isOverdue(t.due_date) ? 'Scaduto' : 'Oggi'} - {new Date(t.due_date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
                     </p>
                   </div>
+                  {onToggleTask && (
+                    <button onClick={() => onToggleTask(t.id)} title="Completa task"
+                      className="w-6 h-6 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/50 flex items-center justify-center flex-shrink-0 transition-colors">
+                      <Check className="w-3 h-3 text-emerald-600" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -181,18 +220,25 @@ export default function TodayDashboard({ calls, lavorazioni, tasks, events, visi
             </div>
             <div className="divide-y divide-slate-100/60">
               {activeLav.map(l => (
-                <button key={l.id} onClick={() => onOpenLavorazione?.(l)} className="w-full px-3.5 py-2.5 text-left hover:bg-violet-50/30 transition-colors flex items-center gap-2.5">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${l.status === 'in_corso' ? 'bg-gradient-to-br from-indigo-500 to-blue-600' : 'bg-gradient-to-br from-violet-500 to-purple-600'}`}>
-                    <Wrench className="w-3 h-3 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-slate-700 truncate">{l.title}</p>
-                    <p className="text-[10px] text-slate-400 truncate">
-                      {l.status === 'in_corso' ? 'In corso' : 'Da fare'}{l.assigned_to ? ` - ${l.assigned_to}` : ''}
-                    </p>
-                  </div>
-                  <ArrowRight className="w-3 h-3 text-slate-300 flex-shrink-0" />
-                </button>
+                <div key={l.id} className="w-full px-3.5 py-2.5 hover:bg-violet-50/30 transition-colors flex items-center gap-2.5">
+                  <button onClick={() => onOpenLavorazione?.(l)} className="flex items-center gap-2.5 flex-1 min-w-0 text-left">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${l.status === 'in_corso' ? 'bg-gradient-to-br from-indigo-500 to-blue-600' : 'bg-gradient-to-br from-violet-500 to-purple-600'}`}>
+                      <Wrench className="w-3 h-3 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-slate-700 truncate">{l.title}</p>
+                      <p className="text-[10px] text-slate-400 truncate">
+                        {l.status === 'in_corso' ? 'In corso' : 'Da fare'}{l.assigned_to ? ` - ${l.assigned_to}` : ''}
+                      </p>
+                    </div>
+                  </button>
+                  {onToggleLavorazioneStatus && (
+                    <button onClick={() => onToggleLavorazioneStatus(l.id)} title="Avanza stato"
+                      className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${l.status === 'da_fare' ? 'bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/50' : 'bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/50'}`}>
+                      {l.status === 'da_fare' ? <ArrowRight className="w-3 h-3 text-indigo-600" /> : <Check className="w-3 h-3 text-emerald-600" />}
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -223,6 +269,36 @@ export default function TodayDashboard({ calls, lavorazioni, tasks, events, visi
           </div>
         )}
       </div>
+
+      {/* Weekly Summary */}
+      {(weekCalls > 0 || weekCompletedLav > 0 || weekVisits > 0 || weekCompletedTasks > 0) && (
+        <div className="px-4 pb-4">
+          <div className="bg-white/80 rounded-xl border border-slate-200/40 p-3.5">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="text-[11px] font-semibold text-slate-600">Riepilogo Settimana</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              <div className="text-center p-2 rounded-lg bg-blue-50/60 border border-blue-100/40">
+                <div className="text-sm font-bold text-blue-600">{weekCalls}</div>
+                <div className="text-[9px] text-blue-400 font-medium">Chiamate</div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-emerald-50/60 border border-emerald-100/40">
+                <div className="text-sm font-bold text-emerald-600">{weekCompletedLav}</div>
+                <div className="text-[9px] text-emerald-400 font-medium">Lav. Completate</div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-indigo-50/60 border border-indigo-100/40">
+                <div className="text-sm font-bold text-indigo-600">{weekVisits}</div>
+                <div className="text-[9px] text-indigo-400 font-medium">Visite</div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-amber-50/60 border border-amber-100/40">
+                <div className="text-sm font-bold text-amber-600">{weekCompletedTasks}</div>
+                <div className="text-[9px] text-amber-400 font-medium">Task Chiusi</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,46 +1,51 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
   Search, Bell, Settings, MapPin, FileText, Wrench
 } from 'lucide-react'
-import PasswordModal from './components/PasswordModal'
-import PasswordMenuModal from './components/PasswordMenuModal'
-import PasswordListModal from './components/PasswordListModal'
-import BudgetModal from './components/BudgetModal'
-import BudgetMenuModal from './components/BudgetMenuModal'
-import BudgetViewModal from './components/BudgetViewModal'
-import RecurringModal from './components/RecurringModal'
-import RecurringListModal from './components/RecurringListModal'
-import BudgetLimitModal from './components/BudgetLimitModal'
-import BudgetLimitsViewModal from './components/BudgetLimitsViewModal'
-import CallModal from './components/CallModal'
-import CallMenuModal from './components/CallMenuModal'
-import CallsListModal from './components/CallsListModal'
-import VisitModal from './components/VisitModal'
-import VisitsListModal from './components/VisitsListModal'
-import TaskModal from './components/TaskModal'
-import TasksListModal from './components/TasksListModal'
-import NoteModal from './components/NoteModal'
-import NotesListModal from './components/NotesListModal'
-import EventModal from './components/EventModal'
-import CalendarView from './components/CalendarView'
-import LavorazioniListModal from './components/LavorazioniListModal'
-import LavorazioneModal from './components/LavorazioneModal'
-import LavorazioneTimelineModal from './components/LavorazioneTimelineModal'
-import LavorazioneReportModal from './components/LavorazioneReportModal'
-import CallTimelineModal from './components/CallTimelineModal'
-import ClientModal from './components/ClientModal'
-import ClientsListModal from './components/ClientsListModal'
-import ClientDetailModal from './components/ClientDetailModal'
-import PreventivoModal from './components/PreventivoModal'
-import SearchModal from './components/SearchModal'
+
+// ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
+const PasswordModal = dynamic(() => import('./components/PasswordModal'), { ssr: false })
+const PasswordMenuModal = dynamic(() => import('./components/PasswordMenuModal'), { ssr: false })
+const PasswordListModal = dynamic(() => import('./components/PasswordListModal'), { ssr: false })
+const BudgetModal = dynamic(() => import('./components/BudgetModal'), { ssr: false })
+const BudgetMenuModal = dynamic(() => import('./components/BudgetMenuModal'), { ssr: false })
+const BudgetViewModal = dynamic(() => import('./components/BudgetViewModal'), { ssr: false })
+const RecurringModal = dynamic(() => import('./components/RecurringModal'), { ssr: false })
+const RecurringListModal = dynamic(() => import('./components/RecurringListModal'), { ssr: false })
+const BudgetLimitModal = dynamic(() => import('./components/BudgetLimitModal'), { ssr: false })
+const BudgetLimitsViewModal = dynamic(() => import('./components/BudgetLimitsViewModal'), { ssr: false })
+const CallModal = dynamic(() => import('./components/CallModal'), { ssr: false })
+const CallMenuModal = dynamic(() => import('./components/CallMenuModal'), { ssr: false })
+const CallsListModal = dynamic(() => import('./components/CallsListModal'), { ssr: false })
+const VisitModal = dynamic(() => import('./components/VisitModal'), { ssr: false })
+const VisitsListModal = dynamic(() => import('./components/VisitsListModal'), { ssr: false })
+const TaskModal = dynamic(() => import('./components/TaskModal'), { ssr: false })
+const TasksListModal = dynamic(() => import('./components/TasksListModal'), { ssr: false })
+const NoteModal = dynamic(() => import('./components/NoteModal'), { ssr: false })
+const NotesListModal = dynamic(() => import('./components/NotesListModal'), { ssr: false })
+const EventModal = dynamic(() => import('./components/EventModal'), { ssr: false })
+const CalendarView = dynamic(() => import('./components/CalendarView'), { ssr: false })
+const LavorazioniListModal = dynamic(() => import('./components/LavorazioniListModal'), { ssr: false })
+const LavorazioneModal = dynamic(() => import('./components/LavorazioneModal'), { ssr: false })
+const LavorazioneTimelineModal = dynamic(() => import('./components/LavorazioneTimelineModal'), { ssr: false })
+const LavorazioneReportModal = dynamic(() => import('./components/LavorazioneReportModal'), { ssr: false })
+const CallTimelineModal = dynamic(() => import('./components/CallTimelineModal'), { ssr: false })
+const ClientModal = dynamic(() => import('./components/ClientModal'), { ssr: false })
+const ClientsListModal = dynamic(() => import('./components/ClientsListModal'), { ssr: false })
+const ClientDetailModal = dynamic(() => import('./components/ClientDetailModal'), { ssr: false })
+const PreventivoModal = dynamic(() => import('./components/PreventivoModal'), { ssr: false })
+const SearchModal = dynamic(() => import('./components/SearchModal'), { ssr: false })
+const AuthModal = dynamic(() => import('./components/AuthModal'), { ssr: false })
+
+// ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
 import NotificationBar from './components/NotificationBar'
-import AuthModal from './components/AuthModal'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
 import { useRecurring } from './hooks/useRecurring'
@@ -131,7 +136,7 @@ export default function Home() {
   const { entries: callTimelineEntries, loading: callTimelineLoading, loadTimeline: loadCallTimeline, addEntry: addCallTimelineEntry, deleteEntry: deleteCallTimelineEntry, updateEntry: updateCallTimelineEntry, uploadPhoto: uploadCallTimelinePhoto, clearTimeline: clearCallTimeline } = useCallTimeline()
   const { clients, addClient, updateClient, deleteClient, toggleFavorite: toggleClientFavorite } = useClients()
 
-  const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
+  const availableRelationItems = useMemo(() => ({ passwords, calls, visits, tasks, notes, events, transactions }), [passwords, calls, visits, tasks, notes, events, transactions])
 
   // ═══ SYNC: Lavorazione status → Call status ═══
   const lavStatusToCallStatus = (lavStatus: string): 'pending' | 'in_corso' | 'completed' | 'cancelled' => {
@@ -149,31 +154,57 @@ export default function Home() {
     try { await updateCallStatus(lav.call_id, callStatus) } catch (e) { console.error('Sync call status error:', e) }
   }
 
+  const statusLabelMap: Record<string, string> = { da_fare: 'Da Fare', in_corso: 'In Corso', completata: 'Completata', annullata: 'Annullata' }
+
   const handleToggleLavorazioneStatus = async (id: string) => {
     const lav = lavorazioni.find(l => l.id === id)
     if (!lav) return
-    // Calculate what the next status will be
     const nextStatus: Record<string, string> = { da_fare: 'in_corso', in_corso: 'completata', completata: 'da_fare', annullata: 'da_fare' }
     const newStatus = nextStatus[lav.status] || 'da_fare'
     await toggleLavorazioneStatus(id)
     if (lav.call_id) await syncCallStatus(id, newStatus)
+    // Auto-timeline entry for status change
+    try {
+      await addTimelineEntry({
+        lavorazione_id: id,
+        description: `Stato cambiato: ${statusLabelMap[lav.status] || lav.status} \u2192 ${statusLabelMap[newStatus] || newStatus}`,
+        event_type: 'nota',
+        created_by_name: ''
+      })
+    } catch (e) { console.error('Auto-timeline status error:', e) }
   }
 
   const handleUpdateLavorazione = async (id: string, data: any) => {
+    const lav = lavorazioni.find(l => l.id === id)
+    const oldStatus = lav?.status
     await updateLavorazione(id, data)
     if (data.status) await syncCallStatus(id, data.status)
+    // Auto-timeline entry if status changed during edit
+    if (data.status && oldStatus && data.status !== oldStatus) {
+      try {
+        await addTimelineEntry({
+          lavorazione_id: id,
+          description: `Stato aggiornato: ${statusLabelMap[oldStatus] || oldStatus} \u2192 ${statusLabelMap[data.status] || data.status}`,
+          event_type: 'nota',
+          created_by_name: ''
+        })
+      } catch (e) { console.error('Auto-timeline update error:', e) }
+    }
   }
 
-  const stats = getStats()
-  const pendingCalls = calls.filter(c => c.status === 'pending' || c.status === 'in_corso').length
-  const activeTasks = tasks.filter(t => !t.is_completed).length
-  const todayEvents = events.filter(e => {
+  // ═══ MEMOIZED COMPUTED VALUES ═══
+  const stats = useMemo(() => getStats(), [transactions])
+  const pendingCalls = useMemo(() => calls.filter(c => c.status === 'pending' || c.status === 'in_corso').length, [calls])
+  const activeTasks = useMemo(() => tasks.filter(t => !t.is_completed).length, [tasks])
+  const todayEvents = useMemo(() => {
     const today = new Date()
-    const eventDate = new Date(e.start_date)
-    return eventDate.toDateString() === today.toDateString()
-  }).length
+    return events.filter(e => {
+      const eventDate = new Date(e.start_date)
+      return eventDate.toDateString() === today.toDateString()
+    }).length
+  }, [events])
 
-  const activeLavorazioni = lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length
+  const activeLavorazioni = useMemo(() => lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length, [lavorazioni])
 
   // Badge = nuovi dall'ultima apertura (null = primo caricamento, badge 0)
   const badgeCalls = seenCalls === null ? 0 : Math.max(0, pendingCalls - seenCalls)
@@ -429,10 +460,11 @@ export default function Home() {
           <div className="p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
             {/* ═══ NOTIFICATION BAR ═══ */}
             <NotificationBar
-              calls={calls} tasks={tasks} events={events}
+              calls={calls} tasks={tasks} events={events} lavorazioni={lavorazioni}
               onOpenCalls={() => setIsCallsListModalOpen(true)}
               onOpenTasks={() => setIsTasksListModalOpen(true)}
               onOpenCalendar={() => setIsCalendarViewOpen(true)}
+              onOpenLavorazioni={() => setIsLavorazioniListModalOpen(true)}
             />
 
             {/* ═══ TODAY DASHBOARD ═══ */}
@@ -443,6 +475,8 @@ export default function Home() {
               onOpenTasksList={() => setIsTasksListModalOpen(true)}
               onOpenCalendar={() => setIsCalendarViewOpen(true)}
               onOpenVisitsList={() => setIsVisitsListModalOpen(true)}
+              onToggleTask={(id) => toggleComplete(id, true)}
+              onToggleLavorazioneStatus={handleToggleLavorazioneStatus}
             />
 
             {/* ═══ STAT CARDS ═══ */}
@@ -963,6 +997,14 @@ export default function Home() {
         visits={visits}
         onEditClient={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientDetailOpen(false) }}
         onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsClientDetailOpen(false) }}
+        onNewCall={(clientData) => {
+          setEditingCall({ caller_name: clientData.caller_name, company: clientData.company, phone: clientData.phone, email: clientData.email, address: clientData.address, city: clientData.city, zip_code: clientData.zip_code, province: clientData.province, _prefilled: true } as any)
+          setIsCallModalOpen(true)
+        }}
+        onNewLavorazione={(clientData) => {
+          setEditingLavorazione({ client_id: clientData.client_id, title: `Lavorazione: ${clientData.client_name}`, address: clientData.address, city: clientData.city, zip_code: clientData.zip_code, province: clientData.province, status: 'da_fare', _prefilled: true } as any)
+          setIsLavorazioneModalOpen(true)
+        }}
       />
 
       <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}

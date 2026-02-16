@@ -17,6 +17,8 @@ interface ClientDetailModalProps {
   visits: Visit[]
   onEditClient?: (client: Client) => void
   onOpenLavorazione?: (lav: Lavorazione) => void
+  onNewCall?: (clientData: { caller_name: string; company: string; phone: string; email: string; address: string; city: string; zip_code: string; province: string }) => void
+  onNewLavorazione?: (clientData: { client_id: string; client_name: string; address: string; city: string; zip_code: string; province: string }) => void
 }
 
 type TimelineItem = {
@@ -48,7 +50,7 @@ const typeConfig = {
   visit: { icon: Eye, label: 'Visita', bg: 'bg-violet-50', border: 'border-violet-200/60', text: 'text-violet-600', dot: 'bg-violet-500' },
 }
 
-export default function ClientDetailModal({ isOpen, onClose, client, calls, lavorazioni, visits, onEditClient, onOpenLavorazione }: ClientDetailModalProps) {
+export default function ClientDetailModal({ isOpen, onClose, client, calls, lavorazioni, visits, onEditClient, onOpenLavorazione, onNewCall, onNewLavorazione }: ClientDetailModalProps) {
   const [filterType, setFilterType] = useState<'all' | 'call' | 'lavorazione' | 'visit'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -150,6 +152,18 @@ export default function ClientDetailModal({ isOpen, onClose, client, calls, lavo
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {onNewCall && client && (
+                  <button onClick={() => { onNewCall({ caller_name: client.name, company: client.company || '', phone: client.phone || '', email: client.email || '', address: client.address || '', city: client.city || '', zip_code: client.zip_code || '', province: client.province || '' }); onClose() }} title="Nuova chiamata"
+                    className="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/60 text-blue-600 text-xs font-bold transition-all flex items-center gap-1">
+                    <Phone className="w-3 h-3" />Chiamata
+                  </button>
+                )}
+                {onNewLavorazione && client && (
+                  <button onClick={() => { onNewLavorazione({ client_id: client.id, client_name: client.name, address: client.address || '', city: client.city || '', zip_code: client.zip_code || '', province: client.province || '' }); onClose() }} title="Nuova lavorazione"
+                    className="px-3 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-200/60 text-violet-600 text-xs font-bold transition-all flex items-center gap-1">
+                    <Wrench className="w-3 h-3" />Lavorazione
+                  </button>
+                )}
                 {onEditClient && (
                   <button onClick={() => onEditClient(client)} title="Modifica cliente"
                     className="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 text-indigo-600 text-xs font-bold transition-all">

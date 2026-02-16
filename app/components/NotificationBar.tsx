@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, Phone, CheckSquare, Calendar, AlertTriangle, ChevronRight, Clock } from 'lucide-react'
+import { Bell, X, Phone, CheckSquare, Calendar, AlertTriangle, ChevronRight, Clock, Wrench } from 'lucide-react'
 
 interface NotificationBarProps {
   calls: any[]
   tasks: any[]
   events: any[]
+  lavorazioni?: any[]
   onOpenCalls?: () => void
   onOpenTasks?: () => void
   onOpenCalendar?: () => void
+  onOpenLavorazioni?: () => void
 }
 
 interface Notification {
@@ -23,7 +25,7 @@ interface Notification {
   onClick?: () => void
 }
 
-export default function NotificationBar({ calls, tasks, events, onOpenCalls, onOpenTasks, onOpenCalendar }: NotificationBarProps) {
+export default function NotificationBar({ calls, tasks, events, lavorazioni, onOpenCalls, onOpenTasks, onOpenCalendar, onOpenLavorazioni }: NotificationBarProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
 
@@ -101,6 +103,25 @@ export default function NotificationBar({ calls, tasks, events, onOpenCalls, onO
       icon: AlertTriangle,
       gradient: 'from-slate-400 to-slate-600',
       onClick: onOpenCalls
+    })
+  }
+
+  // Overdue lavorazioni (scheduled_date passed, not completed/cancelled)
+  const overdueLavorazioni = (lavorazioni || []).filter(l => {
+    if (l.status === 'completata' || l.status === 'annullata') return false
+    if (!l.scheduled_date) return false
+    const d = new Date(l.scheduled_date)
+    return d < today && d.toDateString() !== todayStr
+  })
+  if (overdueLavorazioni.length > 0) {
+    notifications.push({
+      id: 'overdue-lavorazioni',
+      type: 'call',
+      title: `${overdueLavorazioni.length} lavorazion${overdueLavorazioni.length === 1 ? 'e' : 'i'} scadut${overdueLavorazioni.length === 1 ? 'a' : 'e'}`,
+      subtitle: overdueLavorazioni.slice(0, 2).map(l => l.title).join(', '),
+      icon: Wrench,
+      gradient: 'from-violet-500 to-purple-600',
+      onClick: onOpenLavorazioni
     })
   }
 
