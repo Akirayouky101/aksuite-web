@@ -242,18 +242,13 @@ export default function Home() {
   // ═══ EFFECTS ═══
 
   // Inizializza badge "seen" al primo caricamento dati (no badge fasulli)
+  // Single consolidated effect to avoid cascading re-renders
   useEffect(() => {
     if (calls.length > 0 && seenCalls === null) setSeenCalls(pendingCalls)
-  }, [calls, pendingCalls, seenCalls])
-  useEffect(() => {
     if (lavorazioni.length > 0 && seenLavorazioni === null) setSeenLavorazioni(activeLavorazioni)
-  }, [lavorazioni, activeLavorazioni, seenLavorazioni])
-  useEffect(() => {
     if (tasks.length > 0 && seenTasks === null) setSeenTasks(activeTasks)
-  }, [tasks, activeTasks, seenTasks])
-  useEffect(() => {
     if (events.length > 0 && seenEvents === null) setSeenEvents(todayEvents)
-  }, [events, todayEvents, seenEvents])
+  }, [calls.length, lavorazioni.length, tasks.length, events.length, pendingCalls, activeLavorazioni, activeTasks, todayEvents])
 
   useEffect(() => {
     const guard = initConsoleGuard()
@@ -332,7 +327,7 @@ export default function Home() {
   // NAVIGATION & ACTIONS CONFIG
   // ═══════════════════════════════════════════
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, count: calls.length, badge: badgeCalls },
     { id: 'lavorazioni', label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni },
     { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks },
@@ -345,9 +340,9 @@ export default function Home() {
     { id: 'suppliers', label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length },
     { id: 'orders', label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length },
     { id: 'warehouse', label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length },
-  ]
+  ], [calls.length, lavorazioni.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents])
 
-  const quickActions = [
+  const quickActions = useMemo(() => [
     { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true) },
     { label: 'Lavorazione', icon: Wrench, onClick: () => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) } },
     { label: 'Task', icon: CheckSquare, onClick: () => setIsTaskModalOpen(true) },
@@ -356,15 +351,15 @@ export default function Home() {
     { label: 'Visita', icon: UserCheck, onClick: () => { setEditingVisit(null); setIsVisitModalOpen(true) } },
     { label: 'Preventivo', icon: FileText, onClick: () => setIsPreventivoModalOpen(true) },
     { label: 'Transazione', icon: DollarSign, onClick: () => setIsBudgetModalOpen(true) },
-  ]
+  ], [])
 
   // Stat cards config
-  const statCards = [
+  const statCards = useMemo(() => [
     { label: 'Chiamate', value: calls.length, icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, gradient: 'from-blue-500 to-indigo-600', badgeText: badgeCalls > 0 ? `${badgeCalls} nuove` : null, badgeStyle: 'text-amber-600 bg-amber-50' },
     { label: 'Task', value: tasks.length, icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, gradient: 'from-amber-500 to-orange-600', badgeText: badgeTasks > 0 ? `${badgeTasks} nuovi` : null, badgeStyle: 'text-blue-600 bg-blue-50' },
     { label: 'Eventi', value: events.length, icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, gradient: 'from-rose-500 to-pink-600', badgeText: badgeEvents > 0 ? `${badgeEvents} oggi` : null, badgeStyle: 'text-rose-600 bg-rose-50' },
-    { label: 'Bilancio', value: `${stats.balance >= 0 ? '+' : ''}${stats.balance.toFixed(0)}€`, icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), gradient: 'from-emerald-500 to-teal-600', isBalance: true, balancePositive: stats.balance >= 0 },
-  ]
+    { label: 'Bilancio', value: `${stats.balance >= 0 ? '+' : ''}${stats.balance.toFixed(0)}\u20AC`, icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), gradient: 'from-emerald-500 to-teal-600', isBalance: true, balancePositive: stats.balance >= 0 },
+  ], [calls.length, tasks.length, events.length, stats.balance, badgeCalls, badgeTasks, badgeEvents, pendingCalls, activeTasks, todayEvents])
 
   // ═══════════════════════════════════════════
   // MAIN APP — Glassmorphism Chiaro
@@ -757,31 +752,31 @@ export default function Home() {
       {/* ═══════════════════════════════════════════ */}
       {/* ALL MODALS — Unchanged Logic */}
       {/* ═══════════════════════════════════════════ */}
-      <PasswordMenuModal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}
-        onSelectNew={() => setIsPasswordModalOpen(true)} onSelectList={() => setIsListModalOpen(true)} />
-      <PasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)}
-        onSave={(data) => { addPassword(data) }} />
-      <PasswordListModal isOpen={isListModalOpen} onClose={() => setIsListModalOpen(false)}
-        passwords={passwords} onDelete={deletePassword} />
+      {isMenuModalOpen && <PasswordMenuModal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}
+        onSelectNew={() => setIsPasswordModalOpen(true)} onSelectList={() => setIsListModalOpen(true)} />}
+      {isPasswordModalOpen && <PasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)}
+        onSave={(data) => { addPassword(data) }} />}
+      {isListModalOpen && <PasswordListModal isOpen={isListModalOpen} onClose={() => setIsListModalOpen(false)}
+        passwords={passwords} onDelete={deletePassword} />}
 
-      <BudgetMenuModal isOpen={isBudgetMenuModalOpen} onClose={() => setIsBudgetMenuModalOpen(false)}
+      {isBudgetMenuModalOpen && <BudgetMenuModal isOpen={isBudgetMenuModalOpen} onClose={() => setIsBudgetMenuModalOpen(false)}
         onSelectNew={() => setIsBudgetModalOpen(true)} onSelectView={() => setIsBudgetViewModalOpen(true)}
         onSelectRecurring={() => setIsRecurringModalOpen(true)} onSelectRecurringList={() => setIsRecurringListModalOpen(true)}
-        onSelectLimit={() => setIsLimitModalOpen(true)} onSelectLimitsList={() => setIsLimitsViewModalOpen(true)} />
-      <BudgetModal isOpen={isBudgetModalOpen} onClose={() => setIsBudgetModalOpen(false)} onSave={addTransaction} />
-      <BudgetViewModal isOpen={isBudgetViewModalOpen} onClose={() => setIsBudgetViewModalOpen(false)}
-        transactions={transactions} onDelete={deleteTransaction} stats={getStats()} />
-      <RecurringModal isOpen={isRecurringModalOpen} onClose={() => setIsRecurringModalOpen(false)} onSave={addRecurring} />
-      <RecurringListModal isOpen={isRecurringListModalOpen} onClose={() => setIsRecurringListModalOpen(false)}
-        recurring={recurring} onToggleActive={toggleActive} onDelete={deleteRecurring} />
-      <BudgetLimitModal isOpen={isLimitModalOpen} onClose={() => setIsLimitModalOpen(false)}
-        onSave={addLimit} existingCategories={limits.map(l => l.category)} />
-      <BudgetLimitsViewModal isOpen={isLimitsViewModalOpen} onClose={() => setIsLimitsViewModalOpen(false)}
-        limits={limitsStatus} onToggleActive={toggleLimitActive} onDelete={deleteLimit} />
+        onSelectLimit={() => setIsLimitModalOpen(true)} onSelectLimitsList={() => setIsLimitsViewModalOpen(true)} />}
+      {isBudgetModalOpen && <BudgetModal isOpen={isBudgetModalOpen} onClose={() => setIsBudgetModalOpen(false)} onSave={addTransaction} />}
+      {isBudgetViewModalOpen && <BudgetViewModal isOpen={isBudgetViewModalOpen} onClose={() => setIsBudgetViewModalOpen(false)}
+        transactions={transactions} onDelete={deleteTransaction} stats={stats} />}
+      {isRecurringModalOpen && <RecurringModal isOpen={isRecurringModalOpen} onClose={() => setIsRecurringModalOpen(false)} onSave={addRecurring} />}
+      {isRecurringListModalOpen && <RecurringListModal isOpen={isRecurringListModalOpen} onClose={() => setIsRecurringListModalOpen(false)}
+        recurring={recurring} onToggleActive={toggleActive} onDelete={deleteRecurring} />}
+      {isLimitModalOpen && <BudgetLimitModal isOpen={isLimitModalOpen} onClose={() => setIsLimitModalOpen(false)}
+        onSave={addLimit} existingCategories={limits.map(l => l.category)} />}
+      {isLimitsViewModalOpen && <BudgetLimitsViewModal isOpen={isLimitsViewModalOpen} onClose={() => setIsLimitsViewModalOpen(false)}
+        limits={limitsStatus} onToggleActive={toggleLimitActive} onDelete={deleteLimit} />}
 
-      <CallMenuModal isOpen={isCallMenuModalOpen} onClose={() => setIsCallMenuModalOpen(false)}
-        onSelectNew={() => setIsCallModalOpen(true)} onSelectList={() => setIsCallsListModalOpen(true)} />
-      <CallModal
+      {isCallMenuModalOpen && <CallMenuModal isOpen={isCallMenuModalOpen} onClose={() => setIsCallMenuModalOpen(false)}
+        onSelectNew={() => setIsCallModalOpen(true)} onSelectList={() => setIsCallsListModalOpen(true)} />}
+      {isCallModalOpen && <CallModal
         isOpen={isCallModalOpen}
         onClose={() => { setIsCallModalOpen(false); setEditingCall(null) }}
         onSave={async (callData) => {
@@ -834,13 +829,13 @@ export default function Home() {
         onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems}
         teamMembers={teamMembers} onAddTeamMember={addTeamMember} onDeleteTeamMember={deleteTeamMember}
         clients={clients} onAddClient={addClient}
-      />
-      <CallsListModal isOpen={isCallsListModalOpen} onClose={() => setIsCallsListModalOpen(false)}
+      />}
+      {isCallsListModalOpen && <CallsListModal isOpen={isCallsListModalOpen} onClose={() => setIsCallsListModalOpen(false)}
         calls={calls} onDelete={deleteCall} onStatusChange={updateCallStatus}
         onEdit={(call) => { setEditingCall(call); setIsCallModalOpen(true); setIsCallsListModalOpen(false) }}
-        onViewTimeline={(call) => { setCallTimelineCall(call); loadCallTimeline(call.id); setIsCallTimelineOpen(true) }} />
+        onViewTimeline={(call) => { setCallTimelineCall(call); loadCallTimeline(call.id); setIsCallTimelineOpen(true) }} />}
 
-      <LavorazioniListModal
+      {isLavorazioniListModalOpen && <LavorazioniListModal
         isOpen={isLavorazioniListModalOpen}
         onClose={() => setIsLavorazioniListModalOpen(false)}
         lavorazioni={lavorazioni}
@@ -876,9 +871,9 @@ export default function Home() {
         }}
         teamMembers={teamMembers}
         clients={clients}
-      />
+      />}
 
-      <LavorazioneModal
+      {isLavorazioneModalOpen && <LavorazioneModal
         isOpen={isLavorazioneModalOpen}
         onClose={() => { setIsLavorazioneModalOpen(false); setEditingLavorazione(null) }}
         onSave={async (data) => {
@@ -888,9 +883,9 @@ export default function Home() {
         editLavorazione={editingLavorazione}
         teamMembers={teamMembers}
         clients={clients}
-      />
+      />}
 
-      <LavorazioneTimelineModal
+      {isTimelineModalOpen && <LavorazioneTimelineModal
         isOpen={isTimelineModalOpen}
         onClose={() => { setIsTimelineModalOpen(false); setTimelineLavorazione(null); clearTimeline() }}
         lavorazione={timelineLavorazione}
@@ -901,9 +896,9 @@ export default function Home() {
         onUpdateEntry={updateTimelineEntry}
         onUploadPhoto={uploadTimelinePhoto}
         teamMembers={teamMembers}
-      />
+      />}
 
-      <CallTimelineModal
+      {isCallTimelineOpen && <CallTimelineModal
         isOpen={isCallTimelineOpen}
         onClose={() => { setIsCallTimelineOpen(false); setCallTimelineCall(null); clearCallTimeline() }}
         call={callTimelineCall}
@@ -914,17 +909,17 @@ export default function Home() {
         onUpdateEntry={updateCallTimelineEntry}
         onUploadPhoto={uploadCallTimelinePhoto}
         teamMembers={teamMembers}
-      />
+      />}
 
-      <LavorazioneReportModal
+      {isReportModalOpen && <LavorazioneReportModal
         isOpen={isReportModalOpen}
         onClose={() => { setIsReportModalOpen(false); setReportLavorazione(null) }}
         lavorazione={reportLavorazione}
         entries={timelineEntries}
         userProfile={userProfile}
-      />
+      />}
 
-      <VisitModal
+      {isVisitModalOpen && <VisitModal
         isOpen={isVisitModalOpen}
         onClose={() => { setIsVisitModalOpen(false); setEditingVisit(null) }}
         onSave={async (visitData) => {
@@ -974,51 +969,51 @@ export default function Home() {
         }}
         editVisit={editingVisit}
         teamMembers={teamMembers}
-      />
-      <VisitsListModal isOpen={isVisitsListModalOpen} onClose={() => setIsVisitsListModalOpen(false)}
+      />}
+      {isVisitsListModalOpen && <VisitsListModal isOpen={isVisitsListModalOpen} onClose={() => setIsVisitsListModalOpen(false)}
         visits={visits} onDelete={deleteVisit} onStatusChange={updateVisitStatus}
         onEdit={(visit) => { setEditingVisit(visit); setIsVisitModalOpen(true); setIsVisitsListModalOpen(false) }}
-        onNew={() => { setEditingVisit(null); setIsVisitModalOpen(true) }} />
+        onNew={() => { setEditingVisit(null); setIsVisitModalOpen(true) }} />}
 
-      <TaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)}
+      {isTaskModalOpen && <TaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)}
         onSave={async (task) => { await addTask(task) }} editTask={null}
         availableItems={availableRelationItems} onAddRelation={addRelation}
-        onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />
-      <TasksListModal isOpen={isTasksListModalOpen} onClose={() => setIsTasksListModalOpen(false)}
+        onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />}
+      {isTasksListModalOpen && <TasksListModal isOpen={isTasksListModalOpen} onClose={() => setIsTasksListModalOpen(false)}
         tasks={tasks} onDelete={deleteTask} onToggleComplete={toggleComplete}
-        onUpdate={updateTask} onAdd={async (task) => { await addTask(task) }} />
+        onUpdate={updateTask} onAdd={async (task) => { await addTask(task) }} />}
 
-      <NoteModal isOpen={isNoteModalOpen}
+      {isNoteModalOpen && <NoteModal isOpen={isNoteModalOpen}
         onClose={() => { setIsNoteModalOpen(false); setEditingNote(null) }}
         onSave={(noteData) => { if (editingNote) { updateNote(editingNote.id, noteData) } else { addNote(noteData) } }}
         editNote={editingNote} availableItems={availableRelationItems}
-        onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />
-      <NotesListModal isOpen={isNotesListModalOpen} onClose={() => setIsNotesListModalOpen(false)}
+        onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />}
+      {isNotesListModalOpen && <NotesListModal isOpen={isNotesListModalOpen} onClose={() => setIsNotesListModalOpen(false)}
         notes={notes} onDelete={deleteNote} onUpdate={updateNote} onTogglePin={togglePin}
         onEdit={(note) => { setEditingNote(note); setIsNoteModalOpen(true) }}
-        onAdd={() => { setEditingNote(null); setIsNoteModalOpen(true) }} />
+        onAdd={() => { setEditingNote(null); setIsNoteModalOpen(true) }} />}
 
-      <EventModal isOpen={isEventModalOpen}
+      {isEventModalOpen && <EventModal isOpen={isEventModalOpen}
         onClose={() => { setIsEventModalOpen(false); setEditingEvent(null) }}
         onSave={(eventData) => { if (editingEvent) { updateEvent(editingEvent.id, eventData) } else { addEvent(eventData) } }}
         editEvent={editingEvent} availableItems={availableRelationItems}
-        onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />
+        onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />}
 
-      <CalendarView isOpen={isCalendarViewOpen} onClose={() => setIsCalendarViewOpen(false)}
+      {isCalendarViewOpen && <CalendarView isOpen={isCalendarViewOpen} onClose={() => setIsCalendarViewOpen(false)}
         events={events} tasks={tasks} onDelete={deleteEvent}
         onEdit={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
-        onAdd={() => { setEditingEvent(null); setIsEventModalOpen(true) }} />
+        onAdd={() => { setEditingEvent(null); setIsEventModalOpen(true) }} />}
 
-      <ClientModal isOpen={isClientModalOpen}
+      {isClientModalOpen && <ClientModal isOpen={isClientModalOpen}
         onClose={() => { setIsClientModalOpen(false); setEditingClient(null) }}
         onSave={async (data) => { if (editingClient) { await updateClient(editingClient.id, data) } else { await addClient(data) } }}
-        editingClient={editingClient} />
-      <ClientsListModal isOpen={isClientsListModalOpen} onClose={() => setIsClientsListModalOpen(false)}
+        editingClient={editingClient} />}
+      {isClientsListModalOpen && <ClientsListModal isOpen={isClientsListModalOpen} onClose={() => setIsClientsListModalOpen(false)}
         clients={clients} onDelete={deleteClient} onToggleFavorite={toggleClientFavorite}
         onAdd={() => { setEditingClient(null); setIsClientModalOpen(true) }}
         onEdit={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientsListModalOpen(false) }}
-        onSelectClient={(client) => { setDetailClient(client); setIsClientDetailOpen(true) }} />
-      <ClientDetailModal
+        onSelectClient={(client) => { setDetailClient(client); setIsClientDetailOpen(true) }} />}
+      {isClientDetailOpen && <ClientDetailModal
         isOpen={isClientDetailOpen}
         onClose={() => { setIsClientDetailOpen(false); setDetailClient(null) }}
         client={detailClient}
@@ -1035,9 +1030,9 @@ export default function Home() {
           setEditingLavorazione({ client_id: clientData.client_id, title: `Lavorazione: ${clientData.client_name}`, address: clientData.address, city: clientData.city, zip_code: clientData.zip_code, province: clientData.province, status: 'da_fare', _prefilled: true } as any)
           setIsLavorazioneModalOpen(true)
         }}
-      />
+      />}
 
-      <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}
+      {isSearchModalOpen && <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}
         calls={calls} lavorazioni={lavorazioni} tasks={tasks} notes={notes} events={events} clients={clients} visits={visits}
         onOpenCall={(call) => { setEditingCall(call); setIsCallModalOpen(true) }}
         onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true) }}
@@ -1045,26 +1040,26 @@ export default function Home() {
         onOpenNote={(note) => { setEditingNote(note); setIsNoteModalOpen(true) }}
         onOpenEvent={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
         onOpenClient={(client) => { setEditingClient(client); setIsClientModalOpen(true) }}
-        onOpenVisit={() => setIsVisitsListModalOpen(true)} />
+        onOpenVisit={() => setIsVisitsListModalOpen(true)} />}
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={() => setIsAuthModalOpen(false)} />
+      {isAuthModalOpen && <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => setIsAuthModalOpen(false)} />}
 
-      <PreventivoModal
+      {isPreventivoModalOpen && <PreventivoModal
         isOpen={isPreventivoModalOpen}
         onClose={() => setIsPreventivoModalOpen(false)}
         clients={clients}
         lavorazioni={lavorazioni}
-      />
+      />}
 
       {/* ═══ WAREHOUSE / ORDERS / SUPPLIERS MODALS ═══ */}
-      <SupplierModal
+      {isSupplierModalOpen && <SupplierModal
         isOpen={isSupplierModalOpen}
         onClose={() => { setIsSupplierModalOpen(false); setEditingSupplier(null) }}
         onSave={async (data) => { if (editingSupplier) { await updateSupplier(editingSupplier.id, data) } else { await addSupplier(data) } }}
         editingSupplier={editingSupplier}
-      />
-      <SuppliersListModal
+      />}
+      {isSuppliersListModalOpen && <SuppliersListModal
         isOpen={isSuppliersListModalOpen}
         onClose={() => setIsSuppliersListModalOpen(false)}
         suppliers={suppliers}
@@ -1072,15 +1067,15 @@ export default function Home() {
         onEdit={(supplier) => { setEditingSupplier(supplier); setIsSupplierModalOpen(true); setIsSuppliersListModalOpen(false) }}
         onDelete={deleteSupplier}
         onToggleFavorite={toggleSupplierFavorite}
-      />
-      <ProductModal
+      />}
+      {isProductModalOpen && <ProductModal
         isOpen={isProductModalOpen}
         onClose={() => { setIsProductModalOpen(false); setEditingProduct(null) }}
         onSave={async (data) => { if (editingProduct) { await updateProduct(editingProduct.id, data) } else { await addProduct(data) } }}
         editingProduct={editingProduct}
         suppliers={suppliers}
-      />
-      <WarehouseListModal
+      />}
+      {isWarehouseListModalOpen && <WarehouseListModal
         isOpen={isWarehouseListModalOpen}
         onClose={() => setIsWarehouseListModalOpen(false)}
         products={products}
@@ -1091,8 +1086,8 @@ export default function Home() {
         onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
         onFindByBarcode={findByBarcode}
         onLoadMovements={loadMovements}
-      />
-      <OrderModal
+      />}
+      {isOrderModalOpen && <OrderModal
         isOpen={isOrderModalOpen}
         onClose={() => { setIsOrderModalOpen(false); setEditingOrder(null); setOrderItems([]) }}
         onSave={async (data) => {
@@ -1120,8 +1115,8 @@ export default function Home() {
         orderItems={orderItems}
         suppliers={suppliers}
         products={products}
-      />
-      <OrdersListModal
+      />}
+      {isOrdersListModalOpen && <OrdersListModal
         isOpen={isOrdersListModalOpen}
         onClose={() => setIsOrdersListModalOpen(false)}
         orders={orders}
@@ -1140,12 +1135,12 @@ export default function Home() {
           const receivedItems = items.map(i => ({ itemId: i.id, quantityReceived: i.quantity_ordered }))
           await receiveOrder(orderId, receivedItems)
         }}
-      />
-      <LabelPrinterModal
+      />}
+      {isLabelPrinterOpen && <LabelPrinterModal
         isOpen={isLabelPrinterOpen}
         onClose={() => { setIsLabelPrinterOpen(false); setLabelProduct(null) }}
         product={labelProduct}
-      />
+      />}
     </div>
   )
 }

@@ -31,7 +31,6 @@ const statusLabels = {
 }
 
 export default function VisitsListModal({ isOpen, onClose, visits, onDelete, onStatusChange, onEdit, onNew }: VisitsListModalProps) {
-  console.log('🔍 VisitsListModal - onEdit presente:', !!onEdit, 'onNew presente:', !!onNew)
   const [selectedFilter, setSelectedFilter] = useState<'all' | Visit['status']>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
