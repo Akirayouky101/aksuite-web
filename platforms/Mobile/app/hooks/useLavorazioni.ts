@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { useAuth } from './useAuth'
 
 export interface Lavorazione {
   id: string
@@ -28,48 +28,30 @@ export interface Lavorazione {
 
 export function useLavorazioni() {
   const [lavorazioni, setLavorazioni] = useState<Lavorazione[]>([])
-  const [user, setUser] = useState<User | null>(null)
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadLavorazioni(session.user.id)
-      } else {
-        setLoading(false)
+    if (!user) { setLavorazioni([]); setLoading(false); return }
+    let mounted = true
+    const loadLavorazioni = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('lavorazioni')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('scheduled_date', { ascending: true })
+        if (error) throw error
+        if (mounted) setLavorazioni(data || [])
+      } catch (error) {
+        console.error('Error loading lavorazioni:', error)
+      } finally {
+        if (mounted) setLoading(false)
       }
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadLavorazioni(session.user.id)
-      } else {
-        setLavorazioni([])
-        setLoading(false)
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const loadLavorazioni = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('lavorazioni')
-        .select('*')
-        .eq('user_id', userId)
-        .order('scheduled_date', { ascending: true })
-
-      if (error) throw error
-      setLavorazioni(data || [])
-    } catch (error) {
-      console.error('Error loading lavorazioni:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+    loadLavorazioni()
+    return () => { mounted = false }
+  }, [user?.id])
 
   const addLavorazione = async (lavorazioneData: Omit<Lavorazione, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) throw new Error('User not authenticated')

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { useAuth } from './useAuth'
 
 export interface Call {
   id: string
@@ -28,50 +28,30 @@ export interface Call {
 
 export function useCalls() {
   const [calls, setCalls] = useState<Call[]>([])
-  const [user, setUser] = useState<User | null>(null)
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadCalls(session.user.id)
-      } else {
-        setLoading(false)
+    if (!user) { setCalls([]); setLoading(false); return }
+    let mounted = true
+    const loadCalls = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('calls')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('call_date', { ascending: false })
+        if (error) throw error
+        if (mounted) setCalls(data || [])
+      } catch (error) {
+        console.error('Error loading calls:', error)
+      } finally {
+        if (mounted) setLoading(false)
       }
-    })
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadCalls(session.user.id)
-      } else {
-        setCalls([])
-        setLoading(false)
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const loadCalls = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('calls')
-        .select('*')
-        .eq('user_id', userId)
-        .order('call_date', { ascending: false })
-
-      if (error) throw error
-      setCalls(data || [])
-    } catch (error) {
-      console.error('Error loading calls:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+    loadCalls()
+    return () => { mounted = false }
+  }, [user?.id])
 
   const addCall = async (callData: Omit<Call, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) throw new Error('User not authenticated')

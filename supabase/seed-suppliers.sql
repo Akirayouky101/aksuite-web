@@ -71,5 +71,10 @@ BEGIN
   VALUES (uid, 'RS Components', 'RS', 'Componentistica', NULL, NULL, NULL, 'https://it.rs-online.com', NULL, NULL, NULL, NULL, NULL, 'Carta/Bonifico', 'Distributore componenti elettronici, automazione industriale, utensili, strumentazione.', false)
   ON CONFLICT DO NOTHING;
 
-  RAISE NOTICE 'Inseriti 10 fornitori pre-caricati per utente %', uid;
+  -- ═══ ELETTROGRUPPO ZEROUNO - Materiale Elettrico ═══
+  INSERT INTO suppliers (user_id, name, code, category, contact_name, email, phone, website, address, city, zip_code, province, vat_number, payment_terms, notes, is_favorite)
+  VALUES (uid, 'Elettrogruppo ZeroUno', 'EGZEROUNO', 'Materiale Elettrico', NULL, NULL, '+39 011 8154011', 'https://www.egzerouno.com', 'Strada San Mauro 151', 'Torino', '10156', 'TO', NULL, 'Bonifico 30gg', 'Distributore materiale elettrico, automazione, climatizzazione, sicurezza. Parte del gruppo IDG 01. Filiali a Torino, Cirie, Rivarolo Canavese, Moncalieri, Burolo e altre sedi in Piemonte.', true)
+  ON CONFLICT DO NOTHING;
+
+  RAISE NOTICE 'Inseriti 11 fornitori pre-caricati per utente %', uid;
 END $$;

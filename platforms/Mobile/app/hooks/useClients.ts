@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { useAuth } from './useAuth'
 
 export interface Client {
   id: string
@@ -28,48 +28,29 @@ export interface Client {
 export function useClients() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<User | null>(null)
+  const { user } = useAuth()
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchClients(session.user.id)
-      } else {
-        setLoading(false)
+    if (!user) { setClients([]); setLoading(false); return }
+    let mounted = true
+    const fetchClients = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
+        if (error) throw error
+        if (mounted) setClients(data || [])
+      } catch (error) {
+        console.error('Error fetching clients:', error)
+      } finally {
+        if (mounted) setLoading(false)
       }
-    })
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchClients(session.user.id)
-      } else {
-        setClients([])
-        setLoading(false)
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const fetchClients = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name', { ascending: true })
-      if (error) throw error
-      setClients(data || [])
-    } catch (error) {
-      console.error('Error fetching clients:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+    fetchClients()
+    return () => { mounted = false }
+  }, [user?.id])
 
   const addClient = async (clientData: Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) return null

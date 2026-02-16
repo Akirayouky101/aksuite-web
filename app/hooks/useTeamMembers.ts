@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { useAuth } from './useAuth'
 
 export interface TeamMember {
   id: string
@@ -14,48 +14,30 @@ export interface TeamMember {
 
 export function useTeamMembers() {
   const [members, setMembers] = useState<TeamMember[]>([])
-  const [user, setUser] = useState<User | null>(null)
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadMembers(session.user.id)
-      } else {
-        setLoading(false)
+    if (!user) { setMembers([]); setLoading(false); return }
+    let mounted = true
+    const loadMembers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('team_members')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
+        if (error) throw error
+        if (mounted) setMembers(data || [])
+      } catch (error) {
+        console.error('Error loading team members:', error)
+      } finally {
+        if (mounted) setLoading(false)
       }
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadMembers(session.user.id)
-      } else {
-        setMembers([])
-        setLoading(false)
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const loadMembers = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('team_members')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name', { ascending: true })
-
-      if (error) throw error
-      setMembers(data || [])
-    } catch (error) {
-      console.error('Error loading team members:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+    loadMembers()
+    return () => { mounted = false }
+  }, [user?.id])
 
   const addMember = async (name: string, role: string = '') => {
     if (!user) throw new Error('User not authenticated')

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export type EntityType = 'password' | 'call' | 'task' | 'note' | 'event' | 'transaction' | 'visit'
 export type RelationType = 'related' | 'depends_on' | 'blocks' | 'implements' | 'references'
@@ -30,23 +31,15 @@ export interface RelatedItem {
 
 export function useRelations() {
   const [relations, setRelations] = useState<ItemRelation[]>([])
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkUser()
     loadRelations()
-  }, [])
-
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
-  }
+  }, [user?.id])
 
   const loadRelations = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
       if (user) {
         const { data, error } = await supabase
           .from('item_relations')

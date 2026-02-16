@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface Product {
   id: string
@@ -49,19 +50,7 @@ export function useWarehouse() {
   const [products, setProducts] = useState<Product[]>([])
   const [movements, setMovements] = useState<StockMovement[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
-    }
-    getUser()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+  const { user } = useAuth()
 
   useEffect(() => {
     if (!user) { setProducts([]); setMovements([]); setLoading(false); return }
@@ -86,7 +75,7 @@ export function useWarehouse() {
         () => { if (mounted) fetchProducts() }
       ).subscribe()
     return () => { mounted = false; supabase.removeChannel(channel) }
-  }, [user])
+  }, [user?.id])
 
   const addProduct = async (data: Partial<Product>) => {
     if (!user) return null

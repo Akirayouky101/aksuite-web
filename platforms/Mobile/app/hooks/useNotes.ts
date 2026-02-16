@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface Note {
   id: string
@@ -18,23 +19,15 @@ export interface Note {
 
 export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([])
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkUser()
     loadNotes()
-  }, [])
-
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
-  }
+  }, [user?.id])
 
   const loadNotes = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
       if (user) {
         // Load from Supabase
         const { data, error } = await supabase

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 interface Subtask {
   id: string
@@ -31,31 +32,28 @@ export interface Task {
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    loadTasks()
-  }, [])
+    if (user) {
+      setUserId(user.id)
+      loadTasksFromSupabase(user.id)
+    } else {
+      const tempUserId = localStorage.getItem('temp_user_id') || crypto.randomUUID()
+      localStorage.setItem('temp_user_id', tempUserId)
+      setUserId(tempUserId)
+      loadLocalTasks(tempUserId)
+    }
+  }, [user?.id])
 
-  const loadTasks = async () => {
+  const loadTasksFromSupabase = async (uid: string) => {
     try {
       setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        const tempUserId = localStorage.getItem('temp_user_id') || crypto.randomUUID()
-        localStorage.setItem('temp_user_id', tempUserId)
-        setUserId(tempUserId)
-        loadLocalTasks(tempUserId)
-        return
-      }
-
-      setUserId(user.id)
-
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', uid)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -78,7 +76,6 @@ export function useTasks() {
         created_at: t.created_at,
         updated_at: t.updated_at
       }))
-
       setTasks(formattedTasks)
     } catch (error) {
       console.error('Error loading tasks:', error)
@@ -263,6 +260,6 @@ export function useTasks() {
     updateTask,
     toggleComplete,
     deleteTask,
-    refreshTasks: loadTasks
+    refreshTasks: () => user ? loadTasksFromSupabase(user.id) : Promise.resolve()
   }
 }

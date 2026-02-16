@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface Supplier {
   id: string
@@ -32,19 +33,7 @@ export interface Supplier {
 export function useSuppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
-    }
-    getUser()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+  const { user } = useAuth()
 
   useEffect(() => {
     if (!user) { setSuppliers([]); setLoading(false); return }
@@ -69,7 +58,7 @@ export function useSuppliers() {
         () => { if (mounted) fetchSuppliers() }
       ).subscribe()
     return () => { mounted = false; supabase.removeChannel(channel) }
-  }, [user])
+  }, [user?.id])
 
   const addSupplier = async (data: Partial<Supplier>) => {
     if (!user) return null

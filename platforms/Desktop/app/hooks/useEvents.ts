@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface Event {
   id: string
@@ -22,23 +23,15 @@ export interface Event {
 
 export function useEvents() {
   const [events, setEvents] = useState<Event[]>([])
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkUser()
     loadEvents()
-  }, [])
-
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
-  }
+  }, [user?.id])
 
   const loadEvents = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
       if (user) {
         // Load from Supabase
         const { data, error } = await supabase

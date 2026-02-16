@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase, encryptPassword, decryptPassword } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface Password {
   id: string
@@ -17,20 +18,7 @@ export interface Password {
 export function usePasswords() {
   const [passwords, setPasswords] = useState<Password[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-
-  // Check auth state
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+  const { user } = useAuth()
 
   // Load passwords from Supabase or localStorage
   useEffect(() => {
@@ -80,14 +68,14 @@ export function usePasswords() {
     }
 
     loadPasswords()
-  }, [user])
+  }, [user?.id])
 
   // Save to localStorage as backup
   useEffect(() => {
     if (!isLoading && !user) {
       localStorage.setItem('ak-passwords', JSON.stringify(passwords))
     }
-  }, [passwords, isLoading, user])
+  }, [passwords, isLoading, user?.id])
 
   const addPassword = async (password: Omit<Password, 'id' | 'createdAt'>) => {
     if (user) {

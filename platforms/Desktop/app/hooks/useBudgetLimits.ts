@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface BudgetLimit {
   id: string
@@ -26,7 +27,7 @@ export function useBudgetLimits() {
   const [limits, setLimits] = useState<BudgetLimit[]>([])
   const [limitsStatus, setLimitsStatus] = useState<BudgetLimitStatus[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
 
   // Load budget limits
   const loadLimits = async () => {
@@ -189,29 +190,11 @@ export function useBudgetLimits() {
     return limitsStatus.filter(l => l.status === 'exceeded')
   }
 
-  // Listen to auth changes
+  // Load on auth change
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadLimits()
-      } else {
-        setLimits([])
-        setLimitsStatus([])
-      }
-    })
-
-    // Initial load
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      if (user) loadLimits()
-      else setIsLoading(false)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
+    if (!user) { setLimits([]); setLimitsStatus([]); setIsLoading(false); return }
+    loadLimits()
+  }, [user?.id])
 
   return {
     limits,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 interface Transaction {
   id: string
@@ -16,52 +17,32 @@ interface Transaction {
 export function useBudget() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-
-  // Check auth state
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+  const { user } = useAuth()
 
   // Load transactions when user changes
   useEffect(() => {
-    if (user) {
-      loadTransactions()
-    } else {
-      setTransactions([])
-      setIsLoading(false)
+    if (!user) { setTransactions([]); setIsLoading(false); return }
+    let mounted = true
+    const loadTransactions = async () => {
+      try {
+        setIsLoading(true)
+        const { data, error } = await supabase
+          .from('budget_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false })
+        if (error) throw error
+        if (mounted) setTransactions(data || [])
+      } catch (error) {
+        console.error('Error loading transactions:', error)
+        if (mounted) setTransactions([])
+      } finally {
+        if (mounted) setIsLoading(false)
+      }
     }
-  }, [user])
-
-  const loadTransactions = async () => {
-    if (!user) return
-
-    setIsLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('budget_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-
-      if (error) throw error
-
-      setTransactions(data || [])
-    } catch (error) {
-      console.error('Error loading transactions:', error)
-      setTransactions([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    loadTransactions()
+    return () => { mounted = false }
+  }, [user?.id])
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) return
@@ -156,6 +137,5 @@ export function useBudget() {
     getStats,
     getTransactionsByDateRange,
     getTransactionsByCategory,
-    loadTransactions
   }
 }

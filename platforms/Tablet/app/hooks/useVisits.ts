@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface Visit {
   id: string
@@ -24,38 +25,29 @@ export interface Visit {
 export function useVisits() {
   const [visits, setVisits] = useState<Visit[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
 
   useEffect(() => {
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
-    if (user) {
-      fetchVisits(user.id)
-    } else {
-      setLoading(false)
+    if (!user) { setVisits([]); setLoading(false); return }
+    let mounted = true
+    const fetchVisits = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('visits')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('visit_date', { ascending: false })
+        if (error) throw error
+        if (mounted) setVisits(data || [])
+      } catch (error) {
+        console.error('Error fetching visits:', error)
+      } finally {
+        if (mounted) setLoading(false)
+      }
     }
-  }
-
-  const fetchVisits = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('visits')
-        .select('*')
-        .eq('user_id', userId)
-        .order('visit_date', { ascending: false })
-
-      if (error) throw error
-      setVisits(data || [])
-    } catch (error) {
-      console.error('Error fetching visits:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+    fetchVisits()
+    return () => { mounted = false }
+  }, [user?.id])
 
   const addVisit = async (visitData: Omit<Visit, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) throw new Error('User not authenticated')

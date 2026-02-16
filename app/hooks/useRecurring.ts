@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface RecurringTransaction {
   id: string
@@ -23,7 +24,7 @@ export interface RecurringTransaction {
 export function useRecurring() {
   const [recurring, setRecurring] = useState<RecurringTransaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
 
   // Load recurring transactions
   const loadRecurring = async () => {
@@ -179,28 +180,11 @@ export function useRecurring() {
     return nextDate.toISOString().split('T')[0]
   }
 
-  // Listen to auth changes
+  // Load on auth change
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadRecurring()
-      } else {
-        setRecurring([])
-      }
-    })
-
-    // Initial load
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      if (user) loadRecurring()
-      else setIsLoading(false)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
+    if (!user) { setRecurring([]); setIsLoading(false); return }
+    loadRecurring()
+  }, [user?.id])
 
   return {
     recurring,
