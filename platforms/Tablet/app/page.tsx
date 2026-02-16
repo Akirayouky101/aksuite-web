@@ -264,7 +264,7 @@ export default function Home() {
     if (consoleGuard) {
       if (!user) { consoleGuard.blockConsole() } else { consoleGuard.unblockConsole() }
     }
-  }, [user, consoleGuard])
+  }, [user?.id, consoleGuard])
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -274,7 +274,7 @@ export default function Home() {
       } else { setUserProfile(null) }
     }
     loadProfile()
-  }, [user])
+  }, [user?.id])
 
   // ═══ Cmd+K Global Search Shortcut ═══
   useEffect(() => {

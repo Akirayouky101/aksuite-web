@@ -1,16 +1,30 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useContext, createContext, ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
+// ═══ AUTH CONTEXT — Single source of truth for auth state ═══
+// Only ONE onAuthStateChange subscription for the entire app.
+
+interface AuthContextValue {
+  user: User | null
+  userId: string | null
+  authLoading: boolean
+}
+
+const AuthContext = createContext<AuthContextValue>({
+  user: null,
+  userId: null,
+  authLoading: true,
+})
+
 /**
- * Centralized auth hook - use this in ALL hooks instead of
- * creating separate onAuthStateChange subscriptions.
- * Stabilizes user reference by comparing user.id (string),
- * preventing infinite re-render loops from object reference changes.
+ * AuthProvider - wrap your app in this (in layout.tsx).
+ * Creates exactly ONE onAuthStateChange subscription.
+ * All hooks that call useAuth() read from this shared context.
  */
-export function useAuth() {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const userIdRef = useRef<string | null>(null)
@@ -23,7 +37,6 @@ export function useAuth() {
         const { data: { session } } = await supabase.auth.getSession()
         if (!mounted) return
         const newUser = session?.user ?? null
-        // Only update state if user.id actually changed
         if (newUser?.id !== userIdRef.current) {
           userIdRef.current = newUser?.id ?? null
           setUser(newUser)
@@ -40,7 +53,6 @@ export function useAuth() {
       if (!mounted) return
       const newUser = session?.user ?? null
       const newId = newUser?.id ?? null
-      // Only trigger re-render if user identity actually changed
       if (newId !== userIdRef.current) {
         userIdRef.current = newId
         setUser(newUser)
@@ -53,5 +65,17 @@ export function useAuth() {
     }
   }, [])
 
-  return { user, userId: userIdRef.current, authLoading: loading }
+  return (
+    <AuthContext.Provider value={{ user, userId: userIdRef.current, authLoading: loading }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+/**
+ * useAuth - reads from the shared AuthContext.
+ * No new subscriptions created. Zero re-render overhead.
+ */
+export function useAuth() {
+  return useContext(AuthContext)
 }
