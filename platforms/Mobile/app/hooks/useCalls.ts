@@ -10,12 +10,17 @@ export interface Call {
   company: string
   phone: string
   email: string
+  address: string
+  city: string
+  zip_code: string
+  province: string
+  assigned_to: string
   call_type: string
   priority: string
   notes: string
   follow_up: boolean
   follow_up_date: string | null
-  status: 'pending' | 'completed' | 'cancelled'
+  status: 'pending' | 'in_corso' | 'completed' | 'cancelled'
   call_date: string
   user_id: string
   created_at: string
@@ -80,7 +85,9 @@ export function useCalls() {
     if (error) throw error
     if (data) {
       setCalls(prev => [data, ...prev])
+      return data
     }
+    return null
   }
 
   const deleteCall = async (id: string) => {
@@ -105,12 +112,29 @@ export function useCalls() {
     ))
   }
 
+  const updateCall = async (id: string, updates: Partial<Omit<Call, 'id' | 'user_id' | 'created_at'>>) => {
+    const { data, error } = await supabase
+      .from('calls')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    if (data) {
+      setCalls(prev => prev.map(call => 
+        call.id === id ? data : call
+      ))
+    }
+  }
+
   return {
     calls,
     user,
     loading,
     addCall,
     deleteCall,
-    updateCallStatus
+    updateCallStatus,
+    updateCall
   }
 }

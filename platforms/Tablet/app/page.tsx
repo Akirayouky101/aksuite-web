@@ -1,50 +1,71 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Plus, Sparkles, Zap, Lock, Skull, LogIn, LogOut, User, Phone, LayoutDashboard, FileText, Calendar } from 'lucide-react'
-import PasswordModal from './components/PasswordModal'
-import PasswordMenuModal from './components/PasswordMenuModal'
-import PasswordListModal from './components/PasswordListModal'
-import BudgetModal from './components/BudgetModal'
-import BudgetMenuModal from './components/BudgetMenuModal'
-import BudgetViewModal from './components/BudgetViewModal'
-import RecurringModal from './components/RecurringModal'
-import RecurringListModal from './components/RecurringListModal'
-import BudgetLimitModal from './components/BudgetLimitModal'
-import BudgetLimitsViewModal from './components/BudgetLimitsViewModal'
-import CallModal from './components/CallModal'
-import CallMenuModal from './components/CallMenuModal'
-import CallsListModal from './components/CallsListModal'
-import TaskModal from './components/TaskModal'
-import TasksListModal from './components/TasksListModal'
-import NoteModal from './components/NoteModal'
-import NotesListModal from './components/NotesListModal'
-import EventModal from './components/EventModal'
-import CalendarView from './components/CalendarView'
-import UnifiedDashboard from './components/UnifiedDashboard'
-import AuthModal from './components/AuthModal'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
+import {
+  Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
+  DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
+  TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
+  Search, Bell, Settings, MapPin, FileText, Wrench
+} from 'lucide-react'
+
+// ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
+const PasswordModal = dynamic(() => import('./components/PasswordModal'), { ssr: false })
+const PasswordMenuModal = dynamic(() => import('./components/PasswordMenuModal'), { ssr: false })
+const PasswordListModal = dynamic(() => import('./components/PasswordListModal'), { ssr: false })
+const BudgetModal = dynamic(() => import('./components/BudgetModal'), { ssr: false })
+const BudgetMenuModal = dynamic(() => import('./components/BudgetMenuModal'), { ssr: false })
+const BudgetViewModal = dynamic(() => import('./components/BudgetViewModal'), { ssr: false })
+const RecurringModal = dynamic(() => import('./components/RecurringModal'), { ssr: false })
+const RecurringListModal = dynamic(() => import('./components/RecurringListModal'), { ssr: false })
+const BudgetLimitModal = dynamic(() => import('./components/BudgetLimitModal'), { ssr: false })
+const BudgetLimitsViewModal = dynamic(() => import('./components/BudgetLimitsViewModal'), { ssr: false })
+const CallModal = dynamic(() => import('./components/CallModal'), { ssr: false })
+const CallMenuModal = dynamic(() => import('./components/CallMenuModal'), { ssr: false })
+const CallsListModal = dynamic(() => import('./components/CallsListModal'), { ssr: false })
+const VisitModal = dynamic(() => import('./components/VisitModal'), { ssr: false })
+const VisitsListModal = dynamic(() => import('./components/VisitsListModal'), { ssr: false })
+const TaskModal = dynamic(() => import('./components/TaskModal'), { ssr: false })
+const TasksListModal = dynamic(() => import('./components/TasksListModal'), { ssr: false })
+const NoteModal = dynamic(() => import('./components/NoteModal'), { ssr: false })
+const NotesListModal = dynamic(() => import('./components/NotesListModal'), { ssr: false })
+const EventModal = dynamic(() => import('./components/EventModal'), { ssr: false })
+const CalendarView = dynamic(() => import('./components/CalendarView'), { ssr: false })
+const LavorazioniListModal = dynamic(() => import('./components/LavorazioniListModal'), { ssr: false })
+const LavorazioneModal = dynamic(() => import('./components/LavorazioneModal'), { ssr: false })
+const LavorazioneTimelineModal = dynamic(() => import('./components/LavorazioneTimelineModal'), { ssr: false })
+const LavorazioneReportModal = dynamic(() => import('./components/LavorazioneReportModal'), { ssr: false })
+const CallTimelineModal = dynamic(() => import('./components/CallTimelineModal'), { ssr: false })
+const ClientModal = dynamic(() => import('./components/ClientModal'), { ssr: false })
+const ClientsListModal = dynamic(() => import('./components/ClientsListModal'), { ssr: false })
+const ClientDetailModal = dynamic(() => import('./components/ClientDetailModal'), { ssr: false })
+const PreventivoModal = dynamic(() => import('./components/PreventivoModal'), { ssr: false })
+const SearchModal = dynamic(() => import('./components/SearchModal'), { ssr: false })
+const AuthModal = dynamic(() => import('./components/AuthModal'), { ssr: false })
+
+// ═══ NON-MODAL COMPONENTS (loaded normally) ═══
+import TodayDashboard from './components/TodayDashboard'
+import NotificationBar from './components/NotificationBar'
 import { usePasswords } from './hooks/usePasswords'
 import { useBudget } from './hooks/useBudget'
 import { useRecurring } from './hooks/useRecurring'
 import { useBudgetLimits } from './hooks/useBudgetLimits'
 import { useCalls } from './hooks/useCalls'
+import { useVisits } from './hooks/useVisits'
 import { useTasks } from './hooks/useTasks'
 import { useNotes } from './hooks/useNotes'
 import { useEvents } from './hooks/useEvents'
+import { useRelations } from './hooks/useRelations'
+import { useTeamMembers } from './hooks/useTeamMembers'
+import { useLavorazioni } from './hooks/useLavorazioni'
+import { useLavorazioneTimeline } from './hooks/useLavorazioneTimeline'
+import { useCallTimeline } from './hooks/useCallTimeline'
+import { useClients } from './hooks/useClients'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
-interface AppCard {
-  id: string
-  title: string
-  description: string
-  icon: any
-  gradient: string
-}
-
 export default function Home() {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
+  // ═══ STATE ═══
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isListModalOpen, setIsListModalOpen] = useState(false)
@@ -58,815 +79,952 @@ export default function Home() {
   const [isCallMenuModalOpen, setIsCallMenuModalOpen] = useState(false)
   const [isCallModalOpen, setIsCallModalOpen] = useState(false)
   const [isCallsListModalOpen, setIsCallsListModalOpen] = useState(false)
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false)
+  const [isVisitsListModalOpen, setIsVisitsListModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isTasksListModalOpen, setIsTasksListModalOpen] = useState(false)
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
   const [isNotesListModalOpen, setIsNotesListModalOpen] = useState(false)
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [isCalendarViewOpen, setIsCalendarViewOpen] = useState(false)
-  const [isDashboardOpen, setIsDashboardOpen] = useState(false)
+  const [isLavorazioniListModalOpen, setIsLavorazioniListModalOpen] = useState(false)
+  const [isLavorazioneModalOpen, setIsLavorazioneModalOpen] = useState(false)
+  const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false)
+  const [timelineLavorazione, setTimelineLavorazione] = useState<any>(null)
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [reportLavorazione, setReportLavorazione] = useState<any>(null)
+  const [isCallTimelineOpen, setIsCallTimelineOpen] = useState(false)
+  const [callTimelineCall, setCallTimelineCall] = useState<any>(null)
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false)
+  const [isClientsListModalOpen, setIsClientsListModalOpen] = useState(false)
+  const [editingClient, setEditingClient] = useState<any>(null)
+  const [isClientDetailOpen, setIsClientDetailOpen] = useState(false)
+  const [detailClient, setDetailClient] = useState<any>(null)
+  const [isPreventivoModalOpen, setIsPreventivoModalOpen] = useState(false)
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // ═══ BADGE "SEEN" TRACKING ═══
+  const [seenCalls, setSeenCalls] = useState<number | null>(null)
+  const [seenLavorazioni, setSeenLavorazioni] = useState<number | null>(null)
+  const [seenTasks, setSeenTasks] = useState<number | null>(null)
+  const [seenEvents, setSeenEvents] = useState<number | null>(null)
+
   const [userProfile, setUserProfile] = useState<any>(null)
   const [consoleGuard, setConsoleGuard] = useState<any>(null)
   const [editingNote, setEditingNote] = useState<any>(null)
   const [editingEvent, setEditingEvent] = useState<any>(null)
+  const [editingCall, setEditingCall] = useState<any>(null)
+  const [editingVisit, setEditingVisit] = useState<any>(null)
+  const [editingLavorazione, setEditingLavorazione] = useState<any>(null)
+
+  // ═══ HOOKS ═══
   const { passwords, addPassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
   const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
-  const { calls, addCall, deleteCall, updateCallStatus } = useCalls()
+  const { calls, addCall, deleteCall, updateCallStatus, updateCall } = useCalls()
+  const { visits, addVisit, deleteVisit, updateVisitStatus, updateVisit } = useVisits()
   const { tasks, addTask, updateTask, deleteTask, toggleComplete } = useTasks()
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
   const { events, addEvent, updateEvent, deleteEvent } = useEvents()
+  const { addRelation, removeRelation, getRelatedItems } = useRelations()
+  const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
+  const { lavorazioni, addLavorazione, updateLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
+  const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, updateEntry: updateTimelineEntry, uploadPhoto: uploadTimelinePhoto, clearTimeline } = useLavorazioneTimeline()
+  const { entries: callTimelineEntries, loading: callTimelineLoading, loadTimeline: loadCallTimeline, addEntry: addCallTimelineEntry, deleteEntry: deleteCallTimelineEntry, updateEntry: updateCallTimelineEntry, uploadPhoto: uploadCallTimelinePhoto, clearTimeline: clearCallTimeline } = useCallTimeline()
+  const { clients, addClient, updateClient, deleteClient, toggleFavorite: toggleClientFavorite } = useClients()
 
-  // Initialize console guard once
+  const availableRelationItems = useMemo(() => ({ passwords, calls, visits, tasks, notes, events, transactions }), [passwords, calls, visits, tasks, notes, events, transactions])
+
+  // ═══ SYNC: Lavorazione status → Call status ═══
+  const lavStatusToCallStatus = (lavStatus: string): 'pending' | 'in_corso' | 'completed' | 'cancelled' => {
+    if (lavStatus === 'in_corso') return 'in_corso'
+    if (lavStatus === 'completata') return 'completed'
+    if (lavStatus === 'annullata') return 'cancelled'
+    return 'pending' // da_fare → pending
+  }
+
+  const syncCallStatus = async (lavorazioneId: string, newLavStatus?: string) => {
+    const lav = lavorazioni.find(l => l.id === lavorazioneId)
+    if (!lav?.call_id) return
+    const status = newLavStatus || lav.status
+    const callStatus = lavStatusToCallStatus(status)
+    try { await updateCallStatus(lav.call_id, callStatus) } catch (e) { console.error('Sync call status error:', e) }
+  }
+
+  const statusLabelMap: Record<string, string> = { da_fare: 'Da Fare', in_corso: 'In Corso', completata: 'Completata', annullata: 'Annullata' }
+
+  const handleToggleLavorazioneStatus = async (id: string) => {
+    const lav = lavorazioni.find(l => l.id === id)
+    if (!lav) return
+    const nextStatus: Record<string, string> = { da_fare: 'in_corso', in_corso: 'completata', completata: 'da_fare', annullata: 'da_fare' }
+    const newStatus = nextStatus[lav.status] || 'da_fare'
+    await toggleLavorazioneStatus(id)
+    if (lav.call_id) await syncCallStatus(id, newStatus)
+    // Auto-timeline entry for status change
+    try {
+      await addTimelineEntry({
+        lavorazione_id: id,
+        description: `Stato cambiato: ${statusLabelMap[lav.status] || lav.status} \u2192 ${statusLabelMap[newStatus] || newStatus}`,
+        event_type: 'nota',
+        created_by_name: ''
+      })
+    } catch (e) { console.error('Auto-timeline status error:', e) }
+  }
+
+  const handleUpdateLavorazione = async (id: string, data: any) => {
+    const lav = lavorazioni.find(l => l.id === id)
+    const oldStatus = lav?.status
+    await updateLavorazione(id, data)
+    if (data.status) await syncCallStatus(id, data.status)
+    // Auto-timeline entry if status changed during edit
+    if (data.status && oldStatus && data.status !== oldStatus) {
+      try {
+        await addTimelineEntry({
+          lavorazione_id: id,
+          description: `Stato aggiornato: ${statusLabelMap[oldStatus] || oldStatus} \u2192 ${statusLabelMap[data.status] || data.status}`,
+          event_type: 'nota',
+          created_by_name: ''
+        })
+      } catch (e) { console.error('Auto-timeline update error:', e) }
+    }
+  }
+
+  // ═══ MEMOIZED COMPUTED VALUES ═══
+  const stats = useMemo(() => getStats(), [transactions])
+  const pendingCalls = useMemo(() => calls.filter(c => c.status === 'pending' || c.status === 'in_corso').length, [calls])
+  const activeTasks = useMemo(() => tasks.filter(t => !t.is_completed).length, [tasks])
+  const todayEvents = useMemo(() => {
+    const today = new Date()
+    return events.filter(e => {
+      const eventDate = new Date(e.start_date)
+      return eventDate.toDateString() === today.toDateString()
+    }).length
+  }, [events])
+
+  const activeLavorazioni = useMemo(() => lavorazioni.filter(l => l.status === 'da_fare' || l.status === 'in_corso').length, [lavorazioni])
+
+  // Badge = nuovi dall'ultima apertura (null = primo caricamento, badge 0)
+  const badgeCalls = seenCalls === null ? 0 : Math.max(0, pendingCalls - seenCalls)
+  const badgeLavorazioni = seenLavorazioni === null ? 0 : Math.max(0, activeLavorazioni - seenLavorazioni)
+  const badgeTasks = seenTasks === null ? 0 : Math.max(0, activeTasks - seenTasks)
+  const badgeEvents = seenEvents === null ? 0 : Math.max(0, todayEvents - seenEvents)
+
+  // ═══ EFFECTS ═══
+
+  // Inizializza badge "seen" al primo caricamento dati (no badge fasulli)
+  useEffect(() => {
+    if (calls.length > 0 && seenCalls === null) setSeenCalls(pendingCalls)
+  }, [calls, pendingCalls, seenCalls])
+  useEffect(() => {
+    if (lavorazioni.length > 0 && seenLavorazioni === null) setSeenLavorazioni(activeLavorazioni)
+  }, [lavorazioni, activeLavorazioni, seenLavorazioni])
+  useEffect(() => {
+    if (tasks.length > 0 && seenTasks === null) setSeenTasks(activeTasks)
+  }, [tasks, activeTasks, seenTasks])
+  useEffect(() => {
+    if (events.length > 0 && seenEvents === null) setSeenEvents(todayEvents)
+  }, [events, todayEvents, seenEvents])
+
   useEffect(() => {
     const guard = initConsoleGuard()
     setConsoleGuard(guard)
   }, [])
 
-  // Manage console blocking based on auth state
   useEffect(() => {
     if (consoleGuard) {
-      if (!user) {
-        // Block console if not logged in
-        consoleGuard.blockConsole()
-      } else {
-        // Unblock console if logged in
-        consoleGuard.unblockConsole()
-      }
+      if (!user) { consoleGuard.blockConsole() } else { consoleGuard.unblockConsole() }
     }
   }, [user, consoleGuard])
 
-  // Load user profile from Supabase
   useEffect(() => {
     const loadProfile = async () => {
       if (user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-        
-        if (!error && data) {
-          setUserProfile(data)
-        }
-      } else {
-        setUserProfile(null)
-      }
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        if (!error && data) setUserProfile(data)
+      } else { setUserProfile(null) }
     }
     loadProfile()
   }, [user])
 
-  const handleSavePassword = (data: any) => {
-    addPassword(data)
-    console.log('💥 PASSWORD SAVED!', data)
-  }
+  // ═══ Cmd+K Global Search Shortcut ═══
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setIsSearchModalOpen(prev => !prev)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
   }
 
-  const apps: AppCard[] = [
-    { 
-      id: 'dashboard', 
-      title: '📊 DASHBOARD UNIFICATA 📊', 
-      description: '🎯 Vista panoramica di tutto il tuo sistema! Password, chiamate, task e budget a colpo d\'occhio! 🚀✨', 
-      icon: LayoutDashboard, 
-      gradient: 'from-purple-600 via-indigo-500 to-blue-400' 
-    },
-    { 
-      id: 'passwords', 
-      title: '⚡ PASSWORD ⚡', 
-      description: `🔥 VAULT ULTRA SEGRETO! Modalità sicurezza massima attivata! Le tue password sono protette dal potere dell'anime! 💀✨ (${passwords.length} password salvate)`, 
-      icon: Skull, 
-      gradient: 'from-red-600 via-orange-500 to-yellow-400' 
-    },
-    { 
-      id: 'budget', 
-      title: '💰 BILANCIO FAMILIARE 💰', 
-      description: '💸 Gestisci entrate e uscite della famiglia! Tieni traccia di ogni transazione e monitora il tuo budget mensile! 📊✨', 
-      icon: Zap, 
-      gradient: 'from-green-600 via-emerald-500 to-teal-400' 
-    },
-    {
-      id: 'calls',
-      title: '📞 GESTIONE CHIAMATE 📞',
-      description: `🎯 Registra e gestisci le chiamate clienti! Tieni traccia dei contatti, richieste e follow-up in modo professionale! 💼✨ (${calls.length} chiamate registrate)`,
-      icon: Phone,
-      gradient: 'from-blue-600 via-cyan-500 to-purple-400'
-    },
-    {
-      id: 'tasks',
-      title: '✓ TASK MANAGER ✓',
-      description: `🚀 Organizza le tue attività! Crea task, sottotask, imposta scadenze e tieni tutto sotto controllo! ✨📋 (${tasks.length} task attivi)`,
-      icon: Sparkles,
-      gradient: 'from-purple-600 via-pink-500 to-cyan-400'
-    },
-    {
-      id: 'notes',
-      title: '📝 NOTE MANAGER 📝',
-      description: `✨ Le tue note, sempre a portata di mano! Organizza idee, promemoria e appunti con colori, tag e cartelle! 🎨📌 (${notes.length} note salvate)`,
-      icon: FileText,
-      gradient: 'from-yellow-600 via-orange-500 to-pink-400'
-    },
-    {
-      id: 'calendar',
-      title: '📅 CALENDARIO EVENTI 📅',
-      description: `🗓️ Gestisci i tuoi eventi! Calendario mensile, promemoria, eventi ricorrenti e tanto altro! ⏰✨ (${events.length} eventi registrati)`,
-      icon: Calendar,
-      gradient: 'from-indigo-600 via-blue-500 to-cyan-400'
-    }
-  ]
-
-  // 🔒 BLOCCO TOTALE SE NON AUTENTICATO! 🔒
-  // Show only login screen if user is not authenticated
+  // ═══════════════════════════════════════════
+  // LOGIN SCREEN — Glassmorphism Chiaro
+  // ═══════════════════════════════════════════
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-red-950 to-orange-950 relative overflow-hidden flex items-center justify-center">
-        {/* Dramatic background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,0,0.2),transparent_70%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,69,0,0.1)_2px,transparent_2px),linear-gradient(to_bottom,rgba(255,69,0,0.1)_2px,transparent_2px)] bg-[size:50px_50px]" />
-        </div>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+        {/* Mesh gradient background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/50" />
+        <div className="fixed top-[-200px] left-[-100px] w-[600px] h-[600px] bg-indigo-200/30 rounded-full blur-[120px]" />
+        <div className="fixed bottom-[-150px] right-[-80px] w-[500px] h-[500px] bg-violet-200/25 rounded-full blur-[100px]" />
+        <div className="fixed top-[40%] left-[50%] w-[400px] h-[400px] bg-sky-200/20 rounded-full blur-[80px]" />
 
-        {/* Floating danger symbols */}
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-3xl sm:text-6xl opacity-20"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              rotate: [0, 360],
-              opacity: [0.1, 0.3, 0.1],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          >
-            {['🏴‍☠️', '⚠️', '🔒', '💀', '⚡'][i % 5]}
-          </motion.div>
-        ))}
-
-        {/* Login card */}
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-          className="relative z-10 max-w-2xl w-full mx-4 sm:mx-6"
-        >
-          <div className="bg-gradient-to-br from-red-900/50 via-orange-900/50 to-yellow-900/50 backdrop-blur-xl border-2 sm:border-4 border-yellow-400 rounded-2xl sm:rounded-3xl p-6 sm:p-12 shadow-[0_0_50px_rgba(255,215,0,0.5)]">
-            {/* Danger tape effect */}
-            <div className="absolute top-0 left-0 right-0 h-2 sm:h-4 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-90" />
-            <div className="absolute bottom-0 left-0 right-0 h-2 sm:h-4 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-90" />
-
-            {/* Skull warning */}
-            <motion.div
-              animate={{ 
-                scale: [1, 1.2, 1],
-                rotate: [0, 10, -10, 0] 
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex justify-center mb-4 sm:mb-8"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-red-500 rounded-full blur-2xl opacity-50" />
-                <Skull className="w-16 h-16 sm:w-24 sm:h-24 text-red-500 relative z-10" strokeWidth={2.5} />
+        <div className="relative z-10 w-full max-w-sm">
+          <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-200/60 p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/25">
+                <Star className="w-8 h-8 text-white" />
               </div>
-            </motion.div>
-
-            {/* Warning text */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-center mb-6 sm:mb-10"
-            >
-              <h1 className="text-3xl sm:text-6xl font-black mb-3 sm:mb-6 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent">
-                🔐 ZONA PROTETTA 🔐
-              </h1>
-              <p className="text-xl sm:text-3xl font-bold text-yellow-200 mb-2 sm:mb-4">
-                ⚠️ ACCESSO NEGATO ⚠️
-              </p>
-              <p className="text-sm sm:text-xl text-yellow-100 leading-snug sm:leading-relaxed">
-                Questa console è sotto massima protezione!<br />
-                <span className="text-lg sm:text-2xl font-black text-red-400">VAULT ULTRA SEGRETO</span>
-              </p>
-              <p className="text-sm sm:text-lg text-yellow-200 mt-3 sm:mt-6 font-bold">
-                🔒 Devi eseguire il <span className="text-red-400">LOGIN</span> per procedere! 🔒
-              </p>
-            </motion.div>
-
-            {/* Login button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">AK Suite</h1>
+              <p className="text-slate-400 mt-2 text-sm">La tua suite gestionale premium</p>
+            </div>
+            <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="w-full py-4 sm:py-6 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 text-white text-lg sm:text-2xl font-black rounded-xl sm:rounded-2xl shadow-2xl hover:shadow-[0_0_30px_rgba(255,215,0,0.8)] transition-all"
+              className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 active:scale-[0.98]"
             >
-              <div className="flex items-center justify-center gap-2 sm:gap-3">
-                <LogIn className="w-6 h-6 sm:w-8 sm:h-8" strokeWidth={3} />
-                <span>ENTRA NEL VAULT!</span>
-                <motion.span
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                >
-                  ⚡
-                </motion.span>
-              </div>
-            </motion.button>
-
-            {/* Motivational quote */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-center text-yellow-300 font-bold text-sm sm:text-lg mt-4 sm:mt-8 italic"
-            >
-              "La sicurezza è potere!" 🔐✨
-            </motion.p>
+              <LogIn className="w-5 h-5" />
+              Accedi al pannello
+            </button>
+            <p className="text-center text-xs text-slate-400 mt-6">Crittografia end-to-end</p>
           </div>
-        </motion.div>
-
-        {/* Auth Modal */}
-        <AuthModal
-          isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
-          onSuccess={() => {
-            console.log('🎉 Benvenuto nel vault!')
-            setIsAuthModalOpen(false)
-          }}
-        />
+        </div>
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onSuccess={() => setIsAuthModalOpen(false)} />
       </div>
     )
   }
 
-  // GEOMETRIC THEME (original)
+  // ═══════════════════════════════════════════
+  // NAVIGATION & ACTIONS CONFIG
+  // ═══════════════════════════════════════════
+
+  const navItems = [
+    { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, count: calls.length, badge: badgeCalls },
+    { id: 'lavorazioni', label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni },
+    { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks },
+    { id: 'calendar', label: 'Calendario', icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, count: events.length, badge: badgeEvents },
+    { id: 'budget', label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length },
+    { id: 'passwords', label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length },
+    { id: 'notes', label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length },
+    { id: 'clients', label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length },
+    { id: 'visits', label: 'Visite', icon: MapPin, onClick: () => setIsVisitsListModalOpen(true), count: visits.length },
+  ]
+
+  const quickActions = [
+    { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true) },
+    { label: 'Lavorazione', icon: Wrench, onClick: () => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) } },
+    { label: 'Task', icon: CheckSquare, onClick: () => setIsTaskModalOpen(true) },
+    { label: 'Nota', icon: StickyNote, onClick: () => { setEditingNote(null); setIsNoteModalOpen(true) } },
+    { label: 'Evento', icon: Calendar, onClick: () => { setEditingEvent(null); setIsEventModalOpen(true) } },
+    { label: 'Visita', icon: UserCheck, onClick: () => { setEditingVisit(null); setIsVisitModalOpen(true) } },
+    { label: 'Preventivo', icon: FileText, onClick: () => setIsPreventivoModalOpen(true) },
+    { label: 'Transazione', icon: DollarSign, onClick: () => setIsBudgetModalOpen(true) },
+  ]
+
+  // Stat cards config
+  const statCards = [
+    { label: 'Chiamate', value: calls.length, icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, gradient: 'from-blue-500 to-indigo-600', badgeText: badgeCalls > 0 ? `${badgeCalls} nuove` : null, badgeStyle: 'text-amber-600 bg-amber-50' },
+    { label: 'Task', value: tasks.length, icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, gradient: 'from-amber-500 to-orange-600', badgeText: badgeTasks > 0 ? `${badgeTasks} nuovi` : null, badgeStyle: 'text-blue-600 bg-blue-50' },
+    { label: 'Eventi', value: events.length, icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, gradient: 'from-rose-500 to-pink-600', badgeText: badgeEvents > 0 ? `${badgeEvents} oggi` : null, badgeStyle: 'text-rose-600 bg-rose-50' },
+    { label: 'Bilancio', value: `${stats.balance >= 0 ? '+' : ''}${stats.balance.toFixed(0)}€`, icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), gradient: 'from-emerald-500 to-teal-600', isBalance: true, balancePositive: stats.balance >= 0 },
+  ]
+
+  // ═══════════════════════════════════════════
+  // MAIN APP — Glassmorphism Chiaro
+  // ═══════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 relative overflow-hidden">
-      {/* Geometric background pattern */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(99,102,241,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(99,102,241,0.05)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-      </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* ═══ Mesh Gradient Background ═══ */}
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/50" />
+      <div className="fixed top-[-200px] left-[-100px] w-[600px] h-[600px] bg-indigo-200/30 rounded-full blur-[120px]" />
+      <div className="fixed bottom-[-150px] right-[-80px] w-[500px] h-[500px] bg-violet-200/25 rounded-full blur-[100px]" />
+      <div className="fixed top-[40%] left-[50%] w-[400px] h-[400px] bg-sky-200/20 rounded-full blur-[80px]" />
+      <div className="fixed top-[20%] right-[20%] w-[300px] h-[300px] bg-rose-200/15 rounded-full blur-[80px]" />
 
-      {/* Floating gradient orbs */}
-      <motion.div
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -100, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30 rounded-full blur-3xl"
-      />
-      <motion.div
-        animate={{
-          x: [0, -100, 0],
-          y: [0, 100, 0],
-          scale: [1.2, 1, 1.2],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-br from-cyan-500/30 to-blue-500/30 rounded-full blur-3xl"
-      />
+      <div className="relative z-10 flex h-screen">
+        {/* ═══ SIDEBAR — Glass on Light ═══ */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
+        <aside className={`fixed lg:relative w-[270px] h-screen border-r border-slate-200/60 bg-white/60 backdrop-blur-2xl flex flex-col z-50 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+          {/* Logo */}
+          <div className="p-6 border-b border-slate-200/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                <Star className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-slate-800 font-bold text-lg tracking-tight">AK Suite</h1>
+                <p className="text-slate-400 text-xs">Gestione Premium</p>
+              </div>
+              <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto w-8 h-8 rounded-lg bg-slate-100/70 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-      {/* Main content */}
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="container mx-auto px-4 sm:px-6 pt-8 sm:pt-16 pb-4 sm:pb-8">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-xl blur-md opacity-75" />
-                <div className="relative bg-gradient-to-br from-violet-600 to-fuchsia-600 p-2 sm:p-2.5 rounded-xl">
-                  <Zap className="w-5 h-5 sm:w-7 sm:h-7 text-white" strokeWidth={2.5} />
+          {/* Navigation */}
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <p className="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Menu</p>
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => { item.onClick(); setSidebarOpen(false) }}
+                className="w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-xl text-sm font-medium transition-all text-slate-500 hover:text-slate-700 hover:bg-white/50 active:bg-white/70 border border-transparent hover:border-slate-200/40"
+              >
+                <item.icon className="w-[18px] h-[18px]" />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 ? (
+                  <span className="min-w-[22px] h-[22px] px-1.5 flex items-center justify-center rounded-full bg-indigo-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
+                    {item.badge}
+                  </span>
+                ) : item.count != null ? (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100/60 text-slate-400">{item.count}</span>
+                ) : null}
+              </button>
+            ))}
+
+            <div className="border-t border-slate-200/40 my-4" />
+            <p className="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Crea Nuovo</p>
+            {quickActions.map((action, i) => (
+              <button
+                key={i}
+                onClick={() => { action.onClick(); setSidebarOpen(false) }}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-xs font-medium text-slate-400 hover:text-slate-600 transition-all border border-transparent hover:border-slate-200/40 hover:bg-white/40"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{action.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* User Profile */}
+          <div className="p-4 border-t border-slate-200/50">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/50 transition-all"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                {userProfile?.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-slate-700 text-sm font-medium truncate">{userProfile?.full_name || user.email}</p>
+                <p className="text-slate-400 text-xs">Online</p>
+              </div>
+              <LogOut className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors" />
+            </button>
+          </div>
+        </aside>
+
+        {/* ═══ MAIN CONTENT ═══ */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Header — Glass */}
+          <header className="sticky top-0 z-20 px-4 lg:px-8 py-5 border-b border-slate-200/50 bg-white/40 backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSidebarOpen(true)} className="lg:hidden w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all" title="Menu">
+                  <Menu className="w-5 h-5" />
+                </button>
+                <div>
+                  <h2 className="text-lg sm:text-2xl font-bold text-slate-800 tracking-tight">
+                    Bentornato{userProfile?.full_name ? `, ${userProfile.full_name}` : ''}
+                  </h2>
+                  <p className="text-slate-400 text-xs sm:text-sm mt-0.5 hidden sm:block">Ecco la tua panoramica operativa di oggi.</p>
                 </div>
               </div>
-              <h1 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-white to-violet-200 bg-clip-text text-transparent">
-                AK Suite
-              </h1>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-3">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full"
-              >
-                <Sparkles className="w-4 h-4 text-violet-400" />
-                <span className="text-sm text-violet-200 font-medium">Prossimamente</span>
-              </motion.div>
-
-              {user ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleLogout}
-                  className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-full transition-all"
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button onClick={() => setIsSearchModalOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm active:scale-95 transition-all" title="Cerca (⌘K)">
+                  <Search className="w-[18px] h-[18px]" />
+                </button>
+                <button onClick={() => setIsCalendarViewOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm active:scale-95 transition-all" title="Calendario">
+                  <Calendar className="w-[18px] h-[18px]" />
+                </button>
+                <button
+                  onClick={() => setIsCallModalOpen(true)}
+                  className="w-10 h-10 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 active:scale-95 transition-all flex items-center justify-center gap-1.5"
                 >
-                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
-                  <span className="text-xs sm:text-sm text-red-200 font-medium hidden sm:inline">
-                    {userProfile?.full_name || user.email}
-                  </span>
-                  <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
-                </motion.button>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsAuthModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/50 rounded-full transition-all"
-                >
-                  <LogIn className="w-4 h-4 text-violet-400" />
-                  <span className="text-sm text-violet-200 font-medium">Accedi / Registrati</span>
-                </motion.button>
-              )}
+                  <Plus className="w-4 h-4" /><span className="hidden sm:inline">Nuovo</span>
+                </button>
+              </div>
             </div>
-          </motion.div>
-        </header>
+          </header>
 
-        {/* Hero Section */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="container mx-auto px-4 sm:px-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-center max-w-4xl mx-auto mb-8 sm:mb-16"
-            >
-              <h2 className="text-4xl sm:text-7xl md:text-8xl font-black mb-4 sm:mb-6 leading-tight">
-                <span className="bg-gradient-to-r from-white via-violet-200 to-fuchsia-200 bg-clip-text text-transparent">
-                  Il Tuo Centro
-                </span>
-                <br />
-                <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
-                  Di Comando Digitale
-                </span>
-              </h2>
-              <p className="text-sm sm:text-xl text-slate-300 mb-4 sm:mb-8 max-w-2xl mx-auto">
-                Tutto ciò di cui hai bisogno per gestire la tua vita digitale in un unico posto sicuro e bellissimo
-              </p>
-            </motion.div>
+          {/* Content */}
+          <div className="p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
+            {/* ═══ NOTIFICATION BAR ═══ */}
+            <NotificationBar
+              calls={calls} tasks={tasks} events={events} lavorazioni={lavorazioni}
+              onOpenCalls={() => setIsCallsListModalOpen(true)}
+              onOpenTasks={() => setIsTasksListModalOpen(true)}
+              onOpenCalendar={() => setIsCalendarViewOpen(true)}
+              onOpenLavorazioni={() => setIsLavorazioniListModalOpen(true)}
+            />
 
-            {/* Apps Grid - Empty for now */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="max-w-7xl mx-auto pb-8 sm:pb-20"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                {apps.length === 0 && (
-                  <div className="col-span-full">
-                    <div className="relative group cursor-pointer">
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition" />
-                      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-12 flex flex-col items-center justify-center hover:bg-white/10 transition-all">
-                        <Plus className="w-16 h-16 text-violet-400 mb-4" strokeWidth={1.5} />
-                        <h3 className="text-2xl font-bold text-white mb-2">Add Your First App</h3>
-                        <p className="text-slate-400 text-center">Start building your digital suite</p>
+            {/* ═══ TODAY DASHBOARD ═══ */}
+            <TodayDashboard
+              calls={calls} lavorazioni={lavorazioni} tasks={tasks} events={events} visits={visits}
+              onOpenCall={(call) => { setEditingCall(call); setIsCallModalOpen(true) }}
+              onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true) }}
+              onOpenTasksList={() => setIsTasksListModalOpen(true)}
+              onOpenCalendar={() => setIsCalendarViewOpen(true)}
+              onOpenVisitsList={() => setIsVisitsListModalOpen(true)}
+              onToggleTask={(id) => toggleComplete(id, true)}
+              onToggleLavorazioneStatus={handleToggleLavorazioneStatus}
+            />
+
+            {/* ═══ STAT CARDS ═══ */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              {statCards.map((card) => (
+                <button
+                  key={card.label}
+                  onClick={card.onClick}
+                  className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-4 sm:p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg shadow-slate-200/50`}>
+                      <card.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    {card.badgeText && (
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${card.badgeStyle}`}>
+                        {card.badgeText}
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-xl sm:text-2xl font-bold tabular-nums ${card.isBalance ? (card.balancePositive ? 'text-emerald-600' : 'text-rose-500') : 'text-slate-800'}`}>
+                    {card.value}
+                  </p>
+                  <p className="text-slate-400 text-sm mt-1">{card.label}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* ═══ MAIN GRID: Activities + Quick Actions ═══ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Recent Calls — 2 cols */}
+              <div className="md:col-span-2 bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
+                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
+                    <Phone className="w-4 h-4 text-indigo-500" />
+                    Chiamate Recenti
+                  </h3>
+                  <button onClick={() => setIsCallsListModalOpen(true)} className="text-indigo-500 text-sm hover:text-indigo-700 font-medium transition-colors flex items-center gap-0.5">
+                    Tutte <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-100/80">
+                  {calls.slice(0, 5).map(call => (
+                    <div key={call.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
+                      <div className="w-9 h-9 rounded-lg bg-slate-100/80 flex items-center justify-center shrink-0">
+                        <Phone className="w-4 h-4 text-slate-500" />
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-700 text-sm font-medium truncate">{call.caller_name}</p>
+                        <p className="text-slate-400 text-xs mt-0.5 truncate">{call.company || call.phone || '\u2014'}</p>
+                      </div>
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg shrink-0 ${
+                        call.status === 'completed' ? 'text-emerald-600 bg-emerald-50' :
+                        call.status === 'cancelled' ? 'text-rose-500 bg-rose-50' :
+                        'text-amber-600 bg-amber-50'
+                      }`}>
+                        {call.status === 'completed' ? 'Completata' : call.status === 'cancelled' ? 'Annullata' : 'In attesa'}
+                      </span>
+                    </div>
+                  ))}
+                  {calls.length === 0 && (
+                    <div className="px-6 py-12 text-center">
+                      <Phone className="w-8 h-8 mx-auto mb-2 text-slate-200" />
+                      <p className="text-sm text-slate-400">Nessuna chiamata</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Actions Panel — 1 col */}
+              <div className="md:col-span-2 lg:col-span-1 bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80">
+                  <h3 className="text-slate-800 font-semibold text-sm sm:text-base">Azioni Rapide</h3>
+                </div>
+                <div className="p-3 sm:p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-1 gap-2">
+                  {quickActions.map((action, i) => (
+                    <button
+                      key={i}
+                      onClick={action.onClick}
+                      className="w-full flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3 rounded-xl bg-white/50 border border-slate-200/40 hover:bg-white hover:border-slate-200 hover:shadow-sm active:scale-[0.98] transition-all text-left"
+                    >
+                      <action.icon className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <span className="text-slate-600 text-xs sm:text-sm font-medium truncate">{action.label}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300 ml-auto shrink-0 hidden sm:block" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ═══ DATA PANELS: Tasks + Notes ═══ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              {/* Tasks */}
+              <div className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
+                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
+                    <CheckSquare className="w-4 h-4 text-indigo-500" />
+                    Task Attivi
+                  </h3>
+                  <button onClick={() => setIsTasksListModalOpen(true)} className="text-indigo-500 text-sm hover:text-indigo-700 font-medium transition-colors flex items-center gap-0.5">
+                    Tutti <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-100/80">
+                  {tasks.filter(t => !t.is_completed).slice(0, 4).map(task => (
+                    <div key={task.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
+                      <div className="w-9 h-9 rounded-lg bg-slate-100/80 flex items-center justify-center shrink-0">
+                        <CheckSquare className="w-4 h-4 text-slate-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-700 text-sm font-medium truncate">{task.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {task.due_date && (
+                            <span className="text-[11px] text-slate-400 flex items-center gap-0.5">
+                              <Clock className="w-3 h-3" />
+                              {new Date(task.due_date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
+                            </span>
+                          )}
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            task.priority === 'urgent' ? 'text-red-600 bg-red-50' :
+                            task.priority === 'high' ? 'text-orange-600 bg-orange-50' :
+                            task.priority === 'medium' ? 'text-yellow-600 bg-yellow-50' :
+                            'text-slate-500 bg-slate-100'
+                          }`}>
+                            {task.priority === 'urgent' ? 'Urgente' : task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Media' : 'Bassa'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {tasks.filter(t => !t.is_completed).length === 0 && (
+                    <div className="px-6 py-12 text-center">
+                      <CheckSquare className="w-8 h-8 mx-auto mb-2 text-slate-200" />
+                      <p className="text-sm text-slate-400">Nessun task attivo</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
+                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
+                    <StickyNote className="w-4 h-4 text-indigo-500" />
+                    Note Recenti
+                  </h3>
+                  <button onClick={() => setIsNotesListModalOpen(true)} className="text-indigo-500 text-sm hover:text-indigo-700 font-medium transition-colors flex items-center gap-0.5">
+                    Tutte <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-100/80">
+                  {notes.slice(0, 4).map(note => (
+                    <div key={note.id} onClick={() => { setEditingNote(note); setIsNoteModalOpen(true) }} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
+                      <p className="text-slate-700 text-sm font-medium truncate">{note.title}</p>
+                      <p className="text-slate-400 text-xs mt-1 truncate">{note.content?.replace(/<[^>]*>/g, '').substring(0, 80) || '\u2014'}</p>
+                    </div>
+                  ))}
+                  {notes.length === 0 && (
+                    <div className="px-6 py-12 text-center">
+                      <StickyNote className="w-8 h-8 mx-auto mb-2 text-slate-200" />
+                      <p className="text-sm text-slate-400">Nessuna nota</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ═══ BOTTOM PANELS: Visits + Password/Budget ═══ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Visits */}
+              <div className="md:col-span-2 bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
+                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
+                    <MapPin className="w-4 h-4 text-indigo-500" />
+                    Visite Recenti
+                  </h3>
+                  <button onClick={() => setIsVisitsListModalOpen(true)} className="text-indigo-500 text-sm hover:text-indigo-700 font-medium transition-colors flex items-center gap-0.5">
+                    Tutte <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-100/80">
+                  {visits.slice(0, 4).map(visit => (
+                    <div key={visit.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
+                      <div className="w-9 h-9 rounded-lg bg-slate-100/80 flex items-center justify-center shrink-0">
+                        <MapPin className="w-4 h-4 text-slate-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-700 text-sm font-medium truncate">{visit.visitor_name}</p>
+                        <p className="text-slate-400 text-xs mt-0.5 truncate">{visit.company || visit.visit_type}</p>
+                      </div>
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg shrink-0 ${
+                        visit.status === 'completed' ? 'text-emerald-600 bg-emerald-50' :
+                        visit.status === 'in_progress' ? 'text-blue-600 bg-blue-50' :
+                        visit.status === 'cancelled' ? 'text-rose-500 bg-rose-50' :
+                        'text-slate-500 bg-slate-100/80'
+                      }`}>
+                        {visit.status === 'completed' ? 'Completata' : visit.status === 'in_progress' ? 'In corso' : visit.status === 'cancelled' ? 'Annullata' : 'Programmata'}
+                      </span>
+                    </div>
+                  ))}
+                  {visits.length === 0 && (
+                    <div className="px-6 py-12 text-center">
+                      <MapPin className="w-8 h-8 mx-auto mb-2 text-slate-200" />
+                      <p className="text-sm text-slate-400">Nessuna visita</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Password + Budget cards */}
+              <div className="grid grid-cols-2 md:grid-cols-1 gap-3 sm:gap-4">
+                <button onClick={() => setIsMenuModalOpen(true)} className="w-full bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-4 sm:p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 active:scale-[0.98] transition-all">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-slate-200/50">
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-slate-700 text-sm font-semibold">Vault Password</h3>
+                      <p className="text-slate-400 text-xs">{passwords.length} salvate</p>
                     </div>
                   </div>
-                )}
+                  <span className="flex items-center text-xs text-indigo-500 font-semibold hover:text-indigo-700">
+                    Gestisci <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                  </span>
+                </button>
 
-                {apps.map((app, index) => (
-                  <motion.div
-                    key={app.id}
-                    initial={{ opacity: 0, scale: 0, rotate: -180 }}
-                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                    transition={{ 
-                      delay: 0.1 * index,
-                      type: 'spring',
-                      stiffness: 200,
-                      damping: 15
-                    }}
-                    onHoverStart={() => setHoveredCard(app.id)}
-                    onHoverEnd={() => setHoveredCard(null)}
-                    onClick={() => {
-                      if (app.id === 'dashboard') {
-                        setIsDashboardOpen(true)
-                      } else if (app.id === 'passwords') {
-                        setIsMenuModalOpen(true)
-                      } else if (app.id === 'budget') {
-                        setIsBudgetMenuModalOpen(true)
-                      } else if (app.id === 'calls') {
-                        setIsCallMenuModalOpen(true)
-                      } else if (app.id === 'tasks') {
-                        setIsTasksListModalOpen(true)
-                      } else if (app.id === 'notes') {
-                        setIsNotesListModalOpen(true)
-                      } else if (app.id === 'calendar') {
-                        setIsCalendarViewOpen(true)
-                      }
-                    }}
-                    className="relative group cursor-pointer"
-                  >
-                    {/* EXPLOSIVE GLOW EFFECT! */}
-                    {hoveredCard === app.id && (
-                      <>
-                        <motion.div
-                          layoutId="card-hover"
-                          className={`absolute -inset-2 bg-gradient-to-r ${app.gradient} rounded-2xl blur-xl opacity-75`}
-                          animate={{ 
-                            scale: [1, 1.1, 1],
-                            rotate: [0, 5, -5, 0]
-                          }}
-                          transition={{ duration: 0.3, repeat: Infinity }}
-                        />
-                        {/* SPARKLES EXPLOSIONS! */}
-                        {[...Array(8)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            className="absolute w-2 h-2 bg-yellow-400 rounded-full"
-                            initial={{ 
-                              x: '50%', 
-                              y: '50%',
-                              scale: 0 
-                            }}
-                            animate={{ 
-                              x: `${50 + Math.cos(i * 45 * Math.PI / 180) * 100}%`,
-                              y: `${50 + Math.sin(i * 45 * Math.PI / 180) * 100}%`,
-                              scale: [0, 1, 0],
-                            }}
-                            transition={{ 
-                              duration: 1,
-                              repeat: Infinity,
-                              delay: i * 0.1
-                            }}
-                          />
-                        ))}
-                      </>
-                    )}
-                    
-                    {/* ANIME STYLE CARD! */}
-                    <div className="relative bg-gradient-to-br from-slate-900/90 via-red-900/50 to-orange-900/50 backdrop-blur-xl border-4 border-yellow-400 rounded-2xl p-4 sm:p-6 hover:border-red-500 transition-all shadow-2xl overflow-hidden flex flex-col">
-                      {/* SPEED LINES BACKGROUND! */}
-                      <div className="absolute inset-0 opacity-20">
-                        {[...Array(20)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            className="absolute h-1 bg-white"
-                            style={{
-                              top: `${i * 5}%`,
-                              left: '0',
-                              width: '100%',
-                              transformOrigin: 'right',
-                            }}
-                            animate={{
-                              scaleX: hoveredCard === app.id ? [0, 1] : 1,
-                              opacity: hoveredCard === app.id ? [0, 0.5, 0] : 0.1,
-                            }}
-                            transition={{
-                              duration: 0.5,
-                              delay: i * 0.02,
-                              repeat: hoveredCard === app.id ? Infinity : 0,
-                            }}
-                          />
-                        ))}
-                      </div>
-
-                      <div className="relative z-10 flex flex-col h-full">
-                        {/* TOP SECTION - Icon and Title */}
-                        <div className="flex items-start justify-between mb-3">
-                          {/* PULSATING ICON! */}
-                          <motion.div 
-                            className={`inline-flex p-2.5 sm:p-4 rounded-xl bg-gradient-to-br ${app.gradient} shadow-2xl relative`}
-                            animate={hoveredCard === app.id ? {
-                              scale: [1, 1.1, 1],
-                              rotate: [0, 10, -10, 0],
-                            } : {}}
-                            transition={{ duration: 0.6, repeat: hoveredCard === app.id ? Infinity : 0 }}
-                          >
-                            {/* DANGER STRIPES! */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-yellow-500/30 rounded-xl" />
-                            <app.icon className="w-7 h-7 sm:w-10 sm:h-10 text-white relative z-10" strokeWidth={3} />
-                            
-                            {/* ROTATING RING! */}
-                            {hoveredCard === app.id && (
-                              <motion.div
-                                className="absolute -inset-1 border-2 border-yellow-400 rounded-xl"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                              />
-                            )}
-                          </motion.div>
-
-                          {/* WARNING SIGN! */}
-                          <motion.div
-                            animate={hoveredCard === app.id ? { 
-                              rotate: [0, 10, -10, 0],
-                              scale: [1, 1.2, 1]
-                            } : {}}
-                            transition={{ duration: 0.5, repeat: Infinity }}
-                            className="text-2xl sm:text-4xl"
-                          >
-                            ⚠️
-                          </motion.div>
-                        </div>
-                        
-                        {/* TITLE */}
-                        <motion.h3 
-                          className="text-xl sm:text-3xl font-black mb-2 sm:mb-3 relative"
-                          animate={hoveredCard === app.id ? {
-                            scale: [1, 1.02, 1],
-                          } : {}}
-                          transition={{ duration: 0.3, repeat: Infinity }}
-                        >
-                          <span className="relative z-10 bg-gradient-to-r from-yellow-300 via-red-400 to-orange-500 bg-clip-text text-transparent drop-shadow-2xl">
-                            {app.title}
-                          </span>
-                          {/* TEXT SHADOW EFFECT! */}
-                          <span className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent blur-sm">
-                            {app.title}
-                          </span>
-                        </motion.h3>
-                        
-                        {/* DESCRIPTION */}
-                        <p className="text-sm sm:text-base text-yellow-100 leading-snug sm:leading-relaxed font-bold flex-1">
-                          {app.description}
-                        </p>
-                      </div>
-
-                      {/* DANGER TAPE BORDER! */}
-                      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-70" />
-                      <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-70" />
+                <button onClick={() => setIsBudgetMenuModalOpen(true)} className="w-full bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl p-4 sm:p-5 text-left hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 active:scale-[0.98] transition-all">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-slate-200/50">
+                      <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
-                  </motion.div>
-                ))}
+                    <div>
+                      <h3 className="text-slate-700 text-sm font-semibold">Bilancio Familiare</h3>
+                      <p className="text-slate-400 text-xs">{transactions.length} transazioni</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-lg">+{stats.totalIncome.toFixed(0)}€</span>
+                    <span className="text-rose-500 font-semibold bg-rose-50 px-2 py-0.5 rounded-lg">-{stats.totalExpenses.toFixed(0)}€</span>
+                  </div>
+                </button>
               </div>
-            </motion.div>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
 
-      {/* PASSWORD MENU MODAL */}
-      <PasswordMenuModal 
-        isOpen={isMenuModalOpen}
-        onClose={() => setIsMenuModalOpen(false)}
-        onSelectNew={() => setIsPasswordModalOpen(true)}
-        onSelectList={() => setIsListModalOpen(true)}
-      />
+      {/* ═══════════════════════════════════════════ */}
+      {/* ALL MODALS — Unchanged Logic */}
+      {/* ═══════════════════════════════════════════ */}
+      <PasswordMenuModal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}
+        onSelectNew={() => setIsPasswordModalOpen(true)} onSelectList={() => setIsListModalOpen(true)} />
+      <PasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)}
+        onSave={(data) => { addPassword(data) }} />
+      <PasswordListModal isOpen={isListModalOpen} onClose={() => setIsListModalOpen(false)}
+        passwords={passwords} onDelete={deletePassword} />
 
-      {/* PASSWORD FORM MODAL */}
-      <PasswordModal 
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        onSave={handleSavePassword}
-      />
+      <BudgetMenuModal isOpen={isBudgetMenuModalOpen} onClose={() => setIsBudgetMenuModalOpen(false)}
+        onSelectNew={() => setIsBudgetModalOpen(true)} onSelectView={() => setIsBudgetViewModalOpen(true)}
+        onSelectRecurring={() => setIsRecurringModalOpen(true)} onSelectRecurringList={() => setIsRecurringListModalOpen(true)}
+        onSelectLimit={() => setIsLimitModalOpen(true)} onSelectLimitsList={() => setIsLimitsViewModalOpen(true)} />
+      <BudgetModal isOpen={isBudgetModalOpen} onClose={() => setIsBudgetModalOpen(false)} onSave={addTransaction} />
+      <BudgetViewModal isOpen={isBudgetViewModalOpen} onClose={() => setIsBudgetViewModalOpen(false)}
+        transactions={transactions} onDelete={deleteTransaction} stats={getStats()} />
+      <RecurringModal isOpen={isRecurringModalOpen} onClose={() => setIsRecurringModalOpen(false)} onSave={addRecurring} />
+      <RecurringListModal isOpen={isRecurringListModalOpen} onClose={() => setIsRecurringListModalOpen(false)}
+        recurring={recurring} onToggleActive={toggleActive} onDelete={deleteRecurring} />
+      <BudgetLimitModal isOpen={isLimitModalOpen} onClose={() => setIsLimitModalOpen(false)}
+        onSave={addLimit} existingCategories={limits.map(l => l.category)} />
+      <BudgetLimitsViewModal isOpen={isLimitsViewModalOpen} onClose={() => setIsLimitsViewModalOpen(false)}
+        limits={limitsStatus} onToggleActive={toggleLimitActive} onDelete={deleteLimit} />
 
-      {/* PASSWORD LIST MODAL */}
-      <PasswordListModal 
-        isOpen={isListModalOpen}
-        onClose={() => setIsListModalOpen(false)}
-        passwords={passwords}
-        onDelete={deletePassword}
-      />
-
-      {/* BUDGET MENU MODAL */}
-      <BudgetMenuModal 
-        isOpen={isBudgetMenuModalOpen}
-        onClose={() => setIsBudgetMenuModalOpen(false)}
-        onSelectNew={() => setIsBudgetModalOpen(true)}
-        onSelectView={() => setIsBudgetViewModalOpen(true)}
-        onSelectRecurring={() => setIsRecurringModalOpen(true)}
-        onSelectRecurringList={() => setIsRecurringListModalOpen(true)}
-        onSelectLimit={() => setIsLimitModalOpen(true)}
-        onSelectLimitsList={() => setIsLimitsViewModalOpen(true)}
-      />
-
-      {/* BUDGET MODAL (Add Transaction) */}
-      <BudgetModal 
-        isOpen={isBudgetModalOpen}
-        onClose={() => setIsBudgetModalOpen(false)}
-        onSave={addTransaction}
-      />
-
-      {/* BUDGET VIEW MODAL (View All) */}
-      <BudgetViewModal 
-        isOpen={isBudgetViewModalOpen}
-        onClose={() => setIsBudgetViewModalOpen(false)}
-        transactions={transactions}
-        onDelete={deleteTransaction}
-        stats={getStats()}
-      />
-
-      {/* RECURRING MODAL (Add Recurring) */}
-      <RecurringModal 
-        isOpen={isRecurringModalOpen}
-        onClose={() => setIsRecurringModalOpen(false)}
-        onSave={addRecurring}
-      />
-
-      {/* RECURRING LIST MODAL (Manage Recurring) */}
-      <RecurringListModal 
-        isOpen={isRecurringListModalOpen}
-        onClose={() => setIsRecurringListModalOpen(false)}
-        recurring={recurring}
-        onToggleActive={toggleActive}
-        onDelete={deleteRecurring}
-      />
-
-      {/* BUDGET LIMIT MODAL (Add Limit) */}
-      <BudgetLimitModal 
-        isOpen={isLimitModalOpen}
-        onClose={() => setIsLimitModalOpen(false)}
-        onSave={addLimit}
-        existingCategories={limits.map(l => l.category)}
-      />
-
-      {/* BUDGET LIMITS VIEW MODAL (Manage Limits) */}
-      <BudgetLimitsViewModal 
-        isOpen={isLimitsViewModalOpen}
-        onClose={() => setIsLimitsViewModalOpen(false)}
-        limits={limitsStatus}
-        onToggleActive={toggleLimitActive}
-        onDelete={deleteLimit}
-      />
-
-      {/* CALL MENU MODAL */}
-      <CallMenuModal
-        isOpen={isCallMenuModalOpen}
-        onClose={() => setIsCallMenuModalOpen(false)}
-        onSelectNew={() => setIsCallModalOpen(true)}
-        onSelectList={() => setIsCallsListModalOpen(true)}
-      />
-
-      {/* CALL MODAL (Add Call) */}
+      <CallMenuModal isOpen={isCallMenuModalOpen} onClose={() => setIsCallMenuModalOpen(false)}
+        onSelectNew={() => setIsCallModalOpen(true)} onSelectList={() => setIsCallsListModalOpen(true)} />
       <CallModal
         isOpen={isCallModalOpen}
-        onClose={() => setIsCallModalOpen(false)}
-        onSave={addCall}
+        onClose={() => { setIsCallModalOpen(false); setEditingCall(null) }}
+        onSave={async (callData) => {
+          // Separa i campi lavorazione dai dati della chiamata
+          const { has_lavorazione, lavorazione_date, lavorazione_time, lavorazione_description, lavorazione_assignee, ...cleanCallData } = callData
+          let callId: string | undefined
+          if (editingCall) { await updateCall(editingCall.id, cleanCallData); callId = editingCall.id }
+          else { const newCall = await addCall(cleanCallData); callId = newCall?.id }
+          if (!editingCall && cleanCallData.follow_up && cleanCallData.follow_up_date && callId) {
+            const newTask = await addTask({
+              title: `Follow-up: ${cleanCallData.caller_name || 'Chiamata'}`,
+              description: `Follow-up chiamata da ${cleanCallData.caller_name || 'contatto'}${cleanCallData.company ? ` (${cleanCallData.company})` : ''}`,
+              due_date: cleanCallData.follow_up_date, priority: cleanCallData.priority || 'medium',
+              status: 'todo', category: 'follow_up', is_recurring: false, recurring_type: null, tags: [], subtasks: []
+            })
+            if (newTask?.id) await addRelation('call', callId, 'task', newTask.id, 'related', 'Auto follow-up')
+          }
+          if (has_lavorazione && callId) {
+            const newLav = await addLavorazione({
+              call_id: callId,
+              client_id: null,
+              title: `Lavorazione: ${cleanCallData.caller_name || 'Chiamata'}${cleanCallData.company ? ` - ${cleanCallData.company}` : ''}`,
+              description: lavorazione_description || '',
+              assigned_to: lavorazione_assignee || '',
+              scheduled_date: lavorazione_date || null,
+              scheduled_time: lavorazione_time || null,
+              status: 'da_fare',
+              priority: cleanCallData.priority || 'media',
+              address: cleanCallData.address || '',
+              city: cleanCallData.city || '',
+              zip_code: cleanCallData.zip_code || '',
+              province: cleanCallData.province || '',
+              notes: cleanCallData.notes || '',
+              completed_at: null,
+            })
+            // Auto-create first timeline entry from the call
+            if (newLav?.id) {
+              try {
+                await addTimelineEntry({
+                  lavorazione_id: newLav.id,
+                  description: `Lavorazione creata da chiamata di ${cleanCallData.caller_name || 'contatto'}${cleanCallData.company ? ` (${cleanCallData.company})` : ''}. ${cleanCallData.notes ? 'Note: ' + cleanCallData.notes : ''}`.trim(),
+                  event_type: 'chiamata_cliente',
+                  created_by_name: cleanCallData.caller_name || ''
+                })
+              } catch (e) { console.error('Auto-timeline error:', e) }
+            }
+          }
+        }}
+        editCall={editingCall} availableItems={availableRelationItems}
+        onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems}
+        teamMembers={teamMembers} onAddTeamMember={addTeamMember} onDeleteTeamMember={deleteTeamMember}
+        clients={clients} onAddClient={addClient}
+      />
+      <CallsListModal isOpen={isCallsListModalOpen} onClose={() => setIsCallsListModalOpen(false)}
+        calls={calls} onDelete={deleteCall} onStatusChange={updateCallStatus}
+        onEdit={(call) => { setEditingCall(call); setIsCallModalOpen(true); setIsCallsListModalOpen(false) }}
+        onViewTimeline={(call) => { setCallTimelineCall(call); loadCallTimeline(call.id); setIsCallTimelineOpen(true) }} />
+
+      <LavorazioniListModal
+        isOpen={isLavorazioniListModalOpen}
+        onClose={() => setIsLavorazioniListModalOpen(false)}
+        lavorazioni={lavorazioni}
+        onToggleStatus={handleToggleLavorazioneStatus}
+        onDelete={deleteLavorazione}
+        onNew={() => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) }}
+        onEdit={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsLavorazioniListModalOpen(false) }}
+        onViewTimeline={(lav) => { setTimelineLavorazione(lav); loadTimeline(lav.id); setIsTimelineModalOpen(true) }}
+        onReport={(lav) => { setReportLavorazione(lav); loadTimeline(lav.id); setIsReportModalOpen(true) }}
+        onDuplicate={async (lav) => {
+          const duplicated = await addLavorazione({
+            call_id: lav.call_id,
+            client_id: lav.client_id,
+            title: `${lav.title} (copia)`,
+            description: lav.description,
+            assigned_to: lav.assigned_to,
+            scheduled_date: lav.scheduled_date,
+            scheduled_time: lav.scheduled_time,
+            status: 'da_fare',
+            priority: lav.priority,
+            address: lav.address,
+            city: lav.city,
+            zip_code: lav.zip_code,
+            province: lav.province,
+            notes: lav.notes,
+            completed_at: null,
+          })
+          if (duplicated) {
+            setEditingLavorazione(duplicated)
+            setIsLavorazioneModalOpen(true)
+            setIsLavorazioniListModalOpen(false)
+          }
+        }}
+        teamMembers={teamMembers}
+        clients={clients}
       />
 
-      {/* CALLS LIST MODAL (View All) */}
-      <CallsListModal
-        isOpen={isCallsListModalOpen}
-        onClose={() => setIsCallsListModalOpen(false)}
+      <LavorazioneModal
+        isOpen={isLavorazioneModalOpen}
+        onClose={() => { setIsLavorazioneModalOpen(false); setEditingLavorazione(null) }}
+        onSave={async (data) => {
+          if (editingLavorazione) { await handleUpdateLavorazione(editingLavorazione.id, data) }
+          else { await addLavorazione(data) }
+        }}
+        editLavorazione={editingLavorazione}
+        teamMembers={teamMembers}
+        clients={clients}
+      />
+
+      <LavorazioneTimelineModal
+        isOpen={isTimelineModalOpen}
+        onClose={() => { setIsTimelineModalOpen(false); setTimelineLavorazione(null); clearTimeline() }}
+        lavorazione={timelineLavorazione}
+        entries={timelineEntries}
+        loading={timelineLoading}
+        onAddEntry={addTimelineEntry}
+        onDeleteEntry={deleteTimelineEntry}
+        onUpdateEntry={updateTimelineEntry}
+        onUploadPhoto={uploadTimelinePhoto}
+        teamMembers={teamMembers}
+      />
+
+      <CallTimelineModal
+        isOpen={isCallTimelineOpen}
+        onClose={() => { setIsCallTimelineOpen(false); setCallTimelineCall(null); clearCallTimeline() }}
+        call={callTimelineCall}
+        entries={callTimelineEntries}
+        loading={callTimelineLoading}
+        onAddEntry={addCallTimelineEntry}
+        onDeleteEntry={deleteCallTimelineEntry}
+        onUpdateEntry={updateCallTimelineEntry}
+        onUploadPhoto={uploadCallTimelinePhoto}
+        teamMembers={teamMembers}
+      />
+
+      <LavorazioneReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => { setIsReportModalOpen(false); setReportLavorazione(null) }}
+        lavorazione={reportLavorazione}
+        entries={timelineEntries}
+        userProfile={userProfile}
+      />
+
+      <VisitModal
+        isOpen={isVisitModalOpen}
+        onClose={() => { setIsVisitModalOpen(false); setEditingVisit(null) }}
+        onSave={async (visitData) => {
+          const { has_lavorazione, lavorazione_date, lavorazione_time, lavorazione_description, lavorazione_assignee, ...cleanVisitData } = visitData
+          let visitId: string | undefined
+          if (editingVisit) { await updateVisit(editingVisit.id, cleanVisitData); visitId = editingVisit.id }
+          else { const newVisit = await addVisit(cleanVisitData); visitId = newVisit?.id }
+          if (!editingVisit && cleanVisitData.follow_up && cleanVisitData.follow_up_date && visitId) {
+            const newTask = await addTask({
+              title: `Follow-up: ${cleanVisitData.visitor_name || 'Visita'}`,
+              description: `Follow-up visita di ${cleanVisitData.visitor_name || 'visitatore'}${cleanVisitData.company ? ` (${cleanVisitData.company})` : ''}`,
+              due_date: cleanVisitData.follow_up_date, priority: cleanVisitData.priority || 'medium',
+              status: 'todo', category: 'follow_up', is_recurring: false, recurring_type: null, tags: [], subtasks: []
+            })
+            if (newTask?.id) await addRelation('visit', visitId, 'task', newTask.id, 'related', 'Auto follow-up')
+          }
+          if (has_lavorazione && visitId) {
+            const newLav = await addLavorazione({
+              call_id: null,
+              client_id: null,
+              title: `Lavorazione: ${cleanVisitData.visitor_name || 'Visita'}${cleanVisitData.company ? ` - ${cleanVisitData.company}` : ''}`,
+              description: lavorazione_description || '',
+              assigned_to: lavorazione_assignee || '',
+              scheduled_date: lavorazione_date || null,
+              scheduled_time: lavorazione_time || null,
+              status: 'da_fare',
+              priority: cleanVisitData.priority || 'media',
+              address: '',
+              city: '',
+              zip_code: '',
+              province: '',
+              notes: cleanVisitData.notes || '',
+              completed_at: null,
+            })
+            // Auto-create first timeline entry from the visit
+            if (newLav?.id) {
+              try {
+                await addTimelineEntry({
+                  lavorazione_id: newLav.id,
+                  description: `Lavorazione creata da visita di ${cleanVisitData.visitor_name || 'visitatore'}${cleanVisitData.company ? ` (${cleanVisitData.company})` : ''}. ${cleanVisitData.notes ? 'Note: ' + cleanVisitData.notes : ''}`.trim(),
+                  event_type: 'nota',
+                  created_by_name: cleanVisitData.visitor_name || ''
+                })
+              } catch (e) { console.error('Auto-timeline error:', e) }
+            }
+          }
+        }}
+        editVisit={editingVisit}
+        teamMembers={teamMembers}
+      />
+      <VisitsListModal isOpen={isVisitsListModalOpen} onClose={() => setIsVisitsListModalOpen(false)}
+        visits={visits} onDelete={deleteVisit} onStatusChange={updateVisitStatus}
+        onEdit={(visit) => { setEditingVisit(visit); setIsVisitModalOpen(true); setIsVisitsListModalOpen(false) }}
+        onNew={() => { setEditingVisit(null); setIsVisitModalOpen(true) }} />
+
+      <TaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)}
+        onSave={async (task) => { await addTask(task) }} editTask={null}
+        availableItems={availableRelationItems} onAddRelation={addRelation}
+        onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />
+      <TasksListModal isOpen={isTasksListModalOpen} onClose={() => setIsTasksListModalOpen(false)}
+        tasks={tasks} onDelete={deleteTask} onToggleComplete={toggleComplete}
+        onUpdate={updateTask} onAdd={async (task) => { await addTask(task) }} />
+
+      <NoteModal isOpen={isNoteModalOpen}
+        onClose={() => { setIsNoteModalOpen(false); setEditingNote(null) }}
+        onSave={(noteData) => { if (editingNote) { updateNote(editingNote.id, noteData) } else { addNote(noteData) } }}
+        editNote={editingNote} availableItems={availableRelationItems}
+        onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />
+      <NotesListModal isOpen={isNotesListModalOpen} onClose={() => setIsNotesListModalOpen(false)}
+        notes={notes} onDelete={deleteNote} onUpdate={updateNote} onTogglePin={togglePin}
+        onEdit={(note) => { setEditingNote(note); setIsNoteModalOpen(true) }}
+        onAdd={() => { setEditingNote(null); setIsNoteModalOpen(true) }} />
+
+      <EventModal isOpen={isEventModalOpen}
+        onClose={() => { setIsEventModalOpen(false); setEditingEvent(null) }}
+        onSave={(eventData) => { if (editingEvent) { updateEvent(editingEvent.id, eventData) } else { addEvent(eventData) } }}
+        editEvent={editingEvent} availableItems={availableRelationItems}
+        onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />
+
+      <CalendarView isOpen={isCalendarViewOpen} onClose={() => setIsCalendarViewOpen(false)}
+        events={events} tasks={tasks} onDelete={deleteEvent}
+        onEdit={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
+        onAdd={() => { setEditingEvent(null); setIsEventModalOpen(true) }} />
+
+      <ClientModal isOpen={isClientModalOpen}
+        onClose={() => { setIsClientModalOpen(false); setEditingClient(null) }}
+        onSave={async (data) => { if (editingClient) { await updateClient(editingClient.id, data) } else { await addClient(data) } }}
+        editingClient={editingClient} />
+      <ClientsListModal isOpen={isClientsListModalOpen} onClose={() => setIsClientsListModalOpen(false)}
+        clients={clients} onDelete={deleteClient} onToggleFavorite={toggleClientFavorite}
+        onAdd={() => { setEditingClient(null); setIsClientModalOpen(true) }}
+        onEdit={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientsListModalOpen(false) }}
+        onSelectClient={(client) => { setDetailClient(client); setIsClientDetailOpen(true) }} />
+      <ClientDetailModal
+        isOpen={isClientDetailOpen}
+        onClose={() => { setIsClientDetailOpen(false); setDetailClient(null) }}
+        client={detailClient}
         calls={calls}
-        onDelete={deleteCall}
-        onStatusChange={updateCallStatus}
-      />
-
-      {/* TASK MODAL (Add/Edit Task) */}
-      <TaskModal
-        isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        onSave={addTask}
-        editTask={null}
-      />
-
-      {/* TASKS LIST MODAL (View All) */}
-      <TasksListModal
-        isOpen={isTasksListModalOpen}
-        onClose={() => setIsTasksListModalOpen(false)}
-        tasks={tasks}
-        onDelete={deleteTask}
-        onToggleComplete={toggleComplete}
-        onUpdate={updateTask}
-        onAdd={addTask}
-      />
-
-      {/* UNIFIED DASHBOARD 📊 */}
-      {isDashboardOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-gray-900 rounded-2xl relative"
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setIsDashboardOpen(false)}
-              className="absolute top-4 right-4 z-10 text-gray-400 hover:text-white transition-colors"
-            >
-              <span className="text-2xl">✕</span>
-            </button>
-
-            <UnifiedDashboard
-              passwords={passwords}
-              calls={calls}
-              tasks={tasks}
-              transactions={transactions}
-              onOpenPasswords={() => {
-                setIsDashboardOpen(false)
-                setIsMenuModalOpen(true)
-              }}
-              onOpenCalls={() => {
-                setIsDashboardOpen(false)
-                setIsCallMenuModalOpen(true)
-              }}
-              onOpenTasks={() => {
-                setIsDashboardOpen(false)
-                setIsTasksListModalOpen(true)
-              }}
-              onOpenBudget={() => {
-                setIsDashboardOpen(false)
-                setIsBudgetMenuModalOpen(true)
-              }}
-              onNewPassword={() => {
-                setIsDashboardOpen(false)
-                setIsPasswordModalOpen(true)
-              }}
-              onNewCall={() => {
-                setIsDashboardOpen(false)
-                setIsCallModalOpen(true)
-              }}
-              onNewTask={() => {
-                setIsDashboardOpen(false)
-                setIsTaskModalOpen(true)
-              }}
-              onNewTransaction={() => {
-                setIsDashboardOpen(false)
-                setIsBudgetModalOpen(true)
-              }}
-            />
-          </motion.div>
-        </div>
-      )}
-
-      {/* NOTE MODAL (Create/Edit) */}
-      <NoteModal
-        isOpen={isNoteModalOpen}
-        onClose={() => {
-          setIsNoteModalOpen(false)
-          setEditingNote(null)
+        lavorazioni={lavorazioni}
+        visits={visits}
+        onEditClient={(client) => { setEditingClient(client); setIsClientModalOpen(true); setIsClientDetailOpen(false) }}
+        onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsClientDetailOpen(false) }}
+        onNewCall={(clientData) => {
+          setEditingCall({ caller_name: clientData.caller_name, company: clientData.company, phone: clientData.phone, email: clientData.email, address: clientData.address, city: clientData.city, zip_code: clientData.zip_code, province: clientData.province, _prefilled: true } as any)
+          setIsCallModalOpen(true)
         }}
-        onSave={(noteData) => {
-          if (editingNote) {
-            updateNote(editingNote.id, noteData)
-          } else {
-            addNote(noteData)
-          }
-        }}
-        editNote={editingNote}
-      />
-
-      {/* NOTES LIST MODAL (View All) */}
-      <NotesListModal
-        isOpen={isNotesListModalOpen}
-        onClose={() => setIsNotesListModalOpen(false)}
-        notes={notes}
-        onDelete={deleteNote}
-        onUpdate={updateNote}
-        onTogglePin={togglePin}
-        onEdit={(note) => {
-          setEditingNote(note)
-          setIsNoteModalOpen(true)
-        }}
-        onAdd={() => {
-          setEditingNote(null)
-          setIsNoteModalOpen(true)
+        onNewLavorazione={(clientData) => {
+          setEditingLavorazione({ client_id: clientData.client_id, title: `Lavorazione: ${clientData.client_name}`, address: clientData.address, city: clientData.city, zip_code: clientData.zip_code, province: clientData.province, status: 'da_fare', _prefilled: true } as any)
+          setIsLavorazioneModalOpen(true)
         }}
       />
 
-      {/* EVENT MODAL (Create/Edit) */}
-      <EventModal
-        isOpen={isEventModalOpen}
-        onClose={() => {
-          setIsEventModalOpen(false)
-          setEditingEvent(null)
-        }}
-        onSave={(eventData) => {
-          if (editingEvent) {
-            updateEvent(editingEvent.id, eventData)
-          } else {
-            addEvent(eventData)
-          }
-        }}
-        editEvent={editingEvent}
-      />
+      <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}
+        calls={calls} lavorazioni={lavorazioni} tasks={tasks} notes={notes} events={events} clients={clients} visits={visits}
+        onOpenCall={(call) => { setEditingCall(call); setIsCallModalOpen(true) }}
+        onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true) }}
+        onOpenTask={() => setIsTasksListModalOpen(true)}
+        onOpenNote={(note) => { setEditingNote(note); setIsNoteModalOpen(true) }}
+        onOpenEvent={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
+        onOpenClient={(client) => { setEditingClient(client); setIsClientModalOpen(true) }}
+        onOpenVisit={() => setIsVisitsListModalOpen(true)} />
 
-      {/* CALENDAR VIEW */}
-      <CalendarView
-        isOpen={isCalendarViewOpen}
-        onClose={() => setIsCalendarViewOpen(false)}
-        events={events}
-        onDelete={deleteEvent}
-        onEdit={(event) => {
-          setEditingEvent(event)
-          setIsEventModalOpen(true)
-        }}
-        onAdd={() => {
-          setEditingEvent(null)
-          setIsEventModalOpen(true)
-        }}
-      />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => setIsAuthModalOpen(false)} />
 
-      {/* AUTH MODAL! */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={() => console.log('🎉 Logged in successfully!')}
+      <PreventivoModal
+        isOpen={isPreventivoModalOpen}
+        onClose={() => setIsPreventivoModalOpen(false)}
+        clients={clients}
+        lavorazioni={lavorazioni}
       />
     </div>
   )

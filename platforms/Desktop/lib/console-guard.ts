@@ -1,84 +1,36 @@
 /**
- * Console Guard - Luffy ASCII Art Protection
+ * Console Guard - Professional Security Warning
  * Displays warning in browser console for unauthorized access attempts
  */
 
 export function initConsoleGuard() {
   if (typeof window === 'undefined') return;
 
-  const luffyArt = `
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║                    ⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀                        ║
-║                    ⠀⠀⠀⣠⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⣄⠀⠀⠀                        ║
-║                    ⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀                        ║
-║                    ⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆                        ║
-║                    ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿                        ║
-║                    ⣿⣿⣿⣿⣿⡿⠿⠿⠿⠿⣿⣿⣿⣿⣿⠿⠿⠿⠿⣿⣿⣿⣿⣿                        ║
-║                    ⣿⣿⣿⣿⡏⠀⣶⣶⣶⣶⠀⠉⠉⠀⠀⣶⣶⣶⣶⠀⢹⣿⣿⣿                        ║
-║                    ⣿⣿⣿⣿⡇⠀⣿⣿⣿⣿⠀⣿⣿⡇⠀⣿⣿⣿⣿⠀⢸⣿⣿⣿                        ║
-║                    ⣿⣿⣿⣿⡇⠀⠙⠛⠛⠛⠀⣿⣿⡇⠀⠙⠛⠛⠛⠀⢸⣿⣿⣿                        ║
-║                    ⣿⣿⣿⣿⣿⣦⣀⠀⠀⠀⣰⣿⣿⣿⣆⠀⠀⠀⣀⣴⣿⣿⣿⣿                        ║
-║                    ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿                        ║
-║                    ⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋                         ║
-║                    ⠀⠀⠙⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀                         ║
-║                    ⠀⠀⠀⠀⠀⠉⠛⠿⢿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠉⠀⠀⠀⠀                        ║
-║                                                                               ║
-║                      🏴‍☠️  MONKEY D. LUFFY - STRAW HAT PIRATES  🏴‍☠️                  ║
-║                                                                               ║
-║   ██████╗ ██╗   ██╗███████╗███████╗████████╗ █████╗      ██████╗ ██████╗    ║
-║  ██╔═══██╗██║   ██║██╔════╝██╔════╝╚══██╔══╝██╔══██╗    ██╔════╝██╔═══██╗   ║
-║  ██║   ██║██║   ██║█████╗  ███████╗   ██║   ███████║    ██║     ██║   ██║   ║
-║  ██║▄▄ ██║██║   ██║██╔══╝  ╚════██║   ██║   ██╔══██║    ██║     ██║   ██║   ║
-║  ╚██████╔╝╚██████╔╝███████╗███████║   ██║   ██║  ██║    ╚██████╗╚██████╔╝   ║
-║   ╚══▀▀═╝  ╚═════╝ ╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝     ╚═════╝ ╚═════╝    ║
-║                                                                               ║
-║  ███╗   ██╗███████╗ ██████╗ ██╗      █████╗     ███████╗                    ║
-║  ████╗  ██║██╔════╝██╔═══██╗██║     ██╔══██╗    ██╔════╝                    ║
-║  ██╔██╗ ██║███████╗██║   ██║██║     ███████║    █████╗                      ║
-║  ██║╚██╗██║╚════██║██║   ██║██║     ██╔══██║    ██╔══╝                      ║
-║  ██║ ╚████║███████║╚██████╔╝███████╗██║  ██║    ███████╗                    ║
-║  ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝    ╚══════╝                    ║
-║                                                                               ║
-║  ██████╗ ██╗      ██████╗  ██████╗ ██████╗ ██╗   ██╗████████╗ █████╗ ██╗   ║
-║  ██╔══██╗██║     ██╔═══██╗██╔════╝██╔════╝ ██║   ██║╚══██╔══╝██╔══██╗██║   ║
-║  ██████╔╝██║     ██║   ██║██║     ██║      ██║   ██║   ██║   ███████║██║   ║
-║  ██╔══██╗██║     ██║   ██║██║     ██║      ██║   ██║   ██║   ██╔══██║╚═╝   ║
-║  ██████╔╝███████╗╚██████╔╝╚██████╗╚██████╗ ╚██████╔╝   ██║   ██║  ██║██╗   ║
-║  ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝   ║
-║                                                                               ║
-║                    ⚠️  QUESTA CONSOLE È BLOCCATA! ⚠️                          ║
-║                                                                               ║
-║              Devi eseguire il login per accedere al sistema!                 ║
-║              La ciurma di Cappello di Paglia protegge questo vault!          ║
-║                                                                               ║
-║                    🔒 PROTETTO DAL POTERE DEL GOMU GOMU! 🔒                   ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-`;
-
-  const warningStyle = `
-    color: #ff6b6b;
-    font-size: 16px;
-    font-weight: bold;
-    text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
-  `;
-
-  const pirateStyle = `
-    color: #ffd700;
+  const headerStyle = `
+    color: #2dd4bf;
     font-size: 14px;
     font-weight: bold;
-    text-shadow: 0 0 5px #ff8800;
+    font-family: monospace;
+  `;
+
+  const warningStyle = `
+    color: #f87171;
+    font-size: 13px;
+    font-weight: bold;
+  `;
+
+  const infoStyle = `
+    color: #94a3b8;
+    font-size: 12px;
   `;
 
   // Clear console and display warning
   console.clear();
-  console.log('%c' + luffyArt, 'color: #ffd700; font-family: monospace; font-weight: bold;');
-  console.log('%c⚠️ ATTENZIONE! ZONA PROTETTA! ⚠️', warningStyle);
-  console.log('%c🏴‍☠️ Questa console è sotto la protezione della ciurma di Cappello di Paglia! 🏴‍☠️', pirateStyle);
-  console.log('%c🔒 Accesso negato fino al login! 🔒', warningStyle);
-  console.log('%c💀 Qualsiasi tentativo di accesso non autorizzato sarà respinto! 💀', pirateStyle);
-  console.log('%c⚡ GOMU GOMU NO... CONSOLE BLOCK! ⚡', warningStyle);
+  console.log('%c╔══════════════════════════════════════════╗', headerStyle);
+  console.log('%c║         AK Suite — Console Guard         ║', headerStyle);
+  console.log('%c╚══════════════════════════════════════════╝', headerStyle);
+  console.log('%c⛔ Accesso non autorizzato alla console.', warningStyle);
+  console.log('%cEffettua il login per sbloccare l\'ambiente.', infoStyle);
 
   // Store original console methods
   const originalMethods = {
@@ -91,12 +43,11 @@ export function initConsoleGuard() {
 
   // Block console access for non-authenticated users
   const blockConsole = () => {
-    // Override console methods to show warning
     const methods = ['log', 'info', 'warn', 'error', 'debug'] as const;
     
     methods.forEach(method => {
       (console as any)[method] = (...args: any[]) => {
-        originalMethods.log.call(console, '%c🏴‍☠️ CONSOLE BLOCCATA! Fai il login! 🏴‍☠️', warningStyle);
+        originalMethods.log.call(console, '%c�� Console bloccata — effettua il login.', warningStyle);
       };
     });
   };
@@ -109,39 +60,16 @@ export function initConsoleGuard() {
     console.error = originalMethods.error;
     console.debug = originalMethods.debug;
     
-    // Clear and show success message
     console.clear();
-    console.log('%c✅ CONSOLE SBLOCCATA! Benvenuto! ✅', `
-      color: #00ff00;
-      font-size: 20px;
+    console.log('%c✅ Console sbloccata. Benvenuto in AK Suite.', `
+      color: #2dd4bf;
+      font-size: 14px;
       font-weight: bold;
-      text-shadow: 0 0 10px #00ff00;
     `);
   };
 
   return {
-    luffyArt,
     blockConsole,
     unblockConsole
   };
 }
-
-// Alternative Luffy ASCII (more detailed)
-export const luffyAsciiAlt = `
-           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣤⣤⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-           ⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⣄⠀⠀⠀⠀⠀⠀
-           ⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀
-           ⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀
-           ⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀
-           ⠀⠀⠀⠀⣿⣿⣿⣿⣿⡿⠿⠿⠿⣿⣿⣿⣿⣿⠿⠿⠿⢿⣿⣿⣿⣿⣿⣿⠀⠀
-           ⠀⠀⠀⠀⣿⣿⣿⣿⡏⠀⣶⣶⣶⠀⠉⠁⠀⠀⣶⣶⣶⠀⢹⣿⣿⣿⣿⣿⠀⠀
-           ⠀⠀⠀⠀⣿⣿⣿⣿⡇⠀⣿⣿⣿⠀⣿⣿⣿⠀⣿⣿⣿⠀⢸⣿⣿⣿⣿⣿⠀⠀
-           ⠀⠀⠀⠀⣿⣿⣿⣿⡇⠀⠙⠛⠋⠀⣿⣿⣿⠀⠙⠛⠋⠀⢸⣿⣿⣿⣿⣿⠀⠀
-           ⠀⠀⠀⠀⣿⣿⣿⣿⣿⣦⣀⠀⠀⣠⣿⣿⣿⣷⡀⠀⠀⣠⣾⣿⣿⣿⣿⣿⠀⠀
-           ⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀
-           ⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⠀
-           ⠀⠀⠀⠀⠀⠀⠙⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠀⠀⠀⠀
-           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⢿⣿⣿⣿⡿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀
-           
-           🏴‍☠️ "I'M GONNA BE THE KING OF THE PIRATES!" - Luffy 🏴‍☠️
-`;

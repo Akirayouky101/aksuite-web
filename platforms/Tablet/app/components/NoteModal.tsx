@@ -4,12 +4,27 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, Tag, Pin, Folder, Palette } from 'lucide-react'
 import { Note } from '../hooks/useNotes'
+import RelationsIntegration from './RelationsIntegration'
+import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
 
 interface NoteModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (note: Omit<Note, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
   editNote?: Note | null
+  // Relazioni
+  availableItems?: {
+    passwords?: any[]
+    calls?: any[]
+    tasks?: any[]
+    notes?: any[]
+    events?: any[]
+    transactions?: any[]
+  }
+  onAddRelation?: (sourceType: EntityType, sourceId: string, targetType: EntityType, targetId: string, relationType: RelationType, notes?: string) => Promise<void>
+  onRemoveRelation?: (relationId: string) => Promise<void>
+  getRelatedItems?: (type: EntityType, id: string, items: any) => Promise<RelatedItem[]>
+  onNavigateToItem?: (type: EntityType, id: string) => void
 }
 
 const COLORS = [
@@ -20,7 +35,7 @@ const COLORS = [
   { name: 'purple', class: 'bg-purple-500', light: 'bg-purple-100', dark: 'bg-purple-900' },
   { name: 'pink', class: 'bg-pink-500', light: 'bg-pink-100', dark: 'bg-pink-900' },
   { name: 'orange', class: 'bg-orange-500', light: 'bg-orange-100', dark: 'bg-orange-900' },
-  { name: 'gray', class: 'bg-gray-500', light: 'bg-gray-100', dark: 'bg-gray-900' }
+  { name: 'gray', class: 'bg-gray-500', light: 'bg-gray-100', dark: 'bg-slate-50' }
 ]
 
 const FOLDERS = [
@@ -34,7 +49,17 @@ const FOLDERS = [
   'other'
 ]
 
-export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteModalProps) {
+export default function NoteModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  editNote,
+  availableItems,
+  onAddRelation,
+  onRemoveRelation,
+  getRelatedItems,
+  onNavigateToItem
+}: NoteModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -97,40 +122,46 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-slate-900/30 ">
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-gray-700"
+            className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200/60"
           >
             {/* Header */}
-            <div className={`${selectedColor.dark} p-6 border-b border-gray-700`}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  📝 {editNote ? 'Modifica Nota' : 'Nuova Nota'}
-                </h2>
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X size={24} />
-                </button>
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <Save className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">
+                    {editNote ? 'Modifica Nota' : 'Nuova Nota'}
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Appunti e promemoria</p>
+                </div>
               </div>
+              <button
+                onClick={onClose}
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+              >
+                <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+              </button>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-180px)]">
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   Titolo *
                 </label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   placeholder="Inserisci il titolo della nota..."
                   required
                 />
@@ -138,14 +169,14 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
 
               {/* Content */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   Contenuto
                 </label>
                 <textarea
                   value={formData.content}
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                   rows={10}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none resize-none"
                   placeholder="Scrivi qui il contenuto della nota..."
                 />
               </div>
@@ -154,13 +185,13 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Folder */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                  <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                     <Folder size={16} /> Cartella
                   </label>
                   <select
                     value={formData.folder}
                     onChange={(e) => setFormData(prev => ({ ...prev, folder: e.target.value }))}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   >
                     {FOLDERS.map(folder => (
                       <option key={folder} value={folder}>
@@ -172,7 +203,7 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
 
                 {/* Pin Toggle */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                  <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                     <Pin size={16} /> In Evidenza
                   </label>
                   <button
@@ -181,7 +212,7 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
                     className={`w-full px-4 py-3 rounded-lg font-medium transition-all ${
                       formData.is_pinned
                         ? 'bg-yellow-500 text-black'
-                        : 'bg-gray-800 text-gray-400 border border-gray-700'
+                        : 'bg-slate-50 text-slate-400 border border-slate-200/60'
                     }`}
                   >
                     {formData.is_pinned ? '📌 Fissata' : 'Fissa Nota'}
@@ -191,7 +222,7 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
 
               {/* Color Picker */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                   <Palette size={16} /> Colore
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -202,7 +233,7 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
                       onClick={() => setFormData(prev => ({ ...prev, color: color.name }))}
                       className={`w-10 h-10 rounded-lg ${color.class} ${
                         formData.color === color.name
-                          ? 'ring-4 ring-white ring-offset-2 ring-offset-gray-900'
+                          ? 'ring-4 ring-white ring-offset-2 ring-offset-white'
                           : 'opacity-60 hover:opacity-100'
                       } transition-all`}
                     />
@@ -212,7 +243,7 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
 
               {/* Tags */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                   <Tag size={16} /> Tags
                 </label>
                 <div className="flex gap-2 mb-3">
@@ -221,13 +252,13 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                    className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-2 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                     placeholder="Aggiungi tag..."
                   />
                   <button
                     type="button"
                     onClick={addTag}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
                   >
                     Aggiungi
                   </button>
@@ -236,13 +267,13 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
                   {formData.tags.map(tag => (
                     <span
                       key={tag}
-                      className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm flex items-center gap-2 border border-gray-700"
+                      className="px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-sm flex items-center gap-2 border border-slate-200/60"
                     >
                       #{tag}
                       <button
                         type="button"
                         onClick={() => removeTag(tag)}
-                        className="text-gray-500 hover:text-red-500 transition-colors"
+                        className="text-slate-500 hover:text-red-500 transition-colors"
                       >
                         <X size={14} />
                       </button>
@@ -252,24 +283,39 @@ export default function NoteModal({ isOpen, onClose, onSave, editNote }: NoteMod
               </div>
             </form>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-gray-700 bg-gray-900/50">
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  Annulla
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
-                >
-                  <Save size={20} />
-                  {editNote ? 'Aggiorna Nota' : 'Salva Nota'}
-                </button>
+            {/* Collegamenti Multi-Entità */}
+            {editNote?.id && (
+              <div className="px-6 pb-4 space-y-3">
+                <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  🔗 Collegamenti
+                </h4>
+                <RelationsIntegration
+                  entityType="note"
+                  entityId={editNote.id}
+                  entityTitle={formData.title}
+                  availableItems={availableItems || {}}
+                  onAddRelation={(targetType, targetId, relationType, notes) => {
+                    if (onAddRelation && editNote?.id) {
+                      onAddRelation('note', editNote.id, targetType, targetId, relationType, notes)
+                    }
+                  }}
+                  onRemoveRelation={onRemoveRelation || (async () => {})}
+                  getRelatedItems={getRelatedItems || (async () => [])}
+                  onNavigateToItem={onNavigateToItem}
+                />
               </div>
+            )}
+
+            {/* Footer */}
+            <div className="px-6 pb-6">
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={handleSubmit}
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
+              >
+                {editNote ? '✏️ Aggiorna Nota' : '💾 Salva Nota'}
+              </motion.button>
             </div>
           </motion.div>
         </div>

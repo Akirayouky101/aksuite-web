@@ -79,81 +79,51 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-900/30  z-50 flex items-center justify-center p-4"
           >
             {/* MODAL CONTAINER! */}
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, rotate: 180 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-2xl"
             >
               {/* DANGER GLOW! */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-3xl blur-2xl opacity-50 animate-pulse" />
+              <div className="hidden" />
               
               {/* MAIN MODAL! */}
-              <div className="relative bg-gradient-to-br from-slate-900 via-red-900/50 to-orange-900/50 border-4 border-yellow-400 rounded-2xl shadow-2xl overflow-hidden">
-                {/* SPEED LINES BACKGROUND! */}
-                <div className="absolute inset-0 opacity-10">
-                  {[...Array(15)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute h-1 bg-white"
-                      style={{
-                        top: `${i * 7}%`,
-                        left: '0',
-                        width: '100%',
-                      }}
-                      animate={{
-                        scaleX: [0, 1],
-                        opacity: [0, 0.3, 0],
-                      }}
-                      transition={{
-                        duration: 1,
-                        delay: i * 0.05,
-                        repeat: Infinity,
-                      }}
-                    />
-                  ))}
-                </div>
+              <div className="relative bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden max-h-[90vh] flex flex-col">
 
-                {/* HEADER! */}
-                <div className="relative z-10 p-6 border-b-2 border-yellow-400/50 bg-black/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                        className="w-12 h-12 bg-gradient-to-br from-red-500 to-yellow-500 rounded-xl flex items-center justify-center"
-                      >
-                        <Lock className="w-6 h-6 text-white" strokeWidth={3} />
-                      </motion.div>
-                      <div>
-                        <h2 className="text-3xl font-black bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent">
-                          ⚡ AGGIUNGI NUOVA PASSWORD ⚡
-                        </h2>
-                        <p className="text-yellow-100 font-bold">MODALITÀ SICUREZZA MASSIMA!</p>
-                      </div>
+                {/* HEADER */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                      <Lock className="w-5 h-5 text-white" />
                     </div>
-                    <motion.button
-                      whileHover={{ scale: 1.1, rotate: 90 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={onClose}
-                      className="w-10 h-10 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center"
-                    >
-                      <X className="w-6 h-6 text-white" strokeWidth={3} />
-                    </motion.button>
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-800">
+                        Aggiungi Nuova Password
+                      </h2>
+                      <p className="text-xs text-slate-400 mt-0.5">Gestione credenziali sicura</p>
+                    </div>
                   </div>
+                  <button
+                    onClick={onClose}
+                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+                  >
+                    <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+                  </button>
                 </div>
 
-                {/* FORM! */}
-                <form onSubmit={handleSubmit} className="relative z-10 p-6 space-y-4">
+                {/* FORM */}
+                <div className="p-6 overflow-y-auto flex-1">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   {/* EMOJI SELECTOR! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider">
-                      🎯 Scegli la tua Icona!
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 text-sm uppercase tracking-wider">
+                      Scegli Icona
                     </label>
                     <div className="grid grid-cols-6 gap-2">
                       {emojis.map((emoji) => (
@@ -166,7 +136,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                           className={`text-4xl p-3 rounded-xl border-2 transition-all ${
                             formData.emoji === emoji
                               ? 'border-yellow-400 bg-yellow-400/20 scale-110'
-                              : 'border-white/20 hover:border-yellow-400/50'
+                              : 'border-slate-200 hover:border-yellow-400/50'
                           }`}
                         >
                           {emoji}
@@ -177,7 +147,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
 
                   {/* TITLE! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                       <Sparkles className="w-4 h-4" /> Titolo
                     </label>
                     <input
@@ -185,15 +155,15 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                       required
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
-                      placeholder="es. Il mio Account Super Segreto 💀"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
+                      placeholder="es. es. Il mio account"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     {/* USERNAME! */}
                     <div>
-                      <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                      <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                         <User className="w-4 h-4" /> Nome Utente
                       </label>
                       <input
@@ -201,20 +171,20 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         required
                         value={formData.username}
                         onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                        className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                         placeholder="tuo_username"
                       />
                     </div>
 
                     {/* CATEGORY! */}
                     <div>
-                      <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                      <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                         <Tag className="w-4 h-4" /> Categoria
                       </label>
                       <select
                         value={formData.category}
                         onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                        className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                       >
                         {categories.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -225,7 +195,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
 
                   {/* PASSWORD! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2 justify-between">
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 text-sm uppercase tracking-wider flex items-center gap-2 justify-between">
                       <span className="flex items-center gap-2">
                         <Lock className="w-4 h-4" /> Password
                       </span>
@@ -251,7 +221,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                         required
                         value={formData.password}
                         onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                        className="w-full px-4 py-3 pr-12 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                        className="w-full px-4 py-3 pr-12 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                         placeholder="••••••••••••"
                       />
                       <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -271,83 +241,58 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
 
                   {/* WEBSITE! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                       <Globe className="w-4 h-4" /> Sito Web
                     </label>
                     <input
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                      className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
                       placeholder="https://esempio.com"
                     />
                   </div>
 
                   {/* NOTES! */}
                   <div>
-                    <label className="block text-yellow-300 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
                       <MessageSquare className="w-4 h-4" /> Note (opzionale)
                     </label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                       rows={3}
-                      className="w-full px-4 py-3 bg-black/50 border-2 border-yellow-400/50 rounded-xl text-white font-bold placeholder-yellow-300/50 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all resize-none"
+                      className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all resize-none"
                       placeholder="Aggiungi note, domande di sicurezza, ecc..."
                     />
                   </div>
 
                   {/* FAVORITE! */}
                   <div>
-                    <label className="flex items-center gap-3 cursor-pointer bg-gradient-to-r from-purple-900/30 to-pink-900/30 border-2 border-purple-500/50 rounded-xl p-4 hover:border-purple-400 transition-all">
+                    <label className="flex items-center gap-3 cursor-pointer bg-gradient-to-r from-violet-50 to-pink-50 border-2 border-violet-200/60 rounded-xl p-4 hover:border-purple-400 transition-all">
                       <input
                         type="checkbox"
                         checked={formData.isFavorite}
                         onChange={(e) => setFormData(prev => ({ ...prev, isFavorite: e.target.checked }))}
                         className="w-5 h-5 rounded accent-yellow-500"
                       />
-                      <Star className={`w-5 h-5 ${formData.isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`} />
-                      <span className="text-yellow-300 font-bold">Aggiungi ai Preferiti</span>
+                      <Star className={`w-5 h-5 ${formData.isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-slate-400'}`} />
+                      <span className="text-sm text-slate-700 font-medium">Aggiungi ai Preferiti</span>
                     </label>
                   </div>
 
-                  {/* SUBMIT BUTTON! */}
+                  {/* SUBMIT BUTTON */}
                   <motion.button
                     type="submit"
                     disabled={isSaving}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full relative group overflow-hidden"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative px-6 py-4 bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 rounded-xl border-2 border-yellow-400 flex items-center justify-center gap-3">
-                      {isSaving ? (
-                        <>
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                          >
-                            <Zap className="w-6 h-6 text-white" />
-                          </motion.div>
-                          <span className="text-white font-black text-xl uppercase tracking-wider">
-                            SALVATAGGIO... 💥
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-6 h-6 text-white" strokeWidth={3} />
-                          <span className="text-white font-black text-xl uppercase tracking-wider">
-                            🔥 SALVA PASSWORD 🔥
-                          </span>
-                        </>
-                      )}
-                    </div>
+                    {isSaving ? '⏳ Salvataggio...' : '💾 Salva Password'}
                   </motion.button>
                 </form>
-
-                {/* DANGER TAPE! */}
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-70" />
-                <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-black to-yellow-400 opacity-70" />
+                </div>
               </div>
             </motion.div>
           </motion.div>

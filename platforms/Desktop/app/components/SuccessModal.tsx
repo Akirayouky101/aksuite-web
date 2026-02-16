@@ -35,13 +35,13 @@ export default function SuccessModal({
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-x-hidden"
+          className="fixed inset-0 bg-slate-50  z-[100] flex items-center justify-center p-4 overflow-x-hidden"
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0, rotate: -180, opacity: 0 }}
-            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            exit={{ scale: 0, rotate: 180, opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
             transition={{ 
               type: 'spring', 
               stiffness: 400, 
@@ -51,22 +51,21 @@ export default function SuccessModal({
             onClick={(e) => e.stopPropagation()}
             className="relative max-w-md w-full overflow-x-hidden"
           >
-            {/* Glow effect */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 rounded-3xl blur-2xl opacity-60 animate-pulse" />
+            <div className="hidden" />
             
             {/* Main modal */}
-            <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border-4 border-green-400 shadow-2xl p-8 overflow-hidden">
+            <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50 p-8 overflow-hidden">
               
-              {/* Animated circles background */}
-              <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/20 rounded-full blur-3xl animate-pulse" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+              {/* Subtle background glow */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl" />
               
               {/* Content */}
               <div className="relative z-10 text-center">
                 {/* Checkmark icon with animation */}
                 <motion.div
                   initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ 
                     type: 'spring', 
                     stiffness: 500, 
@@ -78,14 +77,14 @@ export default function SuccessModal({
                   <div className="relative">
                     {/* Rotating ring */}
                     <motion.div
-                      animate={{ rotate: 360 }}
+                      animate={{ opacity: 1 }}
                       transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                      className="absolute inset-0 rounded-full border-4 border-t-green-400 border-r-emerald-400 border-b-teal-400 border-l-green-500"
+                      className="absolute inset-0 rounded-full border-2 border-green-400/30"
                       style={{ width: '100px', height: '100px' }}
                     />
                     {/* Icon */}
                     <div className="relative w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center shadow-2xl">
-                      <CheckCircle className="w-16 h-16 text-white" strokeWidth={3} />
+                      <CheckCircle className="w-16 h-16 text-slate-800" strokeWidth={3} />
                     </div>
                   </div>
                 </motion.div>
@@ -95,7 +94,7 @@ export default function SuccessModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-3xl font-black text-white mb-3 drop-shadow-lg"
+                  className="text-lg font-bold text-slate-800 mb-3 drop-shadow-lg"
                 >
                   {title}
                 </motion.h2>
@@ -105,7 +104,7 @@ export default function SuccessModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="text-lg text-slate-200 leading-relaxed"
+                  className="text-lg text-slate-600 leading-relaxed"
                 >
                   {message}
                 </motion.p>
@@ -113,13 +112,13 @@ export default function SuccessModal({
                 {/* Progress bar (if auto-dismiss) */}
                 {autoDismiss && (
                   <motion.div
-                    className="mt-6 h-1 bg-slate-700 rounded-full overflow-hidden"
+                    className="mt-6 h-1 bg-slate-50 rounded-full overflow-hidden"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
                     <motion.div
-                      className="h-full bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400"
+                      className="h-full bg-gradient-to-r from-green-400 via-emerald-400 to-emerald-400"
                       initial={{ width: '100%' }}
                       animate={{ width: '0%' }}
                       transition={{ duration: dismissDelay / 1000, ease: 'linear' }}
@@ -134,7 +133,7 @@ export default function SuccessModal({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
                     onClick={onClose}
-                    className="mt-6 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl font-bold text-white text-lg shadow-lg transition-all transform hover:scale-105"
+                    className="mt-6 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl font-bold text-slate-800 text-lg shadow-lg transition-all transform hover:scale-105"
                   >
                     OK
                   </motion.button>
@@ -142,7 +141,7 @@ export default function SuccessModal({
               </div>
 
               {/* Decorative top border */}
-              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400" />
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/40 to-transparent" />
             </div>
           </motion.div>
         </div>

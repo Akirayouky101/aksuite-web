@@ -74,7 +74,7 @@ export default function BudgetLimitModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/30  flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -82,28 +82,27 @@ export default function BudgetLimitModal({
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-2xl w-full overflow-x-hidden"
         >
-          {/* Glow effect */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 rounded-3xl blur-2xl opacity-30" />
+          <div className="absolute -inset-4 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-orange-500/30 shadow-2xl">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-orange-900/30 to-red-900/30">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-2xl">
-                  ⚠️
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <AlertTriangle className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Limite Budget</h2>
-                  <p className="text-sm text-slate-400">Imposta un tetto massimo di spesa</p>
+                  <h2 className="text-lg font-bold text-slate-800">Limite Budget</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Imposta un tetto massimo di spesa</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                aria-label="Chiudi"
+                title="Chiudi"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
               </button>
             </div>
 
@@ -111,7 +110,7 @@ export default function BudgetLimitModal({
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {/* Category Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">Categoria</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Categoria</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {commonCategories.map((cat) => {
                     const isDisabled = existingCategories.includes(cat.name)
@@ -123,16 +122,16 @@ export default function BudgetLimitModal({
                         disabled={isDisabled}
                         className={`p-3 rounded-lg border-2 transition-all ${
                           category === cat.name
-                            ? 'bg-orange-500/20 border-orange-500 shadow-lg'
+                            ? 'bg-orange-50 border-orange-500 shadow-lg'
                             : isDisabled
-                            ? 'bg-slate-800/50 border-slate-700 opacity-50 cursor-not-allowed'
-                            : 'bg-white/5 border-white/10 hover:border-white/20'
+                            ? 'bg-white border-slate-200 opacity-50 cursor-not-allowed'
+                            : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                         }`}
                       >
                         <span className="text-2xl block mb-1">{cat.emoji}</span>
-                        <span className="text-white text-xs font-medium">{cat.name}</span>
+                        <span className="text-slate-800 text-xs font-medium">{cat.name}</span>
                         {isDisabled && (
-                          <span className="text-[10px] text-slate-500 block mt-1">✓ Già impostato</span>
+                          <span className="text-[10px] text-slate-400 block mt-1">✓ Già impostato</span>
                         )}
                       </button>
                     )
@@ -142,7 +141,7 @@ export default function BudgetLimitModal({
 
               {/* Period */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">Periodo</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Periodo</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { value: 'daily', label: '📆 Giorno', desc: 'al giorno' },
@@ -156,8 +155,8 @@ export default function BudgetLimitModal({
                       onClick={() => setPeriod(p.value as any)}
                       className={`p-3 rounded-lg text-sm font-medium transition-all ${
                         period === p.value
-                          ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/50'
-                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          ? 'bg-orange-500 text-white shadow-lg shadow-orange-200/50'
+                          : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
                       <div>{p.label}</div>
@@ -169,14 +168,14 @@ export default function BudgetLimitModal({
 
               {/* Limit Amount */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-2">Limite Massimo (€)</label>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">Limite Massimo (€)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={limitAmount}
                   onChange={(e) => setLimitAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-2xl font-bold placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 text-2xl font-bold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 />
                 <p className="text-slate-400 text-xs mt-2">
@@ -187,7 +186,7 @@ export default function BudgetLimitModal({
               {/* Alert Threshold */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-semibold text-white">Soglia di Allerta</label>
+                  <label className="text-sm font-semibold text-slate-800">Soglia di Allerta</label>
                   <span className="text-orange-400 font-bold">{alertThreshold}%</span>
                 </div>
                 <input
@@ -197,9 +196,9 @@ export default function BudgetLimitModal({
                   step="5"
                   value={alertThreshold}
                   onChange={(e) => setAlertThreshold(parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                  className="w-full h-2 bg-slate-50 rounded-lg appearance-none cursor-pointer slider-thumb"
                 />
-                <div className="flex justify-between text-xs text-slate-500 mt-1">
+                <div className="flex justify-between text-xs text-slate-400 mt-1">
                   <span>50%</span>
                   <span>95%</span>
                 </div>
@@ -210,14 +209,14 @@ export default function BudgetLimitModal({
 
               {/* Preview */}
               {category && limitAmount && (
-                <div className="mb-6 bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/30 rounded-xl p-4">
+                <div className="mb-6 bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-200/60 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-orange-300 font-medium mb-1">Anteprima</p>
-                      <p className="text-slate-300 text-sm">
-                        Limite di <span className="text-white font-bold">€{parseFloat(limitAmount).toFixed(2)}</span> per{' '}
-                        <span className="text-white font-bold">{category}</span>{' '}
+                      <p className="text-orange-600 font-medium mb-1">Anteprima</p>
+                      <p className="text-slate-400 text-sm">
+                        Limite di <span className="text-slate-800 font-bold">€{parseFloat(limitAmount).toFixed(2)}</span> per{' '}
+                        <span className="text-slate-800 font-bold">{category}</span>{' '}
                         {period === 'daily' ? 'al giorno' : period === 'weekly' ? 'a settimana' : period === 'monthly' ? 'al mese' : "all'anno"}.
                       </p>
                       <p className="text-slate-400 text-xs mt-1">
@@ -229,13 +228,15 @@ export default function BudgetLimitModal({
               )}
 
               {/* Submit Button */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isSaving || !category || !limitAmount}
-                className="w-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving ? 'Salvataggio...' : '⚠️ Imposta Limite'}
-              </button>
+                {isSaving ? 'Salvataggio...' : 'Imposta Limite'}
+              </motion.button>
             </form>
           </div>
         </motion.div>

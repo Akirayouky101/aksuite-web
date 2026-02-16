@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Repeat, Calendar } from 'lucide-react'
+import { X, Repeat, Calendar, RefreshCw } from 'lucide-react'
 
 interface RecurringModalProps {
   isOpen: boolean
@@ -104,7 +104,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/30  flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -112,28 +112,27 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-2xl w-full overflow-x-hidden"
         >
-          {/* Glow effect */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl blur-2xl opacity-30" />
+          <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 rounded-3xl hidden" />
           
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-purple-500/30 shadow-2xl">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-purple-900/30 to-pink-900/30">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">
-                  🔄
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <RefreshCw className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Transazione Ricorrente</h2>
-                  <p className="text-sm text-slate-400">Automatica ogni mese/settimana</p>
+                  <h2 className="text-lg font-bold text-slate-800">Transazione Ricorrente</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Automatica ogni mese/settimana</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                aria-label="Chiudi"
+                title="Chiudi"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
               </button>
             </div>
 
@@ -141,7 +140,7 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
               {/* Type Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">Tipo</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Tipo</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -151,12 +150,12 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                     }}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       type === 'income'
-                        ? 'bg-green-500/20 border-green-500 shadow-lg shadow-green-500/50'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                        ? 'bg-emerald-50 border-green-500 shadow-lg shadow-indigo-500/25'
+                        : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                     }`}
                   >
                     <span className="text-2xl mb-2 block">💚</span>
-                    <span className="text-white font-medium">Entrata</span>
+                    <span className="text-slate-800 font-medium">Entrata</span>
                   </button>
                   <button
                     type="button"
@@ -166,33 +165,33 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                     }}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       type === 'expense'
-                        ? 'bg-red-500/20 border-red-500 shadow-lg shadow-red-500/50'
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                        ? 'bg-red-50 border-red-500 shadow-lg shadow-red-200/50'
+                        : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                     }`}
                   >
                     <span className="text-2xl mb-2 block">❤️</span>
-                    <span className="text-white font-medium">Uscita</span>
+                    <span className="text-slate-800 font-medium">Uscita</span>
                   </button>
                 </div>
               </div>
 
               {/* Amount */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-2">Importo (€)</label>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">Importo (€)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   required
                 />
               </div>
 
               {/* Frequency */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">Frequenza</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Frequenza</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {[
                     { value: 'daily', label: '📆 Giornaliera', icon: '📆' },
@@ -206,8 +205,8 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                       onClick={() => setFrequency(freq.value as any)}
                       className={`p-3 rounded-lg text-sm font-medium transition-all ${
                         frequency === freq.value
-                          ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/50'
-                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          ? 'bg-purple-500 text-slate-800 shadow-lg shadow-indigo-500/25'
+                          : 'bg-slate-50 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
                       {freq.label}
@@ -219,11 +218,11 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
               {/* Day Selection */}
               {frequency === 'weekly' && (
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-white mb-2">Giorno della settimana</label>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Giorno della settimana</label>
                   <select
                     value={dayOfWeek}
                     onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   >
                     <option value={1}>Lunedì</option>
                     <option value={2}>Martedì</option>
@@ -238,21 +237,21 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
               {(frequency === 'monthly' || frequency === 'yearly') && (
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-white mb-2">Giorno del mese (1-31)</label>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">Giorno del mese (1-31)</label>
                   <input
                     type="number"
                     min="1"
                     max="31"
                     value={dayOfMonth}
                     onChange={(e) => setDayOfMonth(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   />
                 </div>
               )}
 
               {/* Category */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">Categoria</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Categoria</label>
                 <div className="grid grid-cols-3 gap-2">
                   {categories.map((cat) => (
                     <button
@@ -265,13 +264,13 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
                       className={`p-3 rounded-lg border-2 transition-all ${
                         category === cat.name
                           ? type === 'income'
-                            ? 'bg-green-500/20 border-green-500 shadow-lg'
-                            : 'bg-red-500/20 border-red-500 shadow-lg'
-                          : 'bg-white/5 border-white/10 hover:border-white/20'
+                            ? 'bg-emerald-50 border-green-500 shadow-lg'
+                            : 'bg-red-50 border-red-500 shadow-lg'
+                          : 'bg-slate-100 border-slate-200 hover:border-slate-200'
                       }`}
                     >
                       <span className="text-2xl block mb-1">{cat.emoji}</span>
-                      <span className="text-white text-xs font-medium">{cat.name}</span>
+                      <span className="text-slate-800 text-xs font-medium">{cat.name}</span>
                     </button>
                   ))}
                 </div>
@@ -279,25 +278,27 @@ export default function RecurringModal({ isOpen, onClose, onSave }: RecurringMod
 
               {/* Description */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-2">Descrizione</label>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">Descrizione</label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Es: Stipendio mensile, Affitto, Netflix..."
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   required
                 />
               </div>
 
               {/* Submit Button */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isSaving || !amount || !category || !description}
-                className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving ? 'Salvataggio...' : '🔄 Crea Ricorrente'}
-              </button>
+                {isSaving ? 'Salvataggio...' : 'Crea Ricorrente'}
+              </motion.button>
             </form>
           </div>
         </motion.div>

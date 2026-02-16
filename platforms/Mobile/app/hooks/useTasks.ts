@@ -168,6 +168,7 @@ export function useTasks() {
       }
 
       setTasks([newTask, ...tasks])
+      return newTask
     } catch (error) {
       console.error('Error adding task:', error)
       throw error

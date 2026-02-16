@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Filter, ArrowUpDown, Download, ExternalLink, PhoneCall } from 'lucide-react'
+import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle, MapPin, User, Wrench, History } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
 import CallDetailModal from './CallDetailModal'
-import CallsDashboard from './CallsDashboard'
 
 interface Call {
   id: string
@@ -18,8 +17,13 @@ interface Call {
   notes: string
   follow_up: boolean
   follow_up_date: string | null
-  status: 'pending' | 'completed' | 'cancelled'
+  status: 'pending' | 'in_corso' | 'completed' | 'cancelled'
   call_date: string
+  address?: string
+  city?: string
+  zip_code?: string
+  province?: string
+  assigned_to?: string
 }
 
 interface CallsListModalProps {
@@ -28,55 +32,67 @@ interface CallsListModalProps {
   calls: Call[]
   onDelete: (id: string) => Promise<void>
   onStatusChange: (id: string, status: Call['status']) => Promise<void>
+  onEdit?: (call: Call) => void
+  onViewTimeline?: (call: Call) => void
 }
 
-const statusColors = {
-  pending: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', text: 'text-yellow-300', icon: Clock },
-  completed: { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-300', icon: CheckCircle },
-  cancelled: { bg: 'bg-red-500/20', border: 'border-red-500/30', text: 'text-red-300', icon: AlertCircle }
+const statusConfig = {
+  pending: { bg: 'bg-amber-50', border: 'border-amber-200/60', text: 'text-amber-600', dot: 'bg-amber-400', label: 'In Attesa', icon: Clock },
+  in_corso: { bg: 'bg-indigo-50', border: 'border-indigo-200/60', text: 'text-indigo-600', dot: 'bg-indigo-400', label: 'In Corso', icon: Wrench },
+  completed: { bg: 'bg-emerald-50', border: 'border-emerald-200/60', text: 'text-emerald-600', dot: 'bg-emerald-400', label: 'Completata', icon: CheckCircle },
+  cancelled: { bg: 'bg-red-50', border: 'border-red-200/60', text: 'text-red-500', dot: 'bg-red-400', label: 'Annullata', icon: AlertCircle }
 }
 
-const statusLabels = {
-  pending: '⏳ In Attesa',
-  completed: '✅ Completata',
-  cancelled: '❌ Annullata'
+const priorityConfig: Record<string, { bg: string; text: string; dot: string }> = {
+  bassa: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-400' },
+  media: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-400' },
+  alta: { bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-400' },
+  urgente: { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-400' }
 }
 
-const priorityColors: Record<string, string> = {
-  bassa: 'bg-green-500/20 border-green-500/30 text-green-300',
-  media: 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300',
-  alta: 'bg-orange-500/20 border-orange-500/30 text-orange-300',
-  urgente: 'bg-red-500/20 border-red-500/30 text-red-300'
+const callTypeLabels: Record<string, string> = {
+  informazioni: 'Informazioni',
+  assistenza: 'Assistenza',
+  vendita: 'Vendita',
+  reclamo: 'Reclamo',
+  altro: 'Altro'
 }
 
-const callTypeEmojis: Record<string, string> = {
-  informazioni: '📞',
-  assistenza: '🛠️',
-  vendita: '💼',
-  reclamo: '⚠️',
-  altro: '📋'
-}
-
-export default function CallsListModal({ isOpen, onClose, calls, onDelete, onStatusChange }: CallsListModalProps) {
+export default function CallsListModal({ isOpen, onClose, calls, onDelete, onStatusChange, onEdit, onViewTimeline }: CallsListModalProps) {
   const [selectedFilter, setSelectedFilter] = useState<'all' | Call['status']>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [selectedCall, setSelectedCall] = useState<Call | null>(null)
-  
-  // Nuovi stati per filtri avanzati
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState<string>('all')
   const [selectedPriority, setSelectedPriority] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'priority'>('date')
   const [showFollowUpOnly, setShowFollowUpOnly] = useState(false)
-  const [showDashboard, setShowDashboard] = useState(true)
+  const [showStats, setShowStats] = useState(true)
 
-  // Filtraggio e ordinamento
+  // Stats
+  const pendingCount = calls.filter(c => c.status === 'pending').length
+  const inCorsoCount = calls.filter(c => c.status === 'in_corso').length
+  const completedCount = calls.filter(c => c.status === 'completed').length
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const followUpTodayCount = calls.filter(c => {
+    if (!c.follow_up || !c.follow_up_date || c.status !== 'pending') return false
+    const d = new Date(c.follow_up_date); d.setHours(0, 0, 0, 0)
+    return d <= today
+  }).length
+
+  // Tipo stats
+  const callsByType: Record<string, number> = {}
+  const callsByPriority: Record<string, number> = {}
+  calls.forEach(c => {
+    callsByType[c.call_type] = (callsByType[c.call_type] || 0) + 1
+    callsByPriority[c.priority] = (callsByPriority[c.priority] || 0) + 1
+  })
+
+  // Filtering
   let filteredCalls = calls.filter(call => {
-    // Filtro per status
     if (selectedFilter !== 'all' && call.status !== selectedFilter) return false
-    
-    // Filtro per ricerca
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       if (
@@ -84,57 +100,42 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
         !call.company.toLowerCase().includes(term) &&
         !call.phone.includes(term) &&
         !call.email.toLowerCase().includes(term) &&
-        !call.notes.toLowerCase().includes(term)
+        !call.notes.toLowerCase().includes(term) &&
+        !(call.address || '').toLowerCase().includes(term) &&
+        !(call.city || '').toLowerCase().includes(term) &&
+        !(call.assigned_to || '').toLowerCase().includes(term)
       ) return false
     }
-    
-    // Filtro per tipo
     if (selectedType !== 'all' && call.call_type !== selectedType) return false
-    
-    // Filtro per priorità
     if (selectedPriority !== 'all' && call.priority !== selectedPriority) return false
-    
-    // Filtro follow-up
     if (showFollowUpOnly && !call.follow_up) return false
-    
     return true
   })
 
-  // Ordinamento
+  // Sorting
   filteredCalls = [...filteredCalls].sort((a, b) => {
-    if (sortBy === 'date') {
-      return new Date(b.call_date).getTime() - new Date(a.call_date).getTime()
-    } else if (sortBy === 'name') {
-      return a.caller_name.localeCompare(b.caller_name)
-    } else if (sortBy === 'priority') {
-      const priorityOrder = { urgente: 0, alta: 1, media: 2, bassa: 3 }
-      return priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder]
+    if (sortBy === 'date') return new Date(b.call_date).getTime() - new Date(a.call_date).getTime()
+    if (sortBy === 'name') return a.caller_name.localeCompare(b.caller_name)
+    if (sortBy === 'priority') {
+      const order = { urgente: 0, alta: 1, media: 2, bassa: 3 }
+      return (order[a.priority as keyof typeof order] ?? 4) - (order[b.priority as keyof typeof order] ?? 4)
     }
     return 0
   })
 
-  // Export CSV
+  // CSV Export
   const exportToCSV = () => {
-    const headers = ['Data', 'Nome', 'Azienda', 'Telefono', 'Email', 'Tipo', 'Priorità', 'Stato', 'Note', 'Follow-up', 'Data Follow-up']
+    const headers = ['Data', 'Nome', 'Azienda', 'Telefono', 'Email', 'Tipo', 'Priorità', 'Stato', 'Indirizzo', 'Città', 'CAP', 'Provincia', 'Assegnata A', 'Note', 'Follow-up', 'Data Follow-up']
     const rows = filteredCalls.map(call => [
       new Date(call.call_date).toLocaleString('it-IT'),
-      call.caller_name,
-      call.company,
-      call.phone,
-      call.email,
-      call.call_type,
-      call.priority,
-      call.status,
-      call.notes.replace(/"/g, '""'), // Escape quotes
+      call.caller_name, call.company, call.phone, call.email,
+      call.call_type, call.priority, call.status,
+      call.address || '', call.city || '', call.zip_code || '', call.province || '', call.assigned_to || '',
+      call.notes.replace(/"/g, '""'),
       call.follow_up ? 'Sì' : 'No',
       call.follow_up_date ? new Date(call.follow_up_date).toLocaleDateString('it-IT') : ''
     ])
-    
-    const csv = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n')
-    
+    const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
@@ -144,370 +145,418 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)
-    try {
-      await onDelete(id)
-      setDeleteConfirmId(null)
-    } finally {
-      setDeletingId(null)
-    }
+    try { await onDelete(id); setDeleteConfirmId(null) } finally { setDeletingId(null) }
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return new Date(dateString).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   if (!isOpen) return null
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative max-w-6xl w-full overflow-x-hidden"
+          className="relative max-w-4xl w-full my-4"
         >
-          {/* Glow effect */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-3xl blur-2xl opacity-30" />
-          
-          {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-blue-500/30 shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-blue-900/30 to-cyan-900/30">
+          <div className="bg-white/90 backdrop-blur-2xl rounded-2xl overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 max-h-[92vh] sm:max-h-[90vh] flex flex-col">
+            
+            {/* ── Header ── */}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-2xl">
-                  📞
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <Phone className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Registro Chiamate</h2>
-                  <p className="text-sm text-slate-400">{calls.length} chiamate registrate</p>
+                  <h2 className="text-xl font-bold text-slate-800">Registro Chiamate</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">{calls.length} chiamate registrate</p>
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                aria-label="Chiudi"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-            </div>
-
-            {/* Dashboard Toggle */}
-            <div className="p-4 border-b border-white/10 bg-slate-800/50">
-              <button
-                onClick={() => setShowDashboard(!showDashboard)}
-                className="w-full px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-              >
-                {showDashboard ? '📊 Nascondi Dashboard' : '📊 Mostra Dashboard'}
-              </button>
-            </div>
-
-            {/* Dashboard */}
-            {showDashboard && (
-              <div className="p-6 border-b border-white/10 bg-slate-800/30">
-                <CallsDashboard calls={calls} />
-              </div>
-            )}
-
-            {/* Search and Export */}
-            <div className="p-4 border-b border-white/10 bg-slate-800/50 space-y-3">
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Cerca per nome, azienda, telefono, email, note..."
-                    className="w-full pl-10 pr-10 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none text-sm"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={exportToCSV}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold text-sm flex items-center gap-2 transition-all"
-                  title="Esporta in CSV"
+                  className="px-3 py-2 rounded-xl bg-white/80 hover:bg-white border border-slate-200/60 text-slate-600 text-xs font-medium flex items-center gap-1.5 transition-all hover:shadow-sm"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3.5 h-3.5" />
                   CSV
                 </button>
-              </div>
-              
-              <div className="text-xs text-slate-400">
-                {filteredCalls.length} di {calls.length} chiamate
+                <button
+                  onClick={onClose}
+                  className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+                >
+                  <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+                </button>
               </div>
             </div>
 
-            {/* Advanced Filters */}
-            <div className="p-4 border-b border-white/10 bg-slate-800/50 space-y-3">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {/* Tipo */}
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none text-sm"
-                >
+            {/* ── Mini Stats Row ── */}
+            <div className="px-6 py-3 border-b border-slate-100/80 bg-slate-50/50 flex-shrink-0">
+              <button onClick={() => setShowStats(!showStats)} className="w-full">
+                <div className="grid grid-cols-5 gap-3">
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-slate-200/40">
+                    <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                    <span className="text-xs text-slate-500">Totale</span>
+                    <span className="text-sm font-bold text-slate-800 ml-auto">{calls.length}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-slate-200/40">
+                    <div className="w-2 h-2 rounded-full bg-amber-400" />
+                    <span className="text-xs text-slate-500">In Attesa</span>
+                    <span className="text-sm font-bold text-amber-600 ml-auto">{pendingCount}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-slate-200/40">
+                    <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                    <span className="text-xs text-slate-500">In Corso</span>
+                    <span className="text-sm font-bold text-indigo-600 ml-auto">{inCorsoCount}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-slate-200/40">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span className="text-xs text-slate-500">Completate</span>
+                    <span className="text-sm font-bold text-emerald-600 ml-auto">{completedCount}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-slate-200/40">
+                    <div className="w-2 h-2 rounded-full bg-red-400" />
+                    <span className="text-xs text-slate-500">Follow-up</span>
+                    <span className="text-sm font-bold text-red-500 ml-auto">{followUpTodayCount}</span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Expanded stats */}
+              <AnimatePresence>
+                {showStats && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid grid-cols-2 gap-4 mt-3">
+                      {/* Per tipo */}
+                      <div className="bg-white/70 rounded-xl p-4 border border-slate-200/40">
+                        <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          Per Tipo
+                        </h4>
+                        <div className="space-y-2">
+                          {Object.entries(callsByType).map(([type, count]) => {
+                            const max = Math.max(...Object.values(callsByType))
+                            return (
+                              <div key={type} className="flex items-center gap-2">
+                                <span className="text-xs text-slate-500 capitalize w-20 truncate">{callTypeLabels[type] || type}</span>
+                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-indigo-400 to-violet-400 rounded-full transition-all duration-700"
+                                    style={{ width: `${max > 0 ? (count / max) * 100 : 0}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs font-semibold text-slate-700 w-6 text-right">{count}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      {/* Per priorità */}
+                      <div className="bg-white/70 rounded-xl p-4 border border-slate-200/40">
+                        <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          Per Priorità
+                        </h4>
+                        <div className="space-y-2">
+                          {(['bassa', 'media', 'alta', 'urgente'] as const).map(priority => {
+                            const count = callsByPriority[priority] || 0
+                            const max = Math.max(...Object.values(callsByPriority), 1)
+                            const colors = { bassa: 'from-emerald-400 to-green-400', media: 'from-amber-400 to-yellow-400', alta: 'from-orange-400 to-amber-400', urgente: 'from-red-400 to-rose-400' }
+                            return (
+                              <div key={priority} className="flex items-center gap-2">
+                                <span className="text-xs text-slate-500 capitalize w-20">{priority}</span>
+                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full bg-gradient-to-r ${colors[priority]} rounded-full transition-all duration-700`}
+                                    style={{ width: `${max > 0 ? (count / max) * 100 : 0}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs font-semibold text-slate-700 w-6 text-right">{count}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* ── Search + Filters ── */}
+            <div className="px-6 py-3 border-b border-slate-100/80 bg-white/40 flex-shrink-0 space-y-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Cerca per nome, azienda, telefono, email, note..."
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50/80 text-slate-700 rounded-xl border border-slate-200/60 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 focus:outline-none text-sm placeholder:text-slate-300 transition-all"
+                />
+                {searchTerm && (
+                  <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span>{filteredCalls.length} di {calls.length} chiamate</span>
+              </div>
+
+              {/* Filter row */}
+              <div className="flex flex-wrap gap-2">
+                <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)}
+                  className="px-3 py-1.5 bg-slate-50/80 text-slate-600 rounded-lg border border-slate-200/60 focus:border-indigo-300 focus:outline-none text-xs">
                   <option value="all">Tutti i tipi</option>
-                  <option value="informazioni">📞 Informazioni</option>
-                  <option value="assistenza">🛠️ Assistenza</option>
-                  <option value="vendita">💼 Vendita</option>
-                  <option value="reclamo">⚠️ Reclamo</option>
-                  <option value="altro">📋 Altro</option>
+                  <option value="informazioni">Informazioni</option>
+                  <option value="assistenza">Assistenza</option>
+                  <option value="vendita">Vendita</option>
+                  <option value="reclamo">Reclamo</option>
+                  <option value="altro">Altro</option>
                 </select>
-
-                {/* Priorità */}
-                <select
-                  value={selectedPriority}
-                  onChange={(e) => setSelectedPriority(e.target.value)}
-                  className="px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none text-sm"
-                >
+                <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)}
+                  className="px-3 py-1.5 bg-slate-50/80 text-slate-600 rounded-lg border border-slate-200/60 focus:border-indigo-300 focus:outline-none text-xs">
                   <option value="all">Tutte le priorità</option>
-                  <option value="urgente">🔴 Urgente</option>
-                  <option value="alta">🟠 Alta</option>
-                  <option value="media">🟡 Media</option>
-                  <option value="bassa">🟢 Bassa</option>
+                  <option value="urgente">Urgente</option>
+                  <option value="alta">Alta</option>
+                  <option value="media">Media</option>
+                  <option value="bassa">Bassa</option>
                 </select>
-
-                {/* Ordinamento */}
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'date' | 'name' | 'priority')}
-                  className="px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none text-sm flex items-center gap-2"
-                >
-                  <option value="date">📅 Data</option>
-                  <option value="name">👤 Nome</option>
-                  <option value="priority">⚡ Priorità</option>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'date' | 'name' | 'priority')}
+                  className="px-3 py-1.5 bg-slate-50/80 text-slate-600 rounded-lg border border-slate-200/60 focus:border-indigo-300 focus:outline-none text-xs">
+                  <option value="date">Data</option>
+                  <option value="name">Nome</option>
+                  <option value="priority">Priorità</option>
                 </select>
-
-                {/* Follow-up Only */}
                 <button
                   onClick={() => setShowFollowUpOnly(!showFollowUpOnly)}
-                  className={`px-3 py-2 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
                     showFollowUpOnly
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      ? 'bg-indigo-50 text-indigo-600 border border-indigo-200/60'
+                      : 'bg-slate-50/80 text-slate-400 border border-slate-200/60 hover:text-slate-600'
                   }`}
                 >
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="w-3.5 h-3.5" />
                   Follow-up
                 </button>
               </div>
             </div>
 
-            {/* Status Filters */}
-            <div className="p-4 border-b border-white/10 bg-slate-800/50">
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setSelectedFilter('all')}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                    selectedFilter === 'all'
-                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/50'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  🌟 Tutte ({calls.length})
-                </button>
-                <button
-                  onClick={() => setSelectedFilter('pending')}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                    selectedFilter === 'pending'
-                      ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/50'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  ⏳ In Attesa ({calls.filter(c => c.status === 'pending').length})
-                </button>
-                <button
-                  onClick={() => setSelectedFilter('completed')}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                    selectedFilter === 'completed'
-                      ? 'bg-green-500 text-white shadow-lg shadow-green-500/50'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  ✅ Completate ({calls.filter(c => c.status === 'completed').length})
-                </button>
+            {/* ── Status Tabs ── */}
+            <div className="px-6 py-2.5 border-b border-slate-100/80 bg-white/30 flex-shrink-0">
+              <div className="flex gap-1.5">
+                {[
+                  { key: 'all' as const, label: 'Tutte', count: calls.length },
+                  { key: 'pending' as const, label: 'In Attesa', count: pendingCount },
+                  { key: 'in_corso' as const, label: 'In Corso', count: inCorsoCount },
+                  { key: 'completed' as const, label: 'Completate', count: completedCount },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setSelectedFilter(tab.key)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      selectedFilter === tab.key
+                        ? 'bg-indigo-50 text-indigo-600 border border-indigo-200/60 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {tab.label} ({tab.count})
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Content */}
-            <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-200px)]">
+            {/* ── Call Cards ── */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {filteredCalls.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">📞</div>
-                  <p className="text-slate-400 text-lg">
-                    {calls.length === 0 
-                      ? 'Nessuna chiamata registrata'
-                      : 'Nessuna chiamata con questi filtri'
-                    }
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                    <Phone className="w-7 h-7 text-slate-300" />
+                  </div>
+                  <p className="text-slate-400 text-sm">
+                    {calls.length === 0 ? 'Nessuna chiamata registrata' : 'Nessuna chiamata con questi filtri'}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {filteredCalls.map((call) => {
-                    const StatusIcon = statusColors[call.status].icon
-                    const today = new Date()
-                    today.setHours(0, 0, 0, 0)
-                    const isFollowUpToday = call.follow_up && call.follow_up_date && 
-                      new Date(call.follow_up_date) <= today && call.status === 'pending'
-                    
-                    return (
-                      <motion.div
-                        key={call.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className={`rounded-xl border-2 p-4 ${statusColors[call.status].bg} ${statusColors[call.status].border} ${
-                          isFollowUpToday ? 'ring-2 ring-orange-500 ring-offset-2 ring-offset-slate-900' : ''
-                        } transition-all`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 space-y-3 cursor-pointer" onClick={() => setSelectedCall(call)}>
-                            {/* Header */}
-                            <div className="flex items-start gap-3">
-                              <div className="text-3xl mt-1">
-                                {callTypeEmojis[call.call_type] || '📞'}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                  <h3 className="text-xl font-bold text-white">{call.caller_name}</h3>
-                                  <span className={`px-2 py-1 rounded text-xs font-bold ${priorityColors[call.priority]}`}>
-                                    {call.priority.toUpperCase()}
+                filteredCalls.map((call) => {
+                  const status = statusConfig[call.status]
+                  const priority = priorityConfig[call.priority] || priorityConfig.media
+                  const isFollowUpDue = call.follow_up && call.follow_up_date && 
+                    new Date(call.follow_up_date) <= today && call.status === 'pending'
+
+                  return (
+                    <motion.div
+                      key={call.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className={`group bg-white/70 hover:bg-white/90 backdrop-blur-lg rounded-xl border transition-all duration-200 hover:shadow-lg hover:shadow-slate-200/50 ${
+                        isFollowUpDue ? 'border-amber-200 ring-1 ring-amber-200/50' : 'border-slate-200/50'
+                      }`}
+                    >
+                      <div className="p-4">
+                        {/* Top row: Name + Priority + Status + Actions */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedCall(call)}>
+                            {/* Avatar */}
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200/60 flex items-center justify-center flex-shrink-0">
+                              <span className="text-base font-bold text-slate-400">{call.caller_name.charAt(0).toUpperCase()}</span>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="text-sm font-bold text-slate-800 truncate">{call.caller_name}</h3>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${priority.bg} ${priority.text}`}>
+                                  {call.priority.toUpperCase()}
+                                </span>
+                                {isFollowUpDue && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-600 animate-pulse">
+                                    FOLLOW-UP
                                   </span>
-                                  {isFollowUpToday && (
-                                    <span className="px-2 py-1 rounded text-xs font-bold bg-orange-500/30 border border-orange-500/50 text-orange-300 animate-pulse">
-                                      ⏰ FOLLOW-UP OGGI!
-                                    </span>
-                                  )}
-                                </div>
-                                {call.company && (
-                                  <p className="text-sm text-slate-300 flex items-center gap-1">
-                                    <Building2 className="w-3 h-3" />
-                                    {call.company}
-                                  </p>
                                 )}
                               </div>
-                            </div>
-
-                            {/* Quick Actions */}
-                            <div className="flex gap-2 flex-wrap">
-                              <a
-                                href={`tel:${call.phone}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                                title="Chiama ora"
-                              >
-                                <PhoneCall className="w-3.5 h-3.5" />
-                                Chiama
-                              </a>
-                              {call.email && (
-                                <a
-                                  href={`mailto:${call.email}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                                  title="Invia email"
-                                >
-                                  <Mail className="w-3.5 h-3.5" />
-                                  Email
-                                </a>
+                              {call.company && (
+                                <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <Building2 className="w-3 h-3" />
+                                  {call.company}
+                                </p>
                               )}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSelectedCall(call)
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                                title="Dettagli"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                                Dettagli
-                              </button>
-                            </div>
-
-                            {/* Contact Info */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                              <div className="flex items-center gap-2 text-slate-300">
-                                <Phone className="w-4 h-4 text-blue-400" />
-                                <span>{call.phone}</span>
-                              </div>
-                              {call.email && (
-                                <div className="flex items-center gap-2 text-slate-300">
-                                  <Mail className="w-4 h-4 text-cyan-400" />
-                                  <span className="truncate">{call.email}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Notes */}
-                            <div className="bg-slate-800/50 rounded-lg p-3">
-                              <div className="flex items-start gap-2">
-                                <MessageSquare className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                                <p className="text-sm text-slate-300">{call.notes}</p>
-                              </div>
-                            </div>
-
-                            {/* Follow-up */}
-                            {call.follow_up && call.follow_up_date && (
-                              <div className="flex items-center gap-2 text-sm text-orange-300 bg-orange-500/10 px-3 py-2 rounded-lg">
-                                <Calendar className="w-4 h-4" />
-                                <span>
-                                  Follow-up: {new Date(call.follow_up_date).toLocaleDateString('it-IT')}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Meta */}
-                            <div className="flex items-center gap-4 text-xs text-slate-400">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {formatDate(call.call_date)}
-                              </div>
-                              <div className={`flex items-center gap-1 ${statusColors[call.status].text}`}>
-                                <StatusIcon className="w-3 h-3" />
-                                {statusLabels[call.status]}
-                              </div>
                             </div>
                           </div>
 
-                          {/* Actions */}
-                          <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
-                            {call.status === 'pending' && (
+                          {/* Right side: status + actions */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span className={`px-2 py-1 rounded-lg text-[10px] font-medium ${status.bg} ${status.text} border ${status.border}`}>
+                              {status.label}
+                            </span>
+                            {(call.status === 'pending' || call.status === 'in_corso') && (
                               <button
                                 onClick={() => onStatusChange(call.id, 'completed')}
-                                className="p-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg transition-colors"
-                                title="Segna come completata"
+                                className="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 flex items-center justify-center transition-all"
+                                title="Segna completata"
                               >
-                                <CheckCircle className="w-5 h-5 text-green-400" />
+                                <CheckCircle className="w-4 h-4 text-emerald-500" />
                               </button>
                             )}
                             <button
                               onClick={() => setDeleteConfirmId(call.id)}
                               disabled={deletingId === call.id}
-                              className="p-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg transition-colors disabled:opacity-50"
-                              title="Elimina chiamata"
+                              className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200/60 flex items-center justify-center transition-all disabled:opacity-50"
+                              title="Elimina"
                             >
-                              <Trash2 className="w-5 h-5 text-red-400" />
+                              <Trash2 className="w-4 h-4 text-red-400" />
                             </button>
                           </div>
                         </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-1.5 mb-3 flex-wrap">
+                          <a
+                            href={`tel:${call.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 text-indigo-600 text-xs font-medium flex items-center gap-1 transition-all"
+                          >
+                            <PhoneCall className="w-3 h-3" />
+                            Chiama
+                          </a>
+                          {onEdit && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onEdit(call) }}
+                              className="px-2.5 py-1 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200/60 text-violet-600 text-xs font-medium flex items-center gap-1 transition-all"
+                            >
+                              ✏️ Modifica
+                            </button>
+                          )}
+                          {onViewTimeline && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onViewTimeline(call) }}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200/60 text-blue-600 text-xs font-medium flex items-center gap-1 transition-all"
+                            >
+                              <History className="w-3 h-3" />
+                              Cronologia
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSelectedCall(call) }}
+                            className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200/60 text-slate-500 text-xs font-medium flex items-center gap-1 transition-all"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Dettagli
+                          </button>
+                        </div>
+
+                        {/* Phone */}
+                        <div className="flex items-center gap-4 text-xs text-slate-400 mb-2">
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-3 h-3 text-indigo-400" />
+                            {call.phone}
+                          </span>
+                          {call.email && (
+                            <a href={`mailto:${call.email}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 hover:text-indigo-500 transition-colors truncate">
+                              <Mail className="w-3 h-3 text-indigo-400" />
+                              {call.email}
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Address + Assigned */}
+                        {(call.address || call.city || call.assigned_to) && (
+                          <div className="flex items-center gap-4 text-xs text-slate-400 mb-2 flex-wrap">
+                            {(call.address || call.city) && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-violet-400" />
+                                {[call.address, call.city, call.province].filter(Boolean).join(', ')}
+                                {call.zip_code && ` (${call.zip_code})`}
+                              </span>
+                            )}
+                            {call.assigned_to && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-500 font-medium">
+                                <User className="w-3 h-3" />
+                                {call.assigned_to}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Notes */}
+                        {call.notes && (
+                          <div className="bg-slate-50/80 rounded-lg p-2.5 mb-2">
+                            <p className="text-xs text-slate-500 leading-relaxed flex items-start gap-1.5">
+                              <MessageSquare className="w-3 h-3 mt-0.5 flex-shrink-0 text-slate-300" />
+                              <span className="line-clamp-2">{call.notes}</span>
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Follow-up + Date */}
+                        <div className="flex items-center justify-between text-xs mt-1">
+                          {call.follow_up && call.follow_up_date ? (
+                            <span className={`flex items-center gap-1 px-2 py-1 rounded-md ${isFollowUpDue ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400'}`}>
+                              <Calendar className="w-3 h-3" />
+                              Follow-up: {new Date(call.follow_up_date).toLocaleDateString('it-IT')}
+                            </span>
+                          ) : <span />}
+                          <span className="text-slate-300 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatDate(call.call_date)}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })
               )}
             </div>
           </div>

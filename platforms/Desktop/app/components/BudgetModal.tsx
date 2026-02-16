@@ -86,7 +86,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-x-hidden">
+      <div className="fixed inset-0 bg-slate-900/30  flex items-center justify-center p-4 z-50 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -94,49 +94,47 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-2xl w-full overflow-x-hidden"
         >
-          {/* Glow effect */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl blur-2xl opacity-30" />
-          
           {/* Main modal */}
-          <div className="relative bg-slate-900 rounded-2xl max-h-[90vh] overflow-hidden border-2 border-green-500/30 shadow-2xl">
+          <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-green-900/30 to-emerald-900/30">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-2xl">
-                💰
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <DollarSign className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">Bilancio Familiare</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Gestisci entrate e uscite</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">Bilancio Familiare</h2>
-                <p className="text-sm text-slate-400">Gestisci entrate e uscite</p>
-              </div>
+              <button
+                onClick={onClose}
+                title="Chiudi"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+              >
+                <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
-          </div>
 
           {/* Content */}
           <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-88px)]">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Type Selection */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setType('income')
                     setCategory('')
                   }}
-                  className={`p-4 rounded-xl border-2 transition-all ${
+                  className={`p-4 rounded-xl border transition-all ${
                     type === 'income'
-                      ? 'border-green-500 bg-green-500/20'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      ? 'border-indigo-300 bg-indigo-50/60 ring-2 ring-indigo-500/10'
+                      : 'border-slate-200/60 bg-slate-50/80 hover:bg-slate-100/80'
                   }`}
                 >
-                  <TrendingUp className={`w-8 h-8 mx-auto mb-2 ${type === 'income' ? 'text-green-400' : 'text-white'}`} />
-                  <p className="text-white font-semibold">Entrata</p>
+                  <TrendingUp className={`w-6 h-6 mx-auto mb-2 ${type === 'income' ? 'text-emerald-500' : 'text-slate-400'}`} />
+                  <p className={`text-sm font-medium ${type === 'income' ? 'text-slate-800' : 'text-slate-500'}`}>Entrata</p>
                 </button>
 
                 <button
@@ -145,34 +143,34 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
                     setType('expense')
                     setCategory('')
                   }}
-                  className={`p-4 rounded-xl border-2 transition-all ${
+                  className={`p-4 rounded-xl border transition-all ${
                     type === 'expense'
-                      ? 'border-red-500 bg-red-500/20'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      ? 'border-indigo-300 bg-indigo-50/60 ring-2 ring-indigo-500/10'
+                      : 'border-slate-200/60 bg-slate-50/80 hover:bg-slate-100/80'
                   }`}
                 >
-                  <TrendingDown className={`w-8 h-8 mx-auto mb-2 ${type === 'expense' ? 'text-red-400' : 'text-white'}`} />
-                  <p className="text-white font-semibold">Uscita</p>
+                  <TrendingDown className={`w-6 h-6 mx-auto mb-2 ${type === 'expense' ? 'text-red-500' : 'text-slate-400'}`} />
+                  <p className={`text-sm font-medium ${type === 'expense' ? 'text-slate-800' : 'text-slate-500'}`}>Uscita</p>
                 </button>
               </div>
 
               {/* Amount */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Importo (€)</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Importo (€)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all text-sm"
                   placeholder="0.00"
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Categoria</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Categoria</label>
                 <div className="grid grid-cols-3 gap-2">
                   {categories.map((cat) => (
                     <button
@@ -182,14 +180,14 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
                         setCategory(cat.name)
                         setEmoji(cat.emoji)
                       }}
-                      className={`p-3 rounded-lg border transition-all ${
+                      className={`p-3 rounded-xl border transition-all ${
                         category === cat.name
-                          ? 'border-green-500 bg-green-500/20'
-                          : 'border-white/10 bg-white/5 hover:bg-white/10'
+                          ? 'border-indigo-300 bg-indigo-50/60 ring-2 ring-indigo-500/10'
+                          : 'border-slate-200/60 bg-slate-50/80 hover:bg-slate-100/80'
                       }`}
                     >
-                      <span className="text-2xl block mb-1">{cat.emoji}</span>
-                      <span className="text-xs text-white">{cat.name}</span>
+                      <span className="text-xl block mb-1">{cat.emoji}</span>
+                      <span className="text-xs text-slate-600">{cat.name}</span>
                     </button>
                   ))}
                 </div>
@@ -197,26 +195,26 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Descrizione</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Descrizione</label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all text-sm"
                   placeholder="Es: Spesa al supermercato"
                 />
               </div>
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Data</label>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Data</label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full bg-slate-100 border border-slate-200 rounded-lg px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                   aria-label="Data transazione"
                 />
               </div>
@@ -226,7 +224,7 @@ export default function BudgetModal({ isOpen, onClose, onSave }: BudgetModalProp
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl py-4 font-semibold hover:shadow-lg hover:shadow-green-500/50 transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
               >
                 Salva Movimento
               </motion.button>

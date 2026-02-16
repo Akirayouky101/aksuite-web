@@ -1,7 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, BarChart3, Repeat, AlertTriangle } from 'lucide-react'
+import { X, Plus, BarChart3, Repeat, AlertTriangle, List, DollarSign, Target } from 'lucide-react'
 
 interface BudgetMenuModalProps {
   isOpen: boolean
@@ -14,318 +13,46 @@ interface BudgetMenuModalProps {
   onSelectLimitsList?: () => void
 }
 
-export default function BudgetMenuModal({ 
-  isOpen, 
-  onClose, 
-  onSelectNew, 
-  onSelectView,
-  onSelectRecurring,
-  onSelectRecurringList,
-  onSelectLimit,
-  onSelectLimitsList
-}: BudgetMenuModalProps) {
+export default function BudgetMenuModal({ isOpen, onClose, onSelectNew, onSelectView, onSelectRecurring, onSelectRecurringList, onSelectLimit, onSelectLimitsList }: BudgetMenuModalProps) {
+  if (!isOpen) return null
+
+  const items = [
+    { label: 'Nuovo Movimento', desc: 'Aggiungi entrata o uscita', icon: Plus, onClick: onSelectNew, color: 'bg-emerald-50 border-emerald-200/60', iconColor: 'text-emerald-400' },
+    { label: 'Bilancio Completo', desc: 'Transazioni e totali', icon: BarChart3, onClick: onSelectView, color: 'bg-indigo-50 border-indigo-200', iconColor: 'text-indigo-500' },
+    ...(onSelectRecurring ? [{ label: 'Nuovo Ricorrente', desc: 'Automatizza movimenti', icon: Repeat, onClick: onSelectRecurring, color: 'bg-indigo-50 border-violet-200/60', iconColor: 'text-indigo-500' }] : []),
+    ...(onSelectRecurringList ? [{ label: 'Gestisci Ricorrenti', desc: 'Automazioni attive', icon: List, onClick: onSelectRecurringList, color: 'bg-indigo-50 border-indigo-200/60', iconColor: 'text-indigo-400' }] : []),
+    ...(onSelectLimit ? [{ label: 'Limite Budget', desc: 'Imposta tetto spesa', icon: AlertTriangle, onClick: onSelectLimit, color: 'bg-amber-50 border-amber-200/60', iconColor: 'text-amber-400' }] : []),
+    ...(onSelectLimitsList ? [{ label: 'Gestisci Limiti', desc: 'Vedi limiti e avvisi', icon: Target, onClick: onSelectLimitsList, color: 'bg-red-50 border-red-200/60', iconColor: 'text-red-400' }] : []),
+  ]
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          >
-            {/* Modal Container */}
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, rotate: 180 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden"
-            >
-              {/* Glow effect */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl blur-2xl opacity-50 animate-pulse" />
-              
-              {/* Main modal */}
-              <div className="relative bg-gradient-to-br from-slate-900 via-green-900/50 to-emerald-900/50 border-4 border-green-400 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-                {/* Header */}
-                <div className="relative z-10 p-4 sm:p-6 border-b-2 border-green-400/50 bg-black/30 flex-shrink-0">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl sm:text-3xl font-black bg-gradient-to-r from-green-300 via-emerald-400 to-teal-500 bg-clip-text text-transparent">
-                      💰 BILANCIO FAMILIARE 💰
-                    </h2>
-                    <motion.button
-                      whileHover={{ scale: 1.1, rotate: 90 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={onClose}
-                      className="w-8 h-8 sm:w-10 sm:h-10 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0"
-                    >
-                      <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={3} />
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Options - Scrollable */}
-                <div className="relative z-10 p-4 sm:p-8 space-y-3 sm:space-y-4 overflow-y-auto overscroll-contain">
-                  {/* New Transaction */}
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 10 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      onSelectNew()
-                      onClose()
-                    }}
-                    className="w-full group"
-                  >
-                    <div className="relative overflow-hidden rounded-xl border-2 border-green-400 bg-gradient-to-r from-green-600 to-emerald-600 p-4 sm:p-6">
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-                          <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-white" strokeWidth={3} />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <h3 className="text-lg sm:text-2xl font-black text-white mb-0.5 sm:mb-1">
-                            ✨ NUOVO MOVIMENTO
-                          </h3>
-                          <p className="text-xs sm:text-base text-green-100 font-bold">
-                            Aggiungi una nuova entrata o uscita
-                          </p>
-                        </div>
-                        <motion.div
-                          animate={{ x: [0, 5, 0] }}
-                          transition={{ duration: 1, repeat: Infinity }}
-                          className="text-2xl sm:text-4xl flex-shrink-0"
-                        >
-                          ➡️
-                        </motion.div>
-                      </div>
-                      {/* Shine effect */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        animate={{ x: [-200, 400] }}
-                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                      />
-                    </div>
-                  </motion.button>
-
-                  {/* View Budget */}
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 10 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      onSelectView()
-                      onClose()
-                    }}
-                    className="w-full group"
-                  >
-                    <div className="relative overflow-hidden rounded-xl border-2 border-green-400 bg-gradient-to-r from-blue-600 to-cyan-600 p-4 sm:p-6">
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-                          <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-white" strokeWidth={3} />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <h3 className="text-lg sm:text-2xl font-black text-white mb-0.5 sm:mb-1">
-                            📊 BILANCIO COMPLETO
-                          </h3>
-                          <p className="text-xs sm:text-base text-blue-100 font-bold">
-                            Visualizza tutte le transazioni e i totali
-                          </p>
-                        </div>
-                        <motion.div
-                          animate={{ x: [0, 5, 0] }}
-                          transition={{ duration: 1, repeat: Infinity }}
-                          className="text-2xl sm:text-4xl flex-shrink-0"
-                        >
-                          ➡️
-                        </motion.div>
-                      </div>
-                      {/* Shine effect */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        animate={{ x: [-200, 400] }}
-                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, delay: 0.5 }}
-                      />
-                    </div>
-                  </motion.button>
-
-                  {/* Recurring Transaction */}
-                  {onSelectRecurring && (
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 10 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        onSelectRecurring()
-                        onClose()
-                      }}
-                      className="w-full group"
-                    >
-                      <div className="relative overflow-hidden rounded-xl border-2 border-green-400 bg-gradient-to-r from-purple-600 to-pink-600 p-4 sm:p-6">
-                        <div className="flex items-center gap-3 sm:gap-4">
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-                            <Repeat className="w-6 h-6 sm:w-8 sm:h-8 text-white" strokeWidth={3} />
-                          </div>
-                          <div className="flex-1 text-left">
-                            <h3 className="text-lg sm:text-2xl font-black text-white mb-0.5 sm:mb-1">
-                              🔄 RICORRENTE
-                            </h3>
-                            <p className="text-xs sm:text-base text-purple-100 font-bold">
-                              Automatizza stipendi, affitti e bollette
-                            </p>
-                          </div>
-                          <motion.div
-                            animate={{ x: [0, 5, 0] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                            className="text-2xl sm:text-4xl flex-shrink-0"
-                          >
-                            ➡️
-                          </motion.div>
-                        </div>
-                        {/* Shine effect */}
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                          animate={{ x: [-200, 400] }}
-                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, delay: 1 }}
-                        />
-                      </div>
-                    </motion.button>
-                  )}
-
-                  {/* Recurring List */}
-                  {onSelectRecurringList && (
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 10 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        onSelectRecurringList()
-                        onClose()
-                      }}
-                      className="w-full group"
-                    >
-                      <div className="relative overflow-hidden rounded-xl border-2 border-green-400 bg-gradient-to-r from-cyan-600 to-teal-600 p-4 sm:p-6">
-                        <div className="flex items-center gap-3 sm:gap-4">
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-                            <span className="text-2xl sm:text-3xl">📋</span>
-                          </div>
-                          <div className="flex-1 text-left">
-                            <h3 className="text-lg sm:text-2xl font-black text-white mb-0.5 sm:mb-1">
-                              📋 GESTISCI RICORRENTI
-                            </h3>
-                            <p className="text-xs sm:text-base text-cyan-100 font-bold">
-                              Vedi e modifica le automazioni attive
-                            </p>
-                          </div>
-                          <motion.div
-                            animate={{ x: [0, 5, 0] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                            className="text-2xl sm:text-4xl flex-shrink-0"
-                          >
-                            ➡️
-                          </motion.div>
-                        </div>
-                        {/* Shine effect */}
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                          animate={{ x: [-200, 400] }}
-                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, delay: 1.5 }}
-                        />
-                      </div>
-                    </motion.button>
-                  )}
-
-                  {/* Budget Limit */}
-                  {onSelectLimit && (
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 10 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        onSelectLimit()
-                        onClose()
-                      }}
-                      className="w-full group"
-                    >
-                      <div className="relative overflow-hidden rounded-xl border-2 border-green-400 bg-gradient-to-r from-orange-600 to-red-600 p-4 sm:p-6">
-                        <div className="flex items-center gap-3 sm:gap-4">
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-                            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-white" strokeWidth={3} />
-                          </div>
-                          <div className="flex-1 text-left">
-                            <h3 className="text-lg sm:text-2xl font-black text-white mb-0.5 sm:mb-1">
-                              ⚠️ LIMITE BUDGET
-                            </h3>
-                            <p className="text-xs sm:text-base text-orange-100 font-bold">
-                              Imposta tetto massimo di spesa
-                            </p>
-                          </div>
-                          <motion.div
-                            animate={{ x: [0, 5, 0] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                            className="text-2xl sm:text-4xl flex-shrink-0"
-                          >
-                            ➡️
-                          </motion.div>
-                        </div>
-                        {/* Shine effect */}
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                          animate={{ x: [-200, 400] }}
-                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, delay: 2 }}
-                        />
-                      </div>
-                    </motion.button>
-                  )}
-
-                  {/* Limits List */}
-                  {onSelectLimitsList && (
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 10 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        onSelectLimitsList()
-                        onClose()
-                      }}
-                      className="w-full group"
-                    >
-                      <div className="relative overflow-hidden rounded-xl border-2 border-green-400 bg-gradient-to-r from-red-600 to-pink-600 p-4 sm:p-6">
-                        <div className="flex items-center gap-3 sm:gap-4">
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-                            <span className="text-2xl sm:text-3xl">🎯</span>
-                          </div>
-                          <div className="flex-1 text-left">
-                            <h3 className="text-lg sm:text-2xl font-black text-white mb-0.5 sm:mb-1">
-                              🎯 GESTISCI LIMITI
-                            </h3>
-                            <p className="text-xs sm:text-base text-red-100 font-bold">
-                              Vedi tutti i limiti e avvisi
-                            </p>
-                          </div>
-                          <motion.div
-                            animate={{ x: [0, 5, 0] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                            className="text-2xl sm:text-4xl flex-shrink-0"
-                          >
-                            ➡️
-                          </motion.div>
-                        </div>
-                        {/* Shine effect */}
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                          animate={{ x: [-200, 400] }}
-                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, delay: 2.5 }}
-                        />
-                      </div>
-                    </motion.button>
-                  )}
-                </div>
-
-                {/* Danger tape */}
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-400 via-black to-green-400 opacity-70" />
-                <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-green-400 via-black to-green-400 opacity-70" />
+    <div className="fixed inset-0 bg-slate-900/30  z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-indigo-500 flex items-center justify-center">
+              <DollarSign className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800">Bilancio Familiare</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all">
+            <X className="w-4 h-4 text-slate-500" />
+          </button>
+        </div>
+        <div className="p-4 space-y-2 overflow-y-auto">
+          {items.map((item, i) => (
+            <button key={i} onClick={() => { item.onClick?.(); onClose() }} className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-white/50 hover:bg-white border border-slate-200/40 hover:border-slate-200 transition-all text-left group">
+              <div className={`w-10 h-10 rounded-lg ${item.color} border flex items-center justify-center group-hover:opacity-100 opacity-80 transition-opacity`}>
+                <item.icon className={`w-5 h-5 ${item.iconColor}`} />
               </div>
-            </motion.div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700">{item.label}</h3>
+                <p className="text-xs text-slate-400">{item.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
