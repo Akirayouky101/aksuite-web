@@ -6,7 +6,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -42,6 +42,13 @@ const ClientDetailModal = dynamic(() => import('./components/ClientDetailModal')
 const PreventivoModal = dynamic(() => import('./components/PreventivoModal'), { ssr: false })
 const SearchModal = dynamic(() => import('./components/SearchModal'), { ssr: false })
 const AuthModal = dynamic(() => import('./components/AuthModal'), { ssr: false })
+const SupplierModal = dynamic(() => import('./components/SupplierModal'), { ssr: false })
+const SuppliersListModal = dynamic(() => import('./components/SuppliersListModal'), { ssr: false })
+const ProductModal = dynamic(() => import('./components/ProductModal'), { ssr: false })
+const OrderModal = dynamic(() => import('./components/OrderModal'), { ssr: false })
+const OrdersListModal = dynamic(() => import('./components/OrdersListModal'), { ssr: false })
+const WarehouseListModal = dynamic(() => import('./components/WarehouseListModal'), { ssr: false })
+const LabelPrinterModal = dynamic(() => import('./components/LabelPrinterModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -61,6 +68,9 @@ import { useLavorazioni } from './hooks/useLavorazioni'
 import { useLavorazioneTimeline } from './hooks/useLavorazioneTimeline'
 import { useCallTimeline } from './hooks/useCallTimeline'
 import { useClients } from './hooks/useClients'
+import { useSuppliers } from './hooks/useSuppliers'
+import { useWarehouse } from './hooks/useWarehouse'
+import { useOrders } from './hooks/useOrders'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -105,6 +115,20 @@ export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // ═══ WAREHOUSE / ORDERS STATE ═══
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false)
+  const [isSuppliersListModalOpen, setIsSuppliersListModalOpen] = useState(false)
+  const [editingSupplier, setEditingSupplier] = useState<any>(null)
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [isWarehouseListModalOpen, setIsWarehouseListModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<any>(null)
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
+  const [isOrdersListModalOpen, setIsOrdersListModalOpen] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<any>(null)
+  const [orderItems, setOrderItems] = useState<any[]>([])
+  const [isLabelPrinterOpen, setIsLabelPrinterOpen] = useState(false)
+  const [labelProduct, setLabelProduct] = useState<any>(null)
+
   // ═══ BADGE "SEEN" TRACKING ═══
   const [seenCalls, setSeenCalls] = useState<number | null>(null)
   const [seenLavorazioni, setSeenLavorazioni] = useState<number | null>(null)
@@ -135,6 +159,9 @@ export default function Home() {
   const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, updateEntry: updateTimelineEntry, uploadPhoto: uploadTimelinePhoto, clearTimeline } = useLavorazioneTimeline()
   const { entries: callTimelineEntries, loading: callTimelineLoading, loadTimeline: loadCallTimeline, addEntry: addCallTimelineEntry, deleteEntry: deleteCallTimelineEntry, updateEntry: updateCallTimelineEntry, uploadPhoto: uploadCallTimelinePhoto, clearTimeline: clearCallTimeline } = useCallTimeline()
   const { clients, addClient, updateClient, deleteClient, toggleFavorite: toggleClientFavorite } = useClients()
+  const { suppliers, addSupplier, updateSupplier, deleteSupplier, toggleFavorite: toggleSupplierFavorite } = useSuppliers()
+  const { products, addProduct, updateProduct, deleteProduct, updateStock, loadMovements, findByBarcode } = useWarehouse()
+  const { orders, addOrder, updateOrder, deleteOrder, addOrderItem, deleteOrderItem, getOrderItems, receiveOrder } = useOrders()
 
   const availableRelationItems = useMemo(() => ({ passwords, calls, visits, tasks, notes, events, transactions }), [passwords, calls, visits, tasks, notes, events, transactions])
 
@@ -315,6 +342,9 @@ export default function Home() {
     { id: 'notes', label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length },
     { id: 'clients', label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length },
     { id: 'visits', label: 'Visite', icon: MapPin, onClick: () => setIsVisitsListModalOpen(true), count: visits.length },
+    { id: 'suppliers', label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length },
+    { id: 'orders', label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length },
+    { id: 'warehouse', label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length },
   ]
 
   const quickActions = [
@@ -1025,6 +1055,96 @@ export default function Home() {
         onClose={() => setIsPreventivoModalOpen(false)}
         clients={clients}
         lavorazioni={lavorazioni}
+      />
+
+      {/* ═══ WAREHOUSE / ORDERS / SUPPLIERS MODALS ═══ */}
+      <SupplierModal
+        isOpen={isSupplierModalOpen}
+        onClose={() => { setIsSupplierModalOpen(false); setEditingSupplier(null) }}
+        onSave={async (data) => { if (editingSupplier) { await updateSupplier(editingSupplier.id, data) } else { await addSupplier(data) } }}
+        editingSupplier={editingSupplier}
+      />
+      <SuppliersListModal
+        isOpen={isSuppliersListModalOpen}
+        onClose={() => setIsSuppliersListModalOpen(false)}
+        suppliers={suppliers}
+        onAdd={() => { setEditingSupplier(null); setIsSupplierModalOpen(true) }}
+        onEdit={(supplier) => { setEditingSupplier(supplier); setIsSupplierModalOpen(true); setIsSuppliersListModalOpen(false) }}
+        onDelete={deleteSupplier}
+        onToggleFavorite={toggleSupplierFavorite}
+      />
+      <ProductModal
+        isOpen={isProductModalOpen}
+        onClose={() => { setIsProductModalOpen(false); setEditingProduct(null) }}
+        onSave={async (data) => { if (editingProduct) { await updateProduct(editingProduct.id, data) } else { await addProduct(data) } }}
+        editingProduct={editingProduct}
+        suppliers={suppliers}
+      />
+      <WarehouseListModal
+        isOpen={isWarehouseListModalOpen}
+        onClose={() => setIsWarehouseListModalOpen(false)}
+        products={products}
+        suppliers={suppliers}
+        onAdd={() => { setEditingProduct(null); setIsProductModalOpen(true) }}
+        onEdit={(product) => { setEditingProduct(product); setIsProductModalOpen(true); setIsWarehouseListModalOpen(false) }}
+        onDelete={deleteProduct}
+        onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
+        onFindByBarcode={findByBarcode}
+        onLoadMovements={loadMovements}
+      />
+      <OrderModal
+        isOpen={isOrderModalOpen}
+        onClose={() => { setIsOrderModalOpen(false); setEditingOrder(null); setOrderItems([]) }}
+        onSave={async (data) => {
+          if (editingOrder) { await updateOrder(editingOrder.id, data) }
+          else {
+            const newOrder = await addOrder(data)
+            if (newOrder) { setEditingOrder(newOrder); const items = await getOrderItems(newOrder.id); setOrderItems(items) }
+          }
+        }}
+        onAddItem={async (item) => {
+          if (editingOrder) {
+            await addOrderItem(editingOrder.id, item)
+            const items = await getOrderItems(editingOrder.id)
+            setOrderItems(items)
+          }
+        }}
+        onDeleteItem={async (id) => {
+          if (editingOrder) {
+            await deleteOrderItem(id, editingOrder.id)
+            const items = await getOrderItems(editingOrder.id)
+            setOrderItems(items)
+          }
+        }}
+        editingOrder={editingOrder}
+        orderItems={orderItems}
+        suppliers={suppliers}
+        products={products}
+      />
+      <OrdersListModal
+        isOpen={isOrdersListModalOpen}
+        onClose={() => setIsOrdersListModalOpen(false)}
+        orders={orders}
+        suppliers={suppliers}
+        onAdd={() => { setEditingOrder(null); setOrderItems([]); setIsOrderModalOpen(true) }}
+        onEdit={async (order) => {
+          setEditingOrder(order)
+          const items = await getOrderItems(order.id)
+          setOrderItems(items)
+          setIsOrderModalOpen(true)
+          setIsOrdersListModalOpen(false)
+        }}
+        onDelete={deleteOrder}
+        onReceive={async (orderId) => {
+          const items = await getOrderItems(orderId)
+          const receivedItems = items.map(i => ({ itemId: i.id, quantityReceived: i.quantity_ordered }))
+          await receiveOrder(orderId, receivedItems)
+        }}
+      />
+      <LabelPrinterModal
+        isOpen={isLabelPrinterOpen}
+        onClose={() => { setIsLabelPrinterOpen(false); setLabelProduct(null) }}
+        product={labelProduct}
       />
     </div>
   )
