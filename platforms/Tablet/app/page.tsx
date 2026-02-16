@@ -288,43 +288,7 @@ export default function Home() {
   }
 
   // ═══════════════════════════════════════════
-  // LOGIN SCREEN — Glassmorphism Chiaro
-  // ═══════════════════════════════════════════
-  if (!user) {
-    return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        {/* Mesh gradient background */}
-        <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/50" />
-        <div className="fixed top-[-200px] left-[-100px] w-[600px] h-[600px] bg-indigo-200/30 rounded-full blur-[120px]" />
-        <div className="fixed bottom-[-150px] right-[-80px] w-[500px] h-[500px] bg-violet-200/25 rounded-full blur-[100px]" />
-        <div className="fixed top-[40%] left-[50%] w-[400px] h-[400px] bg-sky-200/20 rounded-full blur-[80px]" />
-
-        <div className="relative z-10 w-full max-w-sm">
-          <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-200/60 p-8">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/25">
-                <Star className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">AK Suite</h1>
-              <p className="text-slate-400 mt-2 text-sm">La tua suite gestionale premium</p>
-            </div>
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 active:scale-[0.98]"
-            >
-              <LogIn className="w-5 h-5" />
-              Accedi al pannello
-            </button>
-            <p className="text-center text-xs text-slate-400 mt-6">Crittografia end-to-end</p>
-          </div>
-        </div>
-        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onSuccess={() => setIsAuthModalOpen(false)} />
-      </div>
-    )
-  }
-
-  // ═══════════════════════════════════════════
-  // NAVIGATION & ACTIONS CONFIG
+  // NAVIGATION & ACTIONS CONFIG (must be before early return to respect Rules of Hooks)
   // ═══════════════════════════════════════════
 
   const navItems = useMemo(() => [
@@ -360,6 +324,42 @@ export default function Home() {
     { label: 'Eventi', value: events.length, icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, gradient: 'from-rose-500 to-pink-600', badgeText: badgeEvents > 0 ? `${badgeEvents} oggi` : null, badgeStyle: 'text-rose-600 bg-rose-50' },
     { label: 'Bilancio', value: `${stats.balance >= 0 ? '+' : ''}${stats.balance.toFixed(0)}\u20AC`, icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), gradient: 'from-emerald-500 to-teal-600', isBalance: true, balancePositive: stats.balance >= 0 },
   ], [calls.length, tasks.length, events.length, stats.balance, badgeCalls, badgeTasks, badgeEvents, pendingCalls, activeTasks, todayEvents])
+
+  // ═══════════════════════════════════════════
+  // LOGIN SCREEN — Glassmorphism Chiaro
+  // ═══════════════════════════════════════════
+  if (!user) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+        {/* Mesh gradient background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/50" />
+        <div className="fixed top-[-200px] left-[-100px] w-[600px] h-[600px] bg-indigo-200/30 rounded-full blur-[120px]" />
+        <div className="fixed bottom-[-150px] right-[-80px] w-[500px] h-[500px] bg-violet-200/25 rounded-full blur-[100px]" />
+        <div className="fixed top-[40%] left-[50%] w-[400px] h-[400px] bg-sky-200/20 rounded-full blur-[80px]" />
+
+        <div className="relative z-10 w-full max-w-sm">
+          <div className="bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-200/60 p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/25">
+                <Star className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">AK Suite</h1>
+              <p className="text-slate-400 mt-2 text-sm">La tua suite gestionale premium</p>
+            </div>
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 active:scale-[0.98]"
+            >
+              <LogIn className="w-5 h-5" />
+              Accedi al pannello
+            </button>
+            <p className="text-center text-xs text-slate-400 mt-6">Crittografia end-to-end</p>
+          </div>
+        </div>
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onSuccess={() => setIsAuthModalOpen(false)} />
+      </div>
+    )
+  }
 
   // ═══════════════════════════════════════════
   // MAIN APP — Glassmorphism Chiaro
