@@ -65,24 +65,27 @@ export function useWarehouse() {
 
   useEffect(() => {
     if (!user) { setProducts([]); setMovements([]); setLoading(false); return }
+    let mounted = true
     const fetchProducts = async () => {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name', { ascending: true })
-      if (!error && data) setProducts(data)
-      setLoading(false)
+      try {
+        setLoading(true)
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
+        if (!error && data && mounted) setProducts(data)
+      } catch (e) { console.warn('Products table may not exist yet:', e) }
+      if (mounted) setLoading(false)
     }
     fetchProducts()
 
     const channel = supabase
       .channel('products_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `user_id=eq.${user.id}` },
-        () => fetchProducts()
+        () => { if (mounted) fetchProducts() }
       ).subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => { mounted = false; supabase.removeChannel(channel) }
   }, [user])
 
   const addProduct = async (data: Partial<Product>) => {

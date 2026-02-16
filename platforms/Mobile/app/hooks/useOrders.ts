@@ -63,24 +63,39 @@ export function useOrders() {
 
   useEffect(() => {
     if (!user) { setOrders([]); setLoading(false); return }
-    fetchOrders()
+    let mounted = true
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+        if (!error && data && mounted) setOrders(data)
+      } catch (e) { console.warn('Orders table may not exist yet:', e) }
+      if (mounted) setLoading(false)
+    }
+    fetchData()
     const channel = supabase
       .channel('orders_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` },
-        () => fetchOrders()
+        () => { if (mounted) fetchData() }
       ).subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => { mounted = false; supabase.removeChannel(channel) }
   }, [user])
 
   const fetchOrders = async () => {
     if (!user) return
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-    if (!error && data) setOrders(data)
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      if (!error && data) setOrders(data)
+    } catch (e) { console.warn('Orders fetch error:', e) }
     setLoading(false)
   }
 

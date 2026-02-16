@@ -48,24 +48,27 @@ export function useSuppliers() {
 
   useEffect(() => {
     if (!user) { setSuppliers([]); setLoading(false); return }
+    let mounted = true
     const fetchSuppliers = async () => {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('suppliers')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name', { ascending: true })
-      if (!error && data) setSuppliers(data)
-      setLoading(false)
+      try {
+        setLoading(true)
+        const { data, error } = await supabase
+          .from('suppliers')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
+        if (!error && data && mounted) setSuppliers(data)
+      } catch (e) { console.warn('Suppliers table may not exist yet:', e) }
+      if (mounted) setLoading(false)
     }
     fetchSuppliers()
 
     const channel = supabase
       .channel('suppliers_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'suppliers', filter: `user_id=eq.${user.id}` },
-        () => fetchSuppliers()
+        () => { if (mounted) fetchSuppliers() }
       ).subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => { mounted = false; supabase.removeChannel(channel) }
   }, [user])
 
   const addSupplier = async (data: Partial<Supplier>) => {
