@@ -769,6 +769,7 @@ export default function Home() {
         editCall={editingCall} availableItems={availableRelationItems}
         onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems}
         teamMembers={teamMembers} onAddTeamMember={addTeamMember} onDeleteTeamMember={deleteTeamMember}
+        clients={clients} onAddClient={addClient}
       />
       <CallsListModal isOpen={isCallsListModalOpen} onClose={() => setIsCallsListModalOpen(false)}
         calls={calls} onDelete={deleteCall} onStatusChange={updateCallStatus}

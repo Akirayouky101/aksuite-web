@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock, MapPin, UserPlus, Trash2, ChevronDown, Wrench } from 'lucide-react'
+import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock, MapPin, UserPlus, Trash2, ChevronDown, Wrench, Users } from 'lucide-react'
 import SuccessModal from './SuccessModal'
 import RelationsIntegration from './RelationsIntegration'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
@@ -41,6 +41,9 @@ interface CallModalProps {
   teamMembers?: TeamMember[]
   onAddTeamMember?: (name: string, role: string) => Promise<any>
   onDeleteTeamMember?: (id: string) => Promise<void>
+  // Rubrica clienti
+  clients?: Array<{ id: string; name: string; company: string; phone: string; email: string; address: string; city: string; zip_code: string; province: string }>
+  onAddClient?: (data: any) => Promise<any>
   // Relazioni
   availableItems?: {
     passwords?: any[]
@@ -79,6 +82,8 @@ export default function CallModal({
   teamMembers = [],
   onAddTeamMember,
   onDeleteTeamMember,
+  clients = [],
+  onAddClient,
   availableItems,
   onAddRelation,
   onRemoveRelation,
@@ -109,6 +114,9 @@ export default function CallModal({
   const [lavorazioneTime, setLavorazioneTime] = useState('')
   const [lavorazioneDesc, setLavorazioneDesc] = useState('')
   const [lavorazioneAssignee, setLavorazioneAssignee] = useState('')
+  const [showAddToRubrica, setShowAddToRubrica] = useState(false)
+  const [pendingClientData, setPendingClientData] = useState<any>(null)
+  const [addingToRubrica, setAddingToRubrica] = useState(false)
 
   useEffect(() => {
     if (editCall) {
@@ -165,6 +173,34 @@ export default function CallModal({
       setNotes(''); setFollowUp(false); setFollowUpDate('')
       setHasLavorazione(false); setLavorazioneDate(''); setLavorazioneTime('')
       setLavorazioneDesc(''); setLavorazioneAssignee('')
+
+      // Check if caller exists in rubrica (only for new calls)
+      if (!editCall && onAddClient && clients.length >= 0) {
+        const nameToCheck = callerName.trim().toLowerCase()
+        const phoneToCheck = phone.trim()
+        const alreadyInRubrica = clients.some(c => 
+          c.name.toLowerCase() === nameToCheck || 
+          (phoneToCheck && c.phone && c.phone === phoneToCheck)
+        )
+        if (!alreadyInRubrica && nameToCheck) {
+          setPendingClientData({
+            name: callerName.trim(),
+            company: company.trim(),
+            phone: phone.trim(),
+            email: email.trim(),
+            address: address.trim(),
+            city: city.trim(),
+            zip_code: zipCode.trim(),
+            province: province.trim(),
+            phone2: '', fiscal_code: '', vat_number: '',
+            category: company.trim() ? 'azienda' : 'privato',
+            notes: '', is_favorite: false
+          })
+          setShowAddToRubrica(true)
+          return // Don't show success yet, wait for rubrica decision
+        }
+      }
+
       setShowSuccess(true)
       setTimeout(() => { setShowSuccess(false); onClose() }, 2500)
     } catch (error) {
@@ -184,6 +220,29 @@ export default function CallModal({
     } catch (error) {
       console.error('Error adding team member:', error)
     }
+  }
+
+  const handleAddToRubrica = async () => {
+    if (!pendingClientData || !onAddClient) return
+    setAddingToRubrica(true)
+    try {
+      await onAddClient(pendingClientData)
+    } catch (error) {
+      console.error('Error adding client from call:', error)
+    } finally {
+      setAddingToRubrica(false)
+      setShowAddToRubrica(false)
+      setPendingClientData(null)
+      setShowSuccess(true)
+      setTimeout(() => { setShowSuccess(false); onClose() }, 2500)
+    }
+  }
+
+  const handleSkipRubrica = () => {
+    setShowAddToRubrica(false)
+    setPendingClientData(null)
+    setShowSuccess(true)
+    setTimeout(() => { setShowSuccess(false); onClose() }, 2500)
   }
 
   const inputClass = "w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all text-sm"
@@ -516,6 +575,55 @@ export default function CallModal({
         </motion.div>
 
         <SuccessModal isOpen={showSuccess} onClose={() => setShowSuccess(false)} title="Chiamata Salvata!" message="La chiamata è stata registrata con successo." />
+
+        {/* Add to Rubrica Prompt */}
+        <AnimatePresence>
+          {showAddToRubrica && pendingClientData && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+              onClick={handleSkipRubrica}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/60 w-full max-w-sm p-6 text-center"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/25">
+                  <Users className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 mb-2">Aggiungere alla Rubrica?</h3>
+                <p className="text-sm text-slate-500 mb-1">
+                  <span className="font-semibold text-slate-700">{pendingClientData.name}</span>
+                  {pendingClientData.company ? ` (${pendingClientData.company})` : ''}
+                </p>
+                <p className="text-xs text-slate-400 mb-6">
+                  Questo contatto non è presente nella rubrica clienti. Vuoi aggiungerlo?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSkipRubrica}
+                    className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium transition-all"
+                  >
+                    No, grazie
+                  </button>
+                  <button
+                    onClick={handleAddToRubrica}
+                    disabled={addingToRubrica}
+                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg shadow-teal-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    {addingToRubrica ? 'Salvataggio...' : 'Sì, aggiungi'}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AnimatePresence>
   )
