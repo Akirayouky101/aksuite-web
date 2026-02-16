@@ -32,6 +32,7 @@ import LavorazioniListModal from './components/LavorazioniListModal'
 import LavorazioneModal from './components/LavorazioneModal'
 import LavorazioneTimelineModal from './components/LavorazioneTimelineModal'
 import LavorazioneReportModal from './components/LavorazioneReportModal'
+import CallTimelineModal from './components/CallTimelineModal'
 import ClientModal from './components/ClientModal'
 import ClientsListModal from './components/ClientsListModal'
 import ClientDetailModal from './components/ClientDetailModal'
@@ -53,6 +54,7 @@ import { useRelations } from './hooks/useRelations'
 import { useTeamMembers } from './hooks/useTeamMembers'
 import { useLavorazioni } from './hooks/useLavorazioni'
 import { useLavorazioneTimeline } from './hooks/useLavorazioneTimeline'
+import { useCallTimeline } from './hooks/useCallTimeline'
 import { useClients } from './hooks/useClients'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
@@ -86,6 +88,8 @@ export default function Home() {
   const [timelineLavorazione, setTimelineLavorazione] = useState<any>(null)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [reportLavorazione, setReportLavorazione] = useState<any>(null)
+  const [isCallTimelineOpen, setIsCallTimelineOpen] = useState(false)
+  const [callTimelineCall, setCallTimelineCall] = useState<any>(null)
   const [isClientModalOpen, setIsClientModalOpen] = useState(false)
   const [isClientsListModalOpen, setIsClientsListModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<any>(null)
@@ -124,6 +128,7 @@ export default function Home() {
   const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
   const { lavorazioni, addLavorazione, updateLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
   const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, updateEntry: updateTimelineEntry, uploadPhoto: uploadTimelinePhoto, clearTimeline } = useLavorazioneTimeline()
+  const { entries: callTimelineEntries, loading: callTimelineLoading, loadTimeline: loadCallTimeline, addEntry: addCallTimelineEntry, deleteEntry: deleteCallTimelineEntry, updateEntry: updateCallTimelineEntry, uploadPhoto: uploadCallTimelinePhoto, clearTimeline: clearCallTimeline } = useCallTimeline()
   const { clients, addClient, updateClient, deleteClient, toggleFavorite: toggleClientFavorite } = useClients()
 
   const availableRelationItems = { passwords, calls, visits, tasks, notes, events, transactions }
@@ -767,7 +772,8 @@ export default function Home() {
       />
       <CallsListModal isOpen={isCallsListModalOpen} onClose={() => setIsCallsListModalOpen(false)}
         calls={calls} onDelete={deleteCall} onStatusChange={updateCallStatus}
-        onEdit={(call) => { setEditingCall(call); setIsCallModalOpen(true); setIsCallsListModalOpen(false) }} />
+        onEdit={(call) => { setEditingCall(call); setIsCallModalOpen(true); setIsCallsListModalOpen(false) }}
+        onViewTimeline={(call) => { setCallTimelineCall(call); loadCallTimeline(call.id); setIsCallTimelineOpen(true) }} />
 
       <LavorazioniListModal
         isOpen={isLavorazioniListModalOpen}
@@ -829,6 +835,19 @@ export default function Home() {
         onDeleteEntry={deleteTimelineEntry}
         onUpdateEntry={updateTimelineEntry}
         onUploadPhoto={uploadTimelinePhoto}
+        teamMembers={teamMembers}
+      />
+
+      <CallTimelineModal
+        isOpen={isCallTimelineOpen}
+        onClose={() => { setIsCallTimelineOpen(false); setCallTimelineCall(null); clearCallTimeline() }}
+        call={callTimelineCall}
+        entries={callTimelineEntries}
+        loading={callTimelineLoading}
+        onAddEntry={addCallTimelineEntry}
+        onDeleteEntry={deleteCallTimelineEntry}
+        onUpdateEntry={updateCallTimelineEntry}
+        onUploadPhoto={uploadCallTimelinePhoto}
         teamMembers={teamMembers}
       />
 

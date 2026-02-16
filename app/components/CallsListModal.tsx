@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle, MapPin, User, Wrench } from 'lucide-react'
+import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle, MapPin, User, Wrench, History } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
 import CallDetailModal from './CallDetailModal'
 
@@ -33,6 +33,7 @@ interface CallsListModalProps {
   onDelete: (id: string) => Promise<void>
   onStatusChange: (id: string, status: Call['status']) => Promise<void>
   onEdit?: (call: Call) => void
+  onViewTimeline?: (call: Call) => void
 }
 
 const statusConfig = {
@@ -57,7 +58,7 @@ const callTypeLabels: Record<string, string> = {
   altro: 'Altro'
 }
 
-export default function CallsListModal({ isOpen, onClose, calls, onDelete, onStatusChange, onEdit }: CallsListModalProps) {
+export default function CallsListModal({ isOpen, onClose, calls, onDelete, onStatusChange, onEdit, onViewTimeline }: CallsListModalProps) {
   const [selectedFilter, setSelectedFilter] = useState<'all' | Call['status']>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -476,6 +477,15 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                               className="px-2.5 py-1 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200/60 text-violet-600 text-xs font-medium flex items-center gap-1 transition-all"
                             >
                               ✏️ Modifica
+                            </button>
+                          )}
+                          {onViewTimeline && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onViewTimeline(call) }}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200/60 text-blue-600 text-xs font-medium flex items-center gap-1 transition-all"
+                            >
+                              <History className="w-3 h-3" />
+                              Cronologia
                             </button>
                           )}
                           <button
