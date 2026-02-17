@@ -6,7 +6,6 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  text-transform: uppercase;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
 }
@@ -17,7 +16,7 @@ select,
 option,
 button,
 ::placeholder {
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 /* ═══ Responsive Utilities ═══ */
