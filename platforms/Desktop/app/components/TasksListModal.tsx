@@ -186,7 +186,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
           >
             <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-violet-600 rounded-3xl hidden" />
             
-            <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50">
+            <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[92vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
                 <div className="flex items-center gap-3">
@@ -207,8 +207,11 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                 </button>
               </div>
 
+              {/* Scrollable area: dashboard + search + filters + task list */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+
               {/* New Task Button + Dashboard Toggle */}
-              <div className="p-4 border-b border-slate-200 bg-white space-y-2">
+              <div className="p-4 border-b border-slate-200 bg-white space-y-2 flex-shrink-0">
                 <button
                   onClick={() => setShowTaskModal(true)}
                   className="w-full px-4 py-3 rounded-lg font-bold text-base transition-all bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
@@ -332,7 +335,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
               </div>
 
               {/* Content */}
-              <div className="p-6 overflow-y-auto overflow-x-hidden max-h-[calc(90vh-200px)]">
+              <div className="p-6 overflow-x-hidden">
                 {filteredTasks.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">✓</div>
@@ -486,6 +489,7 @@ export default function TasksListModal({ isOpen, onClose, tasks, onDelete, onTog
                   </div>
                 )}
               </div>
+              </div>{/* close scrollable area */}
             </div>
           </motion.div>
         </div>
