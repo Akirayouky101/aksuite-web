@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Eye, EyeOff, Copy, Trash2, Edit, ExternalLink, Search, Star, Filter, ArrowUpDown, KeyRound } from 'lucide-react'
+import { X, Eye, EyeOff, Copy, Trash2, Edit, ExternalLink, Search, Star, Filter, ArrowUpDown, KeyRound, Hash } from 'lucide-react'
 import { Password } from '../hooks/usePasswords'
 
 interface PasswordListModalProps {
@@ -10,15 +10,18 @@ interface PasswordListModalProps {
   onClose: () => void
   passwords: Password[]
   onDelete?: (id: string) => void
+  onEdit?: (password: Password) => void
 }
 
 export default function PasswordListModal({ 
   isOpen, 
   onClose, 
   passwords,
-  onDelete 
+  onDelete,
+  onEdit 
 }: PasswordListModalProps) {
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set())
+  const [visiblePins, setVisiblePins] = useState<Set<string>>(new Set())
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [selectedPassword, setSelectedPassword] = useState<Password | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -30,6 +33,18 @@ export default function PasswordListModal({
 
   const togglePasswordVisibility = (id: string) => {
     setVisiblePasswords(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
+  }
+
+  const togglePinVisibility = (id: string) => {
+    setVisiblePins(prev => {
       const newSet = new Set(prev)
       if (newSet.has(id)) {
         newSet.delete(id)
@@ -319,10 +334,59 @@ export default function PasswordListModal({
                                     </div>
                                   </div>
                                 )}
+
+                                {/* PIN / Codice Segreto */}
+                                {pwd.pin_code && (
+                                  <div className="mb-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm text-indigo-500 font-bold">PIN:</span>
+                                      <code className="text-slate-800 font-mono tracking-[0.3em]">
+                                        {visiblePins.has(pwd.id) ? pwd.pin_code : '\u25CF'.repeat(pwd.pin_code.length)}
+                                      </code>
+                                      <motion.button
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={(e) => { e.stopPropagation(); togglePinVisibility(pwd.id); }}
+                                        className="p-1 hover:bg-indigo-100 rounded"
+                                        title={visiblePins.has(pwd.id) ? "Nascondi PIN" : "Mostra PIN"}
+                                      >
+                                        {visiblePins.has(pwd.id) ? (
+                                          <EyeOff className="w-4 h-4 text-indigo-500" />
+                                        ) : (
+                                          <Eye className="w-4 h-4 text-indigo-500" />
+                                        )}
+                                      </motion.button>
+                                      <motion.button
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={(e) => { e.stopPropagation(); copyToClipboard(pwd.pin_code!, `${pwd.id}-pin`); }}
+                                        className="p-1 hover:bg-indigo-100 rounded"
+                                        title="Copia PIN"
+                                      >
+                                        {copiedId === `${pwd.id}-pin` ? (
+                                          <span className="text-green-400 text-xs font-bold">{'\u2713'}</span>
+                                        ) : (
+                                          <Copy className="w-3 h-3 text-indigo-500" />
+                                        )}
+                                      </motion.button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
 
                               {/* Actions */}
-                              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                                {onEdit && (
+                                  <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={() => onEdit(pwd)}
+                                    className="p-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 rounded-lg"
+                                    title="Modifica password"
+                                  >
+                                    <Edit className="w-4 h-4 text-indigo-500" />
+                                  </motion.button>
+                                )}
                                 {onDelete && (
                                   <motion.button
                                     whileHover={{ scale: 1.1 }}
@@ -459,7 +523,7 @@ export default function PasswordListModal({
                       {/* Website */}
                       {selectedPassword.website && (
                         <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
-                          <div className="text-sm text-purple-400 font-bold mb-2">🌐 SITO WEB</div>
+                          <div className="text-sm text-purple-400 font-bold mb-2">{'\uD83C\uDF10'} SITO WEB</div>
                           <a 
                             href={selectedPassword.website} 
                             target="_blank" 
@@ -469,6 +533,46 @@ export default function PasswordListModal({
                             {selectedPassword.website}
                             <ExternalLink className="w-5 h-5 shrink-0" />
                           </a>
+                        </div>
+                      )}
+
+                      {/* PIN / Codice Segreto */}
+                      {selectedPassword.pin_code && (
+                        <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
+                          <div className="text-sm text-indigo-500 font-bold mb-2 flex items-center gap-1.5">
+                            <Hash className="w-4 h-4" /> PIN / CODICE
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <code className="text-xl text-slate-800 font-mono flex-1 break-all tracking-[0.3em]">
+                              {visiblePins.has(selectedPassword.id) ? selectedPassword.pin_code : '\u25CF'.repeat(selectedPassword.pin_code.length)}
+                            </code>
+                            <div className="flex gap-2 shrink-0">
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => togglePinVisibility(selectedPassword.id)}
+                                className="p-3 bg-indigo-50 hover:bg-indigo-100 border border-slate-200 rounded-lg"
+                              >
+                                {visiblePins.has(selectedPassword.id) ? (
+                                  <EyeOff className="w-5 h-5 text-indigo-500" />
+                                ) : (
+                                  <Eye className="w-5 h-5 text-indigo-500" />
+                                )}
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => copyToClipboard(selectedPassword.pin_code!, `detail-pin`)}
+                                className="p-3 bg-indigo-50 hover:bg-indigo-100 border border-slate-200 rounded-lg"
+                              >
+                                {copiedId === `detail-pin` ? (
+                                  <span className="text-green-400 font-bold">{'\u2713'}</span>
+                                ) : (
+                                  <Copy className="w-5 h-5 text-indigo-500" />
+                                )}
+                              </motion.button>
+                            </div>
+                          </div>
                         </div>
                       )}
 

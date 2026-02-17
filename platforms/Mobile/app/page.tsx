@@ -79,6 +79,7 @@ export default function Home() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isListModalOpen, setIsListModalOpen] = useState(false)
+  const [editPasswordData, setEditPasswordData] = useState<any>(null)
   const [isBudgetMenuModalOpen, setIsBudgetMenuModalOpen] = useState(false)
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false)
   const [isBudgetViewModalOpen, setIsBudgetViewModalOpen] = useState(false)
@@ -144,7 +145,7 @@ export default function Home() {
   const [editingLavorazione, setEditingLavorazione] = useState<any>(null)
 
   // ═══ HOOKS ═══
-  const { passwords, addPassword, user, deletePassword } = usePasswords()
+  const { passwords, addPassword, updatePassword, user, deletePassword } = usePasswords()
   const { transactions, addTransaction, deleteTransaction, getStats } = useBudget()
   const { recurring, addRecurring, deleteRecurring, toggleActive } = useRecurring()
   const { limits, limitsStatus, addLimit, deleteLimit, toggleActive: toggleLimitActive } = useBudgetLimits()
@@ -754,10 +755,19 @@ export default function Home() {
       {/* ═══════════════════════════════════════════ */}
       {isMenuModalOpen && <PasswordMenuModal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}
         onSelectNew={() => setIsPasswordModalOpen(true)} onSelectList={() => setIsListModalOpen(true)} />}
-      {isPasswordModalOpen && <PasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)}
-        onSave={(data) => { addPassword(data) }} />}
+      {isPasswordModalOpen && <PasswordModal isOpen={isPasswordModalOpen} onClose={() => { setIsPasswordModalOpen(false); setEditPasswordData(null) }}
+        editPassword={editPasswordData}
+        onSave={(data) => {
+          if (data.id) {
+            updatePassword(data.id, data)
+          } else {
+            addPassword(data)
+          }
+          setEditPasswordData(null)
+        }} />}
       {isListModalOpen && <PasswordListModal isOpen={isListModalOpen} onClose={() => setIsListModalOpen(false)}
-        passwords={passwords} onDelete={deletePassword} />}
+        passwords={passwords} onDelete={deletePassword}
+        onEdit={(pwd) => { setEditPasswordData(pwd); setIsPasswordModalOpen(true) }} />}
 
       {isBudgetMenuModalOpen && <BudgetMenuModal isOpen={isBudgetMenuModalOpen} onClose={() => setIsBudgetMenuModalOpen(false)}
         onSelectNew={() => setIsBudgetModalOpen(true)} onSelectView={() => setIsBudgetViewModalOpen(true)}

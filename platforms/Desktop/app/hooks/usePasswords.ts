@@ -13,6 +13,7 @@ export interface Password {
   emoji: string
   notes?: string
   isFavorite?: boolean
+  pin_code?: string
 }
 
 export function usePasswords() {
@@ -44,6 +45,7 @@ export function usePasswords() {
               emoji: p.emoji,
               notes: p.notes,
               isFavorite: p.is_favorite,
+              pin_code: p.pin_code || '',
               createdAt: new Date(p.created_at),
             }))
           )
@@ -93,6 +95,7 @@ export function usePasswords() {
           emoji: password.emoji,
           notes: password.notes || null,
           is_favorite: password.isFavorite || false,
+          pin_code: password.pin_code || null,
         })
         .select()
         .single()
@@ -112,6 +115,7 @@ export function usePasswords() {
         emoji: data.emoji,
         notes: data.notes,
         isFavorite: data.is_favorite,
+        pin_code: data.pin_code || '',
         createdAt: new Date(data.created_at),
       }
       setPasswords(prev => [newPassword, ...prev])
@@ -131,12 +135,15 @@ export function usePasswords() {
   const updatePassword = async (id: string, updates: Partial<Password>) => {
     if (user) {
       const updateData: any = {}
-      if (updates.title) updateData.title = updates.title
-      if (updates.username) updateData.username = updates.username
+      if (updates.title !== undefined) updateData.title = updates.title
+      if (updates.username !== undefined) updateData.username = updates.username
       if (updates.password) updateData.encrypted_password = await encryptPassword(updates.password)
-      if (updates.website) updateData.website = updates.website
-      if (updates.category) updateData.category = updates.category
-      if (updates.emoji) updateData.emoji = updates.emoji
+      if (updates.website !== undefined) updateData.website = updates.website
+      if (updates.category !== undefined) updateData.category = updates.category
+      if (updates.emoji !== undefined) updateData.emoji = updates.emoji
+      if (updates.notes !== undefined) updateData.notes = updates.notes || null
+      if (updates.isFavorite !== undefined) updateData.is_favorite = updates.isFavorite
+      if (updates.pin_code !== undefined) updateData.pin_code = updates.pin_code || null
       updateData.updated_at = new Date().toISOString()
 
       const { error } = await supabase

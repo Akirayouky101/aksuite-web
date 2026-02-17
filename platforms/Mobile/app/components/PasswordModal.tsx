@@ -1,42 +1,81 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Lock, User, Globe, Tag, Sparkles, Zap, Eye, EyeOff, Dices, Star, MessageSquare } from 'lucide-react'
+import { X, Lock, User, Globe, Tag, Sparkles, Zap, Eye, EyeOff, Dices, Star, MessageSquare, Hash } from 'lucide-react'
 import PasswordGenerator from './PasswordGenerator'
+
+interface PasswordData {
+  id?: string
+  title: string
+  username: string
+  password: string
+  website: string
+  category: string
+  emoji: string
+  notes?: string
+  isFavorite?: boolean
+  pin_code?: string
+}
 
 interface PasswordModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: {
-    title: string
-    username: string
-    password: string
-    website: string
-    category: string
-    emoji: string
-    notes?: string
-    isFavorite?: boolean
-  }) => void
+  onSave: (data: PasswordData) => void
+  editPassword?: PasswordData | null
 }
 
-const emojis = ['🔥', '💀', '⚡', '💎', '🎯', '🚀', '👑', '💣', '⭐', '🌟', '✨', '💥']
+const emojis = ['🔥', '\uD83D\uDC80', '\u26A1', '\uD83D\uDC8E', '\uD83C\uDFAF', '\uD83D\uDE80', '\uD83D\uDC51', '\uD83D\uDCA3', '\u2B50', '\uD83C\uDF1F', '\u2728', '\uD83D\uDCA5']
 const categories = ['Lavoro', 'Personale', 'Social', 'Finanza', 'Gaming', 'Altro']
 
-export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModalProps) {
-  const [formData, setFormData] = useState({
+export default function PasswordModal({ isOpen, onClose, onSave, editPassword }: PasswordModalProps) {
+  const [formData, setFormData] = useState<PasswordData>({
     title: '',
     username: '',
     password: '',
     website: '',
     category: 'Personale',
-    emoji: '🔥',
+    emoji: '\uD83D\uDD25',
     notes: '',
     isFavorite: false,
+    pin_code: '',
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [showPin, setShowPin] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showGenerator, setShowGenerator] = useState(false)
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (editPassword) {
+      setFormData({
+        id: editPassword.id,
+        title: editPassword.title || '',
+        username: editPassword.username || '',
+        password: editPassword.password || '',
+        website: editPassword.website || '',
+        category: editPassword.category || 'Personale',
+        emoji: editPassword.emoji || '\uD83D\uDD25',
+        notes: editPassword.notes || '',
+        isFavorite: editPassword.isFavorite || false,
+        pin_code: editPassword.pin_code || '',
+      })
+    } else {
+      setFormData({
+        title: '',
+        username: '',
+        password: '',
+        website: '',
+        category: 'Personale',
+        emoji: '\uD83D\uDD25',
+        notes: '',
+        isFavorite: false,
+        pin_code: '',
+      })
+    }
+    setShowPassword(false)
+    setShowPin(false)
+  }, [editPassword, isOpen])
 
   const generatePassword = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
@@ -51,20 +90,22 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
     e.preventDefault()
     setIsSaving(true)
     
-    // Simulate save animation
     await new Promise(resolve => setTimeout(resolve, 800))
     
     onSave(formData)
-    setFormData({
-      title: '',
-      username: '',
-      password: '',
-      website: '',
-      category: 'Personale',
-      emoji: '🔥',
-      notes: '',
-      isFavorite: false,
-    })
+    if (!editPassword) {
+      setFormData({
+        title: '',
+        username: '',
+        password: '',
+        website: '',
+        category: 'Personale',
+        emoji: '\uD83D\uDD25',
+        notes: '',
+        isFavorite: false,
+        pin_code: '',
+      })
+    }
     setIsSaving(false)
     onClose()
   }
@@ -104,9 +145,9 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                     </div>
                     <div>
                       <h2 className="text-lg font-bold text-slate-800">
-                        Aggiungi Nuova Password
+                        {editPassword ? 'Modifica Password' : 'Aggiungi Nuova Password'}
                       </h2>
-                      <p className="text-xs text-slate-400 mt-0.5">Gestione credenziali sicura</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{editPassword ? 'Aggiorna le credenziali' : 'Gestione credenziali sicura'}</p>
                     </div>
                   </div>
                   <button
@@ -267,6 +308,35 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                     />
                   </div>
 
+                  {/* PIN / CODICE SEGRETO */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                      <Hash className="w-4 h-4" /> PIN / Codice Segreto (opzionale)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPin ? 'text' : 'password'}
+                        value={formData.pin_code || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, pin_code: e.target.value }))}
+                        className="w-full px-4 py-3 pr-12 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all font-mono tracking-[0.3em]"
+                        placeholder={showPin ? '1234' : '\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF'}
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setShowPin(!showPin)}
+                          className="p-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg"
+                          aria-label={showPin ? "Nascondi PIN" : "Mostra PIN"}
+                        >
+                          {showPin ? <EyeOff className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
+                        </motion.button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5">PIN, codice dispositivo, pattern di sblocco, ecc.</p>
+                  </div>
+
                   {/* FAVORITE! */}
                   <div>
                     <label className="flex items-center gap-3 cursor-pointer bg-gradient-to-r from-violet-50 to-pink-50 border-2 border-violet-200/60 rounded-xl p-4 hover:border-purple-400 transition-all">
@@ -289,7 +359,7 @@ export default function PasswordModal({ isOpen, onClose, onSave }: PasswordModal
                     whileTap={{ scale: 0.99 }}
                     className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
-                    {isSaving ? '⏳ Salvataggio...' : '💾 Salva Password'}
+                    {isSaving ? '\u23F3 Salvataggio...' : editPassword ? '\u2705 Aggiorna Password' : '\uD83D\uDCBE Salva Password'}
                   </motion.button>
                 </form>
                 </div>
