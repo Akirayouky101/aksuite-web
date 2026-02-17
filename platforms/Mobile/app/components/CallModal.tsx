@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock, MapPin, UserPlus, Trash2, ChevronDown, Wrench, Users } from 'lucide-react'
+import { X, Phone, User, Building2, Mail, MessageSquare, Calendar, Clock, MapPin, UserPlus, Trash2, ChevronDown, Wrench, Users, PhoneIncoming, PhoneOutgoing } from 'lucide-react'
 import SuccessModal from './SuccessModal'
 import RelationsIntegration from './RelationsIntegration'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
@@ -19,6 +19,7 @@ interface Call {
   province: string
   assigned_to: string
   call_type: string
+  call_direction: 'inbound' | 'outbound'
   priority: string
   notes: string
   follow_up: boolean
@@ -100,6 +101,7 @@ export default function CallModal({
   const [province, setProvince] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
   const [callType, setCallType] = useState('informazioni')
+  const [callDirection, setCallDirection] = useState<'inbound' | 'outbound'>('inbound')
   const [priority, setPriority] = useState('media')
   const [notes, setNotes] = useState('')
   const [followUp, setFollowUp] = useState(false)
@@ -169,6 +171,7 @@ export default function CallModal({
       setProvince(editCall.province || '')
       setAssignedTo(editCall.assigned_to || '')
       setCallType(editCall.call_type)
+      setCallDirection(editCall.call_direction || 'inbound')
       setPriority(editCall.priority)
       setNotes(editCall.notes)
       setFollowUp(editCall.follow_up)
@@ -177,7 +180,7 @@ export default function CallModal({
       setCallerName(''); setCompany(''); setPhone(''); setEmail('')
       setAddress(''); setCity(''); setZipCode(''); setProvince('')
       setAssignedTo('')
-      setCallType('informazioni'); setPriority('media')
+      setCallType('informazioni'); setCallDirection('inbound'); setPriority('media')
       setNotes(''); setFollowUp(false); setFollowUpDate('')
       setHasLavorazione(false); setLavorazioneDate(''); setLavorazioneTime('')
       setLavorazioneDesc(''); setLavorazioneAssignee('')
@@ -194,7 +197,7 @@ export default function CallModal({
         company, phone, email,
         address, city, zip_code: zipCode, province,
         assigned_to: assignedTo,
-        call_type: callType, priority, notes,
+        call_type: callType, call_direction: callDirection, priority, notes,
         follow_up: followUp,
         follow_up_date: followUpDate || null,
         status: editCall?.status || 'pending',
@@ -209,7 +212,7 @@ export default function CallModal({
       setCallerName(''); setCompany(''); setPhone(''); setEmail('')
       setAddress(''); setCity(''); setZipCode(''); setProvince('')
       setAssignedTo('')
-      setCallType('informazioni'); setPriority('media')
+      setCallType('informazioni'); setCallDirection('inbound'); setPriority('media')
       setNotes(''); setFollowUp(false); setFollowUpDate('')
       setHasLavorazione(false); setLavorazioneDate(''); setLavorazioneTime('')
       setLavorazioneDesc(''); setLavorazioneAssignee('')
@@ -495,6 +498,31 @@ export default function CallModal({
                         )}
                       </motion.div>
                     )}
+                  </div>
+                </div>
+
+                {/* ── Direzione Chiamata ── */}
+                <div>
+                  <label className={labelClass}>Direzione</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setCallDirection('inbound')}
+                      className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border transition-all font-medium text-xs ${
+                        callDirection === 'inbound'
+                          ? 'bg-emerald-50 border-emerald-200/60 text-emerald-600'
+                          : 'border-slate-200/60 bg-white/50 text-slate-400 hover:bg-slate-50'
+                      }`}>
+                      <PhoneIncoming className="w-3.5 h-3.5" />
+                      In Entrata
+                    </button>
+                    <button type="button" onClick={() => setCallDirection('outbound')}
+                      className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border transition-all font-medium text-xs ${
+                        callDirection === 'outbound'
+                          ? 'bg-blue-50 border-blue-200/60 text-blue-600'
+                          : 'border-slate-200/60 bg-white/50 text-slate-400 hover:bg-slate-50'
+                      }`}>
+                      <PhoneOutgoing className="w-3.5 h-3.5" />
+                      In Uscita
+                    </button>
                   </div>
                 </div>
 

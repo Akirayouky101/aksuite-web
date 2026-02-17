@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle, MapPin, User, Wrench, History } from 'lucide-react'
+import { X, Phone, Trash2, CheckCircle, Clock, AlertCircle, Building2, Mail, MessageSquare, Calendar, Search, Download, ExternalLink, PhoneCall, TrendingUp, AlertTriangle, MapPin, User, Wrench, History, PhoneIncoming, PhoneOutgoing } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
 import CallDetailModal from './CallDetailModal'
 
@@ -24,6 +24,7 @@ interface Call {
   zip_code?: string
   province?: string
   assigned_to?: string
+  call_direction?: 'inbound' | 'outbound'
 }
 
 interface CallsListModalProps {
@@ -125,11 +126,11 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
 
   // CSV Export
   const exportToCSV = () => {
-    const headers = ['Data', 'Nome', 'Azienda', 'Telefono', 'Email', 'Tipo', 'Priorità', 'Stato', 'Indirizzo', 'Città', 'CAP', 'Provincia', 'Assegnata A', 'Note', 'Follow-up', 'Data Follow-up']
+    const headers = ['Data', 'Nome', 'Azienda', 'Telefono', 'Email', 'Tipo', 'Direzione', 'Priorità', 'Stato', 'Indirizzo', 'Città', 'CAP', 'Provincia', 'Assegnata A', 'Note', 'Follow-up', 'Data Follow-up']
     const rows = filteredCalls.map(call => [
       new Date(call.call_date).toLocaleString('it-IT'),
       call.caller_name, call.company, call.phone, call.email,
-      call.call_type, call.priority, call.status,
+      call.call_type, call.call_direction === 'outbound' ? 'In Uscita' : 'In Entrata', call.priority, call.status,
       call.address || '', call.city || '', call.zip_code || '', call.province || '', call.assigned_to || '',
       call.notes.replace(/"/g, '""'),
       call.follow_up ? 'Sì' : 'No',
@@ -418,6 +419,15 @@ export default function CallsListModal({ isOpen, onClose, calls, onDelete, onSta
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="text-sm font-bold text-slate-800 truncate">{call.caller_name}</h3>
+                                {call.call_direction === 'outbound' ? (
+                                  <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-500">
+                                    <PhoneOutgoing className="w-3 h-3" /> Uscita
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-500">
+                                    <PhoneIncoming className="w-3 h-3" /> Entrata
+                                  </span>
+                                )}
                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${priority.bg} ${priority.text}`}>
                                   {call.priority.toUpperCase()}
                                 </span>

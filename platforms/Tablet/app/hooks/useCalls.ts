@@ -16,6 +16,7 @@ export interface Call {
   province: string
   assigned_to: string
   call_type: string
+  call_direction: 'inbound' | 'outbound'
   priority: string
   notes: string
   follow_up: boolean
