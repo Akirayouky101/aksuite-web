@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, UserPlus, User, Building2, Phone, Mail, MapPin, FileText, Star, Save } from 'lucide-react'
+import { X, UserPlus, User, Building2, Phone, Mail, MapPin, FileText, Star, Save, CheckCircle2 } from 'lucide-react'
 
 interface ClientModalProps {
   isOpen: boolean
@@ -26,6 +26,7 @@ export default function ClientModal({ isOpen, onClose, onSave, editingClient }: 
     fiscal_code: '', vat_number: '', category: 'privato', notes: '', is_favorite: false
   })
   const [saving, setSaving] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   useEffect(() => {
     if (editingClient) {
@@ -52,7 +53,11 @@ export default function ClientModal({ isOpen, onClose, onSave, editingClient }: 
     setSaving(true)
     try {
       await onSave(form)
-      onClose()
+      setShowSuccess(true)
+      setTimeout(() => {
+        setShowSuccess(false)
+        onClose()
+      }, 1500)
     } finally {
       setSaving(false)
     }
@@ -70,7 +75,7 @@ export default function ClientModal({ isOpen, onClose, onSave, editingClient }: 
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/60 w-full max-w-lg max-h-[90vh] flex flex-col"
+          className="bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/60 w-full max-w-lg max-h-[90vh] flex flex-col relative"
         >
           {/* Header */}
           <div className="px-5 py-4 border-b border-slate-100/80 flex items-center justify-between flex-shrink-0">
@@ -217,6 +222,43 @@ export default function ClientModal({ isOpen, onClose, onSave, editingClient }: 
               {saving ? 'Salvataggio...' : editingClient ? 'Aggiorna' : 'Salva Cliente'}
             </button>
           </div>
+
+          {/* Success Overlay */}
+          <AnimatePresence>
+            {showSuccess && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+                  className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/30 mb-4"
+                >
+                  <CheckCircle2 className="w-10 h-10 text-white" />
+                </motion.div>
+                <motion.h3
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-lg font-bold text-slate-800"
+                >
+                  {editingClient ? 'Cliente Aggiornato!' : 'Cliente Salvato!'}
+                </motion.h3>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-sm text-slate-400 mt-1"
+                >
+                  {editingClient ? 'Le modifiche sono state salvate' : 'Il cliente è stato aggiunto alla rubrica'}
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </motion.div>
     </AnimatePresence>
