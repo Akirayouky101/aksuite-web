@@ -234,23 +234,32 @@ export function useUserManagement() {
     return updatePermissions(userId, allPerms)
   }, [updatePermissions])
 
-  // Elimina un utente (rimuovi permessi, l'utente resta in auth)
+  // Elimina un utente COMPLETAMENTE (auth + profilo + permessi)
   const deleteUserPermissions = useCallback(async (userId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('user_permissions')
-        .delete()
-        .eq('user_id', userId)
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) return false
 
-      if (error) {
-        console.error('Error deleting permissions:', error)
+      const response = await fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          adminUserId: currentUser.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        console.error('Error deleting user:', result.error)
         return false
       }
 
       await loadAllUsers()
       return true
     } catch (err) {
-      console.error('Error deleting user permissions:', err)
+      console.error('Error deleting user:', err)
       return false
     }
   }, [loadAllUsers])
