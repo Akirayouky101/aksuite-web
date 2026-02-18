@@ -49,6 +49,7 @@ const OrderModal = dynamic(() => import('./components/OrderModal'), { ssr: false
 const OrdersListModal = dynamic(() => import('./components/OrdersListModal'), { ssr: false })
 const WarehouseListModal = dynamic(() => import('./components/WarehouseListModal'), { ssr: false })
 const LabelPrinterModal = dynamic(() => import('./components/LabelPrinterModal'), { ssr: false })
+const UserManagementModal = dynamic(() => import('./components/UserManagementModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -71,6 +72,7 @@ import { useClients } from './hooks/useClients'
 import { useSuppliers } from './hooks/useSuppliers'
 import { useWarehouse } from './hooks/useWarehouse'
 import { useOrders } from './hooks/useOrders'
+import { useUserManagement } from './hooks/useUserManagement'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -130,6 +132,9 @@ export default function Home() {
   const [isLabelPrinterOpen, setIsLabelPrinterOpen] = useState(false)
   const [labelProduct, setLabelProduct] = useState<any>(null)
 
+  // ═══ USER MANAGEMENT STATE ═══
+  const [isUserManagementOpen, setIsUserManagementOpen] = useState(false)
+
   // ═══ BADGE "SEEN" TRACKING ═══
   const [seenCalls, setSeenCalls] = useState<number | null>(null)
   const [seenLavorazioni, setSeenLavorazioni] = useState<number | null>(null)
@@ -163,6 +168,7 @@ export default function Home() {
   const { suppliers, addSupplier, updateSupplier, deleteSupplier, toggleFavorite: toggleSupplierFavorite } = useSuppliers()
   const { products, addProduct, updateProduct, deleteProduct, updateStock, loadMovements, findByBarcode } = useWarehouse()
   const { orders, addOrder, updateOrder, deleteOrder, addOrderItem, deleteOrderItem, getOrderItems, receiveOrder } = useOrders()
+  const { users: managedUsers, isAdmin, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
 
   const availableRelationItems = useMemo(() => ({ passwords, calls, visits, tasks, notes, events, transactions }), [passwords, calls, visits, tasks, notes, events, transactions])
 
@@ -292,20 +298,23 @@ export default function Home() {
   // NAVIGATION & ACTIONS CONFIG (must be before early return to respect Rules of Hooks)
   // ═══════════════════════════════════════════
 
-  const navItems = useMemo(() => [
-    { id: 'calls', label: 'Chiamate', icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, count: calls.length, badge: badgeCalls },
-    { id: 'lavorazioni', label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni },
-    { id: 'tasks', label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks },
-    { id: 'calendar', label: 'Calendario', icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, count: events.length, badge: badgeEvents },
-    { id: 'budget', label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length },
-    { id: 'passwords', label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length },
-    { id: 'notes', label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length },
-    { id: 'clients', label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length },
-    { id: 'visits', label: 'Visite', icon: MapPin, onClick: () => setIsVisitsListModalOpen(true), count: visits.length },
-    { id: 'suppliers', label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length },
-    { id: 'orders', label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length },
-    { id: 'warehouse', label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length },
-  ], [calls.length, lavorazioni.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents])
+  const navItems = useMemo(() => {
+    const allItems = [
+      { id: 'calls', perm: 'can_calls' as const, label: 'Chiamate', icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, count: calls.length, badge: badgeCalls },
+      { id: 'lavorazioni', perm: 'can_lavorazioni' as const, label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni },
+      { id: 'tasks', perm: 'can_tasks' as const, label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks },
+      { id: 'calendar', perm: 'can_calendar' as const, label: 'Calendario', icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, count: events.length, badge: badgeEvents },
+      { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length },
+      { id: 'passwords', perm: 'can_passwords' as const, label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length },
+      { id: 'notes', perm: 'can_notes' as const, label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length },
+      { id: 'clients', perm: 'can_clients' as const, label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length },
+      { id: 'visits', perm: 'can_visits' as const, label: 'Visite', icon: MapPin, onClick: () => setIsVisitsListModalOpen(true), count: visits.length },
+      { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length },
+      { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length },
+      { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length },
+    ]
+    return allItems.filter(item => hasPermission(item.perm))
+  }, [calls.length, lavorazioni.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission])
 
   const quickActions = useMemo(() => [
     { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true) },
@@ -429,6 +438,22 @@ export default function Home() {
                 <span>{action.label}</span>
               </button>
             ))}
+
+            {/* Admin: Gestione Utenti */}
+            {isAdmin && (
+              <>
+                <div className="border-t border-slate-200/40 my-4" />
+                <p className="px-3 pb-2 text-[11px] font-semibold text-amber-500 uppercase tracking-wider">Admin</p>
+                <button
+                  onClick={() => { setIsUserManagementOpen(true); setSidebarOpen(false) }}
+                  className="w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-xl text-sm font-medium transition-all text-amber-600 hover:text-amber-700 hover:bg-amber-50/50 active:bg-amber-50/70 border border-transparent hover:border-amber-200/40"
+                >
+                  <Shield className="w-[18px] h-[18px]" />
+                  <span className="flex-1 text-left">Gestione Utenti</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-500">{managedUsers.length || '...'}</span>
+                </button>
+              </>
+            )}
           </nav>
 
           {/* User Profile */}
@@ -1150,6 +1175,18 @@ export default function Home() {
         isOpen={isLabelPrinterOpen}
         onClose={() => { setIsLabelPrinterOpen(false); setLabelProduct(null) }}
         product={labelProduct}
+      />}
+
+      {/* ═══ USER MANAGEMENT (Admin Only) ═══ */}
+      {isUserManagementOpen && <UserManagementModal
+        isOpen={isUserManagementOpen}
+        onClose={() => setIsUserManagementOpen(false)}
+        users={managedUsers}
+        onCreateUser={createUser}
+        onTogglePermission={togglePermission}
+        onSetAllPermissions={setAllPermissions}
+        onDeleteUser={deleteUserPermissions}
+        onLoadUsers={loadAllUsers}
       />}
     </div>
   )
