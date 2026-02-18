@@ -273,9 +273,23 @@ export function useUserManagement() {
     return (myPermissions as any)[key] === true
   }, [myPermissions, isAdmin, loading])
 
-  // Init
+  // Init — carica permessi quando l'auth è pronta
   useEffect(() => {
     loadMyPermissions()
+
+    // Ascolta cambi di auth (login/logout) per ricaricare i permessi
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        loadMyPermissions()
+      }
+      if (event === 'SIGNED_OUT') {
+        setMyPermissions(null)
+        setIsAdmin(false)
+        setLoading(false)
+      }
+    })
+
+    return () => { subscription.unsubscribe() }
   }, [loadMyPermissions])
 
   return {
