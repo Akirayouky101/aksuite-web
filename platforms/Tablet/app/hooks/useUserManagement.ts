@@ -265,11 +265,13 @@ export function useUserManagement() {
   }, [loadAllUsers])
 
   // Check se l'utente ha un permesso specifico
+  // Durante il caricamento mostra tutto per non far sparire il menu
   const hasPermission = useCallback((key: PermissionKey): boolean => {
+    if (loading) return true // Permessi non ancora caricati → mostra tutto
     if (!myPermissions) return isAdmin // admin hardcoded ha tutto
     if (myPermissions.is_admin) return true
     return (myPermissions as any)[key] === true
-  }, [myPermissions, isAdmin])
+  }, [myPermissions, isAdmin, loading])
 
   // Init
   useEffect(() => {
