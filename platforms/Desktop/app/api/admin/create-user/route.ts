@@ -37,7 +37,12 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      console.error('Supabase createUser error:', error)
+      return NextResponse.json({ 
+        error: error.message, 
+        code: error.status || error.name,
+        details: `Email: ${email}, Password length: ${password?.length}` 
+      }, { status: 400 })
     }
 
     // Crea il profilo nella tabella profiles
