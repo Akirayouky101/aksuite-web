@@ -50,6 +50,7 @@ const OrdersListModal = dynamic(() => import('./components/OrdersListModal'), { 
 const WarehouseListModal = dynamic(() => import('./components/WarehouseListModal'), { ssr: false })
 const LabelPrinterModal = dynamic(() => import('./components/LabelPrinterModal'), { ssr: false })
 const UserManagementModal = dynamic(() => import('./components/UserManagementModal'), { ssr: false })
+const ActivityLogModal = dynamic(() => import('./components/ActivityLogModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -73,6 +74,7 @@ import { useSuppliers } from './hooks/useSuppliers'
 import { useWarehouse } from './hooks/useWarehouse'
 import { useOrders } from './hooks/useOrders'
 import { useUserManagement } from './hooks/useUserManagement'
+import { useActivityLog } from './hooks/useActivityLog'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -134,6 +136,7 @@ export default function Home() {
 
   // ═══ USER MANAGEMENT STATE ═══
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(false)
+  const [isActivityLogOpen, setIsActivityLogOpen] = useState(false)
 
   // ═══ BADGE "SEEN" TRACKING ═══
   const [seenCalls, setSeenCalls] = useState<number | null>(null)
@@ -169,6 +172,7 @@ export default function Home() {
   const { products, addProduct, updateProduct, deleteProduct, updateStock, loadMovements, findByBarcode } = useWarehouse()
   const { orders, addOrder, updateOrder, deleteOrder, addOrderItem, deleteOrderItem, getOrderItems, receiveOrder } = useOrders()
   const { users: managedUsers, isAdmin, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
+  const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
 
   const availableRelationItems = useMemo(() => ({ passwords, calls, visits, tasks, notes, events, transactions }), [passwords, calls, visits, tasks, notes, events, transactions])
 
@@ -426,19 +430,6 @@ export default function Home() {
               </button>
             ))}
 
-            <div className="border-t border-slate-200/40 my-4" />
-            <p className="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Crea Nuovo</p>
-            {quickActions.map((action, i) => (
-              <button
-                key={i}
-                onClick={() => { action.onClick(); setSidebarOpen(false) }}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-xs font-medium text-slate-400 hover:text-slate-600 transition-all border border-transparent hover:border-slate-200/40 hover:bg-white/40"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>{action.label}</span>
-              </button>
-            ))}
-
             {/* Admin: Gestione Utenti */}
             {isAdmin && (
               <>
@@ -451,6 +442,14 @@ export default function Home() {
                   <Shield className="w-[18px] h-[18px]" />
                   <span className="flex-1 text-left">Gestione Utenti</span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-500">{managedUsers.length || '...'}</span>
+                </button>
+                <button
+                  onClick={() => { setIsActivityLogOpen(true); loadActivityLogs(200); setSidebarOpen(false) }}
+                  className="w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-xl text-sm font-medium transition-all text-violet-600 hover:text-violet-700 hover:bg-violet-50/50 active:bg-violet-50/70 border border-transparent hover:border-violet-200/40"
+                >
+                  <Clock className="w-[18px] h-[18px]" />
+                  <span className="flex-1 text-left">Cronologia</span>
+                  <ChevronRight className="w-4 h-4 opacity-40" />
                 </button>
               </>
             )}
@@ -1187,6 +1186,17 @@ export default function Home() {
         onSetAllPermissions={setAllPermissions}
         onDeleteUser={deleteUserPermissions}
         onLoadUsers={loadAllUsers}
+      />}
+
+      {/* ═══ ACTIVITY LOG (Admin Only) ═══ */}
+      {isActivityLogOpen && <ActivityLogModal
+        isOpen={isActivityLogOpen}
+        onClose={() => setIsActivityLogOpen(false)}
+        logs={activityLogs}
+        loading={activityLoading}
+        onLoadLogs={loadActivityLogs}
+        onClearOldLogs={clearOldLogs}
+        isAdmin={isAdmin}
       />}
     </div>
   )

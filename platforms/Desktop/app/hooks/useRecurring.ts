@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface RecurringTransaction {
   id: string
@@ -66,6 +67,7 @@ export function useRecurring() {
       if (error) throw error
       
       setRecurring(prev => [...prev, data])
+      logActivity('create', 'budget_recurring', transaction.description || transaction.category, `Nuova ricorrenza: ${transaction.emoji} ${transaction.category} - ${transaction.frequency}`)
       return data
     } catch (error) {
       console.error('Error adding recurring transaction:', error)
@@ -98,6 +100,7 @@ export function useRecurring() {
   // Delete recurring transaction
   const deleteRecurring = async (id: string) => {
     try {
+      const item = recurring.find(t => t.id === id)
       const { error } = await supabase
         .from('budget_recurring')
         .delete()
@@ -106,6 +109,7 @@ export function useRecurring() {
       if (error) throw error
 
       setRecurring(prev => prev.filter(t => t.id !== id))
+      logActivity('delete', 'budget_recurring', item?.description || item?.category || 'Ricorrenza', `Eliminata ricorrenza: ${item?.description || ''}`)
     } catch (error) {
       console.error('Error deleting recurring transaction:', error)
       throw error
@@ -125,6 +129,7 @@ export function useRecurring() {
       setRecurring(prev =>
         prev.map(t => t.id === id ? { ...t, ...updates } : t)
       )
+      logActivity('update', 'budget_recurring', updates.description || 'Ricorrenza', `Aggiornata ricorrenza`)
     } catch (error) {
       console.error('Error updating recurring transaction:', error)
       throw error

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface Supplier {
   id: string
@@ -67,6 +68,7 @@ export function useSuppliers() {
       .select()
       .single()
     if (error) { console.error('Add supplier error:', error); return null }
+    logActivity('create', 'supplier', data.name || 'Fornitore', `Nuovo fornitore: ${data.name || ''}`)
     return newItem
   }
 
@@ -76,11 +78,14 @@ export function useSuppliers() {
       .update({ ...data, updated_at: new Date().toISOString() })
       .eq('id', id)
     if (error) console.error('Update supplier error:', error)
+    else logActivity('update', 'supplier', data.name || 'Fornitore', `Aggiornato fornitore`)
   }
 
   const deleteSupplier = async (id: string) => {
+    const supplier = suppliers.find(s => s.id === id)
     const { error } = await supabase.from('suppliers').delete().eq('id', id)
     if (error) console.error('Delete supplier error:', error)
+    else logActivity('delete', 'supplier', supplier?.name || 'Fornitore', `Eliminato fornitore: ${supplier?.name || ''}`)
   }
 
   const toggleFavorite = async (id: string) => {

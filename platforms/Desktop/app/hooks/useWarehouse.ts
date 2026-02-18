@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface Product {
   id: string
@@ -84,6 +85,7 @@ export function useWarehouse() {
       .select()
       .single()
     if (error) { console.error('Add product error:', error); return null }
+    logActivity('create', 'product', data.name || 'Prodotto', `Nuovo prodotto: ${data.name || ''} - SKU: ${data.sku || 'N/A'}`)
     return newItem
   }
 
@@ -93,11 +95,14 @@ export function useWarehouse() {
       .update({ ...data, updated_at: new Date().toISOString() })
       .eq('id', id)
     if (error) console.error('Update product error:', error)
+    else logActivity('update', 'product', data.name || 'Prodotto', `Aggiornato prodotto`)
   }
 
   const deleteProduct = async (id: string) => {
+    const product = products.find(p => p.id === id)
     const { error } = await supabase.from('products').delete().eq('id', id)
     if (error) console.error('Delete product error:', error)
+    else logActivity('delete', 'product', product?.name || 'Prodotto', `Eliminato prodotto: ${product?.name || ''}`)
   }
 
   const updateStock = async (productId: string, movementType: StockMovement['movement_type'], qty: number, reference?: string, notes?: string, orderId?: string) => {
@@ -127,6 +132,7 @@ export function useWarehouse() {
       reference: reference || null,
       notes: notes || null,
     }])
+    logActivity('update', 'product', product.name || 'Prodotto', `Movimento magazzino: ${movementType} x${qty} (${prevQty} -> ${newQty})`)
   }
 
   const loadMovements = async (productId: string): Promise<StockMovement[]> => {

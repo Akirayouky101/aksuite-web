@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface BudgetLimit {
   id: string
@@ -91,6 +92,7 @@ export function useBudgetLimits() {
       
       setLimits(prev => [...prev, data])
       await loadLimitsStatus()
+      logActivity('create', 'budget_limit', limit.category, `Nuovo limite budget: ${limit.category} - \u{20AC}${limit.limit_amount} (${limit.period})`)
       return data
     } catch (error) {
       console.error('Error adding budget limit:', error)
@@ -112,6 +114,7 @@ export function useBudgetLimits() {
         prev.map(l => l.id === id ? { ...l, ...updates } : l)
       )
       await loadLimitsStatus()
+      logActivity('update', 'budget_limit', updates.category || 'Limite', `Aggiornato limite budget`)
     } catch (error) {
       console.error('Error updating budget limit:', error)
       throw error
@@ -144,6 +147,7 @@ export function useBudgetLimits() {
   // Delete budget limit
   const deleteLimit = async (id: string) => {
     try {
+      const limit = limits.find(l => l.id === id)
       const { error } = await supabase
         .from('budget_limits')
         .delete()
@@ -153,6 +157,7 @@ export function useBudgetLimits() {
 
       setLimits(prev => prev.filter(l => l.id !== id))
       setLimitsStatus(prev => prev.filter(l => l.id !== id))
+      logActivity('delete', 'budget_limit', limit?.category || 'Limite', `Eliminato limite budget: ${limit?.category || ''}`)
     } catch (error) {
       console.error('Error deleting budget limit:', error)
       throw error

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface Call {
   id: string
@@ -65,12 +66,14 @@ export function useCalls() {
     if (error) throw error
     if (data) {
       setCalls(prev => [data, ...prev])
+      logActivity('create', 'call', data.caller_name || '', `${data.call_type} - ${data.company || ''}`)
       return data
     }
     return null
   }
 
   const deleteCall = async (id: string) => {
+    const callToDelete = calls.find(c => c.id === id)
     const { error } = await supabase
       .from('calls')
       .delete()
@@ -78,6 +81,7 @@ export function useCalls() {
 
     if (error) throw error
     setCalls(prev => prev.filter(call => call.id !== id))
+    logActivity('delete', 'call', callToDelete?.caller_name || '', '')
   }
 
   const updateCallStatus = async (id: string, status: Call['status']) => {
@@ -105,6 +109,7 @@ export function useCalls() {
       setCalls(prev => prev.map(call => 
         call.id === id ? data : call
       ))
+      logActivity('update', 'call', data.caller_name || '', '')
     }
   }
 

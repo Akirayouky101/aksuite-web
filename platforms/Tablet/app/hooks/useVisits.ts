@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface Visit {
   id: string
@@ -61,9 +62,8 @@ export function useVisits() {
     
     if (data) {
       setVisits(prev => [data, ...prev])
+      logActivity('create', 'visit', data.visitor_name || '', data.company || '')
     }
-    
-    return data
   }
 
   const updateVisit = async (id: string, updates: Partial<Omit<Visit, 'id' | 'user_id' | 'created_at'>>) => {
@@ -78,12 +78,14 @@ export function useVisits() {
 
     if (data) {
       setVisits(prev => prev.map(visit => visit.id === id ? data : visit))
+      logActivity('update', 'visit', data.visitor_name || '', '')
     }
 
     return data
   }
 
   const deleteVisit = async (id: string) => {
+    const visitToDelete = visits.find(v => v.id === id)
     const { error } = await supabase
       .from('visits')
       .delete()
@@ -91,6 +93,7 @@ export function useVisits() {
 
     if (error) throw error
     setVisits(prev => prev.filter(visit => visit.id !== id))
+    logActivity('delete', 'visit', visitToDelete?.visitor_name || '', '')
   }
 
   const updateVisitStatus = async (id: string, status: Visit['status']) => {

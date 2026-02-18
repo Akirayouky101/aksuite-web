@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface TeamMember {
   id: string
@@ -50,12 +51,14 @@ export function useTeamMembers() {
     if (error) throw error
     if (data) {
       setMembers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+      logActivity('create', 'team_member', data.name, data.role || '')
       return data
     }
     return null
   }
 
   const deleteMember = async (id: string) => {
+    const memberToDelete = members.find(m => m.id === id)
     const { error } = await supabase
       .from('team_members')
       .delete()
@@ -63,6 +66,7 @@ export function useTeamMembers() {
 
     if (error) throw error
     setMembers(prev => prev.filter(m => m.id !== id))
+    logActivity('delete', 'team_member', memberToDelete?.name || '', '')
   }
 
   return { members, loading, addMember, deleteMember }

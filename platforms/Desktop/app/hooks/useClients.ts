@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface Client {
   id: string
@@ -61,6 +62,7 @@ export function useClients() {
         .single()
       if (error) throw error
       setClients(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+      logActivity('create', 'client', data.name, data.company || '')
       return data
     } catch (error) {
       console.error('Error adding client:', error)
@@ -78,6 +80,7 @@ export function useClients() {
         .single()
       if (error) throw error
       setClients(prev => prev.map(c => c.id === id ? data : c).sort((a, b) => a.name.localeCompare(b.name)))
+      logActivity('update', 'client', data.name, '')
       return data
     } catch (error) {
       console.error('Error updating client:', error)
@@ -86,10 +89,12 @@ export function useClients() {
   }
 
   const deleteClient = async (id: string) => {
+    const clientToDelete = clients.find(c => c.id === id)
     try {
       const { error } = await supabase.from('clients').delete().eq('id', id)
       if (error) throw error
       setClients(prev => prev.filter(c => c.id !== id))
+      logActivity('delete', 'client', clientToDelete?.name || '', '')
     } catch (error) {
       console.error('Error deleting client:', error)
     }

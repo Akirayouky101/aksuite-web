@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface OrderItem {
   id: string
@@ -95,6 +96,7 @@ export function useOrders() {
       .select()
       .single()
     if (error) { console.error('Add order error:', error); return null }
+    logActivity('create', 'order', newItem?.order_number || 'Ordine', `Nuovo ordine: ${newItem?.order_number || orderNumber}`)
     return newItem
   }
 
@@ -104,13 +106,19 @@ export function useOrders() {
       .update({ ...data, updated_at: new Date().toISOString() })
       .eq('id', id)
     if (error) console.error('Update order error:', error)
+    else {
+      const order = orders.find(o => o.id === id)
+      logActivity('update', 'order', order?.order_number || 'Ordine', `Aggiornato ordine${data.status ? ' - stato: ' + data.status : ''}`)
+    }
   }
 
   const deleteOrder = async (id: string) => {
+    const order = orders.find(o => o.id === id)
     // Delete items first
     await supabase.from('order_items').delete().eq('order_id', id)
     const { error } = await supabase.from('orders').delete().eq('id', id)
     if (error) console.error('Delete order error:', error)
+    else logActivity('delete', 'order', order?.order_number || 'Ordine', `Eliminato ordine: ${order?.order_number || ''}`)
   }
 
   const addOrderItem = async (orderId: string, item: Partial<OrderItem>) => {

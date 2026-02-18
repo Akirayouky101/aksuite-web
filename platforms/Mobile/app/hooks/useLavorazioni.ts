@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface Lavorazione {
   id: string
@@ -63,6 +64,7 @@ export function useLavorazioni() {
 
     if (error) throw error
     setLavorazioni(prev => [data, ...prev])
+    logActivity('create', 'lavorazione', data.title || data.description || '', '')
     return data
   }
 
@@ -76,10 +78,12 @@ export function useLavorazioni() {
 
     if (error) throw error
     setLavorazioni(prev => prev.map(l => l.id === id ? data : l))
+    logActivity('update', 'lavorazione', data.title || data.description || '', '')
     return data
   }
 
   const deleteLavorazione = async (id: string) => {
+    const lavToDelete = lavorazioni.find(l => l.id === id)
     const { error } = await supabase
       .from('lavorazioni')
       .delete()
@@ -87,6 +91,7 @@ export function useLavorazioni() {
 
     if (error) throw error
     setLavorazioni(prev => prev.filter(l => l.id !== id))
+    logActivity('delete', 'lavorazione', lavToDelete?.title || lavToDelete?.description || '', '')
   }
 
   const toggleStatus = async (id: string) => {

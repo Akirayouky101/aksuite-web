@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 interface Subtask {
   id: string
@@ -164,6 +165,7 @@ export function useTasks() {
       }
 
       setTasks([newTask, ...tasks])
+      logActivity('create', 'task', task.title, `Nuovo task: ${task.title} - ${task.priority} - ${task.category}`)
       return newTask
     } catch (error) {
       console.error('Error adding task:', error)
@@ -201,6 +203,8 @@ export function useTasks() {
       setTasks(tasks.map(t =>
         t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t
       ))
+      const task = tasks.find(t => t.id === id)
+      logActivity('update', 'task', task?.title || updates.title || 'Task', `Aggiornato task`)
     } catch (error) {
       console.error('Error updating task:', error)
       throw error
@@ -209,6 +213,7 @@ export function useTasks() {
 
   const toggleComplete = async (id: string, completed: boolean) => {
     try {
+      const task = tasks.find(t => t.id === id)
       const updates = {
         is_completed: completed,
         completed_at: completed ? new Date().toISOString() : null,
@@ -216,6 +221,7 @@ export function useTasks() {
       }
       
       await updateTask(id, updates)
+      logActivity('update', 'task', task?.title || 'Task', completed ? 'Task completato' : 'Task riaperto')
     } catch (error) {
       console.error('Error toggling task completion:', error)
       throw error
@@ -244,7 +250,9 @@ export function useTasks() {
 
       if (error) throw error
 
+      const task = tasks.find(t => t.id === id)
       setTasks(tasks.filter(t => t.id !== id))
+      logActivity('delete', 'task', task?.title || 'Task', `Eliminato task: ${task?.title || ''}`)
     } catch (error) {
       console.error('Error deleting task:', error)
       throw error

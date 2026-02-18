@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { logActivity } from '@/lib/activityLogger'
 
 interface Transaction {
   id: string
@@ -64,6 +65,7 @@ export function useBudget() {
       if (error) throw error
 
       setTransactions(prev => [data, ...prev])
+      logActivity('create', 'budget', transaction.category, `${transaction.type === 'income' ? 'Entrata' : 'Uscita'}: ${transaction.emoji} ${transaction.category} - \u{20AC}${transaction.amount}`)
       return data
     } catch (error) {
       console.error('Error adding transaction:', error)
@@ -83,7 +85,9 @@ export function useBudget() {
 
       if (error) throw error
 
+      const deletedTx = transactions.find(t => t.id === id)
       setTransactions(prev => prev.filter(t => t.id !== id))
+      if (deletedTx) logActivity('delete', 'budget', deletedTx.category, `Eliminata transazione: ${deletedTx.emoji} ${deletedTx.category} - \u{20AC}${deletedTx.amount}`)
     } catch (error) {
       console.error('Error deleting transaction:', error)
       throw error
