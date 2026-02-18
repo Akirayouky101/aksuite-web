@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Package, Search, Plus, Pencil, Trash2, ChevronDown, ChevronUp, ScanLine, AlertTriangle, ArrowUpDown, MapPin, Tag, Minus } from 'lucide-react'
+import { X, Package, Search, Plus, Pencil, Trash2, ChevronDown, ChevronUp, ScanLine, AlertTriangle, ArrowUpDown, MapPin, Tag, Minus, Upload } from 'lucide-react'
 import { Product, StockMovement } from '../hooks/useWarehouse'
 import { Supplier } from '../hooks/useSuppliers'
 
@@ -17,9 +17,10 @@ interface WarehouseListModalProps {
   onUpdateStock: (productId: string, type: string, quantity: number, notes: string) => void
   onFindByBarcode: (code: string) => Product | undefined
   onLoadMovements: (productId: string) => Promise<StockMovement[]>
+  onImportCsv?: () => void
 }
 
-export default function WarehouseListModal({ isOpen, onClose, products, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements }: WarehouseListModalProps) {
+export default function WarehouseListModal({ isOpen, onClose, products, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onImportCsv }: WarehouseListModalProps) {
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterStock, setFilterStock] = useState('all')
@@ -119,6 +120,11 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 border ${scanMode ? 'bg-violet-100 border-violet-300 text-violet-600' : 'bg-slate-50 border-slate-200/60 text-slate-500 hover:bg-violet-50'}`}>
                   <ScanLine className="w-3 h-3" />Scanner
                 </button>
+                {onImportCsv && (
+                  <button onClick={onImportCsv} title="Importa da CSV" className="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 text-emerald-600 text-xs font-bold transition-all flex items-center gap-1">
+                    <Upload className="w-3 h-3" />CSV
+                  </button>
+                )}
                 <button onClick={onAdd} title="Aggiungi prodotto" className="px-3 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-200/60 text-violet-600 text-xs font-bold transition-all flex items-center gap-1">
                   <Plus className="w-3 h-3" />Nuovo
                 </button>

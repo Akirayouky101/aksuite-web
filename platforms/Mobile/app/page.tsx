@@ -51,6 +51,7 @@ const WarehouseListModal = dynamic(() => import('./components/WarehouseListModal
 const LabelPrinterModal = dynamic(() => import('./components/LabelPrinterModal'), { ssr: false })
 const UserManagementModal = dynamic(() => import('./components/UserManagementModal'), { ssr: false })
 const ActivityLogModal = dynamic(() => import('./components/ActivityLogModal'), { ssr: false })
+const CsvImportModal = dynamic(() => import('./components/CsvImportModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -137,6 +138,7 @@ export default function Home() {
   // ═══ USER MANAGEMENT STATE ═══
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(false)
   const [isActivityLogOpen, setIsActivityLogOpen] = useState(false)
+  const [isCsvImportOpen, setIsCsvImportOpen] = useState(false)
 
   // ═══ BADGE "SEEN" TRACKING ═══
   const [seenCalls, setSeenCalls] = useState<number | null>(null)
@@ -1120,6 +1122,21 @@ export default function Home() {
         onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
         onFindByBarcode={findByBarcode}
         onLoadMovements={loadMovements}
+        onImportCsv={() => setIsCsvImportOpen(true)}
+      />}
+
+      {isCsvImportOpen && <CsvImportModal
+        isOpen={isCsvImportOpen}
+        onClose={() => setIsCsvImportOpen(false)}
+        existingSkus={products.map(p => p.sku).filter(Boolean) as string[]}
+        onImport={async (items) => {
+          let count = 0
+          for (const item of items) {
+            const result = await addProduct(item)
+            if (result) count++
+          }
+          return count
+        }}
       />}
       {isOrderModalOpen && <OrderModal
         isOpen={isOrderModalOpen}
