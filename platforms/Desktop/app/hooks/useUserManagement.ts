@@ -157,36 +157,27 @@ export function useUserManagement() {
     }
   }, [])
 
-  // Registra un nuovo utente
+  // Registra un nuovo utente (via API route server-side)
   const createUser = useCallback(async (email: string, password: string, fullName: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName }
-        }
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) return { success: false, error: 'Non autenticato' }
+
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          adminUserId: currentUser.id
+        })
       })
 
-      if (error) return { success: false, error: error.message }
+      const result = await response.json()
 
-      // Aspetta un momento per il trigger che crea i permessi default
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      // Se il trigger non ha creato il record, crealo manualmente
-      if (data.user) {
-        const { data: existing } = await supabase
-          .from('user_permissions')
-          .select('id')
-          .eq('user_id', data.user.id)
-          .single()
-
-        if (!existing) {
-          await supabase.from('user_permissions').insert({
-            user_id: data.user.id,
-            ...DEFAULT_PERMISSIONS
-          })
-        }
+      if (!response.ok) {
+        return { success: false, error: result.error || 'Errore durante la creazione' }
       }
 
       // Ricarica lista utenti
