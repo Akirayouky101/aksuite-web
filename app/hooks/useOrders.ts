@@ -59,7 +59,6 @@ export function useOrders() {
         const { data, error } = await supabase
           .from('orders')
           .select('*')
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
         if (!error && data && mounted) setOrders(data)
       } catch (e) { console.warn('Orders table may not exist yet:', e) }
@@ -68,7 +67,7 @@ export function useOrders() {
     fetchData()
     const channel = supabase
       .channel('orders_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' },
         () => { if (mounted) fetchData() }
       ).subscribe()
     return () => { mounted = false; supabase.removeChannel(channel) }
@@ -81,7 +80,6 @@ export function useOrders() {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
       if (!error && data) setOrders(data)
     } catch (e) { console.warn('Orders fetch error:', e) }

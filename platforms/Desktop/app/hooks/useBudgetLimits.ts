@@ -44,7 +44,6 @@ export function useBudgetLimits() {
       const { data, error } = await supabase
         .from('budget_limits')
         .select('*')
-        .eq('user_id', user.id)
         .order('category', { ascending: true })
 
       if (error) throw error

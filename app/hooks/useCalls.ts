@@ -40,7 +40,6 @@ export function useCalls() {
         const { data, error } = await supabase
           .from('calls')
           .select('*')
-          .eq('user_id', user.id)
           .order('call_date', { ascending: false })
         if (error) throw error
         if (mounted) setCalls(data || [])

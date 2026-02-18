@@ -35,7 +35,6 @@ export function useVisits() {
         const { data, error } = await supabase
           .from('visits')
           .select('*')
-          .eq('user_id', user.id)
           .order('visit_date', { ascending: false })
         if (error) throw error
         if (mounted) setVisits(data || [])

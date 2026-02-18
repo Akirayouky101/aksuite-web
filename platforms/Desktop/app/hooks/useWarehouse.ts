@@ -61,7 +61,6 @@ export function useWarehouse() {
         const { data, error } = await supabase
           .from('products')
           .select('*')
-          .eq('user_id', user.id)
           .order('name', { ascending: true })
         if (!error && data && mounted) setProducts(data)
       } catch (e) { console.warn('Products table may not exist yet:', e) }
@@ -71,7 +70,7 @@ export function useWarehouse() {
 
     const channel = supabase
       .channel('products_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `user_id=eq.${user.id}` },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' },
         () => { if (mounted) fetchProducts() }
       ).subscribe()
     return () => { mounted = false; supabase.removeChannel(channel) }

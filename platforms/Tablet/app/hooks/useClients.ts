@@ -38,7 +38,6 @@ export function useClients() {
         const { data, error } = await supabase
           .from('clients')
           .select('*')
-          .eq('user_id', user.id)
           .order('name', { ascending: true })
         if (error) throw error
         if (mounted) setClients(data || [])

@@ -39,7 +39,6 @@ export function useLavorazioni() {
         const { data, error } = await supabase
           .from('lavorazioni')
           .select('*')
-          .eq('user_id', user.id)
           .order('scheduled_date', { ascending: true })
         if (error) throw error
         if (mounted) setLavorazioni(data || [])

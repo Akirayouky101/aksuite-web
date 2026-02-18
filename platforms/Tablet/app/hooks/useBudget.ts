@@ -29,7 +29,6 @@ export function useBudget() {
         const { data, error } = await supabase
           .from('budget_transactions')
           .select('*')
-          .eq('user_id', user.id)
           .order('date', { ascending: false })
         if (error) throw error
         if (mounted) setTransactions(data || [])

@@ -25,7 +25,6 @@ export function useTeamMembers() {
         const { data, error } = await supabase
           .from('team_members')
           .select('*')
-          .eq('user_id', user.id)
           .order('name', { ascending: true })
         if (error) throw error
         if (mounted) setMembers(data || [])

@@ -44,7 +44,6 @@ export function useSuppliers() {
         const { data, error } = await supabase
           .from('suppliers')
           .select('*')
-          .eq('user_id', user.id)
           .order('name', { ascending: true })
         if (!error && data && mounted) setSuppliers(data)
       } catch (e) { console.warn('Suppliers table may not exist yet:', e) }
@@ -54,7 +53,7 @@ export function useSuppliers() {
 
     const channel = supabase
       .channel('suppliers_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'suppliers', filter: `user_id=eq.${user.id}` },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'suppliers' },
         () => { if (mounted) fetchSuppliers() }
       ).subscribe()
     return () => { mounted = false; supabase.removeChannel(channel) }

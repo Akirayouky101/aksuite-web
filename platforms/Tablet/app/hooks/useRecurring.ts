@@ -40,7 +40,6 @@ export function useRecurring() {
       const { data, error } = await supabase
         .from('budget_recurring')
         .select('*')
-        .eq('user_id', user.id)
         .order('next_date', { ascending: true })
 
       if (error) throw error

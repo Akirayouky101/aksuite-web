@@ -53,7 +53,6 @@ export function useTasks() {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', uid)
         .order('created_at', { ascending: false })
 
       if (error) throw error
