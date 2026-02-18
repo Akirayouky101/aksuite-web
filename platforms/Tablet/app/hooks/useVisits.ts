@@ -64,6 +64,7 @@ export function useVisits() {
       setVisits(prev => [data, ...prev])
       logActivity('create', 'visit', data.visitor_name || '', data.company || '')
     }
+    return data
   }
 
   const updateVisit = async (id: string, updates: Partial<Omit<Visit, 'id' | 'user_id' | 'created_at'>>) => {
