@@ -262,6 +262,11 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
     )
   }
 
+  // Brand logos - mappatura nome brand (lowercase) -> percorso logo
+  const brandLogos: Record<string, string> = {
+    'dahua': '/brands/dahua.svg',
+  }
+
   // Brand colors (cycle through)
   const brandColors = [
     'from-violet-500 to-purple-600 shadow-violet-500/25',
@@ -434,21 +439,41 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {brands.map((b, i) => (
-                        <button key={b.name} onClick={() => goBrand(b.name)}
-                          className="text-left p-4 rounded-2xl bg-white/80 border border-slate-200/40 hover:shadow-lg hover:border-slate-300/60 transition-all group">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${brandColors[i % brandColors.length]} flex items-center justify-center shadow-lg`}>
-                              <Folder className="w-6 h-6 text-white" />
+                      {brands.map((b, i) => {
+                        const logo = brandLogos[b.name.toLowerCase()]
+                        return logo ? (
+                          <button key={b.name} onClick={() => goBrand(b.name)}
+                            className="text-left rounded-2xl bg-white border border-slate-200/40 hover:shadow-xl hover:border-slate-300/60 transition-all group overflow-hidden sm:col-span-2">
+                            <div className="flex items-center gap-4 p-5">
+                              <div className="w-40 h-16 rounded-xl bg-white flex items-center justify-center p-2 border border-slate-100 group-hover:border-violet-200/60 transition-all group-hover:shadow-md">
+                                <img src={logo} alt={b.name} className="max-w-full max-h-full object-contain" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-bold text-slate-800 group-hover:text-violet-600 transition-colors">{b.name}</h3>
+                                <p className="text-xs text-slate-400 mt-0.5">{b.count} prodott{b.count === 1 ? 'o' : 'i'} {'\u2022'} {b.categories} categori{b.categories === 1 ? 'a' : 'e'}</p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="px-3 py-1 rounded-lg bg-violet-50 text-violet-600 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Apri</span>
+                                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-400 transition-colors" />
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-base font-bold text-slate-800 group-hover:text-violet-600 transition-colors truncate">{b.name}</h3>
-                              <p className="text-xs text-slate-400">{b.count} prodott{b.count === 1 ? 'o' : 'i'} {'\u2022'} {b.categories} categori{b.categories === 1 ? 'a' : 'e'}</p>
+                          </button>
+                        ) : (
+                          <button key={b.name} onClick={() => goBrand(b.name)}
+                            className="text-left p-4 rounded-2xl bg-white/80 border border-slate-200/40 hover:shadow-lg hover:border-slate-300/60 transition-all group">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${brandColors[i % brandColors.length]} flex items-center justify-center shadow-lg`}>
+                                <Folder className="w-6 h-6 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-bold text-slate-800 group-hover:text-violet-600 transition-colors truncate">{b.name}</h3>
+                                <p className="text-xs text-slate-400">{b.count} prodott{b.count === 1 ? 'o' : 'i'} {'\u2022'} {b.categories} categori{b.categories === 1 ? 'a' : 'e'}</p>
+                              </div>
+                              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-400 transition-colors" />
                             </div>
-                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-400 transition-colors" />
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                 </>
