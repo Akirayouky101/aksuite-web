@@ -63,10 +63,14 @@ export default function ClientDetailModal({ isOpen, onClose, client, calls, lavo
     const phoneClean = client.phone?.replace(/\s/g, '') || ''
     const phone2Clean = client.phone2?.replace(/\s/g, '') || ''
 
+    // Generic/category company names should NOT be used for matching
+    const genericCompanies = ['privato', 'private', 'azienda', 'company', 'altro', 'other', 'nessuna', 'none', '']
+    const companyIsGeneric = !companyL || genericCompanies.includes(companyL)
+
     // Match calls by name, company, or phone
     calls.forEach(c => {
       const matchName = c.caller_name?.toLowerCase() === nameL
-      const matchCompany = companyL && c.company?.toLowerCase() === companyL
+      const matchCompany = !companyIsGeneric && companyL && c.company?.toLowerCase() === companyL
       const matchPhone = phoneClean && c.phone?.replace(/\s/g, '') === phoneClean
       const matchPhone2 = phone2Clean && c.phone?.replace(/\s/g, '') === phone2Clean
       if (matchName || matchCompany || matchPhone || matchPhone2) {
@@ -94,7 +98,7 @@ export default function ClientDetailModal({ isOpen, onClose, client, calls, lavo
     // Match visits by name, company, or phone
     visits.forEach(v => {
       const matchName = v.visitor_name?.toLowerCase() === nameL
-      const matchCompany = companyL && v.company?.toLowerCase() === companyL
+      const matchCompany = !companyIsGeneric && companyL && v.company?.toLowerCase() === companyL
       const matchPhone = phoneClean && v.phone?.replace(/\s/g, '') === phoneClean
       if (matchName || matchCompany || matchPhone) {
         items.push({
