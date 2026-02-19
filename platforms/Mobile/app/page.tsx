@@ -321,6 +321,7 @@ export default function Home() {
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length },
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length },
+      { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventivoModalOpen(true) },
     ]
     return allItems.filter(item => hasPermission(item.perm))
   }, [calls.length, lavorazioni.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission])
