@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, UserCheck, Building2, Phone, Mail, Calendar, FileText, AlertTriangle, Clock, Wrench, ChevronDown } from 'lucide-react'
+import { X, UserCheck, Building2, Phone, Mail, Calendar, FileText, AlertTriangle, Clock, Wrench, ChevronDown, Users, UserPlus } from 'lucide-react'
 // import RelationsIntegration from './RelationsIntegration' // TODO: Fix prop types
 import type { Visit } from '../hooks/useVisits'
 
@@ -12,6 +12,9 @@ interface VisitModalProps {
   onSave: (visitData: any) => Promise<any>
   editVisit?: Visit | null
   teamMembers?: Array<{ id: string; name: string; role: string }>
+  // Rubrica clienti
+  clients?: Array<{ id: string; name: string; company: string; phone: string; email: string }>
+  onAddClient?: (data: any) => Promise<any>
   availableRelationItems?: Array<{
     type: string
     id: string
@@ -29,6 +32,8 @@ export default function VisitModal({
   onSave,
   editVisit,
   teamMembers = [],
+  clients = [],
+  onAddClient,
   availableRelationItems = [],
   onAddRelation,
   onRemoveRelation,
@@ -50,6 +55,10 @@ export default function VisitModal({
   const [lavorazioneTime, setLavorazioneTime] = useState('')
   const [lavorazioneDesc, setLavorazioneDesc] = useState('')
   const [lavorazioneAssignee, setLavorazioneAssignee] = useState('')
+  const [showAddToRubrica, setShowAddToRubrica] = useState(false)
+  const [pendingClientData, setPendingClientData] = useState<any>(null)
+  const [addingToRubrica, setAddingToRubrica] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     if (editVisit) {
@@ -86,33 +95,97 @@ export default function VisitModal({
     setLavorazioneTime('')
     setLavorazioneDesc('')
     setLavorazioneAssignee('')
+    setShowAddToRubrica(false)
+    setPendingClientData(null)
+    setAddingToRubrica(false)
+    setIsSaving(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSaving(true)
     
-    const visitData = {
-      visitor_name: visitorName,
-      company,
-      phone,
-      email,
-      visit_type: visitType,
-      priority,
-      visit_date: new Date(visitDate).toISOString(),
-      notes,
-      follow_up: followUp,
-      follow_up_date: followUpDate ? new Date(followUpDate).toISOString() : null,
-      status,
-      // Lavorazione
-      has_lavorazione: hasLavorazione,
-      lavorazione_date: hasLavorazione ? lavorazioneDate || null : null,
-      lavorazione_time: hasLavorazione ? lavorazioneTime || null : null,
-      lavorazione_description: hasLavorazione ? lavorazioneDesc : '',
-      lavorazione_assignee: hasLavorazione ? lavorazioneAssignee : ''
-    }
+    try {
+      const visitData = {
+        visitor_name: visitorName,
+        company,
+        phone,
+        email,
+        visit_type: visitType,
+        priority,
+        visit_date: new Date(visitDate).toISOString(),
+        notes,
+        follow_up: followUp,
+        follow_up_date: followUpDate ? new Date(followUpDate).toISOString() : null,
+        status,
+        // Lavorazione
+        has_lavorazione: hasLavorazione,
+        lavorazione_date: hasLavorazione ? lavorazioneDate || null : null,
+        lavorazione_time: hasLavorazione ? lavorazioneTime || null : null,
+        lavorazione_description: hasLavorazione ? lavorazioneDesc : '',
+        lavorazione_assignee: hasLavorazione ? lavorazioneAssignee : ''
+      }
 
-    await onSave(visitData)
-    resetForm()
+      await onSave(visitData)
+
+      // Save name/phone/email before reset
+      const savedName = visitorName.trim()
+      const savedCompany = company.trim()
+      const savedPhone = phone.trim()
+      const savedEmail = email.trim()
+
+      resetForm()
+
+      // Check if visitor exists in rubrica (only for new visits)
+      if (!editVisit && onAddClient && clients.length >= 0) {
+        const nameToCheck = savedName.toLowerCase()
+        const phoneToCheck = savedPhone
+        const alreadyInRubrica = clients.some(c =>
+          c.name.toLowerCase() === nameToCheck ||
+          (phoneToCheck && c.phone && c.phone === phoneToCheck)
+        )
+        if (!alreadyInRubrica && nameToCheck) {
+          setPendingClientData({
+            name: savedName,
+            company: savedCompany,
+            phone: savedPhone,
+            email: savedEmail,
+            address: '', city: '', zip_code: '', province: '',
+            phone2: '', fiscal_code: '', vat_number: '',
+            category: savedCompany ? 'azienda' : 'privato',
+            notes: '', is_favorite: false
+          })
+          setShowAddToRubrica(true)
+          return // Don't close yet, wait for rubrica decision
+        }
+      }
+
+      onClose()
+    } catch (error) {
+      console.error('Error saving visit:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleAddToRubrica = async () => {
+    if (!pendingClientData || !onAddClient) return
+    setAddingToRubrica(true)
+    try {
+      await onAddClient(pendingClientData)
+    } catch (error) {
+      console.error('Error adding client from visit:', error)
+    } finally {
+      setAddingToRubrica(false)
+      setShowAddToRubrica(false)
+      setPendingClientData(null)
+      onClose()
+    }
+  }
+
+  const handleSkipRubrica = () => {
+    setShowAddToRubrica(false)
+    setPendingClientData(null)
     onClose()
   }
 
@@ -390,12 +463,64 @@ export default function VisitModal({
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
-              className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
+              disabled={isSaving}
+              className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm disabled:opacity-50"
             >
-              {editVisit ? '✏️ Aggiorna Visita' : '💾 Salva Visita'}
+              {isSaving ? 'Salvataggio...' : editVisit ? '\u270F\uFE0F Aggiorna Visita' : '\uD83D\uDCBE Salva Visita'}
             </motion.button>
           </form>
         </motion.div>
+
+        {/* Add to Rubrica Prompt */}
+        <AnimatePresence>
+          {showAddToRubrica && pendingClientData && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+              onClick={handleSkipRubrica}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/60 w-full max-w-sm p-6 text-center"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/25">
+                  <Users className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 mb-2">Aggiungere alla Rubrica?</h3>
+                <p className="text-sm text-slate-500 mb-1">
+                  <span className="font-semibold text-slate-700">{pendingClientData.name}</span>
+                  {pendingClientData.company ? ` (${pendingClientData.company})` : ''}
+                </p>
+                <p className="text-xs text-slate-400 mb-6">
+                  Questo contatto non {'\u00E8'} presente nella rubrica clienti. Vuoi aggiungerlo?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSkipRubrica}
+                    title="Non aggiungere alla rubrica"
+                    className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium transition-all"
+                  >
+                    No, grazie
+                  </button>
+                  <button
+                    onClick={handleAddToRubrica}
+                    disabled={addingToRubrica}
+                    title="Aggiungi alla rubrica clienti"
+                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg shadow-teal-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    {addingToRubrica ? 'Salvataggio...' : 'S\u00EC, aggiungi'}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AnimatePresence>
   )

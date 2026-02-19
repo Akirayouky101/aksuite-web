@@ -1009,6 +1009,8 @@ export default function Home() {
         }}
         editVisit={editingVisit}
         teamMembers={teamMembers}
+        clients={clients}
+        onAddClient={addClient}
       />}
       {isVisitsListModalOpen && <VisitsListModal isOpen={isVisitsListModalOpen} onClose={() => setIsVisitsListModalOpen(false)}
         visits={visits} onDelete={deleteVisit} onStatusChange={updateVisitStatus}
