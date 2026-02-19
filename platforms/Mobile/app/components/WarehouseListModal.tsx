@@ -300,6 +300,7 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
   // Brand logos - mappatura nome brand (lowercase) -> percorso logo
   const brandLogos: Record<string, string> = {
     'dahua': '/brands/dahua.png',
+    'tecnoalarm': '/brands/tecnoalarm.png',
   }
 
   // Brand colors (cycle through)
