@@ -4,9 +4,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
-  DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
+  DollarSign, CheckSquare, StickyNote, ChevronRight, ChevronLeft, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -121,6 +121,7 @@ export default function Home() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // ═══ WAREHOUSE / ORDERS STATE ═══
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false)
@@ -404,56 +405,82 @@ export default function Home() {
         {sidebarOpen && (
           <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
         )}
-        <aside className={`fixed lg:relative w-[265px] h-screen bg-white border-r border-slate-200/80 flex flex-col z-50 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <aside className={`fixed lg:relative ${sidebarCollapsed ? 'w-[65px]' : 'w-[265px]'} h-screen bg-white border-r border-slate-200/80 flex flex-col z-50 transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
           {/* Logo */}
-          <div className="px-5 py-5 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <div className={`${sidebarCollapsed ? 'px-2 py-4' : 'px-5 py-5'} border-b border-slate-100 transition-all duration-300`}>
+            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 flex-shrink-0">
                 <Star className="w-5 h-5 text-white" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-slate-800 font-bold text-lg tracking-tight">AK Suite</h1>
-                <p className="text-slate-400 text-[10px] font-medium">Gestione Premium</p>
-              </div>
-              <button onClick={() => setSidebarOpen(false)} title="Chiudi menu" className="lg:hidden w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
+              {!sidebarCollapsed && (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-slate-800 font-bold text-lg tracking-tight">AK Suite</h1>
+                    <p className="text-slate-400 text-[10px] font-medium">Gestione Premium</p>
+                  </div>
+                  <button onClick={() => setSidebarOpen(false)} title="Chiudi menu" className="lg:hidden w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </div>
+            {/* Toggle collapse button — visible only on lg+ */}
+            <button
+              onClick={() => setSidebarCollapsed(prev => !prev)}
+              title={sidebarCollapsed ? 'Espandi sidebar' : 'Riduci sidebar'}
+              className={`hidden lg:flex items-center justify-center ${sidebarCollapsed ? 'w-8 h-8 mx-auto mt-3' : 'w-full mt-3 py-1.5 gap-2'} rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all duration-200`}
+            >
+              {sidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <><PanelLeftClose className="w-3.5 h-3.5" /><span className="text-[10px] font-medium">Riduci</span></>}
+            </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-3 overflow-y-auto">
+          <nav className={`flex-1 ${sidebarCollapsed ? 'px-1.5' : 'px-3'} py-3 overflow-y-auto transition-all duration-300`}>
             {(() => {
               const sections = [
-                { key: 'agenda', label: 'Agenda', borderColor: 'border-l-blue-500', iconBg: 'bg-blue-50', iconColor: 'text-blue-500', labelColor: 'text-blue-500' },
-                { key: 'operativo', label: 'Operativo', borderColor: 'border-l-emerald-500', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500', labelColor: 'text-emerald-500' },
-                { key: 'commerciale', label: 'Commerciale', borderColor: 'border-l-violet-500', iconBg: 'bg-violet-50', iconColor: 'text-violet-500', labelColor: 'text-violet-500' },
-                { key: 'strumenti', label: 'Strumenti', borderColor: 'border-l-slate-400', iconBg: 'bg-slate-50', iconColor: 'text-slate-400', labelColor: 'text-slate-400' },
+                { key: 'agenda', label: 'Agenda', borderColor: 'border-l-blue-500', iconBg: 'bg-blue-50', iconColor: 'text-blue-500', labelColor: 'text-blue-500', dotColor: 'bg-blue-400' },
+                { key: 'operativo', label: 'Operativo', borderColor: 'border-l-emerald-500', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500', labelColor: 'text-emerald-500', dotColor: 'bg-emerald-400' },
+                { key: 'commerciale', label: 'Commerciale', borderColor: 'border-l-violet-500', iconBg: 'bg-violet-50', iconColor: 'text-violet-500', labelColor: 'text-violet-500', dotColor: 'bg-violet-400' },
+                { key: 'strumenti', label: 'Strumenti', borderColor: 'border-l-slate-400', iconBg: 'bg-slate-50', iconColor: 'text-slate-400', labelColor: 'text-slate-400', dotColor: 'bg-slate-300' },
               ]
               return sections.map((sec, si) => {
                 const sectionItems = navItems.filter((item: any) => item.section === sec.key)
                 if (sectionItems.length === 0) return null
                 return (
                   <div key={sec.key} className={si > 0 ? 'mt-4' : ''}>
-                    <p className={`px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${sec.labelColor}`}>{sec.label}</p>
-                    <div className={`space-y-0.5 border-l-2 ${sec.borderColor} ml-1 pl-0`}>
+                    {sidebarCollapsed ? (
+                      <div className={`w-4 h-0.5 ${sec.dotColor} rounded-full mx-auto mb-2`} />
+                    ) : (
+                      <p className={`px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${sec.labelColor}`}>{sec.label}</p>
+                    )}
+                    <div className={`space-y-0.5 ${sidebarCollapsed ? '' : `border-l-2 ${sec.borderColor} ml-1 pl-0`}`}>
                       {sectionItems.map((item: any) => (
                         <button
                           key={item.id}
                           onClick={() => { item.onClick(); setSidebarOpen(false) }}
-                          className="w-full group flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-r-xl text-[13px] font-medium transition-all text-slate-600 hover:text-slate-800 hover:bg-slate-50 active:bg-slate-100"
+                          title={sidebarCollapsed ? item.label : undefined}
+                          className={`w-full group flex items-center ${sidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-xl' : 'gap-2.5 pl-3 pr-2 py-2 rounded-r-xl'} text-[13px] font-medium transition-all text-slate-600 hover:text-slate-800 hover:bg-slate-50 active:bg-slate-100 relative`}
                         >
-                          <div className={`w-7 h-7 rounded-lg ${sec.iconBg} flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-105`}>
-                            <item.icon className={`w-3.5 h-3.5 ${sec.iconColor}`} />
+                          <div className={`${sidebarCollapsed ? 'w-9 h-9' : 'w-7 h-7'} rounded-lg ${sec.iconBg} flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-105`}>
+                            <item.icon className={`${sidebarCollapsed ? 'w-4 h-4' : 'w-3.5 h-3.5'} ${sec.iconColor}`} />
                           </div>
-                          <span className="flex-1 text-left">{item.label}</span>
-                          {item.badge !== undefined && item.badge > 0 ? (
-                            <span className="min-w-[20px] h-[20px] px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
+                          {!sidebarCollapsed && (
+                            <>
+                              <span className="flex-1 text-left">{item.label}</span>
+                              {item.badge !== undefined && item.badge > 0 ? (
+                                <span className="min-w-[20px] h-[20px] px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
+                                  {item.badge}
+                                </span>
+                              ) : item.count != null ? (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-400 font-medium">{item.count}</span>
+                              ) : null}
+                            </>
+                          )}
+                          {sidebarCollapsed && item.badge !== undefined && item.badge > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[8px] font-bold shadow-sm animate-pulse">
                               {item.badge}
                             </span>
-                          ) : item.count != null ? (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-400 font-medium">{item.count}</span>
-                          ) : null}
+                          )}
                         </button>
                       ))}
                     </div>
@@ -465,27 +492,41 @@ export default function Home() {
             {/* Admin */}
             {isAdmin && (
               <div className="mt-4">
-                <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-500">Admin</p>
-                <div className="space-y-0.5 border-l-2 border-l-amber-400 ml-1 pl-0">
+                {sidebarCollapsed ? (
+                  <div className="w-4 h-0.5 bg-amber-400 rounded-full mx-auto mb-2" />
+                ) : (
+                  <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-500">Admin</p>
+                )}
+                <div className={`space-y-0.5 ${sidebarCollapsed ? '' : 'border-l-2 border-l-amber-400 ml-1 pl-0'}`}>
                   <button
                     onClick={() => { setIsUserManagementOpen(true); setSidebarOpen(false) }}
-                    className="w-full group flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-r-xl text-[13px] font-medium transition-all text-slate-600 hover:text-amber-700 hover:bg-amber-50 active:bg-amber-100"
+                    title={sidebarCollapsed ? 'Gestione Utenti' : undefined}
+                    className={`w-full group flex items-center ${sidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-xl' : 'gap-2.5 pl-3 pr-2 py-2 rounded-r-xl'} text-[13px] font-medium transition-all text-slate-600 hover:text-amber-700 hover:bg-amber-50 active:bg-amber-100`}
                   >
-                    <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-                      <Shield className="w-3.5 h-3.5 text-amber-500" />
+                    <div className={`${sidebarCollapsed ? 'w-9 h-9' : 'w-7 h-7'} rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0`}>
+                      <Shield className={`${sidebarCollapsed ? 'w-4 h-4' : 'w-3.5 h-3.5'} text-amber-500`} />
                     </div>
-                    <span className="flex-1 text-left">Gestione Utenti</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-500 font-medium">{managedUsers.length || '...'}</span>
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="flex-1 text-left">Gestione Utenti</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-500 font-medium">{managedUsers.length || '...'}</span>
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={() => { setIsActivityLogOpen(true); loadActivityLogs(200); setSidebarOpen(false) }}
-                    className="w-full group flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-r-xl text-[13px] font-medium transition-all text-slate-600 hover:text-violet-700 hover:bg-violet-50 active:bg-violet-100"
+                    title={sidebarCollapsed ? 'Cronologia' : undefined}
+                    className={`w-full group flex items-center ${sidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-xl' : 'gap-2.5 pl-3 pr-2 py-2 rounded-r-xl'} text-[13px] font-medium transition-all text-slate-600 hover:text-violet-700 hover:bg-violet-50 active:bg-violet-100`}
                   >
-                    <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-3.5 h-3.5 text-violet-500" />
+                    <div className={`${sidebarCollapsed ? 'w-9 h-9' : 'w-7 h-7'} rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0`}>
+                      <Clock className={`${sidebarCollapsed ? 'w-4 h-4' : 'w-3.5 h-3.5'} text-violet-500`} />
                     </div>
-                    <span className="flex-1 text-left">Cronologia</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="flex-1 text-left">Cronologia</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -493,19 +534,24 @@ export default function Home() {
           </nav>
 
           {/* User Profile */}
-          <div className="p-3 border-t border-slate-100">
+          <div className={`${sidebarCollapsed ? 'p-1.5' : 'p-3'} border-t border-slate-100 transition-all duration-300`}>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition-all"
+              title={sidebarCollapsed ? 'Logout' : undefined}
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-2 py-2'} rounded-xl hover:bg-slate-50 transition-all`}
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-500/20">
+              <div className={`${sidebarCollapsed ? 'w-9 h-9' : 'w-9 h-9'} rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-500/20 flex-shrink-0`}>
                 {userProfile?.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U'}
               </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-slate-700 text-sm font-medium truncate">{userProfile?.full_name || user.email}</p>
-                <p className="text-slate-400 text-[10px] flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Online</p>
-              </div>
-              <LogOut className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+              {!sidebarCollapsed && (
+                <>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-slate-700 text-sm font-medium truncate">{userProfile?.full_name || user.email}</p>
+                    <p className="text-slate-400 text-[10px] flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Online</p>
+                  </div>
+                  <LogOut className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                </>
+              )}
             </button>
           </div>
         </aside>
