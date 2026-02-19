@@ -42,6 +42,8 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
   ])
   const [productSearchId, setProductSearchId] = useState<string | null>(null)
   const [productSearchQuery, setProductSearchQuery] = useState('')
+  const [barcodeInput, setBarcodeInput] = useState('')
+  const barcodeRef = useRef<HTMLInputElement>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
       setItems([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }])
       setProductSearchId(null)
       setProductSearchQuery('')
+      setBarcodeInput('')
     }
   }, [isOpen, preselectedClientId, preselectedLavorazioneId])
 
@@ -72,18 +75,94 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
     ).slice(0, 8)
   }, [productSearchQuery, products])
 
-  // Select product from search
+  // Select product from search (or barcode scan)
   const selectProduct = (itemId: string, product: Product) => {
-    setItems(items.map(i => i.id === itemId ? {
-      ...i,
-      description: `${product.name}${product.model ? ` (${product.model})` : ''}`,
-      unit_price: product.sell_price || product.purchase_price || 0,
-      unit: product.unit === 'Pezzi' ? 'pz' : (product.unit || 'pz'),
-      product_id: product.id,
-      sku: product.sku || '',
-    } : i))
+    // Check if product already exists in another row
+    const existingItem = items.find(i => i.product_id === product.id && i.id !== itemId)
+    if (existingItem) {
+      // Product already in list — increment quantity
+      setItems(prev => prev.map(i => i.id === existingItem.id ? { ...i, quantity: i.quantity + 1 } : i))
+      // If current row is empty (used just for scanning), remove it
+      const currentItem = items.find(i => i.id === itemId)
+      if (currentItem && !currentItem.description && !currentItem.product_id) {
+        // keep it as the next empty row
+      }
+    } else {
+      // Fill current row with product data + auto-add new empty row
+      const newEmptyRow: LineItem = { id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }
+      setItems(prev => [
+        ...prev.map(i => i.id === itemId ? {
+          ...i,
+          description: `${product.name}${product.model ? ` (${product.model})` : ''}`,
+          unit_price: product.sell_price || product.purchase_price || 0,
+          unit: product.unit === 'Pezzi' ? 'pz' : (product.unit || 'pz'),
+          product_id: product.id,
+          sku: product.sku || '',
+          quantity: 1,
+        } : i),
+        newEmptyRow,
+      ])
+    }
     setProductSearchId(null)
     setProductSearchQuery('')
+  }
+
+  // Handle barcode scan — finds product by SKU/barcode and adds/sums
+  const handleBarcodeScan = (code: string) => {
+    if (!code.trim() || !products.length) return
+    const q = code.trim().toLowerCase()
+    const product = products.find(p =>
+      p.sku?.toLowerCase() === q ||
+      p.barcode?.toLowerCase() === q ||
+      p.name?.toLowerCase() === q
+    )
+    if (!product) {
+      setBarcodeInput('')
+      return
+    }
+    // Check if product already exists in items
+    const existingItem = items.find(i => i.product_id === product.id)
+    if (existingItem) {
+      // Increment quantity
+      setItems(prev => prev.map(i => i.id === existingItem.id ? { ...i, quantity: i.quantity + 1 } : i))
+    } else {
+      // Find last empty row or add new one
+      const emptyRow = items.find(i => !i.description && !i.product_id)
+      if (emptyRow) {
+        // Fill empty row + add new empty row
+        const newEmptyRow: LineItem = { id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }
+        setItems(prev => [
+          ...prev.map(i => i.id === emptyRow.id ? {
+            ...i,
+            description: `${product.name}${product.model ? ` (${product.model})` : ''}`,
+            unit_price: product.sell_price || product.purchase_price || 0,
+            unit: product.unit === 'Pezzi' ? 'pz' : (product.unit || 'pz'),
+            product_id: product.id,
+            sku: product.sku || '',
+            quantity: 1,
+          } : i),
+          newEmptyRow,
+        ])
+      } else {
+        // No empty row, add filled + empty
+        setItems(prev => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            description: `${product.name}${product.model ? ` (${product.model})` : ''}`,
+            unit_price: product.sell_price || product.purchase_price || 0,
+            unit: product.unit === 'Pezzi' ? 'pz' : (product.unit || 'pz'),
+            product_id: product.id,
+            sku: product.sku || '',
+            quantity: 1,
+          },
+          { id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 },
+        ])
+      }
+    }
+    setBarcodeInput('')
+    // Re-focus barcode field for rapid scanning
+    setTimeout(() => barcodeRef.current?.focus(), 50)
   }
 
   // Auto-fill from lavorazione
@@ -204,24 +283,24 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
             {/* Form */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-4">
               {/* Top row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">N. Preventivo</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="min-w-0">
+                  <label className="block text-xs font-bold text-slate-500 mb-1 truncate">N. Preventivo</label>
                   <input type="text" value={numero} onChange={(e) => setNumero(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm font-mono" />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Data</label>
+                <div className="min-w-0">
+                  <label className="block text-xs font-bold text-slate-500 mb-1 truncate">Data</label>
                   <input type="date" value={dataPreventivo} onChange={(e) => setDataPreventivo(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm" />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Validita (gg)</label>
+                <div className="min-w-0">
+                  <label className="block text-xs font-bold text-slate-500 mb-1 truncate">Validit{'\u00E0'} (gg)</label>
                   <input type="number" value={validita} onChange={(e) => setValidita(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm" />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">IVA %</label>
+                <div className="min-w-0">
+                  <label className="block text-xs font-bold text-slate-500 mb-1 truncate">IVA %</label>
                   <input type="number" value={ivaPercent} onChange={(e) => setIvaPercent(Number(e.target.value))}
                     className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm" />
                 </div>
@@ -258,6 +337,32 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                   placeholder="Es: Fornitura e posa infissi in PVC"
                   className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm" />
               </div>
+
+              {/* Barcode scanner input */}
+              {products.length > 0 && (
+                <div className="flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 rounded-xl border border-indigo-200/60 p-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <Package className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <input
+                      ref={barcodeRef}
+                      type="text"
+                      value={barcodeInput}
+                      onChange={(e) => setBarcodeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleBarcodeScan(barcodeInput)
+                        }
+                      }}
+                      placeholder="Spara codice a barre o digita SKU e premi Invio..."
+                      className="w-full px-3 py-2 bg-white text-slate-800 rounded-lg border border-indigo-200 focus:border-indigo-400 focus:outline-none text-sm placeholder:text-indigo-300"
+                    />
+                  </div>
+                  <span className="text-[10px] text-indigo-400 font-medium flex-shrink-0 hidden sm:block">Scansione rapida</span>
+                </div>
+              )}
 
               {/* Line Items */}
               <div>
