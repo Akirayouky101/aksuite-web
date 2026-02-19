@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { logActivity } from '@/lib/activityLogger'
 
 export interface UserPermissions {
   id: string
@@ -182,6 +183,7 @@ export function useUserManagement() {
 
       // Ricarica lista utenti
       await loadAllUsers()
+      logActivity('create', 'user', fullName, `Nuovo utente creato: ${fullName} (${email})`)
       return { success: true }
     } catch (err: any) {
       return { success: false, error: err.message }
@@ -215,12 +217,18 @@ export function useUserManagement() {
 
       // Ricarica
       await loadAllUsers()
+
+      // Log attivit\u{00E0}
+      const targetUser = users.find(u => u.id === userId)
+      const changedKeys = Object.keys(permissions).filter(k => k !== 'id' && k !== 'user_id' && k !== 'created_at' && k !== 'updated_at')
+      logActivity('update', 'permission', targetUser?.full_name || 'Utente', `Permessi aggiornati: ${changedKeys.join(', ')}`)
+
       return true
     } catch (err) {
       console.error('Error updating permissions:', err)
       return false
     }
-  }, [loadAllUsers])
+  }, [loadAllUsers, users])
 
   // Toggle un singolo permesso
   const togglePermission = useCallback(async (userId: string, key: PermissionKey, value: boolean): Promise<boolean> => {
@@ -240,6 +248,10 @@ export function useUserManagement() {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       if (!currentUser) return false
 
+      // Salva il nome prima di eliminare
+      const targetUser = users.find(u => u.id === userId)
+      const targetName = targetUser?.full_name || targetUser?.email || 'Utente'
+
       const response = await fetch('/api/admin/delete-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -257,12 +269,13 @@ export function useUserManagement() {
       }
 
       await loadAllUsers()
+      logActivity('delete', 'user', targetName, `Utente eliminato: ${targetName}`)
       return true
     } catch (err) {
       console.error('Error deleting user:', err)
       return false
     }
-  }, [loadAllUsers])
+  }, [loadAllUsers, users])
 
   // Check se l'utente ha un permesso specifico
   // Durante il caricamento mostra tutto per non far sparire il menu
