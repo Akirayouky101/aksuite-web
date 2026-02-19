@@ -72,6 +72,15 @@ export async function POST(request: NextRequest) {
         can_warehouse: false,
         can_preventivi: false,
       })
+
+      // Aggiungi automaticamente ai team_members per i dropdown (usa adminUserId per RLS)
+      try {
+        await supabaseAdmin.from('team_members').insert({
+          user_id: adminUserId,
+          name: fullName,
+          role: '',
+        })
+      } catch { /* ignora se esiste già */ }
     }
 
     return NextResponse.json({
