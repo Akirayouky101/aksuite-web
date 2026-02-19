@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, FileText, Plus, Trash2, Printer, Users, Calculator } from 'lucide-react'
+import { X, FileText, Plus, Trash2, Printer, Users, Calculator, Search, Package } from 'lucide-react'
 import { Client } from '../hooks/useClients'
 import { Lavorazione } from '../hooks/useLavorazioni'
+import { Product } from '../hooks/useWarehouse'
 
 interface LineItem {
   id: string
@@ -12,6 +13,8 @@ interface LineItem {
   quantity: number
   unit: string
   unit_price: number
+  product_id?: string
+  sku?: string
 }
 
 interface PreventivoModalProps {
@@ -19,11 +22,12 @@ interface PreventivoModalProps {
   onClose: () => void
   clients: Client[]
   lavorazioni: Lavorazione[]
+  products?: Product[]
   preselectedClientId?: string | null
   preselectedLavorazioneId?: string | null
 }
 
-export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni, preselectedClientId, preselectedLavorazioneId }: PreventivoModalProps) {
+export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni, products = [], preselectedClientId, preselectedLavorazioneId }: PreventivoModalProps) {
   const [clientId, setClientId] = useState<string>('')
   const [lavorazioneId, setLavorazioneId] = useState<string>('')
   const [numero, setNumero] = useState('')
@@ -36,6 +40,8 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
   const [items, setItems] = useState<LineItem[]>([
     { id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }
   ])
+  const [productSearchId, setProductSearchId] = useState<string | null>(null)
+  const [productSearchQuery, setProductSearchQuery] = useState('')
   const reportRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -48,8 +54,37 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
       setNote('')
       setSconto(0)
       setItems([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }])
+      setProductSearchId(null)
+      setProductSearchQuery('')
     }
   }, [isOpen, preselectedClientId, preselectedLavorazioneId])
+
+  // Filtered products for search
+  const filteredProducts = useMemo(() => {
+    if (!productSearchQuery.trim() || !products.length) return []
+    const q = productSearchQuery.toLowerCase()
+    return products.filter(p =>
+      p.name?.toLowerCase().includes(q) ||
+      p.sku?.toLowerCase().includes(q) ||
+      p.model?.toLowerCase().includes(q) ||
+      p.brand?.toLowerCase().includes(q) ||
+      p.category?.toLowerCase().includes(q)
+    ).slice(0, 8)
+  }, [productSearchQuery, products])
+
+  // Select product from search
+  const selectProduct = (itemId: string, product: Product) => {
+    setItems(items.map(i => i.id === itemId ? {
+      ...i,
+      description: `${product.name}${product.model ? ` (${product.model})` : ''}`,
+      unit_price: product.sell_price || product.purchase_price || 0,
+      unit: product.unit === 'Pezzi' ? 'pz' : (product.unit || 'pz'),
+      product_id: product.id,
+      sku: product.sku || '',
+    } : i))
+    setProductSearchId(null)
+    setProductSearchQuery('')
+  }
 
   // Auto-fill from lavorazione
   useEffect(() => {
@@ -243,10 +278,23 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                     <div className="col-span-1"></div>
                   </div>
                   {items.map((item) => (
-                    <div key={item.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 items-center bg-slate-50/50 rounded-lg p-2 border border-slate-200/40">
-                      <input type="text" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                        placeholder="Descrizione voce"
-                        className="col-span-2 md:col-span-5 px-2 py-1.5 bg-white text-slate-800 rounded border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm" />
+                    <div key={item.id} className="relative">
+                      <div className="grid grid-cols-2 md:grid-cols-12 gap-2 items-center bg-slate-50/50 rounded-lg p-2 border border-slate-200/40">
+                        <div className="col-span-2 md:col-span-5 relative">
+                          <div className="flex gap-1">
+                            {products.length > 0 && (
+                              <button onClick={() => { setProductSearchId(productSearchId === item.id ? null : item.id); setProductSearchQuery('') }}
+                                title="Cerca prodotto da magazzino"
+                                className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 transition-all ${productSearchId === item.id ? 'bg-indigo-100 text-indigo-600 border border-indigo-300' : 'bg-slate-100 text-slate-400 border border-slate-200 hover:text-indigo-500 hover:border-indigo-200'}`}>
+                                <Package className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <input type="text" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                              placeholder="Descrizione voce"
+                              className="flex-1 px-2 py-1.5 bg-white text-slate-800 rounded border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm" />
+                          </div>
+                          {item.sku && <span className="text-[10px] text-indigo-500 font-mono mt-0.5 block">{item.sku}</span>}
+                        </div>
                       <input type="number" value={item.quantity} onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))} min={0} step={0.1}
                         className="md:col-span-2 px-2 py-1.5 bg-white text-slate-800 rounded border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm" />
                       <select value={item.unit} onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
@@ -268,6 +316,38 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                         className="md:col-span-1 p-1.5 rounded bg-red-50 hover:bg-red-100 text-red-400 transition-all flex items-center justify-center">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
+                      </div>
+                      {/* Product search dropdown */}
+                      {productSearchId === item.id && products.length > 0 && (
+                        <div className="mt-1 bg-white rounded-lg border border-indigo-200 shadow-lg p-2 z-20">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Search className="w-3.5 h-3.5 text-indigo-400" />
+                            <input type="text" value={productSearchQuery} onChange={(e) => setProductSearchQuery(e.target.value)}
+                              placeholder="Cerca prodotto per nome, SKU, modello..."
+                              autoFocus
+                              className="flex-1 px-2 py-1.5 bg-slate-50 text-slate-800 rounded border border-slate-200 focus:border-indigo-400 focus:outline-none text-xs" />
+                          </div>
+                          {filteredProducts.length > 0 ? (
+                            <div className="max-h-32 overflow-y-auto space-y-0.5">
+                              {filteredProducts.map(p => (
+                                <button key={p.id} onClick={() => selectProduct(item.id, p)}
+                                  title={`Seleziona ${p.name}`}
+                                  className="w-full text-left px-2 py-1.5 rounded hover:bg-indigo-50 transition-all flex items-center gap-2">
+                                  <Package className="w-3 h-3 text-indigo-400 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <span className="text-xs font-medium text-slate-700 truncate block">{p.name}</span>
+                                    <span className="text-[10px] text-slate-400">{p.sku || p.model || ''} {p.brand ? `| ${p.brand}` : ''} {p.sell_price ? `| \u20AC${p.sell_price.toFixed(2)}` : ''}</span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          ) : productSearchQuery.length > 0 ? (
+                            <p className="text-[10px] text-slate-400 text-center py-2">Nessun prodotto trovato</p>
+                          ) : (
+                            <p className="text-[10px] text-slate-400 text-center py-2">Digita per cercare nel magazzino</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -6,7 +6,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -52,6 +52,7 @@ const LabelPrinterModal = dynamic(() => import('./components/LabelPrinterModal')
 const UserManagementModal = dynamic(() => import('./components/UserManagementModal'), { ssr: false })
 const ActivityLogModal = dynamic(() => import('./components/ActivityLogModal'), { ssr: false })
 const CsvImportModal = dynamic(() => import('./components/CsvImportModal'), { ssr: false })
+const LoadingListModal = dynamic(() => import('./components/LoadingListModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -139,6 +140,8 @@ export default function Home() {
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(false)
   const [isActivityLogOpen, setIsActivityLogOpen] = useState(false)
   const [isCsvImportOpen, setIsCsvImportOpen] = useState(false)
+  const [isLoadingListOpen, setIsLoadingListOpen] = useState(false)
+  const [productPrefill, setProductPrefill] = useState<any>(null)
 
   // ═══ BADGE "SEEN" TRACKING ═══
   const [seenCalls, setSeenCalls] = useState<number | null>(null)
@@ -330,6 +333,7 @@ export default function Home() {
     { label: 'Evento', icon: Calendar, onClick: () => { setEditingEvent(null); setIsEventModalOpen(true) } },
     { label: 'Visita', icon: UserCheck, onClick: () => { setEditingVisit(null); setIsVisitModalOpen(true) } },
     { label: 'Preventivo', icon: FileText, onClick: () => setIsPreventivoModalOpen(true) },
+    { label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true) },
     { label: 'Transazione', icon: DollarSign, onClick: () => setIsBudgetModalOpen(true) },
   ], [])
 
@@ -1086,6 +1090,7 @@ export default function Home() {
         onClose={() => setIsPreventivoModalOpen(false)}
         clients={clients}
         lavorazioni={lavorazioni}
+        products={products}
       />}
 
       {/* ═══ WAREHOUSE / ORDERS / SUPPLIERS MODALS ═══ */}
@@ -1106,9 +1111,9 @@ export default function Home() {
       />}
       {isProductModalOpen && <ProductModal
         isOpen={isProductModalOpen}
-        onClose={() => { setIsProductModalOpen(false); setEditingProduct(null) }}
+        onClose={() => { setIsProductModalOpen(false); setEditingProduct(null); setProductPrefill(null) }}
         onSave={async (data) => { if (editingProduct) { await updateProduct(editingProduct.id, data) } else { await addProduct(data) } }}
-        editingProduct={editingProduct}
+        editingProduct={editingProduct || productPrefill}
         suppliers={suppliers}
       />}
       {isWarehouseListModalOpen && <WarehouseListModal
@@ -1136,6 +1141,17 @@ export default function Home() {
             if (result) count++
           }
           return count
+        }}
+      />}
+      {isLoadingListOpen && <LoadingListModal
+        isOpen={isLoadingListOpen}
+        onClose={() => setIsLoadingListOpen(false)}
+        products={products}
+        onUpdateStock={async (productId, type, qty, ref, notes) => { await updateStock(productId, type as any, qty, ref, notes) }}
+        onOpenProductModal={(prefill) => {
+          setProductPrefill(prefill)
+          setEditingProduct(null)
+          setIsProductModalOpen(true)
         }}
       />}
       {isOrderModalOpen && <OrderModal
