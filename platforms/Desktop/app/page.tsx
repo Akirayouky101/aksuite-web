@@ -1094,6 +1094,11 @@ export default function Home() {
         clients={clients}
         lavorazioni={lavorazioni}
         products={products}
+        onOpenProductModal={(prefill) => {
+          setProductPrefill(prefill)
+          setEditingProduct(null)
+          setIsProductModalOpen(true)
+        }}
       />}
 
       {/* ═══ WAREHOUSE / ORDERS / SUPPLIERS MODALS ═══ */}

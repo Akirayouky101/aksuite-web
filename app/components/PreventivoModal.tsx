@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, FileText, Plus, Trash2, Printer, Users, Calculator, Search, Package } from 'lucide-react'
+import { X, FileText, Plus, Trash2, Printer, Users, Calculator, Search, Package, AlertCircle } from 'lucide-react'
 import { Client } from '../hooks/useClients'
 import { Lavorazione } from '../hooks/useLavorazioni'
 import { Product } from '../hooks/useWarehouse'
@@ -25,9 +25,10 @@ interface PreventivoModalProps {
   products?: Product[]
   preselectedClientId?: string | null
   preselectedLavorazioneId?: string | null
+  onOpenProductModal?: (prefill: any) => void
 }
 
-export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni, products = [], preselectedClientId, preselectedLavorazioneId }: PreventivoModalProps) {
+export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni, products = [], preselectedClientId, preselectedLavorazioneId, onOpenProductModal }: PreventivoModalProps) {
   const [clientId, setClientId] = useState<string>('')
   const [lavorazioneId, setLavorazioneId] = useState<string>('')
   const [numero, setNumero] = useState('')
@@ -43,6 +44,7 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
   const [productSearchId, setProductSearchId] = useState<string | null>(null)
   const [productSearchQuery, setProductSearchQuery] = useState('')
   const [barcodeInput, setBarcodeInput] = useState('')
+  const [notFoundCode, setNotFoundCode] = useState<string | null>(null)
   const barcodeRef = useRef<HTMLInputElement>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
@@ -59,6 +61,7 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
       setProductSearchId(null)
       setProductSearchQuery('')
       setBarcodeInput('')
+      setNotFoundCode(null)
     }
   }, [isOpen, preselectedClientId, preselectedLavorazioneId])
 
@@ -117,6 +120,8 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
       p.name?.toLowerCase() === q
     )
     if (!product) {
+      // Product not found — show prompt to create
+      setNotFoundCode(code.trim())
       setBarcodeInput('')
       return
     }
@@ -283,7 +288,7 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
             {/* Form */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-4">
               {/* Top row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="min-w-0">
                   <label className="block text-xs font-bold text-slate-500 mb-1 truncate">N. Preventivo</label>
                   <input type="text" value={numero} onChange={(e) => setNumero(e.target.value)}
@@ -362,6 +367,50 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                   </div>
                   <span className="text-[10px] text-indigo-400 font-medium flex-shrink-0 hidden sm:block">Scansione rapida</span>
                 </div>
+              )}
+
+              {/* Product not found prompt */}
+              {notFoundCode && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200/60 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <AlertCircle className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-amber-800">Prodotto non trovato</p>
+                      <p className="text-xs text-amber-600 mt-0.5">
+                        Il codice <span className="font-mono font-bold">{notFoundCode}</span> non corrisponde a nessun prodotto in magazzino.
+                      </p>
+                      <p className="text-xs text-amber-500 mt-1">Vuoi creare un nuovo prodotto con questo codice?</p>
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={() => {
+                            if (onOpenProductModal) {
+                              onOpenProductModal({ sku: notFoundCode, barcode: notFoundCode, name: '' })
+                            }
+                            setNotFoundCode(null)
+                          }}
+                          className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold shadow-sm hover:shadow-md transition-all"
+                        >
+                          {'\u2714'} S{'\u00EC'}, crea prodotto
+                        </button>
+                        <button
+                          onClick={() => {
+                            setNotFoundCode(null)
+                            setTimeout(() => barcodeRef.current?.focus(), 50)
+                          }}
+                          className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold border border-slate-200 transition-all"
+                        >
+                          No, ignora
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
               )}
 
               {/* Line Items */}
