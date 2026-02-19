@@ -73,14 +73,27 @@ export async function POST(request: NextRequest) {
         can_preventivi: false,
       })
 
-      // Aggiungi automaticamente ai team_members per i dropdown (usa adminUserId per RLS)
+      // Aggiungi ai team_members solo se non esiste già un membro con nome simile
       try {
-        await supabaseAdmin.from('team_members').insert({
-          user_id: adminUserId,
-          name: fullName,
-          role: '',
-        })
-      } catch { /* ignora se esiste già */ }
+        const firstName = fullName.split(' ')[0].toUpperCase()
+        const { data: existing } = await supabaseAdmin
+          .from('team_members')
+          .select('id, name')
+          .eq('user_id', adminUserId)
+        
+        const alreadyExists = (existing || []).some((m: any) => 
+          m.name.toUpperCase() === fullName.toUpperCase() || 
+          m.name.toUpperCase() === firstName
+        )
+        
+        if (!alreadyExists) {
+          await supabaseAdmin.from('team_members').insert({
+            user_id: adminUserId,
+            name: fullName,
+            role: '',
+          })
+        }
+      } catch { /* ignora errori */ }
     }
 
     return NextResponse.json({
