@@ -404,56 +404,55 @@ export default function Home() {
         {sidebarOpen && (
           <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
         )}
-        <aside className={`fixed lg:relative w-[260px] h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col z-50 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <aside className={`fixed lg:relative w-[265px] h-screen bg-white border-r border-slate-200/80 flex flex-col z-50 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
           {/* Logo */}
-          <div className="p-5 pb-4">
+          <div className="px-5 py-5 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
                 <Star className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-white font-bold text-lg tracking-tight">AK Suite</h1>
-                <p className="text-slate-500 text-[10px] font-medium">Gestione Premium</p>
+                <h1 className="text-slate-800 font-bold text-lg tracking-tight">AK Suite</h1>
+                <p className="text-slate-400 text-[10px] font-medium">Gestione Premium</p>
               </div>
-              <button onClick={() => setSidebarOpen(false)} title="Chiudi menu" className="lg:hidden w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+              <button onClick={() => setSidebarOpen(false)} title="Chiudi menu" className="lg:hidden w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-2 overflow-y-auto scrollbar-thin">
+          <nav className="flex-1 px-3 py-3 overflow-y-auto">
             {(() => {
               const sections = [
-                { key: 'agenda', label: 'Agenda', color: 'text-blue-400', dotColor: 'bg-blue-400' },
-                { key: 'operativo', label: 'Operativo', color: 'text-emerald-400', dotColor: 'bg-emerald-400' },
-                { key: 'commerciale', label: 'Commerciale', color: 'text-violet-400', dotColor: 'bg-violet-400' },
-                { key: 'strumenti', label: 'Strumenti', color: 'text-slate-500', dotColor: 'bg-slate-500' },
+                { key: 'agenda', label: 'Agenda', borderColor: 'border-l-blue-500', iconBg: 'bg-blue-50', iconColor: 'text-blue-500', labelColor: 'text-blue-500' },
+                { key: 'operativo', label: 'Operativo', borderColor: 'border-l-emerald-500', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500', labelColor: 'text-emerald-500' },
+                { key: 'commerciale', label: 'Commerciale', borderColor: 'border-l-violet-500', iconBg: 'bg-violet-50', iconColor: 'text-violet-500', labelColor: 'text-violet-500' },
+                { key: 'strumenti', label: 'Strumenti', borderColor: 'border-l-slate-400', iconBg: 'bg-slate-50', iconColor: 'text-slate-400', labelColor: 'text-slate-400' },
               ]
               return sections.map((sec, si) => {
                 const sectionItems = navItems.filter((item: any) => item.section === sec.key)
                 if (sectionItems.length === 0) return null
                 return (
-                  <div key={sec.key} className={si > 0 ? 'mt-5' : ''}>
-                    <div className="flex items-center gap-2 px-3 mb-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${sec.dotColor}`} />
-                      <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${sec.color}`}>{sec.label}</p>
-                    </div>
-                    <div className="space-y-0.5">
+                  <div key={sec.key} className={si > 0 ? 'mt-4' : ''}>
+                    <p className={`px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${sec.labelColor}`}>{sec.label}</p>
+                    <div className={`space-y-0.5 border-l-2 ${sec.borderColor} ml-1 pl-0`}>
                       {sectionItems.map((item: any) => (
                         <button
                           key={item.id}
                           onClick={() => { item.onClick(); setSidebarOpen(false) }}
-                          className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all text-slate-400 hover:text-white hover:bg-white/[0.07] active:bg-white/10"
+                          className="w-full group flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-r-xl text-[13px] font-medium transition-all text-slate-600 hover:text-slate-800 hover:bg-slate-50 active:bg-slate-100"
                         >
-                          <item.icon className="w-[17px] h-[17px] text-slate-500 group-hover:text-slate-300 transition-colors" />
+                          <div className={`w-7 h-7 rounded-lg ${sec.iconBg} flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-105`}>
+                            <item.icon className={`w-3.5 h-3.5 ${sec.iconColor}`} />
+                          </div>
                           <span className="flex-1 text-left">{item.label}</span>
                           {item.badge !== undefined && item.badge > 0 ? (
-                            <span className="min-w-[20px] h-[20px] px-1.5 flex items-center justify-center rounded-full bg-indigo-500 text-white text-[10px] font-bold shadow-lg shadow-indigo-500/40 animate-pulse">
+                            <span className="min-w-[20px] h-[20px] px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
                               {item.badge}
                             </span>
                           ) : item.count != null ? (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/[0.06] text-slate-500 font-medium">{item.count}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-400 font-medium">{item.count}</span>
                           ) : null}
                         </button>
                       ))}
@@ -463,51 +462,50 @@ export default function Home() {
               })
             })()}
 
-            {/* Admin: Gestione Utenti */}
+            {/* Admin */}
             {isAdmin && (
-              <>
-                <div className="mt-5">
-                  <div className="flex items-center gap-2 px-3 mb-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-400">Admin</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <button
-                      onClick={() => { setIsUserManagementOpen(true); setSidebarOpen(false) }}
-                      className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all text-amber-400/70 hover:text-amber-300 hover:bg-amber-500/[0.08] active:bg-amber-500/10"
-                    >
-                      <Shield className="w-[17px] h-[17px]" />
-                      <span className="flex-1 text-left">Gestione Utenti</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-500 font-medium">{managedUsers.length || '...'}</span>
-                    </button>
-                    <button
-                      onClick={() => { setIsActivityLogOpen(true); loadActivityLogs(200); setSidebarOpen(false) }}
-                      className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all text-violet-400/70 hover:text-violet-300 hover:bg-violet-500/[0.08] active:bg-violet-500/10"
-                    >
-                      <Clock className="w-[17px] h-[17px]" />
-                      <span className="flex-1 text-left">Cronologia</span>
-                      <ChevronRight className="w-3.5 h-3.5 opacity-30" />
-                    </button>
-                  </div>
+              <div className="mt-4">
+                <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-500">Admin</p>
+                <div className="space-y-0.5 border-l-2 border-l-amber-400 ml-1 pl-0">
+                  <button
+                    onClick={() => { setIsUserManagementOpen(true); setSidebarOpen(false) }}
+                    className="w-full group flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-r-xl text-[13px] font-medium transition-all text-slate-600 hover:text-amber-700 hover:bg-amber-50 active:bg-amber-100"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-3.5 h-3.5 text-amber-500" />
+                    </div>
+                    <span className="flex-1 text-left">Gestione Utenti</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-500 font-medium">{managedUsers.length || '...'}</span>
+                  </button>
+                  <button
+                    onClick={() => { setIsActivityLogOpen(true); loadActivityLogs(200); setSidebarOpen(false) }}
+                    className="w-full group flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-r-xl text-[13px] font-medium transition-all text-slate-600 hover:text-violet-700 hover:bg-violet-50 active:bg-violet-100"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                      <Clock className="w-3.5 h-3.5 text-violet-500" />
+                    </div>
+                    <span className="flex-1 text-left">Cronologia</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                  </button>
                 </div>
-              </>
+              </div>
             )}
           </nav>
 
           {/* User Profile */}
-          <div className="p-3 mx-3 mb-3 rounded-xl bg-white/[0.05] border border-white/[0.06]">
+          <div className="p-3 border-t border-slate-100">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-1 py-1 rounded-lg hover:bg-white/[0.05] transition-all"
+              className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition-all"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-indigo-500/20">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-500/20">
                 {userProfile?.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-slate-200 text-sm font-medium truncate">{userProfile?.full_name || user.email}</p>
-                <p className="text-slate-500 text-[10px] flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Online</p>
+                <p className="text-slate-700 text-sm font-medium truncate">{userProfile?.full_name || user.email}</p>
+                <p className="text-slate-400 text-[10px] flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Online</p>
               </div>
-              <LogOut className="w-4 h-4 text-slate-600 hover:text-slate-400 transition-colors" />
+              <LogOut className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
             </button>
           </div>
         </aside>
