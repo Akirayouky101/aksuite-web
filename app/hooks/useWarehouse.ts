@@ -59,11 +59,30 @@ export function useWarehouse() {
     const fetchProducts = async () => {
       try {
         setLoading(true)
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .order('name', { ascending: true })
-        if (!error && data && mounted) setProducts(data)
+        // Fetch paginato per superare il limite di 1000 righe di Supabase
+        const PAGE_SIZE = 1000
+        let allProducts: Product[] = []
+        let from = 0
+        let hasMore = true
+
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('name', { ascending: true })
+            .range(from, from + PAGE_SIZE - 1)
+
+          if (error) { console.warn('Fetch products error:', error); break }
+          if (data && data.length > 0) {
+            allProducts = [...allProducts, ...data]
+            from += PAGE_SIZE
+            hasMore = data.length === PAGE_SIZE
+          } else {
+            hasMore = false
+          }
+        }
+
+        if (mounted) setProducts(allProducts)
       } catch (e) { console.warn('Products table may not exist yet:', e) }
       if (mounted) setLoading(false)
     }
