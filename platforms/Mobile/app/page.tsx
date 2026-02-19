@@ -309,20 +309,24 @@ export default function Home() {
 
   const navItems = useMemo(() => {
     const allItems = [
-      { id: 'calls', perm: 'can_calls' as const, label: 'Chiamate', icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, count: calls.length, badge: badgeCalls },
-      { id: 'lavorazioni', perm: 'can_lavorazioni' as const, label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni },
-      { id: 'tasks', perm: 'can_tasks' as const, label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks },
-      { id: 'calendar', perm: 'can_calendar' as const, label: 'Calendario', icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, count: events.length, badge: badgeEvents },
-      { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length },
-      { id: 'passwords', perm: 'can_passwords' as const, label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length },
-      { id: 'notes', perm: 'can_notes' as const, label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length },
-      { id: 'clients', perm: 'can_clients' as const, label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length },
-      { id: 'visits', perm: 'can_visits' as const, label: 'Visite', icon: MapPin, onClick: () => setIsVisitsListModalOpen(true), count: visits.length },
-      { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length },
-      { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length },
-      { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length },
-      { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true) },
-      { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventivoModalOpen(true) },
+      // --- Agenda ---
+      { id: 'calendar', perm: 'can_calendar' as const, label: 'Calendario', icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, count: events.length, badge: badgeEvents, section: 'agenda' },
+      { id: 'calls', perm: 'can_calls' as const, label: 'Chiamate', icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, count: calls.length, badge: badgeCalls, section: 'agenda' },
+      { id: 'visits', perm: 'can_visits' as const, label: 'Visite', icon: MapPin, onClick: () => setIsVisitsListModalOpen(true), count: visits.length, section: 'agenda' },
+      // --- Operativo ---
+      { id: 'notes', perm: 'can_notes' as const, label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length, section: 'operativo' },
+      { id: 'tasks', perm: 'can_tasks' as const, label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks, section: 'operativo' },
+      { id: 'clients', perm: 'can_clients' as const, label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length, section: 'operativo' },
+      { id: 'lavorazioni', perm: 'can_lavorazioni' as const, label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni, section: 'operativo' },
+      // --- Magazzino & Commerciale ---
+      { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
+      { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length, section: 'commerciale' },
+      { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
+      { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true), section: 'commerciale' },
+      { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventivoModalOpen(true), section: 'commerciale' },
+      // --- Strumenti ---
+      { id: 'passwords', perm: 'can_passwords' as const, label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length, section: 'strumenti' },
+      { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length, section: 'strumenti' },
     ]
     return allItems.filter(item => hasPermission(item.perm))
   }, [calls.length, lavorazioni.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission])
@@ -418,25 +422,43 @@ export default function Home() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            <p className="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Menu</p>
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => { item.onClick(); setSidebarOpen(false) }}
-                className="w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-xl text-sm font-medium transition-all text-slate-500 hover:text-slate-700 hover:bg-white/50 active:bg-white/70 border border-transparent hover:border-slate-200/40"
-              >
-                <item.icon className="w-[18px] h-[18px]" />
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 ? (
-                  <span className="min-w-[22px] h-[22px] px-1.5 flex items-center justify-center rounded-full bg-indigo-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
-                    {item.badge}
-                  </span>
-                ) : item.count != null ? (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100/60 text-slate-400">{item.count}</span>
-                ) : null}
-              </button>
-            ))}
+          <nav className="flex-1 px-3 py-4 overflow-y-auto">
+            {(() => {
+              const sections = [
+                { key: 'agenda', label: 'Agenda', color: 'text-blue-400' },
+                { key: 'operativo', label: 'Operativo', color: 'text-emerald-400' },
+                { key: 'commerciale', label: 'Commerciale', color: 'text-violet-400' },
+                { key: 'strumenti', label: 'Strumenti', color: 'text-slate-400' },
+              ]
+              return sections.map((sec, si) => {
+                const sectionItems = navItems.filter((item: any) => item.section === sec.key)
+                if (sectionItems.length === 0) return null
+                return (
+                  <div key={sec.key} className={si > 0 ? 'mt-4' : ''}>
+                    <p className={`px-3 pb-2 text-[10px] font-bold uppercase tracking-widest ${sec.color}`}>{sec.label}</p>
+                    <div className="space-y-0.5">
+                      {sectionItems.map((item: any) => (
+                        <button
+                          key={item.id}
+                          onClick={() => { item.onClick(); setSidebarOpen(false) }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-500 hover:text-slate-700 hover:bg-white/60 active:bg-white/80 border border-transparent hover:border-slate-200/40 hover:shadow-sm"
+                        >
+                          <item.icon className="w-[18px] h-[18px]" />
+                          <span className="flex-1 text-left">{item.label}</span>
+                          {item.badge !== undefined && item.badge > 0 ? (
+                            <span className="min-w-[22px] h-[22px] px-1.5 flex items-center justify-center rounded-full bg-indigo-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
+                              {item.badge}
+                            </span>
+                          ) : item.count != null ? (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100/60 text-slate-400 font-medium">{item.count}</span>
+                          ) : null}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })
+            })()}
 
             {/* Admin: Gestione Utenti */}
             {isAdmin && (
