@@ -26,10 +26,24 @@ interface WarehouseListModalProps {
 function extractSubcategory(category: string): string {
   if (!category) return 'Altro'
   const parts = category.split('>').map(s => s.trim()).filter(Boolean)
-  const keywords = ['BULLET', 'EYEBALL', 'DOME', 'PTZ', 'TURRET', 'RECORDER', 'NVR', 'DVR', 'SMOKE', 'MINI CAMERA', 'ENCODER', 'SPEED DOME']
+  const keywords = [
+    'BULLET IBRIDE', 'BULLET OTTICA FISSA', 'BULLET VARI-FOCAL', 'BULLET GRANDANGOL', 'BULLET DOPPIA', 'BULLET',
+    'EYEBALL OTTICA FISSA', 'EYEBALL VARI-FOCAL', 'EYEBALL DOPPIA', 'EYEBALL',
+    'DOME WEDGE', 'DOME OTTICA FISSA', 'DOME',
+    'PTZ IBRIDE', 'PTZ', 'SPEED DOME',
+    'TERMICHE', 'THERMAL', 'TELECAMERA PORTATILE',
+    'SMART LINKAGE', 'PROJECT',
+    'RECORDER', 'NVR', 'DVR', 'XVR', 'HDCVI', 'AHD',
+    'SMOKE', 'MINI CAMERA', 'ENCODER', 'TURRET',
+    'FISHEYE', 'PANORAMIC', 'MULTISENSOR', 'MULTI-SENSOR',
+    'ACCESS', 'SWITCH', 'TRASMETTITORE', 'RICEVITORE',
+    'SERIE PRO', 'SERIE LITE',
+  ]
+  // Cerca keyword piu specifica (piu lunga) prima
   for (const part of parts) {
+    const up = part.toUpperCase()
     for (const kw of keywords) {
-      if (part.toUpperCase().includes(kw)) return part
+      if (up.includes(kw)) return part
     }
   }
   return parts[parts.length - 1] || 'Altro'
@@ -38,22 +52,43 @@ function extractSubcategory(category: string): string {
 // Normalizza sottocategorie simili
 function normalizeSubcategory(sub: string): string {
   const upper = sub.toUpperCase()
+  // Thermal
+  if (upper.includes('SMART LINKAGE')) return 'PTZ Thermal Smart Linkage'
+  if (upper.includes('PTZ') && upper.includes('IBRID')) return 'PTZ Thermal Ibride'
+  if (upper.includes('TELECAMERA PORTATILE')) return 'Telecamera Portatile Thermal'
+  if (upper.includes('BULLET') && upper.includes('IBRID')) return 'Bullet Thermal Ibride'
+  if (upper.includes('TERMICHE') || (upper.includes('THERMAL') && !upper.includes('BULLET') && !upper.includes('PTZ'))) return 'Termiche'
+  // Bullet IP/HDCVI
   if (upper.includes('BULLET') && upper.includes('VARI')) return 'Bullet Vari-Focal'
   if (upper.includes('BULLET') && upper.includes('GRANDANGOL')) return 'Bullet Grandangolare'
   if (upper.includes('BULLET') && upper.includes('DOPPIA')) return 'Bullet Doppia Ottica'
   if (upper.includes('BULLET') && upper.includes('OTTICA FISSA')) return 'Bullet Ottica Fissa'
   if (upper.includes('BULLET')) return 'Bullet'
+  // Eyeball
   if (upper.includes('EYEBALL') && upper.includes('VARI')) return 'Eyeball Vari-Focal'
   if (upper.includes('EYEBALL') && upper.includes('DOPPIA')) return 'Eyeball Doppia Ottica'
   if (upper.includes('EYEBALL') && upper.includes('OTTICA FISSA')) return 'Eyeball Ottica Fissa'
   if (upper.includes('EYEBALL')) return 'Eyeball'
+  // Dome
+  if (upper.includes('DOME') && upper.includes('WEDGE')) return 'Dome Wedge'
+  if (upper.includes('DOME') && upper.includes('OTTICA FISSA')) return 'Dome Ottica Fissa'
   if (upper.includes('DOME') || upper.includes('HDBW')) return 'Dome'
+  // PTZ
   if (upper.includes('PTZ') || upper.includes('SPEED DOME')) return 'PTZ / Speed Dome'
+  // Recorder
+  if (upper.includes('XVR') || upper.includes('HDCVI') || upper.includes('AHD')) return 'XVR / Videoregistratore'
   if (upper.includes('RECORDER') || upper.includes('NVR')) return 'NVR / Recorder'
   if (upper.includes('DVR')) return 'DVR'
+  // Altro
+  if (upper.includes('FISHEYE') || upper.includes('PANORAMIC')) return 'Fisheye / Panoramica'
+  if (upper.includes('MULTISENSOR') || upper.includes('MULTI-SENSOR')) return 'Multi-Sensor'
   if (upper.includes('SMOKE')) return 'Smoke Detector'
   if (upper.includes('MINI CAMERA')) return 'Mini Camera'
   if (upper.includes('ENCODER')) return 'Encoder'
+  if (upper.includes('SWITCH')) return 'Switch di Rete'
+  if (upper.includes('ACCESS')) return 'Controllo Accessi'
+  if (upper.includes('SERIE PRO')) return 'Serie Pro'
+  if (upper.includes('SERIE LITE')) return 'Serie Lite'
   return sub
 }
 
@@ -284,17 +319,31 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
     'Bullet Grandangolare': '\uD83D\uDCF7',
     'Bullet Doppia Ottica': '\uD83D\uDCF7',
     'Bullet': '\uD83D\uDCF7',
+    'Bullet Thermal Ibride': '\uD83D\uDD25',
     'Eyeball Ottica Fissa': '\uD83D\uDC41',
     'Eyeball Vari-Focal': '\uD83D\uDC41',
     'Eyeball Doppia Ottica': '\uD83D\uDC41',
     'Eyeball': '\uD83D\uDC41',
     'Dome': '\u26AB',
+    'Dome Wedge': '\u26AB',
+    'Dome Ottica Fissa': '\u26AB',
     'PTZ / Speed Dome': '\uD83C\uDFAF',
+    'PTZ Thermal Ibride': '\uD83C\uDFAF',
+    'PTZ Thermal Smart Linkage': '\uD83E\uDD16',
     'NVR / Recorder': '\uD83D\uDCBE',
+    'XVR / Videoregistratore': '\uD83D\uDCFC',
     'DVR': '\uD83D\uDCBE',
+    'Termiche': '\uD83C\uDF21',
+    'Telecamera Portatile Thermal': '\uD83D\uDD0B',
+    'Fisheye / Panoramica': '\uD83D\uDC1F',
+    'Multi-Sensor': '\uD83D\uDCE1',
     'Smoke Detector': '\uD83D\uDEA8',
     'Mini Camera': '\uD83D\uDD0D',
     'Encoder': '\u2699\uFE0F',
+    'Switch di Rete': '\uD83D\uDD0C',
+    'Controllo Accessi': '\uD83D\uDD10',
+    'Serie Pro': '\u2B50',
+    'Serie Lite': '\uD83D\uDCE6',
   }
 
   return (
