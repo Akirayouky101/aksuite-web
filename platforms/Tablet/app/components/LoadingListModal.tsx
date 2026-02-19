@@ -532,7 +532,7 @@ export default function LoadingListModal({ isOpen, onClose, products, onUpdateSt
                         <PackageCheck className="w-5 h-5 text-emerald-600" />
                         <div className="flex-1">
                           <p className="text-sm font-bold text-slate-700">{existingItems.length} prodotti esistenti</p>
-                          <p className="text-xs text-slate-400">Quantit\u00e0 aggiornata: +{totalExistingQty} pezzi</p>
+                          <p className="text-xs text-slate-400">Quantit{'\u00E0'} aggiornata: +{totalExistingQty} pezzi</p>
                         </div>
                         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                       </div>
@@ -556,7 +556,7 @@ export default function LoadingListModal({ isOpen, onClose, products, onUpdateSt
                         <>
                           <button onClick={() => handleConfirmLoad(true)}
                             className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all flex items-center justify-center gap-2">
-                            <Check className="w-4 h-4" /> S\u00ec, crea e carica tutto
+                            <Check className="w-4 h-4" /> S{'\u00EC'}, crea e carica tutto
                           </button>
                           <button onClick={() => handleConfirmLoad(false)}
                             className="w-full py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold hover:bg-emerald-100 transition-all flex items-center justify-center gap-2">
