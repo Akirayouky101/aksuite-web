@@ -129,7 +129,15 @@ export function useWarehouse() {
     const product = products.find(p => p.id === productId)
     if (!product) return
 
-    const prevQty = product.quantity
+    // Leggi la quantita' attuale DIRETTAMENTE dal DB (non dallo state React)
+    // per evitare race condition quando si caricano piu' prodotti in sequenza
+    const { data: freshProduct } = await supabase
+      .from('products')
+      .select('quantity, name')
+      .eq('id', productId)
+      .single()
+
+    const prevQty = freshProduct?.quantity ?? product.quantity
     let newQty = prevQty
     if (movementType === 'carico' || movementType === 'reso') newQty = prevQty + qty
     else if (movementType === 'scarico') newQty = Math.max(0, prevQty - qty)

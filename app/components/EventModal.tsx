@@ -175,8 +175,9 @@ export default function EventModal({
               </div>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            {/* Content (scrollable area with form + relations) */}
+            <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-slate-500 mb-2">
@@ -334,30 +335,31 @@ export default function EventModal({
                   ))}
                 </select>
               </div>
-            </form>
+              </form>
 
-            {/* Collegamenti Multi-Entità */}
-            {editEvent?.id && (
-              <div className="p-6 border-t border-slate-200 space-y-3">
-                <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                  🔗 Collegamenti
-                </h4>
-                <RelationsIntegration
-                  entityType="event"
-                  entityId={editEvent.id}
-                  entityTitle={formData.title}
-                  availableItems={availableItems || {}}
-                  onAddRelation={(targetType, targetId, relationType, notes) => {
-                    if (onAddRelation && editEvent?.id) {
-                      onAddRelation('event', editEvent.id, targetType, targetId, relationType, notes)
-                    }
-                  }}
-                  onRemoveRelation={onRemoveRelation || (async () => {})}
-                  getRelatedItems={getRelatedItems || (async () => [])}
-                  onNavigateToItem={onNavigateToItem}
-                />
-              </div>
-            )}
+              {/* Collegamenti Multi-Entità */}
+              {editEvent?.id && (
+                <div className="p-6 border-t border-slate-200 space-y-3">
+                  <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    🔗 Collegamenti
+                  </h4>
+                  <RelationsIntegration
+                    entityType="event"
+                    entityId={editEvent.id}
+                    entityTitle={formData.title}
+                    availableItems={availableItems || {}}
+                    onAddRelation={(targetType, targetId, relationType, notes) => {
+                      if (onAddRelation && editEvent?.id) {
+                        onAddRelation('event', editEvent.id, targetType, targetId, relationType, notes)
+                      }
+                    }}
+                    onRemoveRelation={onRemoveRelation || (async () => {})}
+                    getRelatedItems={getRelatedItems || (async () => [])}
+                    onNavigateToItem={onNavigateToItem}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-200/60 bg-white/40 flex-shrink-0">
