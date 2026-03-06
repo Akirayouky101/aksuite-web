@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ClipboardList, Save, CheckCircle } from 'lucide-react'
+import { X, ClipboardList, Save, CheckCircle, Search } from 'lucide-react'
 import type { Sopralluogo } from '../hooks/useSopralluoghi'
 import type { Client } from '../hooks/useClients'
 import type { Lavorazione } from '../hooks/useLavorazioni'
@@ -34,6 +34,9 @@ export default function SopralluogoModal({
   const [risultato, setRisultato] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [clientSearch, setClientSearch] = useState('')
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
+  const clientRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isOpen) return
@@ -61,6 +64,8 @@ export default function SopralluogoModal({
       setRisultato('')
     }
     setSaveSuccess(false)
+    setClientSearch('')
+    setClientDropdownOpen(false)
   }, [isOpen, editSopralluogo, preselectedClientId, preselectedLavorazioneId])
 
   // Auto-fill indirizzo dal cliente
@@ -73,6 +78,17 @@ export default function SopralluogoModal({
       }
     }
   }, [clientId])
+
+  // Chiudi dropdown cliente cliccando fuori
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (clientRef.current && !clientRef.current.contains(e.target as Node)) {
+        setClientDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const handleSave = async () => {
     if (!titolo.trim()) return
@@ -167,19 +183,59 @@ export default function SopralluogoModal({
 
               {/* Cliente + Lavorazione */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
+                <div ref={clientRef} className="relative">
                   <label className="block text-xs font-bold text-slate-500 mb-1">Cliente</label>
-                  <select
-                    value={clientId}
-                    onChange={e => setClientId(e.target.value)}
-                    title="Seleziona cliente"
-                    className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-sky-400 focus:outline-none text-sm"
+                  {/* Selected display / search trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setClientDropdownOpen(o => !o)}
+                    className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-sky-400 focus:outline-none text-sm text-left flex items-center justify-between"
                   >
-                    <option value="">-- Nessuno --</option>
-                    {clients.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ''}</option>
-                    ))}
-                  </select>
+                    <span className={clientId ? 'text-slate-800' : 'text-slate-400'}>
+                      {clientId
+                        ? (() => { const c = clients.find(x => x.id === clientId); return c ? `${c.name}${c.company ? ` (${c.company})` : ''}` : '-- Nessuno --' })()
+                        : '-- Nessuno --'}
+                    </span>
+                    <Search className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                  </button>
+                  {clientDropdownOpen && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+                      <div className="p-2 border-b border-slate-100">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={clientSearch}
+                          onChange={e => setClientSearch(e.target.value)}
+                          placeholder="Cerca cliente..."
+                          className="w-full px-3 py-1.5 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-sky-400 focus:outline-none text-sm"
+                        />
+                      </div>
+                      <div className="overflow-y-auto max-h-48">
+                        <button
+                          type="button"
+                          onClick={() => { setClientId(''); setClientDropdownOpen(false); setClientSearch('') }}
+                          className="w-full px-3 py-2 text-left text-sm text-slate-400 hover:bg-slate-50"
+                        >
+                          -- Nessuno --
+                        </button>
+                        {clients
+                          .filter(c => {
+                            const q = clientSearch.toLowerCase()
+                            return !q || c.name?.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q)
+                          })
+                          .map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => { setClientId(c.id); setClientDropdownOpen(false); setClientSearch('') }}
+                              className={`w-full px-3 py-2 text-left text-sm hover:bg-sky-50 transition-colors ${clientId === c.id ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-slate-700'}`}
+                            >
+                              {c.name}{c.company ? <span className="text-slate-400 ml-1">({c.company})</span> : null}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 mb-1">Lavorazione (opz.)</label>
