@@ -1178,6 +1178,26 @@ export default function Home() {
         onEdit={(p) => { setEditingPreventivo(p); setIsPreventiviListModalOpen(false); setIsPreventivoModalOpen(true) }}
         onDelete={deletePreventivo}
         onUpdateStato={updatePreventivoStato}
+        onTransforma={async (p) => {
+          const itemsText = p.items?.filter(i => i.description).map(i => `- ${i.description} (${i.quantity} ${i.unit})`).join('\n') || ''
+          await addLavorazione({
+            call_id: null,
+            client_id: p.client_id || null,
+            title: p.oggetto || p.numero,
+            description: `Preventivo ${p.numero}${itemsText ? `\n${itemsText}` : ''}`,
+            assigned_to: '',
+            scheduled_date: null,
+            scheduled_time: null,
+            status: 'da_fare',
+            priority: 'normale',
+            address: '',
+            city: '',
+            zip_code: '',
+            province: '',
+            notes: `Da preventivo ${p.numero} - Totale €${p.totale.toFixed(2)}${p.note ? `\n${p.note}` : ''}`,
+            completed_at: null,
+          })
+        }}
       />}
 
       {isPreventivoModalOpen && <PreventivoModal

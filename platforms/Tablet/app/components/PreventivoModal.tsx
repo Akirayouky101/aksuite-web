@@ -34,7 +34,6 @@ interface PreventivoModalProps {
 
 export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni, products = [], preselectedClientId, preselectedLavorazioneId, onOpenProductModal, onSave, onUpdate, editPreventivo }: PreventivoModalProps) {
   const [clientId, setClientId] = useState<string>('')
-  const [lavorazioneId, setLavorazioneId] = useState<string>('')
   const [numero, setNumero] = useState('')
   const [dataPreventivo, setDataPreventivo] = useState(new Date().toISOString().split('T')[0])
   const [validita, setValidita] = useState('30')
@@ -60,7 +59,6 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
       if (editPreventivo) {
         // Modalità modifica: carica dati esistenti
         setClientId(editPreventivo.client_id || '')
-        setLavorazioneId(editPreventivo.lavorazione_id || '')
         setNumero(editPreventivo.numero)
         setDataPreventivo(editPreventivo.data_preventivo)
         setValidita(String(editPreventivo.validita))
@@ -73,7 +71,6 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
       } else {
         // Modalità nuovo
         setClientId(preselectedClientId || '')
-        setLavorazioneId(preselectedLavorazioneId || '')
         setNumero(`PRV-${Date.now().toString().slice(-6)}`)
         setDataPreventivo(new Date().toISOString().split('T')[0])
         setValidita('30')
@@ -89,7 +86,7 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
       setNotFoundCode(null)
       setSaveSuccess(false)
     }
-  }, [isOpen, preselectedClientId, preselectedLavorazioneId, editPreventivo])
+  }, [isOpen, preselectedClientId, editPreventivo])
 
   // Filtered products for search
   const filteredProducts = useMemo(() => {
@@ -196,21 +193,11 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
     setTimeout(() => barcodeRef.current?.focus(), 50)
   }
 
-  // Auto-fill from lavorazione
-  useEffect(() => {
-    if (lavorazioneId) {
-      const lav = lavorazioni.find(l => l.id === lavorazioneId)
-      if (lav) {
-        if (!oggetto) setOggetto(lav.title)
-        if (lav.client_id && !clientId) setClientId(lav.client_id)
-      }
-    }
-  }, [lavorazioneId])
+  // Auto-fill from lavorazione removed
 
   if (!isOpen) return null
 
   const selectedClient = clients.find(c => c.id === clientId) || null
-  const selectedLav = lavorazioni.find(l => l.id === lavorazioneId) || null
 
   const addItem = () => {
     setItems([...items, { id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }])
@@ -236,7 +223,7 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
     const payload = {
       numero,
       client_id: clientId || null,
-      lavorazione_id: lavorazioneId || null,
+      lavorazione_id: null,
       oggetto: oggetto || null,
       items: items as PreventivoLineItem[],
       subtotal,
@@ -379,28 +366,16 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                 </div>
               </div>
 
-              {/* Client + Lavorazione */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Cliente</label>
-                  <select value={clientId} onChange={(e) => setClientId(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm">
-                    <option value="">-- Seleziona cliente --</option>
-                    {clients.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ''}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Lavorazione (opzionale)</label>
-                  <select value={lavorazioneId} onChange={(e) => setLavorazioneId(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm">
-                    <option value="">-- Nessuna --</option>
-                    {lavorazioni.filter(l => l.status !== 'annullata').map(l => (
-                      <option key={l.id} value={l.id}>{l.title}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* Cliente */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Cliente</label>
+                <select value={clientId} onChange={(e) => setClientId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-emerald-400 focus:outline-none text-sm">
+                  <option value="">-- Seleziona cliente --</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ''}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Oggetto */}
@@ -636,13 +611,6 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                       <div className="party-detail">Non specificato</div>
                     )}
                   </div>
-                  {selectedLav && (
-                    <div className="party">
-                      <div className="party-label">Rif. Lavorazione</div>
-                      <div className="party-name">{selectedLav.title}</div>
-                      {selectedLav.address && <div className="party-detail">{selectedLav.address}{selectedLav.city ? `, ${selectedLav.city}` : ''}</div>}
-                    </div>
-                  )}
                 </div>
                 {oggetto && (
                   <div className="oggetto">

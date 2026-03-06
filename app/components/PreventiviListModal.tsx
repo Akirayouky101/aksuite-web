@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, FileText, Search, Plus, Pencil, Trash2, Send, CheckCircle, XCircle, Clock, AlertCircle, ChevronDown, ChevronUp, Printer, Euro } from 'lucide-react'
+import { X, FileText, Search, Plus, Pencil, Trash2, Send, CheckCircle, XCircle, Clock, AlertCircle, ChevronDown, ChevronUp, Printer, Euro, Wrench } from 'lucide-react'
 import { Preventivo } from '../hooks/usePreventivi'
 import { Client } from '../hooks/useClients'
 
@@ -15,6 +15,7 @@ interface PreventiviListModalProps {
   onEdit: (preventivo: Preventivo) => void
   onDelete: (id: string) => void
   onUpdateStato: (id: string, stato: Preventivo['stato']) => void
+  onTransforma?: (preventivo: Preventivo) => Promise<void>
 }
 
 const statoColors: Record<string, string> = {
@@ -42,12 +43,13 @@ const statoIcons: Record<string, JSX.Element> = {
 }
 
 export default function PreventiviListModal({
-  isOpen, onClose, preventivi, clients, onAdd, onEdit, onDelete, onUpdateStato
+  isOpen, onClose, preventivi, clients, onAdd, onEdit, onDelete, onUpdateStato, onTransforma
 }: PreventiviListModalProps) {
   const [search, setSearch] = useState('')
   const [filterStato, setFilterStato] = useState('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [transformandoId, setTransformandoId] = useState<string | null>(null)
 
   if (!isOpen) return null
 
@@ -283,6 +285,21 @@ export default function PreventiviListModal({
                               >
                                 <Pencil className="w-3.5 h-3.5" /> Modifica
                               </button>
+
+                              {p.stato === 'accettato' && onTransforma && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    setTransformandoId(p.id)
+                                    try { await onTransforma(p) } finally { setTransformandoId(null) }
+                                  }}
+                                  disabled={transformandoId === p.id}
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition-all disabled:opacity-60"
+                                >
+                                  <Wrench className="w-3.5 h-3.5" />
+                                  {transformandoId === p.id ? '...' : 'Trasforma'}
+                                </button>
+                              )}
 
                               {deleteConfirmId === p.id ? (
                                 <div className="flex items-center gap-1">
