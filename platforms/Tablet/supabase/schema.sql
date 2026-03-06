@@ -433,3 +433,38 @@ CREATE INDEX IF NOT EXISTS preventivi_user_id_idx ON public.preventivi(user_id);
 CREATE INDEX IF NOT EXISTS preventivi_client_id_idx ON public.preventivi(client_id);
 CREATE INDEX IF NOT EXISTS preventivi_stato_idx ON public.preventivi(stato);
 CREATE INDEX IF NOT EXISTS preventivi_created_at_idx ON public.preventivi(created_at DESC);
+
+-- ═══════════════════════════════════════════════════════════
+-- SOPRALLUOGHI TABLE
+-- ═══════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.sopralluoghi (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  lavorazione_id UUID REFERENCES public.lavorazioni(id) ON DELETE SET NULL,
+  titolo TEXT NOT NULL,
+  indirizzo TEXT NOT NULL DEFAULT '',
+  citta TEXT NOT NULL DEFAULT '',
+  data_prevista DATE,
+  ora_prevista TIME,
+  stato TEXT NOT NULL DEFAULT 'da_fare' CHECK (stato IN ('da_fare', 'in_corso', 'completato', 'annullato')),
+  note TEXT NOT NULL DEFAULT '',
+  risultato TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.sopralluoghi ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own sopralluoghi" ON public.sopralluoghi FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own sopralluoghi" ON public.sopralluoghi FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own sopralluoghi" ON public.sopralluoghi FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own sopralluoghi" ON public.sopralluoghi FOR DELETE USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS sopralluoghi_user_id_idx ON public.sopralluoghi(user_id);
+CREATE INDEX IF NOT EXISTS sopralluoghi_client_id_idx ON public.sopralluoghi(client_id);
+CREATE INDEX IF NOT EXISTS sopralluoghi_stato_idx ON public.sopralluoghi(stato);
+CREATE INDEX IF NOT EXISTS sopralluoghi_data_prevista_idx ON public.sopralluoghi(data_prevista);
+
+-- Aggiungi can_sopralluoghi alla tabella user_permissions (se esiste già la tabella)
+ALTER TABLE IF EXISTS public.user_permissions ADD COLUMN IF NOT EXISTS can_sopralluoghi BOOLEAN NOT NULL DEFAULT false;

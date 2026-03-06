@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
         can_orders: false,
         can_warehouse: false,
         can_preventivi: false,
+        can_sopralluoghi: false,
       })
 
       // Aggiungi ai team_members solo se non esiste già un membro con nome simile

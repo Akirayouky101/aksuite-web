@@ -54,6 +54,8 @@ const UserManagementModal = dynamic(() => import('./components/UserManagementMod
 const ActivityLogModal = dynamic(() => import('./components/ActivityLogModal'), { ssr: false })
 const CsvImportModal = dynamic(() => import('./components/CsvImportModal'), { ssr: false })
 const LoadingListModal = dynamic(() => import('./components/LoadingListModal'), { ssr: false })
+const SopralluoghiListModal = dynamic(() => import('./components/SopralluoghiListModal'), { ssr: false })
+const SopralluogoModal = dynamic(() => import('./components/SopralluogoModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -77,6 +79,7 @@ import { useSuppliers } from './hooks/useSuppliers'
 import { useWarehouse } from './hooks/useWarehouse'
 import { useOrders } from './hooks/useOrders'
 import { usePreventivi } from './hooks/usePreventivi'
+import { useSopralluoghi } from './hooks/useSopralluoghi'
 import { useUserManagement } from './hooks/useUserManagement'
 import { useActivityLog } from './hooks/useActivityLog'
 import { supabase } from '@/lib/supabase'
@@ -122,6 +125,9 @@ export default function Home() {
   const [isPreventivoModalOpen, setIsPreventivoModalOpen] = useState(false)
   const [isPreventiviListModalOpen, setIsPreventiviListModalOpen] = useState(false)
   const [editingPreventivo, setEditingPreventivo] = useState<any>(null)
+  const [isSopralluoghiListModalOpen, setIsSopralluoghiListModalOpen] = useState(false)
+  const [isSopralluogoModalOpen, setIsSopralluogoModalOpen] = useState(false)
+  const [editingSopralluogo, setEditingSopralluogo] = useState<any>(null)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -182,6 +188,7 @@ export default function Home() {
   const { products, addProduct, updateProduct, deleteProduct, updateStock, loadMovements, findByBarcode } = useWarehouse()
   const { orders, addOrder, updateOrder, deleteOrder, addOrderItem, deleteOrderItem, getOrderItems, receiveOrder } = useOrders()
   const { preventivi, addPreventivo, updatePreventivo, deletePreventivo, updateStato: updatePreventivoStato } = usePreventivi()
+  const { sopralluoghi, addSopralluogo, updateSopralluogo, deleteSopralluogo, updateStato: updateSopralluogoStato } = useSopralluoghi()
   const { users: managedUsers, isAdmin, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
 
@@ -324,6 +331,7 @@ export default function Home() {
       { id: 'tasks', perm: 'can_tasks' as const, label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks, section: 'operativo' },
       { id: 'clients', perm: 'can_clients' as const, label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length, section: 'operativo' },
       { id: 'lavorazioni', perm: 'can_lavorazioni' as const, label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni, section: 'operativo' },
+      { id: 'sopralluoghi', perm: 'can_sopralluoghi' as const, label: 'Sopralluoghi', icon: MapPin, onClick: () => setIsSopralluoghiListModalOpen(true), count: sopralluoghi.length, section: 'operativo' },
       // --- Magazzino & Commerciale ---
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length, section: 'commerciale' },
@@ -335,7 +343,7 @@ export default function Home() {
       { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length, section: 'strumenti' },
     ]
     return allItems.filter(item => hasPermission(item.perm))
-  }, [calls.length, lavorazioni.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission])
+  }, [calls.length, lavorazioni.length, sopralluoghi.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission])
 
   const quickActions = useMemo(() => [
     { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true) },
@@ -1333,6 +1341,28 @@ export default function Home() {
       />}
 
       {/* ═══ USER MANAGEMENT (Admin Only) ═══ */}
+      {isSopralluoghiListModalOpen && <SopralluoghiListModal
+        isOpen={isSopralluoghiListModalOpen}
+        onClose={() => setIsSopralluoghiListModalOpen(false)}
+        sopralluoghi={sopralluoghi}
+        clients={clients}
+        lavorazioni={lavorazioni}
+        onAdd={() => { setEditingSopralluogo(null); setIsSopralluogoModalOpen(true) }}
+        onEdit={(s) => { setEditingSopralluogo(s); setIsSopralluoghiListModalOpen(false); setIsSopralluogoModalOpen(true) }}
+        onDelete={deleteSopralluogo}
+        onUpdateStato={updateSopralluogoStato}
+      />}
+
+      {isSopralluogoModalOpen && <SopralluogoModal
+        isOpen={isSopralluogoModalOpen}
+        onClose={() => { setIsSopralluogoModalOpen(false); if (editingSopralluogo) setIsSopralluoghiListModalOpen(true) }}
+        clients={clients}
+        lavorazioni={lavorazioni}
+        editSopralluogo={editingSopralluogo}
+        onSave={addSopralluogo}
+        onUpdate={updateSopralluogo}
+      />}
+
       {isUserManagementOpen && <UserManagementModal
         isOpen={isUserManagementOpen}
         onClose={() => setIsUserManagementOpen(false)}
