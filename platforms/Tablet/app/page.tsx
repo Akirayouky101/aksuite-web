@@ -40,6 +40,7 @@ const ClientModal = dynamic(() => import('./components/ClientModal'), { ssr: fal
 const ClientsListModal = dynamic(() => import('./components/ClientsListModal'), { ssr: false })
 const ClientDetailModal = dynamic(() => import('./components/ClientDetailModal'), { ssr: false })
 const PreventivoModal = dynamic(() => import('./components/PreventivoModal'), { ssr: false })
+const PreventiviListModal = dynamic(() => import('./components/PreventiviListModal'), { ssr: false })
 const SearchModal = dynamic(() => import('./components/SearchModal'), { ssr: false })
 const AuthModal = dynamic(() => import('./components/AuthModal'), { ssr: false })
 const SupplierModal = dynamic(() => import('./components/SupplierModal'), { ssr: false })
@@ -75,6 +76,7 @@ import { useClients } from './hooks/useClients'
 import { useSuppliers } from './hooks/useSuppliers'
 import { useWarehouse } from './hooks/useWarehouse'
 import { useOrders } from './hooks/useOrders'
+import { usePreventivi } from './hooks/usePreventivi'
 import { useUserManagement } from './hooks/useUserManagement'
 import { useActivityLog } from './hooks/useActivityLog'
 import { supabase } from '@/lib/supabase'
@@ -118,6 +120,8 @@ export default function Home() {
   const [isClientDetailOpen, setIsClientDetailOpen] = useState(false)
   const [detailClient, setDetailClient] = useState<any>(null)
   const [isPreventivoModalOpen, setIsPreventivoModalOpen] = useState(false)
+  const [isPreventiviListModalOpen, setIsPreventiviListModalOpen] = useState(false)
+  const [editingPreventivo, setEditingPreventivo] = useState<any>(null)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -177,6 +181,7 @@ export default function Home() {
   const { suppliers, addSupplier, updateSupplier, deleteSupplier, toggleFavorite: toggleSupplierFavorite } = useSuppliers()
   const { products, addProduct, updateProduct, deleteProduct, updateStock, loadMovements, findByBarcode } = useWarehouse()
   const { orders, addOrder, updateOrder, deleteOrder, addOrderItem, deleteOrderItem, getOrderItems, receiveOrder } = useOrders()
+  const { preventivi, addPreventivo, updatePreventivo, deletePreventivo, updateStato: updatePreventivoStato } = usePreventivi()
   const { users: managedUsers, isAdmin, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
 
@@ -324,7 +329,7 @@ export default function Home() {
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length, section: 'commerciale' },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
       { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true), section: 'commerciale' },
-      { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventivoModalOpen(true), section: 'commerciale' },
+      { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventiviListModalOpen(true), count: preventivi.length, section: 'commerciale' },
       // --- Strumenti ---
       { id: 'passwords', perm: 'can_passwords' as const, label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length, section: 'strumenti' },
       { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length, section: 'strumenti' },
@@ -339,7 +344,7 @@ export default function Home() {
     { label: 'Nota', icon: StickyNote, onClick: () => { setEditingNote(null); setIsNoteModalOpen(true) } },
     { label: 'Evento', icon: Calendar, onClick: () => { setEditingEvent(null); setIsEventModalOpen(true) } },
     { label: 'Visita', icon: UserCheck, onClick: () => { setEditingVisit(null); setIsVisitModalOpen(true) } },
-    { label: 'Preventivo', icon: FileText, onClick: () => setIsPreventivoModalOpen(true) },
+    { label: 'Preventivo', icon: FileText, onClick: () => { setEditingPreventivo(null); setIsPreventivoModalOpen(true) } },
     { label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true) },
     { label: 'Transazione', icon: DollarSign, onClick: () => setIsBudgetModalOpen(true) },
   ], [])
@@ -1164,12 +1169,26 @@ export default function Home() {
       {isAuthModalOpen && <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => setIsAuthModalOpen(false)} />}
 
+      {isPreventiviListModalOpen && <PreventiviListModal
+        isOpen={isPreventiviListModalOpen}
+        onClose={() => setIsPreventiviListModalOpen(false)}
+        preventivi={preventivi}
+        clients={clients}
+        onAdd={() => { setEditingPreventivo(null); setIsPreventiviListModalOpen(false); setIsPreventivoModalOpen(true) }}
+        onEdit={(p) => { setEditingPreventivo(p); setIsPreventiviListModalOpen(false); setIsPreventivoModalOpen(true) }}
+        onDelete={deletePreventivo}
+        onUpdateStato={updatePreventivoStato}
+      />}
+
       {isPreventivoModalOpen && <PreventivoModal
         isOpen={isPreventivoModalOpen}
-        onClose={() => setIsPreventivoModalOpen(false)}
+        onClose={() => { setIsPreventivoModalOpen(false); if (editingPreventivo) setIsPreventiviListModalOpen(true) }}
         clients={clients}
         lavorazioni={lavorazioni}
         products={products}
+        editPreventivo={editingPreventivo}
+        onSave={async (data) => { const r = await addPreventivo(data); return r }}
+        onUpdate={async (id, data) => { await updatePreventivo(id, data) }}
         onOpenProductModal={(prefill) => {
           setProductPrefill(prefill)
           setEditingProduct(null)

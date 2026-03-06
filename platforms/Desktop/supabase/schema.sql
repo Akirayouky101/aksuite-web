@@ -397,3 +397,39 @@ CREATE INDEX IF NOT EXISTS calls_priority_idx ON public.calls(priority);
 CREATE INDEX IF NOT EXISTS calls_call_date_idx ON public.calls(call_date DESC);
 CREATE INDEX IF NOT EXISTS calls_follow_up_date_idx ON public.calls(follow_up_date) WHERE follow_up = true;
 
+-- ═══════════════════════════════════════════
+-- PREVENTIVI
+-- ═══════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.preventivi (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  numero TEXT NOT NULL,
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  lavorazione_id UUID REFERENCES public.lavorazioni(id) ON DELETE SET NULL,
+  oggetto TEXT,
+  items JSONB NOT NULL DEFAULT '[]',
+  subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
+  sconto DECIMAL(5,2) NOT NULL DEFAULT 0,
+  imponibile DECIMAL(12,2) NOT NULL DEFAULT 0,
+  iva_percent DECIMAL(5,2) NOT NULL DEFAULT 22,
+  iva_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+  totale DECIMAL(12,2) NOT NULL DEFAULT 0,
+  stato TEXT NOT NULL DEFAULT 'bozza' CHECK (stato IN ('bozza','inviato','accettato','rifiutato','scaduto')),
+  note TEXT,
+  data_preventivo DATE NOT NULL DEFAULT CURRENT_DATE,
+  validita INTEGER NOT NULL DEFAULT 30,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.preventivi ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own preventivi" ON public.preventivi FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own preventivi" ON public.preventivi FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own preventivi" ON public.preventivi FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own preventivi" ON public.preventivi FOR DELETE USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS preventivi_user_id_idx ON public.preventivi(user_id);
+CREATE INDEX IF NOT EXISTS preventivi_client_id_idx ON public.preventivi(client_id);
+CREATE INDEX IF NOT EXISTS preventivi_stato_idx ON public.preventivi(stato);
+CREATE INDEX IF NOT EXISTS preventivi_created_at_idx ON public.preventivi(created_at DESC);

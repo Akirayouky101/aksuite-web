@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, FileText, Plus, Trash2, Printer, Users, Calculator, Search, Package, AlertCircle } from 'lucide-react'
+import { X, FileText, Plus, Trash2, Printer, Users, Calculator, Search, Package, AlertCircle, Save } from 'lucide-react'
 import { Client } from '../hooks/useClients'
 import { Lavorazione } from '../hooks/useLavorazioni'
 import { Product } from '../hooks/useWarehouse'
+import { Preventivo, PreventivoLineItem } from '../hooks/usePreventivi'
 
 interface LineItem {
   id: string
@@ -26,9 +27,12 @@ interface PreventivoModalProps {
   preselectedClientId?: string | null
   preselectedLavorazioneId?: string | null
   onOpenProductModal?: (prefill: any) => void
+  onSave?: (data: Omit<Preventivo, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<Preventivo | null>
+  onUpdate?: (id: string, data: Partial<Preventivo>) => Promise<void>
+  editPreventivo?: Preventivo | null
 }
 
-export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni, products = [], preselectedClientId, preselectedLavorazioneId, onOpenProductModal }: PreventivoModalProps) {
+export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni, products = [], preselectedClientId, preselectedLavorazioneId, onOpenProductModal, onSave, onUpdate, editPreventivo }: PreventivoModalProps) {
   const [clientId, setClientId] = useState<string>('')
   const [lavorazioneId, setLavorazioneId] = useState<string>('')
   const [numero, setNumero] = useState('')
@@ -38,9 +42,12 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
   const [note, setNote] = useState('')
   const [ivaPercent, setIvaPercent] = useState(22)
   const [sconto, setSconto] = useState(0)
+  const [stato, setStato] = useState<Preventivo['stato']>('bozza')
   const [items, setItems] = useState<LineItem[]>([
     { id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }
   ])
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [productSearchId, setProductSearchId] = useState<string | null>(null)
   const [productSearchQuery, setProductSearchQuery] = useState('')
   const [barcodeInput, setBarcodeInput] = useState('')
@@ -50,20 +57,39 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
 
   useEffect(() => {
     if (isOpen) {
-      setClientId(preselectedClientId || '')
-      setLavorazioneId(preselectedLavorazioneId || '')
-      setNumero(`PRV-${Date.now().toString().slice(-6)}`)
-      setDataPreventivo(new Date().toISOString().split('T')[0])
-      setOggetto('')
-      setNote('')
-      setSconto(0)
-      setItems([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }])
+      if (editPreventivo) {
+        // Modalità modifica: carica dati esistenti
+        setClientId(editPreventivo.client_id || '')
+        setLavorazioneId(editPreventivo.lavorazione_id || '')
+        setNumero(editPreventivo.numero)
+        setDataPreventivo(editPreventivo.data_preventivo)
+        setValidita(String(editPreventivo.validita))
+        setOggetto(editPreventivo.oggetto || '')
+        setNote(editPreventivo.note || '')
+        setIvaPercent(editPreventivo.iva_percent)
+        setSconto(editPreventivo.sconto)
+        setStato(editPreventivo.stato)
+        setItems(editPreventivo.items?.length ? editPreventivo.items : [{ id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }])
+      } else {
+        // Modalità nuovo
+        setClientId(preselectedClientId || '')
+        setLavorazioneId(preselectedLavorazioneId || '')
+        setNumero(`PRV-${Date.now().toString().slice(-6)}`)
+        setDataPreventivo(new Date().toISOString().split('T')[0])
+        setValidita('30')
+        setOggetto('')
+        setNote('')
+        setSconto(0)
+        setStato('bozza')
+        setItems([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: 'pz', unit_price: 0 }])
+      }
       setProductSearchId(null)
       setProductSearchQuery('')
       setBarcodeInput('')
       setNotFoundCode(null)
+      setSaveSuccess(false)
     }
-  }, [isOpen, preselectedClientId, preselectedLavorazioneId])
+  }, [isOpen, preselectedClientId, preselectedLavorazioneId, editPreventivo])
 
   // Filtered products for search
   const filteredProducts = useMemo(() => {
@@ -204,6 +230,36 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
   const ivaAmount = imponibile * (ivaPercent / 100)
   const totale = imponibile + ivaAmount
 
+  const handleSave = async () => {
+    if (!onSave && !onUpdate) return
+    setIsSaving(true)
+    const payload = {
+      numero,
+      client_id: clientId || null,
+      lavorazione_id: lavorazioneId || null,
+      oggetto: oggetto || null,
+      items: items as PreventivoLineItem[],
+      subtotal,
+      sconto,
+      imponibile,
+      iva_percent: ivaPercent,
+      iva_amount: ivaAmount,
+      totale,
+      stato,
+      note: note || null,
+      data_preventivo: dataPreventivo,
+      validita: Number(validita),
+    }
+    if (editPreventivo && onUpdate) {
+      await onUpdate(editPreventivo.id, payload)
+    } else if (onSave) {
+      await onSave(payload)
+    }
+    setIsSaving(false)
+    setSaveSuccess(true)
+    setTimeout(() => setSaveSuccess(false), 2000)
+  }
+
   const fmt = (n: number) => n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   const handlePrint = () => {
@@ -269,11 +325,23 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                   <FileText className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800">Preventivo Rapido</h2>
+                  <h2 className="text-lg font-bold text-slate-800">
+                    {editPreventivo ? `Modifica ${editPreventivo.numero}` : 'Nuovo Preventivo'}
+                  </h2>
                   <p className="text-xs text-slate-400 mt-0.5">Genera un preventivo professionale in PDF</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {(onSave || onUpdate) && (
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className={`px-4 py-2 rounded-xl text-white text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all ${saveSuccess ? 'bg-emerald-500 shadow-emerald-500/25' : 'bg-gradient-to-r from-indigo-500 to-violet-600 shadow-indigo-500/25 hover:shadow-indigo-500/40'}`}
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? 'Salvataggio...' : saveSuccess ? '✓ Salvato!' : 'Salva'}
+                  </button>
+                )}
                 <button onClick={handlePrint}
                   className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/25 flex items-center gap-1.5 transition-all hover:shadow-emerald-500/40">
                   <Printer className="w-4 h-4" /> Stampa PDF
