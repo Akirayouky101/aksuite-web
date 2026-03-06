@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS public.passwords (
   website TEXT,
   category TEXT NOT NULL DEFAULT 'Personal',
   emoji TEXT DEFAULT '🔥',
+  notes TEXT,
+  is_favorite BOOLEAN DEFAULT false,
+  pin_code TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
