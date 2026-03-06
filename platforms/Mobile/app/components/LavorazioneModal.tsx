@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wrench, User, Calendar, Clock, MapPin, FileText, AlertTriangle, Building2, StickyNote, Hash, Users, Copy } from 'lucide-react'
+import { X, Wrench, User, Calendar, Clock, MapPin, FileText, AlertTriangle, Building2, StickyNote, Hash, Users, Copy, Search } from 'lucide-react'
 import type { Lavorazione } from '../hooks/useLavorazioni'
 import type { Client } from '../hooks/useClients'
 
@@ -43,6 +43,19 @@ export default function LavorazioneModal({
   const [notes, setNotes] = useState('')
   const [clientId, setClientId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [clientSearch, setClientSearch] = useState('')
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
+  const clientRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (clientRef.current && !clientRef.current.contains(e.target as Node)) {
+        setClientDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   useEffect(() => {
     if (editLavorazione) {
@@ -167,36 +180,70 @@ export default function LavorazioneModal({
 
             {/* Cliente */}
             {clients.length > 0 && (
-              <div>
+              <div ref={clientRef} className="relative">
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   <Users className="w-4 h-4 inline mr-2" />
                   Cliente (dalla Rubrica)
                 </label>
-                <select
-                  value={clientId || ''}
-                  onChange={(e) => {
-                    const id = e.target.value || null
-                    setClientId(id)
-                    if (id) {
-                      const client = clients.find(c => c.id === id)
-                      if (client) {
-                        if (!address && client.address) setAddress(client.address)
-                        if (!city && client.city) setCity(client.city)
-                        if (!zipCode && client.zip_code) setZipCode(client.zip_code)
-                        if (!province && client.province) setProvince(client.province)
-                      }
-                    }
-                  }}
-                  title="Seleziona cliente"
-                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-800 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
+                <button
+                  type="button"
+                  onClick={() => setClientDropdownOpen(o => !o)}
+                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-800 focus:border-indigo-300 outline-none transition-all text-left flex items-center justify-between"
                 >
-                  <option value="">-- Nessun cliente --</option>
-                  {clients.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}{c.company ? ` (${c.company})` : ''}{c.city ? ` - ${c.city}` : ''}
-                    </option>
-                  ))}
-                </select>
+                  <span className={clientId ? 'text-slate-800' : 'text-slate-400'}>
+                    {clientId
+                      ? (() => { const c = clients.find(x => x.id === clientId); return c ? `${c.name}${c.company ? ` (${c.company})` : ''}${c.city ? ` - ${c.city}` : ''}` : '-- Nessun cliente --' })()
+                      : '-- Nessun cliente --'}
+                  </span>
+                  <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                </button>
+                {clientDropdownOpen && (
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+                    <div className="p-2 border-b border-slate-100">
+                      <input
+                        type="text"
+                        autoFocus
+                        value={clientSearch}
+                        onChange={e => setClientSearch(e.target.value)}
+                        placeholder="Cerca cliente..."
+                        className="w-full px-3 py-1.5 bg-slate-50 text-slate-800 rounded-lg border border-slate-200 focus:border-indigo-400 focus:outline-none text-sm"
+                      />
+                    </div>
+                    <div className="overflow-y-auto max-h-52">
+                      <button
+                        type="button"
+                        onClick={() => { setClientId(null); setClientDropdownOpen(false); setClientSearch('') }}
+                        className="w-full px-4 py-2 text-left text-sm text-slate-400 hover:bg-slate-50"
+                      >
+                        -- Nessun cliente --
+                      </button>
+                      {clients
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .filter(c => {
+                          const q = clientSearch.toLowerCase()
+                          return !q || c.name?.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q) || c.city?.toLowerCase().includes(q)
+                        })
+                        .map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setClientId(c.id)
+                              setClientDropdownOpen(false)
+                              setClientSearch('')
+                              if (!address && c.address) setAddress(c.address)
+                              if (!city && c.city) setCity(c.city)
+                              if (!zipCode && c.zip_code) setZipCode(c.zip_code)
+                              if (!province && c.province) setProvince(c.province)
+                            }}
+                            className={`w-full px-4 py-2 text-left text-sm hover:bg-indigo-50 transition-colors ${clientId === c.id ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-700'}`}
+                          >
+                            {c.name}{c.company ? <span className="text-slate-400 ml-1">({c.company})</span> : null}{c.city ? <span className="text-slate-400 ml-1">- {c.city}</span> : null}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
