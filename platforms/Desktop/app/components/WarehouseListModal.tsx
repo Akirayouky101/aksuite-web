@@ -98,6 +98,7 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
   const [movements, setMovements] = useState<Record<string, StockMovement[]>>({})
   const [scanMode, setScanMode] = useState(false)
   const [scanResult, setScanResult] = useState<string | null>(null)
+  const [scanFoundId, setScanFoundId] = useState<string | null>(null)
   const [stockAction, setStockAction] = useState<{productId: string, type: string, qty: number, notes: string} | null>(null)
   const scanInputRef = useRef<HTMLInputElement>(null)
 
@@ -143,9 +144,14 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
   }, [currentBrand, currentCategory, tree])
 
   // Search mode: flat list across all products
-  const isSearching = search.trim().length > 0
+  const isSearching = search.trim().length > 0 || scanFoundId !== null
   const searchResults = useMemo(() => {
-    if (!isSearching) return []
+    // Scan trovato: mostra solo quel prodotto esatto
+    if (scanFoundId) {
+      const p = products.find(p => p.id === scanFoundId)
+      return p ? [p] : []
+    }
+    if (!search.trim()) return []
     const q = search.toLowerCase()
     return products.filter(p =>
       p.name.toLowerCase().includes(q) ||
@@ -154,7 +160,7 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
       p.brand?.toLowerCase().includes(q) ||
       p.model?.toLowerCase().includes(q)
     ).sort((a, b) => a.name.localeCompare(b.name))
-  }, [search, products, isSearching])
+  }, [search, scanFoundId, products])
 
   const getStockStatus = (p: Product): 'ok' | 'low' | 'out' => {
     if (p.quantity <= 0) return 'out'
@@ -182,10 +188,12 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
     setScanResult(null)
     const found = onFindByBarcode(code.trim())
     if (found) {
-      setSearch(code.trim())
+      setSearch('')
+      setScanFoundId(found.id)
       setScanMode(false)
       setScanResult(found.name)
     } else {
+      setScanFoundId(null)
       setScanResult(`Nessun prodotto trovato per: ${code}`)
     }
   }, [onFindByBarcode])
@@ -431,7 +439,7 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                <input value={search} onChange={e => setSearch(e.target.value)}
+                <input value={search} onChange={e => { setSearch(e.target.value); setScanFoundId(null) }}
                   placeholder={currentCategory ? 'Cerca in questa categoria...' : currentBrand ? 'Cerca in questa marca...' : 'Cerca prodotto, SKU, marca...'}
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white/80 border border-slate-200/60 text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
               </div>
