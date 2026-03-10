@@ -152,13 +152,22 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
       return p ? [p] : []
     }
     if (!search.trim()) return []
-    const q = search.toLowerCase()
+    const q = search.trim()
+    const qLow = q.toLowerCase()
+    // Match esatto su barcode / qr_code / sku → mostra solo quel prodotto
+    const exactMatch = products.find(p =>
+      (p.barcode && p.barcode.toLowerCase() === qLow) ||
+      (p.qr_code && p.qr_code.toLowerCase() === qLow) ||
+      (p.sku && p.sku.toLowerCase() === qLow)
+    )
+    if (exactMatch) return [exactMatch]
+    // Altrimenti ricerca parziale su nome/marca/modello/sku
     return products.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.sku?.toLowerCase().includes(q) ||
-      p.barcode?.toLowerCase().includes(q) ||
-      p.brand?.toLowerCase().includes(q) ||
-      p.model?.toLowerCase().includes(q)
+      p.name.toLowerCase().includes(qLow) ||
+      p.sku?.toLowerCase().includes(qLow) ||
+      p.barcode?.toLowerCase().includes(qLow) ||
+      p.brand?.toLowerCase().includes(qLow) ||
+      p.model?.toLowerCase().includes(qLow)
     ).sort((a, b) => a.name.localeCompare(b.name))
   }, [search, scanFoundId, products])
 
