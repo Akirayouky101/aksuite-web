@@ -1383,7 +1383,11 @@ export default function Home() {
         onEdit={(inst) => { setEditingInstallation(inst); setIsInstallationListModalOpen(false); setIsInstallationModalOpen(true) }}
         onDelete={deleteInstallation}
         onLoadFull={loadInstallationFull}
-        onSchema={(inst) => { setSchemaInstallation(inst); setIsInstallationSchemaOpen(true) }}
+        onSchema={async (inst) => {
+          const fresh = await loadInstallationFull(inst.id)
+          setSchemaInstallation(fresh ?? inst)
+          setIsInstallationSchemaOpen(true)
+        }}
       />}
 
       {isInstallationModalOpen && <InstallationModal
