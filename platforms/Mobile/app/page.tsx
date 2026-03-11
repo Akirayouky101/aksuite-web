@@ -58,6 +58,7 @@ const SopralluoghiListModal = dynamic(() => import('./components/SopralluoghiLis
 const SopralluogoModal = dynamic(() => import('./components/SopralluogoModal'), { ssr: false })
 const InstallationListModal = dynamic(() => import('./components/InstallationListModal'), { ssr: false })
 const InstallationModal = dynamic(() => import('./components/InstallationModal'), { ssr: false })
+const InstallationSchemaModal = dynamic(() => import('./components/InstallationSchemaModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -134,6 +135,8 @@ export default function Home() {
   const [isInstallationListModalOpen, setIsInstallationListModalOpen] = useState(false)
   const [isInstallationModalOpen, setIsInstallationModalOpen] = useState(false)
   const [editingInstallation, setEditingInstallation] = useState<any>(null)
+  const [isInstallationSchemaOpen, setIsInstallationSchemaOpen] = useState(false)
+  const [schemaInstallation, setSchemaInstallation] = useState<any>(null)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -1380,6 +1383,7 @@ export default function Home() {
         onEdit={(inst) => { setEditingInstallation(inst); setIsInstallationListModalOpen(false); setIsInstallationModalOpen(true) }}
         onDelete={deleteInstallation}
         onLoadFull={loadInstallationFull}
+        onSchema={(inst) => { setSchemaInstallation(inst); setIsInstallationSchemaOpen(true) }}
       />}
 
       {isInstallationModalOpen && <InstallationModal
@@ -1418,6 +1422,13 @@ export default function Home() {
             }
           }
         }}
+      />}
+
+      {isInstallationSchemaOpen && <InstallationSchemaModal
+        isOpen={isInstallationSchemaOpen}
+        onClose={() => setIsInstallationSchemaOpen(false)}
+        installation={schemaInstallation}
+        clients={clients}
       />}
 
       {isUserManagementOpen && <UserManagementModal

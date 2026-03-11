@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Monitor, Search, Plus, Pencil, Trash2, ChevronDown, ChevronUp, MapPin, Server, Camera, HardDrive, KeyRound, Eye, EyeOff, Wifi, Building2 } from 'lucide-react'
+import { X, Monitor, Search, Plus, Pencil, Trash2, ChevronDown, ChevronUp, MapPin, Server, Camera, HardDrive, KeyRound, Eye, EyeOff, Wifi, Building2, Network } from 'lucide-react'
 import { Installation, InstallationFull } from '../hooks/useInstallations'
 import { Client } from '../hooks/useClients'
 
@@ -15,10 +15,11 @@ interface InstallationListModalProps {
   onEdit: (installation: InstallationFull) => void
   onDelete: (id: string) => void
   onLoadFull: (id: string) => Promise<InstallationFull | null>
+  onSchema: (installation: InstallationFull) => void
 }
 
 export default function InstallationListModal({
-  isOpen, onClose, installations, clients, onAdd, onEdit, onDelete, onLoadFull
+  isOpen, onClose, installations, clients, onAdd, onEdit, onDelete, onLoadFull, onSchema
 }: InstallationListModalProps) {
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -167,8 +168,11 @@ export default function InstallationListModal({
                                 {/* Note impianto */}
                                 {full.note && <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-2 italic">{full.note}</p>}
 
-                                {/* Pulsante modifica */}
-                                <div className="flex justify-end">
+                                {/* Pulsanti azioni */}
+                                <div className="flex justify-end gap-2">
+                                  <button onClick={() => onSchema(full)} className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold flex items-center gap-1 transition-colors border border-slate-200/60">
+                                    <Network className="w-3 h-3" />Schema impianto
+                                  </button>
                                   <button onClick={() => onEdit(full)} className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center gap-1 transition-colors">
                                     <Pencil className="w-3 h-3" />Modifica impianto
                                   </button>
