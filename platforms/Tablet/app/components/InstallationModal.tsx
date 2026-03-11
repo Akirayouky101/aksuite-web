@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Save, Plus, Trash2, Eye, EyeOff, Server, Camera, HardDrive, KeyRound, Search, ChevronDown, MapPin, Monitor, Copy } from 'lucide-react'
+import { X, Save, Plus, Trash2, Eye, EyeOff, Server, Camera, HardDrive, KeyRound, Search, ChevronDown, MapPin, Monitor, Copy, AlertTriangle } from 'lucide-react'
 import {
   Installation, InstallationDevice, DeviceHdd, DeviceCredential, InstallationCamera, InstallationFull
 } from '../hooks/useInstallations'
@@ -620,6 +620,26 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
               {/* ─── TAB CAMERAS ─── */}
               {activeTab === 'cameras' && (
                 <div className="space-y-3">
+                  {/* Banner: telecamere senza registratore assegnato */}
+                  {cameras.some(c => !c.device_tempId) && devices.length > 0 && (
+                    <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200/60">
+                      <div className="flex items-center gap-2 text-amber-700">
+                        <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="text-xs font-semibold">
+                          {cameras.filter(c => !c.device_tempId).length} telecamera{cameras.filter(c => !c.device_tempId).length !== 1 ? 'e' : ''} senza registratore assegnato
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const firstDevTempId = devices[0]._tempId
+                          setCameras(prev => prev.map(c => !c.device_tempId ? { ...c, device_tempId: firstDevTempId } : c))
+                        }}
+                        className="text-[11px] font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded-lg transition-colors flex-shrink-0"
+                      >
+                        Assegna a {devices[0].tipo}{devices[0].marca ? ` ${devices[0].marca}` : ''}
+                      </button>
+                    </div>
+                  )}
                   {cameras.length === 0 && (
                     <div className="text-center py-8 text-slate-400">
                       <Camera className="w-10 h-10 mx-auto mb-2 opacity-30" />
