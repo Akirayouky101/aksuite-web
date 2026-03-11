@@ -180,149 +180,90 @@ function CameraCard({ cam }: { cam: InstallationCamera }) {
 }
 
 // ─── Costanti layout ─────────────────────────────────────────────────────────
-const DEV_W = 192        // larghezza card registratore px
-const CAM_W = 144        // larghezza card telecamera px
-const CAM_H_BASE = 72    // altezza base card cam (senza dropdown)
-const H_GAP_DEV = 80     // gap orizzontale tra colonne NVR
-const CAM_H_GAP = 20     // gap verticale tra telecamere
-const CAM_COL_GAP = 16   // gap orizzontale tra telecamere nella griglia
-const PAD_X = 60
-const PAD_Y = 50
-const DEV_Y = PAD_Y
-const WIRE_V = 50        // spazio verticale per i cavi tra NVR e cam
+const CAM_W = 144        // larghezza card telecamera px (usata solo per export SVG)
+const CAM_H_BASE = 72    // altezza base card cam per export SVG
+const CAM_COL_GAP = 16
+const PAD_Y_EXPORT = 50
+const WIRE_V_EXPORT = 50
 
-// ─── Calcolo layout ──────────────────────────────────────────────────────────
-function buildLayout(inst: InstallationFull) {
-  const camsByDev: Record<string, InstallationCamera[]> = {}
+// ─── Grouping telecamere per registratore ────────────────────────────────────
+function groupCamsByDevice(inst: InstallationFull) {
+  const map: Record<string, InstallationCamera[]> = {}
   for (const cam of inst.cameras) {
     const k = cam.device_id || '__none__'
-    if (!camsByDev[k]) camsByDev[k] = []
-    camsByDev[k].push(cam)
+    if (!map[k]) map[k] = []
+    map[k].push(cam)
   }
-
-  // Calcola colonne per ogni NVR
-  interface DevCol {
-    dev: FullDevice
-    devX: number
-    devY: number
-    cams: InstallationCamera[]
-    camCols: number
-    camGridW: number
-    colW: number
-    camStartX: number
-    camStartY: number
-  }
-
-  const cols: DevCol[] = []
-  let curX = PAD_X
-
-  for (const dev of inst.devices) {
-    const cams = camsByDev[dev.id] || []
-    const camCols = cams.length <= 3 ? cams.length || 1 : cams.length <= 8 ? 4 : 5
-    const camGridW = camCols * CAM_W + (camCols - 1) * CAM_COL_GAP
-    const colW = Math.max(DEV_W, camGridW)
-    const centerX = curX + colW / 2
-    const devX = centerX - DEV_W / 2
-    cols.push({
-      dev, devX, devY: DEV_Y,
-      cams, camCols, camGridW, colW,
-      camStartX: centerX - camGridW / 2,
-      camStartY: DEV_Y + 120 + WIRE_V,  // 120 = altezza card NVR chiusa
-    })
-    curX += colW + H_GAP_DEV
-  }
-
-  // Unassigned cams: riga separata in fondo
-  const unassigned = camsByDev['__none__'] || []
-
-  const totalW = Math.max(curX - H_GAP_DEV + PAD_X, 500)
-
-  return { cols, unassigned, totalW }
+  return map
 }
 
-// ─── SVG frecce tra NVR e telecamere ────────────────────────────────────────
-function Wires({ cols, devH }: {
-  cols: Array<{ devX: number; devY: number; cams: InstallationCamera[]; camCols: number; camGridW: number; camStartX: number; camStartY: number; colW: number }>
-  devH: number
-}) {
+// ─── Colonna NVR — layout flex, dropdown sposta le cam in basso ──────────────
+function DeviceColumn({ dev, cams }: { dev: FullDevice; cams: InstallationCamera[] }) {
+  const camCols = cams.length <= 3 ? (cams.length || 1) : cams.length <= 8 ? 4 : 5
+  // raggruppa le cam in righe
+  const rows: InstallationCamera[][] = []
+  for (let i = 0; i < cams.length; i += camCols) rows.push(cams.slice(i, i + camCols))
+
   return (
-    <svg
-      className="absolute inset-0 pointer-events-none"
-      style={{ width: '100%', height: '100%', overflow: 'visible' }}
-    >
-      <defs>
-        <marker id="dot" markerWidth="6" markerHeight="6" refX="3" refY="3">
-          <circle cx="3" cy="3" r="2.5" fill="#94a3b8" />
-        </marker>
-        <marker id="arrowblue" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-          <path d="M1,1 L7,4 L1,7 Z" fill="#3b82f6" opacity="0.6" />
-        </marker>
-      </defs>
-      {cols.map((col, ci) => {
-        if (col.cams.length === 0) return null
-        const nvrBottomX = col.devX + DEV_W / 2
-        const nvrBottomY = col.devY + devH
+    <div className="flex flex-col items-center gap-0" style={{ minWidth: 192 }}>
+      {/* Card registratore */}
+      <DeviceCard dev={dev} />
 
-        return col.cams.map((cam, i) => {
-          const camCol = i % col.camCols
-          const camRow = Math.floor(i / col.camCols)
-          const camCenterX = col.camStartX + camCol * (CAM_W + CAM_COL_GAP) + CAM_W / 2
-          const camTopY = col.camStartY + camRow * (CAM_H_BASE + CAM_H_GAP)
-          const midY = nvrBottomY + WIRE_V * 0.45
+      {/* Connettore verticale */}
+      {cams.length > 0 && (
+        <div className="flex flex-col items-center" style={{ gap: 0 }}>
+          <div className="w-px bg-slate-300" style={{ height: 28 }} />
+          <svg width="12" height="8" viewBox="0 0 12 8">
+            <path d="M6,0 L0,8 L12,8 Z" fill="#94a3b8" opacity="0.7" />
+          </svg>
+        </div>
+      )}
 
-          return (
-            <g key={`wire-${ci}-${i}`}>
-              <path
-                d={`M ${nvrBottomX} ${nvrBottomY} C ${nvrBottomX} ${midY}, ${camCenterX} ${midY}, ${camCenterX} ${camTopY}`}
-                fill="none"
-                stroke="#94a3b8"
-                strokeWidth="1.8"
-                strokeDasharray="5,4"
-                markerEnd="url(#arrowblue)"
-                markerStart="url(#dot)"
-              />
-            </g>
-          )
-        })
-      })}
-    </svg>
+      {/* Griglia telecamere */}
+      {rows.length > 0 && (
+        <div className="flex flex-col gap-3 items-center">
+          {rows.map((row, ri) => (
+            <div key={ri} className="flex gap-3">
+              {row.map((cam, ci) => (
+                <CameraCard key={cam.id ?? `${ri}-${ci}`} cam={cam} />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
 // ─── Componente principale ───────────────────────────────────────────────────
 export default function InstallationSchemaModal({ isOpen, onClose, installation, clients }: Props) {
   const [zoom, setZoom] = useState(1)
-  const [pan, setPan] = useState({ x: 40, y: 30 })
+  const zoomRef = useRef(1)
   const isDragging = useRef(false)
   const dragStart = useRef({ x: 0, y: 0 })
-  const zoomRef = useRef(1)           // valore zoom senza re-render durante scroll
-  const animFrameRef = useRef<number | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollOrigin = useRef({ scrollLeft: 0, scrollTop: 0 })
 
   // Reset quando si apre
   useEffect(() => {
-    if (isOpen) { setZoom(1); zoomRef.current = 1; setPan({ x: 40, y: 30 }) }
+    if (isOpen) {
+      setZoom(1)
+      zoomRef.current = 1
+      if (scrollRef.current) { scrollRef.current.scrollLeft = 0; scrollRef.current.scrollTop = 0 }
+    }
   }, [isOpen])
 
-  // Zoom smorzato tramite rAF — evita lo sbalzo "al volo"
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault()
-    const delta = e.deltaY > 0 ? -0.06 : 0.06
-    zoomRef.current = Math.min(3, Math.max(0.2, zoomRef.current + delta))
-    if (animFrameRef.current) return
-    animFrameRef.current = requestAnimationFrame(() => {
-      setZoom(zoomRef.current)
-      animFrameRef.current = null
-    })
-  }
-
+  // Drag per scorrere il canvas
   const onMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
     isDragging.current = true
-    dragStart.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }
+    dragStart.current = { x: e.clientX, y: e.clientY }
+    scrollOrigin.current = { scrollLeft: scrollRef.current?.scrollLeft ?? 0, scrollTop: scrollRef.current?.scrollTop ?? 0 }
   }
   const onMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current) return
-    setPan({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y })
+    if (!isDragging.current || !scrollRef.current) return
+    scrollRef.current.scrollLeft = scrollOrigin.current.scrollLeft - (e.clientX - dragStart.current.x)
+    scrollRef.current.scrollTop  = scrollOrigin.current.scrollTop  - (e.clientY - dragStart.current.y)
   }
   const onMouseUp = () => { isDragging.current = false }
 
@@ -331,58 +272,81 @@ export default function InstallationSchemaModal({ isOpen, onClose, installation,
     zoomRef.current = nz
     setZoom(nz)
   }
-  const resetView = () => { const nz = 1; zoomRef.current = nz; setZoom(nz); setPan({ x: 40, y: 30 }) }
+  const resetView = () => { zoomRef.current = 1; setZoom(1); if (scrollRef.current) { scrollRef.current.scrollLeft = 0; scrollRef.current.scrollTop = 0 } }
 
   const handleDownload = () => {
     if (!installation) return
-    const { cols, unassigned, totalW } = buildLayout(installation)
-    const devH = 120
-    const maxCamRows = Math.max(...cols.map(c => Math.ceil(c.cams.length / c.camCols)), 0)
-    const totalH = DEV_Y + devH + WIRE_V + maxCamRows * (CAM_H_BASE + CAM_H_GAP) + PAD_Y
+    // Export SVG semplificato con layout fisso
+    const camsByDev = groupCamsByDevice(installation)
+    const DEV_W_EXP = 192
+    const DEV_H_EXP = 120
+    const H_GAP = 80
+    const PAD = PAD_Y_EXPORT
 
-    const wires = cols.flatMap((col, ci) =>
+    let curX = PAD
+    interface ExportCol { devX: number; camCols: number; cams: InstallationCamera[]; camGridW: number; camStartX: number }
+    const exportCols: ExportCol[] = []
+
+    for (const dev of installation.devices) {
+      const cams = camsByDev[dev.id] || []
+      const camCols = cams.length <= 3 ? (cams.length || 1) : cams.length <= 8 ? 4 : 5
+      const camGridW = camCols * CAM_W + (camCols - 1) * CAM_COL_GAP
+      const colW = Math.max(DEV_W_EXP, camGridW)
+      const centerX = curX + colW / 2
+      exportCols.push({ devX: centerX - DEV_W_EXP / 2, camCols, cams, camGridW, camStartX: centerX - camGridW / 2 })
+      curX += colW + H_GAP
+    }
+
+    const maxCamRows = exportCols.length > 0 ? Math.max(...exportCols.map(c => Math.ceil(c.cams.length / c.camCols))) : 0
+    const camStartY = PAD + DEV_H_EXP + WIRE_V_EXPORT
+    const totalW = Math.max(curX - H_GAP + PAD, 500)
+    const totalH = camStartY + maxCamRows * (CAM_H_BASE + 20) + PAD
+
+    const wires = exportCols.flatMap((col) =>
       col.cams.map((_, i) => {
         const cc = i % col.camCols; const cr = Math.floor(i / col.camCols)
         const cx2 = col.camStartX + cc * (CAM_W + CAM_COL_GAP) + CAM_W / 2
-        const cy2 = col.camStartY + cr * (CAM_H_BASE + CAM_H_GAP)
-        const bx = col.devX + DEV_W / 2; const by = col.devY + devH
-        const midY = by + WIRE_V * 0.45
+        const cy2 = camStartY + cr * (CAM_H_BASE + 20)
+        const bx = col.devX + DEV_W_EXP / 2; const by = PAD + DEV_H_EXP
+        const midY = by + WIRE_V_EXPORT * 0.45
         return `<path d="M${bx},${by} C${bx},${midY} ${cx2},${midY} ${cx2},${cy2}" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="5,4" fill="none"/>`
       })
     ).join('\n')
 
-    const devRects = cols.map(col => {
-      const s = getStyle(col.dev.tipo)
-      const lbl = [col.dev.marca, col.dev.modello].filter(Boolean).join(' ') || col.dev.tipo
-      const totalTb = col.dev.hdds.reduce((sum, h) => sum + Number(h.dimensione_tb), 0)
-      return `<rect x="${col.devX}" y="${col.devY}" width="${DEV_W}" height="${devH}" rx="12" fill="white" stroke="${s.dot}" stroke-width="1.5"/>
-<rect x="${col.devX}" y="${col.devY}" width="${DEV_W}" height="32" rx="10" fill="${s.dot}"/>
-<rect x="${col.devX}" y="${col.devY + 20}" width="${DEV_W}" height="12" fill="${s.dot}"/>
-<text x="${col.devX + DEV_W / 2}" y="${col.devY + 20}" text-anchor="middle" font-size="11" font-weight="700" fill="white">${col.dev.tipo} · ${col.dev.canali}ch</text>
-<text x="${col.devX + DEV_W / 2}" y="${col.devY + 50}" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">${lbl}</text>
-<text x="${col.devX + DEV_W / 2}" y="${col.devY + 66}" text-anchor="middle" font-size="9" font-family="monospace" fill="#3b82f6">${col.dev.ip_principale}</text>
-${totalTb > 0 ? `<rect x="${col.devX + DEV_W / 2 - 32}" y="${col.devY + 76}" width="64" height="14" rx="5" fill="#fef3c7"/><text x="${col.devX + DEV_W / 2}" y="${col.devY + 86}" text-anchor="middle" font-size="9" font-weight="600" fill="#92400e">HDD ${totalTb.toFixed(1)} TB</text>` : ''}`
+    const devRects = exportCols.map((col, idx) => {
+      const dev = installation.devices[idx]
+      const s = getStyle(dev.tipo)
+      const lbl = [dev.marca, dev.modello].filter(Boolean).join(' ') || dev.tipo
+      const totalTb = dev.hdds.reduce((sum: number, h) => sum + Number(h.dimensione_tb), 0)
+      return `<rect x="${col.devX}" y="${PAD}" width="${DEV_W_EXP}" height="${DEV_H_EXP}" rx="12" fill="white" stroke="${s.dot}" stroke-width="1.5"/>
+<rect x="${col.devX}" y="${PAD}" width="${DEV_W_EXP}" height="32" rx="10" fill="${s.dot}"/>
+<rect x="${col.devX}" y="${PAD + 20}" width="${DEV_W_EXP}" height="12" fill="${s.dot}"/>
+<text x="${col.devX + DEV_W_EXP / 2}" y="${PAD + 20}" text-anchor="middle" font-size="11" font-weight="700" fill="white">${dev.tipo} · ${dev.canali}ch</text>
+<text x="${col.devX + DEV_W_EXP / 2}" y="${PAD + 52}" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">${lbl}</text>
+<text x="${col.devX + DEV_W_EXP / 2}" y="${PAD + 68}" text-anchor="middle" font-size="9" font-family="monospace" fill="#3b82f6">${dev.ip_principale || ''}</text>
+${totalTb > 0 ? `<rect x="${col.devX + DEV_W_EXP / 2 - 32}" y="${PAD + 78}" width="64" height="14" rx="5" fill="#fef3c7"/><text x="${col.devX + DEV_W_EXP / 2}" y="${PAD + 88}" text-anchor="middle" font-size="9" font-weight="600" fill="#92400e">HDD ${totalTb.toFixed(1)} TB</text>` : ''}`
     }).join('\n')
 
-    const camRects = cols.flatMap(col =>
+    const camRects = exportCols.flatMap((col) =>
       col.cams.map((cam, i) => {
         const cc = i % col.camCols; const cr = Math.floor(i / col.camCols)
         const cx = col.camStartX + cc * (CAM_W + CAM_COL_GAP)
-        const cy = col.camStartY + cr * (CAM_H_BASE + CAM_H_GAP)
+        const cy = camStartY + cr * (CAM_H_BASE + 20)
         const lbl = cam.nome || cam.posizione || `CH${cam.canale ?? i + 1}`
         return `<rect x="${cx}" y="${cy}" width="${CAM_W}" height="60" rx="10" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
 <text x="${cx + CAM_W / 2}" y="${cy + 20}" text-anchor="middle" font-size="10" font-weight="600" fill="#334155">${lbl}</text>
-<text x="${cx + CAM_W / 2}" y="${cy + 34}" text-anchor="middle" font-size="9" fill="#64748b">${cam.mpx > 0 ? cam.mpx + 'MP' : ''} ${cam.canale ? 'CH' + cam.canale : ''}</text>
-<text x="${cx + CAM_W / 2}" y="${cy + 48}" text-anchor="middle" font-size="8" font-family="monospace" fill="#64748b">${cam.ip || ''}</text>`
+<text x="${cx + CAM_W / 2}" y="${cy + 36}" text-anchor="middle" font-size="9" fill="#64748b">${cam.mpx > 0 ? cam.mpx + 'MP' : ''} ${cam.canale ? 'CH' + cam.canale : ''}</text>
+<text x="${cx + CAM_W / 2}" y="${cy + 50}" text-anchor="middle" font-size="8" font-family="monospace" fill="#64748b">${cam.ip || ''}</text>`
       })
     ).join('\n')
 
+    const unassigned = camsByDev['__none__'] || []
     const unassignedRects = unassigned.map((cam, i) => {
-      const cx = PAD_X + i * (CAM_W + CAM_COL_GAP)
-      const cy = totalH - PAD_Y - 60
+      const cx = PAD + i * (CAM_W + CAM_COL_GAP)
+      const cy = totalH - PAD - 60
       const lbl = cam.nome || cam.posizione || `CH${cam.canale ?? i + 1}`
       return `<rect x="${cx}" y="${cy}" width="${CAM_W}" height="60" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
-<text x="${cx + CAM_W / 2}" y="${cy + 20}" text-anchor="middle" font-size="10" font-weight="600" fill="#94a3b8">${lbl} (non assegnata)</text>`
+<text x="${cx + CAM_W / 2}" y="${cy + 20}" text-anchor="middle" font-size="10" font-weight="600" fill="#94a3b8">${lbl}</text>`
     }).join('\n')
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalW} ${totalH}">\n${wires}\n${devRects}\n${camRects}\n${unassignedRects}\n</svg>`
@@ -396,11 +360,8 @@ ${totalTb > 0 ? `<rect x="${col.devX + DEV_W / 2 - 32}" y="${col.devY + 76}" wid
   if (!isOpen || !installation) return null
 
   const clientObj = installation.client_id ? clients.find(c => c.id === installation.client_id) : null
-  const { cols, unassigned, totalW } = buildLayout(installation)
-
-  // Altezza stimata canvas (sufficiente per non clippare)
-  const maxCamRows = cols.length > 0 ? Math.max(...cols.map(c => Math.ceil(c.cams.length / c.camCols))) : 0
-  const totalH = DEV_Y + 200 + WIRE_V + maxCamRows * (CAM_H_BASE + CAM_H_GAP) + (unassigned.length > 0 ? 120 : 0) + PAD_Y
+  const camsByDev = groupCamsByDevice(installation)
+  const unassigned = camsByDev['__none__'] || []
 
   return (
     <AnimatePresence>
@@ -449,78 +410,51 @@ ${totalTb > 0 ? `<rect x="${col.devX + DEV_W / 2 - 32}" y="${col.devY + 76}" wid
             {installation.devices.flatMap(d => d.hdds).length > 0 && (
               <span className="flex items-center gap-1.5 font-semibold"><HardDrive className="w-3.5 h-3.5 text-amber-500" />{installation.devices.flatMap(d => d.hdds).reduce((s, h) => s + Number(h.dimensione_tb), 0).toFixed(1)} TB</span>
             )}
-            <span className="ml-auto text-[10px] text-slate-300 italic hidden sm:block">Trascina · Scroll per zoom · Clicca per dettagli</span>
+            <span className="ml-auto text-[10px] text-slate-300 italic hidden sm:block">Trascina per muovere · Usa + / − per zoom · Clicca per dettagli</span>
           </div>
 
-          {/* ── Canvas ─────────────────────────────────────────────────── */}
+          {/* ── Canvas — overflow auto con pan tramite drag ─────────────── */}
           <div
-            className="flex-1 overflow-hidden relative select-none"
+            ref={scrollRef}
+            className="flex-1 overflow-auto relative select-none"
             style={{ background: 'radial-gradient(ellipse at 40% 30%, #f0f4ff 0%, #f1f5f9 60%, #e8edf5 100%)' }}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
             onMouseLeave={onMouseUp}
-            onWheel={handleWheel}
           >
             {/* Dot grid */}
             <div className="absolute inset-0 pointer-events-none opacity-40"
               style={{ backgroundImage: 'radial-gradient(circle, #94a3b8 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
 
-            {/* Pan+zoom wrapper */}
+            {/* Contenuto centrato + scalabile */}
             <div
-              className="absolute"
+              className="flex items-start justify-center min-h-full py-10 px-8"
               style={{
-                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                transformOrigin: 'top left',
-                width: totalW,
-                height: totalH,
+                transform: `scale(${zoom})`,
+                transformOrigin: 'top center',
                 cursor: isDragging.current ? 'grabbing' : 'grab',
               }}
             >
-              {/* SVG frecce — sotto le card */}
-              <Wires cols={cols} devH={120} />
-
-              {/* Card registratori */}
-              {cols.map((col, ci) => (
-                <div key={`dev-${ci}`} className="absolute" style={{ left: col.devX, top: col.devY, width: DEV_W }}>
-                  <DeviceCard dev={col.dev} />
-                </div>
-              ))}
-
-              {/* Card telecamere */}
-              {cols.map((col, ci) =>
-                col.cams.map((cam, i) => {
-                  const camCol = i % col.camCols
-                  const camRow = Math.floor(i / col.camCols)
-                  const camX = col.camStartX + camCol * (CAM_W + CAM_COL_GAP)
-                  const camY = col.camStartY + camRow * (CAM_H_BASE + CAM_H_GAP)
-                  return (
-                    <div key={`cam-${ci}-${i}`} className="absolute" style={{ left: camX, top: camY, width: CAM_W }}>
-                      <CameraCard cam={cam} />
-                    </div>
-                  )
-                })
-              )}
-
-              {/* Telecamere non assegnate */}
-              {unassigned.length > 0 && (
-                <>
-                  <div className="absolute text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-                    style={{ left: PAD_X, top: DEV_Y + 120 + WIRE_V + maxCamRows * (CAM_H_BASE + CAM_H_GAP) + 28 }}>
-                    Telecamere non assegnate
-                  </div>
-                  {unassigned.map((cam, i) => {
-                    const camX = PAD_X + i * (CAM_W + CAM_COL_GAP)
-                    const camY = DEV_Y + 120 + WIRE_V + maxCamRows * (CAM_H_BASE + CAM_H_GAP) + 46
-                    return (
-                      <div key={`unassigned-${i}`} className="absolute opacity-60" style={{ left: camX, top: camY, width: CAM_W }}>
-                        <CameraCard cam={cam} />
-                      </div>
-                    )
-                  })}
-                </>
-              )}
+              {/* Colonne NVR affiancate */}
+              <div className="flex items-start gap-10 flex-wrap justify-center">
+                {installation.devices.map((dev, di) => (
+                  <DeviceColumn key={dev.id ?? di} dev={dev} cams={camsByDev[dev.id] || []} />
+                ))}
+              </div>
             </div>
+
+            {/* Telecamere non assegnate */}
+            {unassigned.length > 0 && (
+              <div className="flex flex-col items-center gap-3 py-6 border-t border-dashed border-slate-300/60 mx-8">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Telecamere non assegnate</p>
+                <div className="flex gap-3 flex-wrap justify-center opacity-60">
+                  {unassigned.map((cam, i) => (
+                    <CameraCard key={cam.id ?? i} cam={cam} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── Legenda ─────────────────────────────────────────────────── */}
