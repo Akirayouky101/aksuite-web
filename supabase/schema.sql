@@ -590,3 +590,16 @@ CREATE INDEX IF NOT EXISTS device_credentials_device_id_idx ON public.device_cre
 CREATE INDEX IF NOT EXISTS installation_cameras_installation_id_idx ON public.installation_cameras(installation_id);
 
 ALTER TABLE IF EXISTS public.user_permissions ADD COLUMN IF NOT EXISTS can_installations BOOLEAN NOT NULL DEFAULT false;
+
+-- ─── Gerarchia nodi impianto (Switch, NVR secondari collegati ad altri nodi) ─
+-- Aggiunge parent_id a installation_devices (self-referencing, nullable)
+ALTER TABLE public.installation_devices
+  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.installation_devices(id) ON DELETE SET NULL;
+
+-- Aggiorna il CHECK sul tipo per includere Switch
+ALTER TABLE public.installation_devices DROP CONSTRAINT IF EXISTS installation_devices_tipo_check;
+ALTER TABLE public.installation_devices
+  ADD CONSTRAINT installation_devices_tipo_check
+  CHECK (tipo IN ('NVR', 'DVR', 'XVR', 'HDCVI', 'Switch', 'Altro'));
+
+CREATE INDEX IF NOT EXISTS installation_devices_parent_id_idx ON public.installation_devices(parent_id);

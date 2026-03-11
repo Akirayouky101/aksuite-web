@@ -22,7 +22,8 @@ export interface InstallationDevice {
   id: string
   installation_id: string
   user_id: string
-  tipo: 'NVR' | 'DVR' | 'XVR' | 'HDCVI' | 'Altro'
+  parent_id: string | null   // nodo padre (NVR/Switch superiore), null = radice
+  tipo: 'NVR' | 'DVR' | 'XVR' | 'HDCVI' | 'Switch' | 'Altro'
   marca: string
   modello: string
   canali: number
@@ -36,6 +37,35 @@ export interface InstallationDevice {
   note: string
   created_at: string
   updated_at: string
+}
+
+// ─── Nodo dell'albero impianto ────────────────────────────────────────────────
+export interface DeviceTreeNode {
+  device: InstallationDevice & { hdds: DeviceHdd[]; credentials: DeviceCredential[] }
+  cameras: InstallationCamera[]   // telecamere direttamente collegate a questo nodo
+  children: DeviceTreeNode[]      // nodi figli (Switch o NVR secondari)
+}
+
+// Costruisce l'albero ricorsivo a partire dalla lista piatta
+export function buildDeviceTree(
+  devices: (InstallationDevice & { hdds: DeviceHdd[]; credentials: DeviceCredential[] })[],
+  cameras: InstallationCamera[]
+): DeviceTreeNode[] {
+  const camsByDevice: Record<string, InstallationCamera[]> = {}
+  for (const cam of cameras) {
+    const k = cam.device_id || '__none__'
+    if (!camsByDevice[k]) camsByDevice[k] = []
+    camsByDevice[k].push(cam)
+  }
+
+  const buildNode = (dev: typeof devices[0]): DeviceTreeNode => ({
+    device: dev,
+    cameras: camsByDevice[dev.id] || [],
+    children: devices.filter(d => d.parent_id === dev.id).map(buildNode),
+  })
+
+  // Radici = nodi senza parent
+  return devices.filter(d => !d.parent_id).map(buildNode)
 }
 
 export interface DeviceHdd {

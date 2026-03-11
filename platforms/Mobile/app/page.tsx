@@ -1397,28 +1397,52 @@ export default function Home() {
             await updateInstallation(editingInstallation.id, { nome: data.nome, client_id: data.client_id, indirizzo: data.indirizzo, citta: data.citta, provincia: data.provincia, note: data.note })
             // Elimina e ricrea dispositivi
             for (const dev of editingInstallation.devices) await deleteDevice(dev.id)
+            // Prima passata: crea tutti i dispositivi senza parent_id, mappa _tempId → id reale
+            const tempToRealId: Record<string, string> = {}
             for (const dev of data.devices) {
-              const newDev = await addDevice(editingInstallation.id, { tipo: dev.tipo, marca: dev.marca, modello: dev.modello, canali: dev.canali, ip_principale: dev.ip_principale, ip_secondario: dev.ip_secondario, porta_http: dev.porta_http, porta_rtsp: dev.porta_rtsp, uscite_hdmi: dev.uscite_hdmi, uscite_vga: dev.uscite_vga, uscite_displayport: dev.uscite_displayport, note: dev.note })
+              const newDev = await addDevice(editingInstallation.id, { tipo: dev.tipo, marca: dev.marca, modello: dev.modello, canali: dev.canali, ip_principale: dev.ip_principale, ip_secondario: dev.ip_secondario, porta_http: dev.porta_http, porta_rtsp: dev.porta_rtsp, uscite_hdmi: dev.uscite_hdmi, uscite_vga: dev.uscite_vga, uscite_displayport: dev.uscite_displayport, note: dev.note, parent_id: null })
               if (newDev) {
+                tempToRealId[dev.id] = newDev.id
                 for (const hdd of dev.hdds) await addHdd(newDev.id, { slot: hdd.slot, dimensione_tb: hdd.dimensione_tb, marca: hdd.marca, note: hdd.note })
                 for (const cred of dev.credentials) await addCredential(newDev.id, { ruolo: cred.ruolo, username: cred.username, password: cred.password, note: cred.note })
               }
             }
+            // Seconda passata: imposta parent_id reale per i dispositivi con genitore
+            for (const dev of data.devices) {
+              if (dev.parent_id && tempToRealId[dev.id] && tempToRealId[dev.parent_id]) {
+                await updateDevice(tempToRealId[dev.id], { parent_id: tempToRealId[dev.parent_id] })
+              }
+            }
             // Elimina e ricrea telecamere
             for (const cam of editingInstallation.cameras) await deleteCamera(cam.id)
-            for (const cam of data.cameras) await addCamera(editingInstallation.id, { nome: cam.nome, marca: cam.marca, modello: cam.modello, mpx: cam.mpx, ip: cam.ip, canale: cam.canale, username: cam.username, password: cam.password, posizione: cam.posizione, note: cam.note })
+            for (const cam of data.cameras) {
+              const realDevId = cam.device_id ? (tempToRealId[cam.device_id] ?? cam.device_id) : null
+              await addCamera(editingInstallation.id, { nome: cam.nome, marca: cam.marca, modello: cam.modello, mpx: cam.mpx, ip: cam.ip, canale: cam.canale, username: cam.username, password: cam.password, posizione: cam.posizione, note: cam.note, device_id: realDevId })
+            }
           } else {
             // Create nuovo impianto
             const newInst = await addInstallation({ nome: data.nome, client_id: data.client_id, indirizzo: data.indirizzo, citta: data.citta, provincia: data.provincia, note: data.note })
             if (newInst) {
+              // Prima passata: crea tutti i dispositivi senza parent_id
+              const tempToRealId: Record<string, string> = {}
               for (const dev of data.devices) {
-                const newDev = await addDevice(newInst.id, { tipo: dev.tipo, marca: dev.marca, modello: dev.modello, canali: dev.canali, ip_principale: dev.ip_principale, ip_secondario: dev.ip_secondario, porta_http: dev.porta_http, porta_rtsp: dev.porta_rtsp, uscite_hdmi: dev.uscite_hdmi, uscite_vga: dev.uscite_vga, uscite_displayport: dev.uscite_displayport, note: dev.note })
+                const newDev = await addDevice(newInst.id, { tipo: dev.tipo, marca: dev.marca, modello: dev.modello, canali: dev.canali, ip_principale: dev.ip_principale, ip_secondario: dev.ip_secondario, porta_http: dev.porta_http, porta_rtsp: dev.porta_rtsp, uscite_hdmi: dev.uscite_hdmi, uscite_vga: dev.uscite_vga, uscite_displayport: dev.uscite_displayport, note: dev.note, parent_id: null })
                 if (newDev) {
+                  tempToRealId[dev.id] = newDev.id
                   for (const hdd of dev.hdds) await addHdd(newDev.id, { slot: hdd.slot, dimensione_tb: hdd.dimensione_tb, marca: hdd.marca, note: hdd.note })
                   for (const cred of dev.credentials) await addCredential(newDev.id, { ruolo: cred.ruolo, username: cred.username, password: cred.password, note: cred.note })
                 }
               }
-              for (const cam of data.cameras) await addCamera(newInst.id, { nome: cam.nome, marca: cam.marca, modello: cam.modello, mpx: cam.mpx, ip: cam.ip, canale: cam.canale, username: cam.username, password: cam.password, posizione: cam.posizione, note: cam.note })
+              // Seconda passata: imposta parent_id reale
+              for (const dev of data.devices) {
+                if (dev.parent_id && tempToRealId[dev.id] && tempToRealId[dev.parent_id]) {
+                  await updateDevice(tempToRealId[dev.id], { parent_id: tempToRealId[dev.parent_id] })
+                }
+              }
+              for (const cam of data.cameras) {
+                const realDevId = cam.device_id ? (tempToRealId[cam.device_id] ?? cam.device_id) : null
+                await addCamera(newInst.id, { nome: cam.nome, marca: cam.marca, modello: cam.modello, mpx: cam.mpx, ip: cam.ip, canale: cam.canale, username: cam.username, password: cam.password, posizione: cam.posizione, note: cam.note, device_id: realDevId })
+              }
             }
           }
         }}

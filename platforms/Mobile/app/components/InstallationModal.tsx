@@ -18,6 +18,7 @@ interface InstallationModalProps {
 
 const emptyDevice = (): Omit<InstallationDevice, 'id' | 'installation_id' | 'user_id' | 'created_at' | 'updated_at'> & { _tempId: string; hdds: TempHdd[]; credentials: TempCred[] } => ({
   _tempId: Math.random().toString(36).slice(2),
+  parent_id: null,
   tipo: 'NVR',
   marca: '',
   modello: '',
@@ -99,6 +100,7 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
       setNote(installation.note)
       setDevices(installation.devices.map(d => ({
         _tempId: d.id,
+        parent_id: d.parent_id,
         tipo: d.tipo,
         marca: d.marca,
         modello: d.modello,
@@ -258,6 +260,7 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
           id: d._tempId,
           installation_id: installation?.id || '',
           user_id: installation?.user_id || '',
+          parent_id: d.parent_id,
           tipo: d.tipo,
           marca: d.marca,
           modello: d.modello,
@@ -335,7 +338,7 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className={`px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === tab ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
                   {tab === 'info' && <><MapPin className="w-3 h-3" />Luogo</>}
-                  {tab === 'devices' && <><Server className="w-3 h-3" />Registratori <span className="ml-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px]">{devices.length}</span></>}
+                  {tab === 'devices' && <><Server className="w-3 h-3" />Dispositivi <span className="ml-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px]">{devices.length}</span></>}
                   {tab === 'cameras' && <><Camera className="w-3 h-3" />Telecamere <span className="ml-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px]">{cameras.length}</span></>}
                 </button>
               ))}
@@ -421,10 +424,10 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-slate-700 truncate">
                             {dev.tipo}{dev.marca ? ` • ${dev.marca}` : ''}{dev.modello ? ` ${dev.modello}` : ''}
-                            {!dev.marca && !dev.modello ? ' — Nuovo registratore' : ''}
+                            {!dev.marca && !dev.modello ? ' — Nuovo dispositivo' : ''}
                           </p>
                           <p className="text-[10px] text-slate-400">
-                            {dev.canali} ch{dev.ip_principale ? ` • ${dev.ip_principale}` : ''} • {dev.hdds.length} HDD • {dev.credentials.length} account
+                            {dev.tipo !== 'Switch' ? `${dev.canali} ch • ` : ''}{dev.ip_principale ? `${dev.ip_principale} • ` : ''}{dev.hdds.length} HDD{dev.parent_id ? ` • ↳ ${devices.find(d => d._tempId === dev.parent_id)?.tipo ?? ''}` : ''}
                           </p>
                         </div>
                         <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform ${expandedDeviceIdx === devIdx ? 'rotate-180' : ''}`} />
@@ -438,7 +441,7 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
                               <label className={labelCls}>Tipo</label>
                               <select value={dev.tipo} onChange={e => updateDevice(devIdx, 'tipo', e.target.value as InstallationDevice['tipo'])}
                                 className={inputCls}>
-                                {['NVR', 'DVR', 'XVR', 'HDCVI', 'Altro'].map(t => <option key={t}>{t}</option>)}
+                                {['NVR', 'DVR', 'XVR', 'HDCVI', 'Switch', 'Altro'].map(t => <option key={t}>{t}</option>)}
                               </select>
                             </div>
                             <div>
@@ -451,25 +454,48 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
                             </div>
                           </div>
 
-                          {/* Canali */}
-                          <div className="grid grid-cols-4 gap-3">
+                          {/* Connesso a (nodo padre) */}
+                          {devices.length > 1 && (
                             <div>
-                              <label className={labelCls}>Canali</label>
-                              <input type="number" value={dev.canali} onChange={e => updateDevice(devIdx, 'canali', Number(e.target.value))} min={1} className={inputCls} />
+                              <label className={labelCls}>Connesso a (nodo superiore)</label>
+                              <select
+                                value={dev.parent_id ?? ''}
+                                onChange={e => updateDevice(devIdx, 'parent_id', e.target.value || null)}
+                                className={inputCls}
+                              >
+                                <option value="">— Radice (nessun genitore)</option>
+                                {devices
+                                  .filter((_, i) => i !== devIdx) // escludi se stesso
+                                  .map(d => (
+                                    <option key={d._tempId} value={d._tempId}>
+                                      {d.tipo}{d.marca ? ` ${d.marca}` : ''}{d.modello ? ` ${d.modello}` : ''}
+                                    </option>
+                                  ))}
+                              </select>
                             </div>
-                            <div>
-                              <label className={labelCls}>HDMI</label>
-                              <input type="number" value={dev.uscite_hdmi} onChange={e => updateDevice(devIdx, 'uscite_hdmi', Number(e.target.value))} min={0} className={inputCls} />
+                          )}
+
+                          {/* Canali + uscite video — non applicabile agli Switch */}
+                          {dev.tipo !== 'Switch' && (
+                            <div className="grid grid-cols-4 gap-3">
+                              <div>
+                                <label className={labelCls}>Canali</label>
+                                <input type="number" value={dev.canali} onChange={e => updateDevice(devIdx, 'canali', Number(e.target.value))} min={1} className={inputCls} />
+                              </div>
+                              <div>
+                                <label className={labelCls}>HDMI</label>
+                                <input type="number" value={dev.uscite_hdmi} onChange={e => updateDevice(devIdx, 'uscite_hdmi', Number(e.target.value))} min={0} className={inputCls} />
+                              </div>
+                              <div>
+                                <label className={labelCls}>VGA</label>
+                                <input type="number" value={dev.uscite_vga} onChange={e => updateDevice(devIdx, 'uscite_vga', Number(e.target.value))} min={0} className={inputCls} />
+                              </div>
+                              <div>
+                                <label className={labelCls}>DisplayPort</label>
+                                <input type="number" value={dev.uscite_displayport} onChange={e => updateDevice(devIdx, 'uscite_displayport', Number(e.target.value))} min={0} className={inputCls} />
+                              </div>
                             </div>
-                            <div>
-                              <label className={labelCls}>VGA</label>
-                              <input type="number" value={dev.uscite_vga} onChange={e => updateDevice(devIdx, 'uscite_vga', Number(e.target.value))} min={0} className={inputCls} />
-                            </div>
-                            <div>
-                              <label className={labelCls}>DisplayPort</label>
-                              <input type="number" value={dev.uscite_displayport} onChange={e => updateDevice(devIdx, 'uscite_displayport', Number(e.target.value))} min={0} className={inputCls} />
-                            </div>
-                          </div>
+                          )}
 
                           {/* IP */}
                           <div className="grid grid-cols-2 gap-3">
@@ -572,11 +598,11 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
                           {/* Rimuovi / Duplica dispositivo */}
                           <div className="flex justify-end gap-2 pt-1">
                             <button onClick={() => duplicateDevice(devIdx)} className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 text-xs font-bold flex items-center gap-1 transition-colors">
-                              <Copy className="w-3 h-3" />Duplica registratore
+                              <Copy className="w-3 h-3" />Duplica dispositivo
                             </button>
                             {devices.length > 1 && (
                               <button onClick={() => removeDevice(devIdx)} className="px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 text-xs font-bold flex items-center gap-1 transition-colors">
-                                <Trash2 className="w-3 h-3" />Rimuovi registratore
+                                <Trash2 className="w-3 h-3" />Rimuovi dispositivo
                               </button>
                             )}
                           </div>
@@ -586,7 +612,7 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
                   ))}
 
                   <button onClick={addDevice} className="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-300 text-slate-400 hover:text-blue-500 text-sm font-bold transition-all flex items-center justify-center gap-2">
-                    <Plus className="w-4 h-4" />Aggiungi Registratore
+                    <Plus className="w-4 h-4" />Aggiungi Dispositivo
                   </button>
                 </div>
               )}
