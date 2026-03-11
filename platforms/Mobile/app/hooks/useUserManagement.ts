@@ -22,6 +22,7 @@ export interface UserPermissions {
   can_warehouse: boolean
   can_preventivi: boolean
   can_sopralluoghi: boolean
+  can_installations: boolean
   created_at: string
   updated_at: string
 }
@@ -49,6 +50,7 @@ export const PERMISSION_MODULES = [
   { key: 'can_warehouse', label: 'Magazzino', icon: 'Package' },
   { key: 'can_preventivi', label: 'Preventivi', icon: 'FileText' },
   { key: 'can_sopralluoghi', label: 'Sopralluoghi', icon: 'ClipboardList' },
+  { key: 'can_installations', label: 'Impianti', icon: 'Monitor' },
 ] as const
 
 export type PermissionKey = typeof PERMISSION_MODULES[number]['key']
@@ -69,6 +71,7 @@ const DEFAULT_PERMISSIONS: Omit<UserPermissions, 'id' | 'user_id' | 'created_at'
   can_warehouse: false,
   can_preventivi: false,
   can_sopralluoghi: false,
+  can_installations: false,
 }
 
 export function useUserManagement() {
@@ -108,7 +111,7 @@ export function useUserManagement() {
             can_calls: true, can_lavorazioni: true, can_tasks: true, can_calendar: true,
             can_budget: true, can_passwords: true, can_notes: true, can_clients: true,
             can_visits: true, can_suppliers: true, can_orders: true, can_warehouse: true,
-            can_preventivi: true, can_sopralluoghi: true,
+            can_preventivi: true, can_sopralluoghi: true, can_installations: true,
           } as UserPermissions)
         }
       }

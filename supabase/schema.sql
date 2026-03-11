@@ -468,3 +468,125 @@ CREATE INDEX IF NOT EXISTS sopralluoghi_data_prevista_idx ON public.sopralluoghi
 
 -- Aggiungi can_sopralluoghi alla tabella user_permissions (se esiste già la tabella)
 ALTER TABLE IF EXISTS public.user_permissions ADD COLUMN IF NOT EXISTS can_sopralluoghi BOOLEAN NOT NULL DEFAULT false;
+
+-- ═══════════════════════════════════════════════════════════
+-- INSTALLATIONS TABLE (Impianti di videosorveglianza)
+-- ═══════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.installations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+  nome TEXT NOT NULL,
+  indirizzo TEXT NOT NULL DEFAULT '',
+  citta TEXT NOT NULL DEFAULT '',
+  provincia TEXT NOT NULL DEFAULT '',
+  note TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Dispositivi registratori (NVR / DVR / XVR / HDCVI)
+CREATE TABLE IF NOT EXISTS public.installation_devices (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  installation_id UUID REFERENCES public.installations(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  tipo TEXT NOT NULL DEFAULT 'NVR' CHECK (tipo IN ('NVR', 'DVR', 'XVR', 'HDCVI', 'Altro')),
+  marca TEXT NOT NULL DEFAULT '',
+  modello TEXT NOT NULL DEFAULT '',
+  canali INTEGER NOT NULL DEFAULT 4,
+  ip_principale TEXT NOT NULL DEFAULT '',
+  ip_secondario TEXT NOT NULL DEFAULT '',
+  porta_http INTEGER,
+  porta_rtsp INTEGER,
+  uscite_hdmi INTEGER NOT NULL DEFAULT 1,
+  uscite_vga INTEGER NOT NULL DEFAULT 1,
+  uscite_displayport INTEGER NOT NULL DEFAULT 0,
+  note TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- HDD per ogni dispositivo
+CREATE TABLE IF NOT EXISTS public.device_hdds (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  device_id UUID REFERENCES public.installation_devices(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  slot INTEGER NOT NULL DEFAULT 1,
+  dimensione_tb NUMERIC(5,2) NOT NULL DEFAULT 1,
+  marca TEXT NOT NULL DEFAULT '',
+  note TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Credenziali per ogni dispositivo (admin, guest, ecc.)
+CREATE TABLE IF NOT EXISTS public.device_credentials (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  device_id UUID REFERENCES public.installation_devices(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  ruolo TEXT NOT NULL DEFAULT 'admin',
+  username TEXT NOT NULL DEFAULT '',
+  password TEXT NOT NULL DEFAULT '',
+  note TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Telecamere per ogni impianto
+CREATE TABLE IF NOT EXISTS public.installation_cameras (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  installation_id UUID REFERENCES public.installations(id) ON DELETE CASCADE NOT NULL,
+  device_id UUID REFERENCES public.installation_devices(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  nome TEXT NOT NULL DEFAULT '',
+  marca TEXT NOT NULL DEFAULT '',
+  modello TEXT NOT NULL DEFAULT '',
+  mpx NUMERIC(4,1) NOT NULL DEFAULT 2,
+  ip TEXT NOT NULL DEFAULT '',
+  canale INTEGER,
+  username TEXT NOT NULL DEFAULT '',
+  password TEXT NOT NULL DEFAULT '',
+  posizione TEXT NOT NULL DEFAULT '',
+  note TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS
+ALTER TABLE public.installations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.installation_devices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.device_hdds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.device_credentials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.installation_cameras ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own installations" ON public.installations FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own installations" ON public.installations FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own installations" ON public.installations FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own installations" ON public.installations FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own installation_devices" ON public.installation_devices FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own installation_devices" ON public.installation_devices FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own installation_devices" ON public.installation_devices FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own installation_devices" ON public.installation_devices FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own device_hdds" ON public.device_hdds FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own device_hdds" ON public.device_hdds FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own device_hdds" ON public.device_hdds FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own device_hdds" ON public.device_hdds FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own device_credentials" ON public.device_credentials FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own device_credentials" ON public.device_credentials FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own device_credentials" ON public.device_credentials FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own device_credentials" ON public.device_credentials FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own installation_cameras" ON public.installation_cameras FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own installation_cameras" ON public.installation_cameras FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own installation_cameras" ON public.installation_cameras FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own installation_cameras" ON public.installation_cameras FOR DELETE USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS installations_user_id_idx ON public.installations(user_id);
+CREATE INDEX IF NOT EXISTS installations_client_id_idx ON public.installations(client_id);
+CREATE INDEX IF NOT EXISTS installation_devices_installation_id_idx ON public.installation_devices(installation_id);
+CREATE INDEX IF NOT EXISTS device_hdds_device_id_idx ON public.device_hdds(device_id);
+CREATE INDEX IF NOT EXISTS device_credentials_device_id_idx ON public.device_credentials(device_id);
+CREATE INDEX IF NOT EXISTS installation_cameras_installation_id_idx ON public.installation_cameras(installation_id);
+
+ALTER TABLE IF EXISTS public.user_permissions ADD COLUMN IF NOT EXISTS can_installations BOOLEAN NOT NULL DEFAULT false;

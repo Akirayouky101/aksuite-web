@@ -6,7 +6,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, ChevronLeft, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -56,6 +56,8 @@ const CsvImportModal = dynamic(() => import('./components/CsvImportModal'), { ss
 const LoadingListModal = dynamic(() => import('./components/LoadingListModal'), { ssr: false })
 const SopralluoghiListModal = dynamic(() => import('./components/SopralluoghiListModal'), { ssr: false })
 const SopralluogoModal = dynamic(() => import('./components/SopralluogoModal'), { ssr: false })
+const InstallationListModal = dynamic(() => import('./components/InstallationListModal'), { ssr: false })
+const InstallationModal = dynamic(() => import('./components/InstallationModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -80,6 +82,7 @@ import { useWarehouse } from './hooks/useWarehouse'
 import { useOrders } from './hooks/useOrders'
 import { usePreventivi } from './hooks/usePreventivi'
 import { useSopralluoghi } from './hooks/useSopralluoghi'
+import { useInstallations } from './hooks/useInstallations'
 import { useUserManagement } from './hooks/useUserManagement'
 import { useActivityLog } from './hooks/useActivityLog'
 import { supabase } from '@/lib/supabase'
@@ -128,6 +131,9 @@ export default function Home() {
   const [isSopralluoghiListModalOpen, setIsSopralluoghiListModalOpen] = useState(false)
   const [isSopralluogoModalOpen, setIsSopralluogoModalOpen] = useState(false)
   const [editingSopralluogo, setEditingSopralluogo] = useState<any>(null)
+  const [isInstallationListModalOpen, setIsInstallationListModalOpen] = useState(false)
+  const [isInstallationModalOpen, setIsInstallationModalOpen] = useState(false)
+  const [editingInstallation, setEditingInstallation] = useState<any>(null)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -189,6 +195,7 @@ export default function Home() {
   const { orders, addOrder, updateOrder, deleteOrder, addOrderItem, deleteOrderItem, getOrderItems, receiveOrder } = useOrders()
   const { preventivi, addPreventivo, updatePreventivo, deletePreventivo, updateStato: updatePreventivoStato } = usePreventivi()
   const { sopralluoghi, addSopralluogo, updateSopralluogo, deleteSopralluogo, updateStato: updateSopralluogoStato } = useSopralluoghi()
+  const { installations, loadFull: loadInstallationFull, addInstallation, updateInstallation, deleteInstallation, addDevice, updateDevice, deleteDevice, addHdd, deleteHdd, addCredential, updateCredential, deleteCredential, addCamera, updateCamera, deleteCamera } = useInstallations()
   const { users: managedUsers, isAdmin, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
 
@@ -332,6 +339,7 @@ export default function Home() {
       { id: 'clients', perm: 'can_clients' as const, label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length, section: 'operativo' },
       { id: 'lavorazioni', perm: 'can_lavorazioni' as const, label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni, section: 'operativo' },
       { id: 'sopralluoghi', perm: 'can_sopralluoghi' as const, label: 'Sopralluoghi', icon: MapPin, onClick: () => setIsSopralluoghiListModalOpen(true), count: sopralluoghi.length, section: 'operativo' },
+      { id: 'installations', perm: 'can_installations' as const, label: 'Impianti', icon: Monitor, onClick: () => setIsInstallationListModalOpen(true), count: installations.length, section: 'operativo' },
       // --- Magazzino & Commerciale ---
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length, section: 'commerciale' },
@@ -1361,6 +1369,55 @@ export default function Home() {
         editSopralluogo={editingSopralluogo}
         onSave={addSopralluogo}
         onUpdate={updateSopralluogo}
+      />}
+
+      {isInstallationListModalOpen && <InstallationListModal
+        isOpen={isInstallationListModalOpen}
+        onClose={() => setIsInstallationListModalOpen(false)}
+        installations={installations}
+        clients={clients}
+        onAdd={() => { setEditingInstallation(null); setIsInstallationListModalOpen(false); setIsInstallationModalOpen(true) }}
+        onEdit={(inst) => { setEditingInstallation(inst); setIsInstallationListModalOpen(false); setIsInstallationModalOpen(true) }}
+        onDelete={deleteInstallation}
+        onLoadFull={loadInstallationFull}
+      />}
+
+      {isInstallationModalOpen && <InstallationModal
+        isOpen={isInstallationModalOpen}
+        onClose={() => { setIsInstallationModalOpen(false); setIsInstallationListModalOpen(true) }}
+        clients={clients}
+        installation={editingInstallation}
+        onSave={async (data) => {
+          if (editingInstallation) {
+            // Update: aggiorna info base
+            await updateInstallation(editingInstallation.id, { nome: data.nome, client_id: data.client_id, indirizzo: data.indirizzo, citta: data.citta, provincia: data.provincia, note: data.note })
+            // Elimina e ricrea dispositivi
+            for (const dev of editingInstallation.devices) await deleteDevice(dev.id)
+            for (const dev of data.devices) {
+              const newDev = await addDevice(editingInstallation.id, { tipo: dev.tipo, marca: dev.marca, modello: dev.modello, canali: dev.canali, ip_principale: dev.ip_principale, ip_secondario: dev.ip_secondario, porta_http: dev.porta_http, porta_rtsp: dev.porta_rtsp, uscite_hdmi: dev.uscite_hdmi, uscite_vga: dev.uscite_vga, uscite_displayport: dev.uscite_displayport, note: dev.note })
+              if (newDev) {
+                for (const hdd of dev.hdds) await addHdd(newDev.id, { slot: hdd.slot, dimensione_tb: hdd.dimensione_tb, marca: hdd.marca, note: hdd.note })
+                for (const cred of dev.credentials) await addCredential(newDev.id, { ruolo: cred.ruolo, username: cred.username, password: cred.password, note: cred.note })
+              }
+            }
+            // Elimina e ricrea telecamere
+            for (const cam of editingInstallation.cameras) await deleteCamera(cam.id)
+            for (const cam of data.cameras) await addCamera(editingInstallation.id, { nome: cam.nome, marca: cam.marca, modello: cam.modello, mpx: cam.mpx, ip: cam.ip, canale: cam.canale, username: cam.username, password: cam.password, posizione: cam.posizione, note: cam.note })
+          } else {
+            // Create nuovo impianto
+            const newInst = await addInstallation({ nome: data.nome, client_id: data.client_id, indirizzo: data.indirizzo, citta: data.citta, provincia: data.provincia, note: data.note })
+            if (newInst) {
+              for (const dev of data.devices) {
+                const newDev = await addDevice(newInst.id, { tipo: dev.tipo, marca: dev.marca, modello: dev.modello, canali: dev.canali, ip_principale: dev.ip_principale, ip_secondario: dev.ip_secondario, porta_http: dev.porta_http, porta_rtsp: dev.porta_rtsp, uscite_hdmi: dev.uscite_hdmi, uscite_vga: dev.uscite_vga, uscite_displayport: dev.uscite_displayport, note: dev.note })
+                if (newDev) {
+                  for (const hdd of dev.hdds) await addHdd(newDev.id, { slot: hdd.slot, dimensione_tb: hdd.dimensione_tb, marca: hdd.marca, note: hdd.note })
+                  for (const cred of dev.credentials) await addCredential(newDev.id, { ruolo: cred.ruolo, username: cred.username, password: cred.password, note: cred.note })
+                }
+              }
+              for (const cam of data.cameras) await addCamera(newInst.id, { nome: cam.nome, marca: cam.marca, modello: cam.modello, mpx: cam.mpx, ip: cam.ip, canale: cam.canale, username: cam.username, password: cam.password, posizione: cam.posizione, note: cam.note })
+            }
+          }
+        }}
       />}
 
       {isUserManagementOpen && <UserManagementModal
