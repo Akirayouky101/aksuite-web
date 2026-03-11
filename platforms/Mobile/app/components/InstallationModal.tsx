@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Save, Plus, Trash2, Eye, EyeOff, Server, Camera, HardDrive, KeyRound, Search, ChevronDown, MapPin, Monitor } from 'lucide-react'
+import { X, Save, Plus, Trash2, Eye, EyeOff, Server, Camera, HardDrive, KeyRound, Search, ChevronDown, MapPin, Monitor, Copy } from 'lucide-react'
 import {
   Installation, InstallationDevice, DeviceHdd, DeviceCredential, InstallationCamera, InstallationFull
 } from '../hooks/useInstallations'
@@ -200,6 +200,42 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
     setCameras(prev => prev.map((c, i) => i !== idx ? c : { ...c, [field]: value }))
   }
   const removeCamera = (idx: number) => setCameras(prev => prev.filter((_, i) => i !== idx))
+
+  // IP +1 sull'ultimo ottetto
+  const incrementIp = (ip: string): string => {
+    if (!ip || !ip.trim()) return ip
+    const parts = ip.split('.')
+    if (parts.length !== 4) return ip
+    const last = parseInt(parts[3], 10)
+    if (isNaN(last)) return ip
+    parts[3] = String(last + 1)
+    return parts.join('.')
+  }
+
+  const duplicateDevice = (idx: number) => {
+    const src = devices[idx]
+    const nd: TempDevice = {
+      ...src,
+      _tempId: Math.random().toString(36).slice(2),
+      ip_principale: incrementIp(src.ip_principale),
+      ip_secondario: incrementIp(src.ip_secondario),
+      hdds: src.hdds.map(h => ({ ...h, _tempId: Math.random().toString(36).slice(2) })),
+      credentials: src.credentials.map(c => ({ ...c, _tempId: Math.random().toString(36).slice(2) })),
+    }
+    setDevices(prev => [...prev.slice(0, idx + 1), nd, ...prev.slice(idx + 1)])
+    setExpandedDeviceIdx(idx + 1)
+  }
+
+  const duplicateCamera = (idx: number) => {
+    const src = cameras[idx]
+    const nc: TempCamera = {
+      ...src,
+      _tempId: Math.random().toString(36).slice(2),
+      ip: incrementIp(src.ip),
+      canale: src.canale !== null ? src.canale + 1 : null,
+    }
+    setCameras(prev => [...prev.slice(0, idx + 1), nc, ...prev.slice(idx + 1)])
+  }
 
   const togglePassword = (key: string) => setVisiblePasswords(prev => ({ ...prev, [key]: !prev[key] }))
 
@@ -533,14 +569,17 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
                             <textarea value={dev.note} onChange={e => updateDevice(devIdx, 'note', e.target.value)} rows={2} placeholder="Note tecniche..." className={inputCls + ' resize-none'} />
                           </div>
 
-                          {/* Rimuovi dispositivo */}
-                          {devices.length > 1 && (
-                            <div className="flex justify-end pt-1">
+                          {/* Rimuovi / Duplica dispositivo */}
+                          <div className="flex justify-end gap-2 pt-1">
+                            <button onClick={() => duplicateDevice(devIdx)} className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 text-xs font-bold flex items-center gap-1 transition-colors">
+                              <Copy className="w-3 h-3" />Duplica registratore
+                            </button>
+                            {devices.length > 1 && (
                               <button onClick={() => removeDevice(devIdx)} className="px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 text-xs font-bold flex items-center gap-1 transition-colors">
                                 <Trash2 className="w-3 h-3" />Rimuovi registratore
                               </button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -570,9 +609,14 @@ export default function InstallationModal({ isOpen, onClose, onSave, installatio
                           </div>
                           <span className="text-xs font-bold text-slate-600">Telecamera {camIdx + 1}{cam.nome ? ` — ${cam.nome}` : ''}</span>
                         </div>
-                        <button onClick={() => removeCamera(camIdx)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => duplicateCamera(camIdx)} className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-300 hover:text-blue-400 transition-colors" title="Duplica telecamera">
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => removeCamera(camIdx)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors" title="Rimuovi telecamera">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
