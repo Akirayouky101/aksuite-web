@@ -148,48 +148,49 @@ export default function PasswordListModal({
                   </div>
 
                   {/* Search Bar */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500" />
+                    <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="🔍 Cerca per titolo, username, sito o categoria..."
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 font-bold placeholder-slate-400 focus:border-indigo-400 focus:outline-none transition-all"
+                      placeholder="Cerca per titolo, username, sito o categoria..."
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:border-indigo-400 focus:outline-none transition-all"
                     />
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-500 hover:text-slate-800 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                         aria-label="Cancella ricerca"
                       >
-                        <X className="w-5 h-5" />
+                        <X className="w-4 h-4" />
                       </button>
                     )}
-                  </div>
+                    </div>
 
                   {/* Filters and Sorting */}
                   <div className="flex flex-wrap gap-3 items-center">
                     {/* Favorites Toggle */}
                     <button
                       onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                      className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${
-                        showFavoritesOnly 
-                          ? 'bg-yellow-500 text-black' 
-                          : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all border ${
+                        showFavoritesOnly
+                          ? 'bg-amber-50 text-amber-600 border-amber-200'
+                          : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      <Star className={`w-4 h-4 ${showFavoritesOnly ? 'fill-black' : ''}`} />
-                      Solo Preferiti
+                      <Star className={`w-3.5 h-3.5 ${showFavoritesOnly ? 'fill-amber-400 text-amber-400' : ''}`} />
+                      Solo preferiti
                     </button>
 
                     {/* Category Filter */}
                     <div className="flex items-center gap-2">
                       <Filter className="w-4 h-4 text-indigo-500" />
                       <select
+                        title="Filtra per categoria"
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-bold text-sm focus:border-indigo-400 focus:outline-none"
+                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-sm focus:border-indigo-400 focus:outline-none"
                       >
                         {categories.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -201,9 +202,10 @@ export default function PasswordListModal({
                     <div className="flex items-center gap-2">
                       <ArrowUpDown className="w-4 h-4 text-indigo-500" />
                       <select
+                        title="Ordina per"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as any)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-bold text-sm focus:border-indigo-400 focus:outline-none"
+                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-sm focus:border-indigo-400 focus:outline-none"
                       >
                         <option value="date">Data (recenti)</option>
                         <option value="name">Nome (A-Z)</option>
@@ -216,196 +218,176 @@ export default function PasswordListModal({
                 {/* Password List */}
                 <div className="relative z-10 p-6 overflow-y-auto flex-1">
                   {filteredPasswords.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-8xl mb-4">{searchQuery ? '🔍' : '🔒'}</div>
-                      <h3 className="text-base font-bold text-indigo-500 mb-2">
-                        {searchQuery ? 'Nessun risultato' : 'Nessuna password salvata'}
+                    <div className="text-center py-16">
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                        <KeyRound className="w-5 h-5 text-slate-400" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-600 mb-1">
+                        {searchQuery ? 'Nessun risultato' : 'Nessuna credenziale salvata'}
                       </h3>
-                      <p className="text-indigo-600">
-                        {searchQuery ? 'Prova a cercare con altri termini' : 'Inizia aggiungendo la tua prima password!'}
+                      <p className="text-xs text-slate-400">
+                        {searchQuery ? 'Prova con termini diversi' : 'Aggiungi la prima credenziale al vault'}
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {filteredPasswords.map((pwd, index) => (
-                        <motion.div
+                    <div className="space-y-2">
+                      {filteredPasswords.map((pwd) => (
+                        <div
                           key={pwd.id}
-                          initial={{ opacity: 0, x: -50 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="relative group"
+                          onClick={() => setSelectedPassword(pwd)}
+                          className="bg-white border border-slate-200 rounded-xl p-4 hover:border-indigo-300 hover:bg-slate-50/50 transition-all cursor-pointer"
                         >
-                          <div 
-                            onClick={() => setSelectedPassword(pwd)}
-                            className="bg-gradient-to-r from-white to-slate-50 border border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-all cursor-pointer hover:bg-slate-50"
-                          >
-                            <div className="flex items-start gap-4">
-                              {/* Emoji */}
-                              <div className="text-5xl">{pwd.emoji}</div>
+                            <div className="flex items-start gap-3">
+                              {/* Icona categoria */}
+                              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <KeyRound className="w-4 h-4 text-slate-500" />
+                              </div>
                               
                               {/* Content */}
                               <div className="flex-1 min-w-0">
-                                {/* Title and Category */}
-                                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                  <div className="flex items-center gap-2">
-                                    {pwd.isFavorite && (
-                                      <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                    )}
-                                    <h3 className="text-xl font-bold text-indigo-500">
-                                      {pwd.title}
-                                    </h3>
-                                  </div>
-                                  <span className="px-3 py-1 bg-violet-50 border border-violet-200/60 rounded-full text-xs font-bold text-violet-500">
+                                {/* Titolo e categoria */}
+                                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                  {pwd.isFavorite && (
+                                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+                                  )}
+                                  <h3 className="text-sm font-semibold text-slate-800 truncate">
+                                    {pwd.title}
+                                  </h3>
+                                  <span className="px-2 py-0.5 bg-slate-100 rounded-full text-xs text-slate-500 flex-shrink-0">
                                     {pwd.category}
                                   </span>
                                 </div>
 
                                 {/* Username */}
-                                <div className="mb-2">
+                                <div className="mb-1.5">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-sm text-indigo-500 font-bold">Username:</span>
-                                    <span className="text-slate-800 font-mono">{pwd.username}</span>
-                                    <motion.button
-                                      whileHover={{ scale: 1.1 }}
-                                      whileTap={{ scale: 0.9 }}
+                                    <span className="text-xs text-slate-400 w-16 flex-shrink-0">Username</span>
+                                    <span className="text-sm text-slate-700 font-mono truncate">{pwd.username}</span>
+                                    <button
                                       onClick={(e) => { e.stopPropagation(); copyToClipboard(pwd.username, `${pwd.id}-user`); }}
-                                      className="p-1 hover:bg-indigo-100 rounded"
+                                      className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0"
                                       title="Copia username"
                                     >
                                       {copiedId === `${pwd.id}-user` ? (
-                                        <span className="text-green-400 text-xs font-bold">✓</span>
+                                        <span className="text-green-500 text-xs font-medium">✓</span>
                                       ) : (
-                                        <Copy className="w-3 h-3 text-indigo-500" />
+                                        <Copy className="w-3 h-3 text-slate-400" />
                                       )}
-                                    </motion.button>
+                                    </button>
                                   </div>
                                 </div>
 
                                 {/* Password */}
-                                <div className="mb-2">
+                                <div className="mb-1.5">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-sm text-indigo-500 font-bold">Password:</span>
-                                    <code className="text-slate-800 font-mono">
-                                      {visiblePasswords.has(pwd.id) ? pwd.password : '••••••••••••'}
+                                    <span className="text-xs text-slate-400 w-16 flex-shrink-0">Password</span>
+                                    <code className="text-sm text-slate-700 font-mono">
+                                      {visiblePasswords.has(pwd.id) ? pwd.password : '••••••••••'}
                                     </code>
-                                    <motion.button
-                                      whileHover={{ scale: 1.1 }}
-                                      whileTap={{ scale: 0.9 }}
+                                    <button
                                       onClick={(e) => { e.stopPropagation(); togglePasswordVisibility(pwd.id); }}
-                                      className="p-1 hover:bg-indigo-100 rounded"
-                                      title={visiblePasswords.has(pwd.id) ? "Nascondi" : "Mostra"}
+                                      className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0"
+                                      title={visiblePasswords.has(pwd.id) ? 'Nascondi' : 'Mostra'}
                                     >
                                       {visiblePasswords.has(pwd.id) ? (
-                                        <EyeOff className="w-4 h-4 text-indigo-500" />
+                                        <EyeOff className="w-3.5 h-3.5 text-slate-400" />
                                       ) : (
-                                        <Eye className="w-4 h-4 text-indigo-500" />
+                                        <Eye className="w-3.5 h-3.5 text-slate-400" />
                                       )}
-                                    </motion.button>
-                                    <motion.button
-                                      whileHover={{ scale: 1.1 }}
-                                      whileTap={{ scale: 0.9 }}
+                                    </button>
+                                    <button
                                       onClick={(e) => { e.stopPropagation(); copyToClipboard(pwd.password, `${pwd.id}-pass`); }}
-                                      className="p-1 hover:bg-indigo-100 rounded"
+                                      className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0"
                                       title="Copia password"
                                     >
                                       {copiedId === `${pwd.id}-pass` ? (
-                                        <span className="text-green-400 text-xs font-bold">✓</span>
+                                        <span className="text-green-500 text-xs font-medium">✓</span>
                                       ) : (
-                                        <Copy className="w-3 h-3 text-indigo-500" />
+                                        <Copy className="w-3 h-3 text-slate-400" />
                                       )}
-                                    </motion.button>
+                                    </button>
                                   </div>
                                 </div>
 
                                 {/* Website */}
                                 {pwd.website && (
-                                  <div>
+                                  <div className="mb-1.5">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-sm text-indigo-500 font-bold">Sito:</span>
-                                      <a 
-                                        href={pwd.website} 
-                                        target="_blank" 
+                                      <span className="text-xs text-slate-400 w-16 flex-shrink-0">Sito</span>
+                                      <a
+                                        href={pwd.website}
+                                        target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-indigo-400 hover:text-indigo-600 font-mono text-sm flex items-center gap-1 hover:underline"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-sm text-indigo-500 hover:text-indigo-700 font-mono flex items-center gap-1 hover:underline truncate"
                                       >
                                         {pwd.website}
-                                        <ExternalLink className="w-3 h-3" />
+                                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
                                       </a>
                                     </div>
                                   </div>
                                 )}
 
-                                {/* PIN / Codice Segreto */}
+                                {/* PIN */}
                                 {pwd.pin_code && (
-                                  <div className="mb-1">
+                                  <div>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-sm text-indigo-500 font-bold">PIN:</span>
-                                      <code className="text-slate-800 font-mono tracking-[0.3em]">
-                                        {visiblePins.has(pwd.id) ? pwd.pin_code : '\u25CF'.repeat(pwd.pin_code.length)}
+                                      <span className="text-xs text-slate-400 w-16 flex-shrink-0">PIN</span>
+                                      <code className="text-sm text-slate-700 font-mono tracking-widest">
+                                        {visiblePins.has(pwd.id) ? pwd.pin_code : '●'.repeat(pwd.pin_code.length)}
                                       </code>
-                                      <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
+                                      <button
                                         onClick={(e) => { e.stopPropagation(); togglePinVisibility(pwd.id); }}
-                                        className="p-1 hover:bg-indigo-100 rounded"
-                                        title={visiblePins.has(pwd.id) ? "Nascondi PIN" : "Mostra PIN"}
+                                        className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0"
+                                        title={visiblePins.has(pwd.id) ? 'Nascondi PIN' : 'Mostra PIN'}
                                       >
                                         {visiblePins.has(pwd.id) ? (
-                                          <EyeOff className="w-4 h-4 text-indigo-500" />
+                                          <EyeOff className="w-3.5 h-3.5 text-slate-400" />
                                         ) : (
-                                          <Eye className="w-4 h-4 text-indigo-500" />
+                                          <Eye className="w-3.5 h-3.5 text-slate-400" />
                                         )}
-                                      </motion.button>
-                                      <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
+                                      </button>
+                                      <button
                                         onClick={(e) => { e.stopPropagation(); copyToClipboard(pwd.pin_code!, `${pwd.id}-pin`); }}
-                                        className="p-1 hover:bg-indigo-100 rounded"
+                                        className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0"
                                         title="Copia PIN"
                                       >
                                         {copiedId === `${pwd.id}-pin` ? (
-                                          <span className="text-green-400 text-xs font-bold">{'\u2713'}</span>
+                                          <span className="text-green-500 text-xs font-medium">✓</span>
                                         ) : (
-                                          <Copy className="w-3 h-3 text-indigo-500" />
+                                          <Copy className="w-3 h-3 text-slate-400" />
                                         )}
-                                      </motion.button>
+                                      </button>
                                     </div>
                                   </div>
                                 )}
                               </div>
 
-                              {/* Actions */}
-                              <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                              {/* Azioni */}
+                              <div className="flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
                                 {onEdit && (
-                                  <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
+                                  <button
                                     onClick={() => onEdit(pwd)}
-                                    className="p-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 rounded-lg"
-                                    title="Modifica password"
+                                    className="p-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-all"
+                                    title="Modifica"
                                   >
-                                    <Edit className="w-4 h-4 text-indigo-500" />
-                                  </motion.button>
+                                    <Edit className="w-3.5 h-3.5 text-slate-500 hover:text-indigo-500" />
+                                  </button>
                                 )}
                                 {onDelete && (
-                                  <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
+                                  <button
                                     onClick={() => {
-                                      if (confirm('Sei sicuro di voler eliminare questa password?')) {
-                                        onDelete(pwd.id)
-                                      }
+                                      if (confirm('Eliminare questa credenziale?')) onDelete(pwd.id)
                                     }}
-                                    className="p-2 bg-red-50 hover:bg-red-100 border border-red-200/60 rounded-lg"
-                                    title="Elimina password"
+                                    className="p-1.5 bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-lg transition-all"
+                                    title="Elimina"
                                   >
-                                    <Trash2 className="w-4 h-4 text-red-400" />
-                                  </motion.button>
+                                    <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-400" />
+                                  </button>
                                 )}
                               </div>
                             </div>
                           </div>
-                        </motion.div>
                       ))}
                     </div>
                   )}
@@ -435,174 +417,159 @@ export default function PasswordListModal({
                   onClick={(e) => e.stopPropagation()}
                   className="relative w-full max-w-2xl my-8"
                 >
-                  <div className="hidden" />
-                  
-                  {/* Modal content */}
-                  <div className="relative bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 p-8">
+                  <div className="relative bg-white/95 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 p-6">
                     {/* Close button */}
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                    <button
                       onClick={() => setSelectedPassword(null)}
-                      className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center"
+                      title="Chiudi"
+                      className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200/60 flex items-center justify-center transition-all"
                     >
-                      <X className="w-6 h-6 text-slate-800" strokeWidth={3} />
-                    </motion.button>
+                      <X className="w-4 h-4 text-slate-500" />
+                    </button>
 
-                    {/* Emoji */}
-                    <div className="text-center mb-6">
-                      <div className="text-8xl mb-4">{selectedPassword.emoji}</div>
-                      <h2 className="text-4xl font-bold text-slate-800 mb-2">
-                        {selectedPassword.title}
-                      </h2>
-                      <span className="inline-block px-4 py-2 bg-violet-50 border border-violet-200/60 rounded-full text-sm font-bold text-violet-500">
+                    {/* Header */}
+                    <div className="mb-5 pr-10">
+                      <div className="flex items-center gap-2 mb-1">
+                        {selectedPassword.isFavorite && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
+                        <h2 className="text-lg font-semibold text-slate-800">{selectedPassword.title}</h2>
+                      </div>
+                      <span className="inline-block px-2.5 py-0.5 bg-slate-100 rounded-full text-xs text-slate-500">
                         {selectedPassword.category}
                       </span>
                     </div>
 
                     {/* Details */}
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {/* Username */}
-                      <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
-                        <div className="text-sm text-indigo-500 font-bold mb-2">👤 USERNAME</div>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                        <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Username</div>
                         <div className="flex items-center justify-between gap-3">
-                          <code className="text-xl text-slate-800 font-mono flex-1 break-all">
+                          <code className="text-sm text-slate-800 font-mono flex-1 break-all">
                             {selectedPassword.username}
                           </code>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                          <button
                             onClick={() => copyToClipboard(selectedPassword.username, `detail-user`)}
-                            className="p-3 bg-indigo-100 hover:bg-violet-100 border border-slate-200 rounded-lg shrink-0"
+                            className="p-2 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg shrink-0 transition-all"
+                            title="Copia"
                           >
                             {copiedId === `detail-user` ? (
-                              <span className="text-green-400 font-bold">✓ Copiato!</span>
+                              <span className="text-green-500 text-xs font-medium">✓</span>
                             ) : (
-                              <Copy className="w-5 h-5 text-indigo-500" />
+                              <Copy className="w-4 h-4 text-slate-400" />
                             )}
-                          </motion.button>
+                          </button>
                         </div>
                       </div>
 
                       {/* Password */}
-                      <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
-                        <div className="text-sm text-pink-400 font-bold mb-2">🔐 PASSWORD</div>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                        <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Password</div>
                         <div className="flex items-center justify-between gap-3">
-                          <code className="text-xl text-slate-800 font-mono flex-1 break-all">
+                          <code className="text-sm text-slate-800 font-mono flex-1 break-all">
                             {visiblePasswords.has(selectedPassword.id) ? selectedPassword.password : '••••••••••••••••'}
                           </code>
-                          <div className="flex gap-2 shrink-0">
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
+                          <div className="flex gap-1.5 shrink-0">
+                            <button
                               onClick={() => togglePasswordVisibility(selectedPassword.id)}
-                              className="p-3 bg-pink-50 hover:bg-pink-100 border border-slate-200 rounded-lg"
+                              className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-all"
+                              title={visiblePasswords.has(selectedPassword.id) ? 'Nascondi' : 'Mostra'}
                             >
                               {visiblePasswords.has(selectedPassword.id) ? (
-                                <EyeOff className="w-5 h-5 text-pink-400" />
+                                <EyeOff className="w-4 h-4 text-slate-400" />
                               ) : (
-                                <Eye className="w-5 h-5 text-pink-400" />
+                                <Eye className="w-4 h-4 text-slate-400" />
                               )}
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
+                            </button>
+                            <button
                               onClick={() => copyToClipboard(selectedPassword.password, `detail-pass`)}
-                              className="p-3 bg-pink-50 hover:bg-pink-100 border border-slate-200 rounded-lg"
+                              className="p-2 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-all"
+                              title="Copia"
                             >
                               {copiedId === `detail-pass` ? (
-                                <span className="text-green-400 font-bold">✓</span>
+                                <span className="text-green-500 text-xs font-medium">✓</span>
                               ) : (
-                                <Copy className="w-5 h-5 text-pink-400" />
+                                <Copy className="w-4 h-4 text-slate-400" />
                               )}
-                            </motion.button>
+                            </button>
                           </div>
                         </div>
                       </div>
 
                       {/* Website */}
                       {selectedPassword.website && (
-                        <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
-                          <div className="text-sm text-purple-400 font-bold mb-2">{'\uD83C\uDF10'} SITO WEB</div>
-                          <a 
-                            href={selectedPassword.website} 
-                            target="_blank" 
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                          <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Sito web</div>
+                          <a
+                            href={selectedPassword.website}
+                            target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xl text-indigo-400 hover:text-indigo-600 font-mono flex items-center gap-2 hover:underline break-all"
+                            className="text-sm text-indigo-500 hover:text-indigo-700 font-mono flex items-center gap-1.5 hover:underline break-all"
                           >
                             {selectedPassword.website}
-                            <ExternalLink className="w-5 h-5 shrink-0" />
+                            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                           </a>
                         </div>
                       )}
 
-                      {/* PIN / Codice Segreto */}
+                      {/* PIN */}
                       {selectedPassword.pin_code && (
-                        <div className="bg-white/70 border border-slate-200/50 rounded-xl p-4">
-                          <div className="text-sm text-indigo-500 font-bold mb-2 flex items-center gap-1.5">
-                            <Hash className="w-4 h-4" /> PIN / CODICE
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                          <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <Hash className="w-3.5 h-3.5" /> PIN / Codice
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <code className="text-xl text-slate-800 font-mono flex-1 break-all tracking-[0.3em]">
-                              {visiblePins.has(selectedPassword.id) ? selectedPassword.pin_code : '\u25CF'.repeat(selectedPassword.pin_code.length)}
+                            <code className="text-sm text-slate-800 font-mono flex-1 break-all tracking-widest">
+                              {visiblePins.has(selectedPassword.id) ? selectedPassword.pin_code : '●'.repeat(selectedPassword.pin_code.length)}
                             </code>
-                            <div className="flex gap-2 shrink-0">
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
+                            <div className="flex gap-1.5 shrink-0">
+                              <button
                                 onClick={() => togglePinVisibility(selectedPassword.id)}
-                                className="p-3 bg-indigo-50 hover:bg-indigo-100 border border-slate-200 rounded-lg"
+                                className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-all"
+                                title={visiblePins.has(selectedPassword.id) ? 'Nascondi PIN' : 'Mostra PIN'}
                               >
                                 {visiblePins.has(selectedPassword.id) ? (
-                                  <EyeOff className="w-5 h-5 text-indigo-500" />
+                                  <EyeOff className="w-4 h-4 text-slate-400" />
                                 ) : (
-                                  <Eye className="w-5 h-5 text-indigo-500" />
+                                  <Eye className="w-4 h-4 text-slate-400" />
                                 )}
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
+                              </button>
+                              <button
                                 onClick={() => copyToClipboard(selectedPassword.pin_code!, `detail-pin`)}
-                                className="p-3 bg-indigo-50 hover:bg-indigo-100 border border-slate-200 rounded-lg"
+                                className="p-2 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-all"
+                                title="Copia PIN"
                               >
                                 {copiedId === `detail-pin` ? (
-                                  <span className="text-green-400 font-bold">{'\u2713'}</span>
+                                  <span className="text-green-500 text-xs font-medium">✓</span>
                                 ) : (
-                                  <Copy className="w-5 h-5 text-indigo-500" />
+                                  <Copy className="w-4 h-4 text-slate-400" />
                                 )}
-                              </motion.button>
+                              </button>
                             </div>
                           </div>
                         </div>
                       )}
 
-                      {/* Created date */}
-                      <div className="text-center text-sm text-indigo-500 font-bold">
-                        📅 Creata il: {new Date(selectedPassword.createdAt).toLocaleDateString('it-IT', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
+                      {/* Data creazione */}
+                      <div className="text-center text-xs text-slate-400 pt-1">
+                        Creata il {new Date(selectedPassword.createdAt).toLocaleDateString('it-IT', {
+                          day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
                         })}
                       </div>
 
-                      {/* Delete button */}
+                      {/* Elimina */}
                       {onDelete && (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                        <button
                           onClick={() => {
-                            if (confirm('Sei sicuro di voler eliminare questa password?')) {
+                            if (confirm('Eliminare questa credenziale?')) {
                               onDelete(selectedPassword.id)
                               setSelectedPassword(null)
                             }
                           }}
-                          className="w-full py-4 bg-red-50 hover:bg-red-100 border-2 border-red-200/60 rounded-xl text-red-500 font-bold text-lg flex items-center justify-center gap-2"
+                          className="w-full py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-red-500 font-medium text-sm flex items-center justify-center gap-2 transition-all"
                         >
-                          <Trash2 className="w-5 h-5" />
-                          ELIMINA PASSWORD
-                        </motion.button>
+                          <Trash2 className="w-4 h-4" />
+                          Elimina credenziale
+                        </button>
                       )}
                     </div>
                   </div>
