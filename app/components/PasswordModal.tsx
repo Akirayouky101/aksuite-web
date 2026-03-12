@@ -120,7 +120,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword }:
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center">
                     <Lock className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -305,7 +305,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword }:
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     {isSaving ? 'Salvataggio...' : editPassword ? 'Aggiorna credenziale' : 'Salva credenziale'}
                   </button>

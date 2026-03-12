@@ -31,6 +31,15 @@ export default function PasswordListModal({
 
   const categories = ['Tutte', 'Lavoro', 'Personale', 'Social', 'Finanza', 'Gaming', 'Altro']
 
+  const categoryColors: Record<string, { bg: string; text: string; dot: string }> = {
+    Lavoro:    { bg: 'bg-blue-50',   text: 'text-blue-600',   dot: 'bg-blue-400' },
+    Personale: { bg: 'bg-violet-50', text: 'text-violet-600', dot: 'bg-violet-400' },
+    Social:    { bg: 'bg-pink-50',   text: 'text-pink-600',   dot: 'bg-pink-400' },
+    Finanza:   { bg: 'bg-emerald-50',text: 'text-emerald-600',dot: 'bg-emerald-400' },
+    Gaming:    { bg: 'bg-orange-50', text: 'text-orange-600', dot: 'bg-orange-400' },
+    Altro:     { bg: 'bg-slate-100', text: 'text-slate-600',  dot: 'bg-slate-400' },
+  }
+
   const togglePasswordVisibility = (id: string) => {
     setVisiblePasswords(prev => {
       const newSet = new Set(prev)
@@ -219,8 +228,8 @@ export default function PasswordListModal({
                 <div className="relative z-10 p-6 overflow-y-auto flex-1">
                   {filteredPasswords.length === 0 ? (
                     <div className="text-center py-16">
-                      <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                        <KeyRound className="w-5 h-5 text-slate-400" />
+                      <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mx-auto mb-3">
+                        <KeyRound className="w-5 h-5 text-indigo-400" />
                       </div>
                       <h3 className="text-sm font-semibold text-slate-600 mb-1">
                         {searchQuery ? 'Nessun risultato' : 'Nessuna credenziale salvata'}
@@ -238,9 +247,9 @@ export default function PasswordListModal({
                           className="bg-white border border-slate-200 rounded-xl p-4 hover:border-indigo-300 hover:bg-slate-50/50 transition-all cursor-pointer"
                         >
                             <div className="flex items-start gap-3">
-                              {/* Icona categoria */}
-                              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <KeyRound className="w-4 h-4 text-slate-500" />
+                              {/* Icona categoria colorata */}
+                              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${categoryColors[pwd.category]?.bg ?? 'bg-slate-100'}`}>
+                                <KeyRound className={`w-4 h-4 ${categoryColors[pwd.category]?.text ?? 'text-slate-500'}`} />
                               </div>
                               
                               {/* Content */}
@@ -253,7 +262,7 @@ export default function PasswordListModal({
                                   <h3 className="text-sm font-semibold text-slate-800 truncate">
                                     {pwd.title}
                                   </h3>
-                                  <span className="px-2 py-0.5 bg-slate-100 rounded-full text-xs text-slate-500 flex-shrink-0">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${categoryColors[pwd.category]?.bg ?? 'bg-slate-100'} ${categoryColors[pwd.category]?.text ?? 'text-slate-500'}`}>
                                     {pwd.category}
                                   </span>
                                 </div>
@@ -368,10 +377,10 @@ export default function PasswordListModal({
                                 {onEdit && (
                                   <button
                                     onClick={() => onEdit(pwd)}
-                                    className="p-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-all"
+                                    className="p-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 hover:border-indigo-200 rounded-lg transition-all"
                                     title="Modifica"
                                   >
-                                    <Edit className="w-3.5 h-3.5 text-slate-500 hover:text-indigo-500" />
+                                    <Edit className="w-3.5 h-3.5 text-indigo-500" />
                                   </button>
                                 )}
                                 {onDelete && (
@@ -429,11 +438,14 @@ export default function PasswordListModal({
 
                     {/* Header */}
                     <div className="mb-5 pr-10">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${categoryColors[selectedPassword.category]?.bg ?? 'bg-slate-100'}`}>
+                          <KeyRound className={`w-4 h-4 ${categoryColors[selectedPassword.category]?.text ?? 'text-slate-500'}`} />
+                        </div>
                         {selectedPassword.isFavorite && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
                         <h2 className="text-lg font-semibold text-slate-800">{selectedPassword.title}</h2>
                       </div>
-                      <span className="inline-block px-2.5 py-0.5 bg-slate-100 rounded-full text-xs text-slate-500">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryColors[selectedPassword.category]?.bg ?? 'bg-slate-100'} ${categoryColors[selectedPassword.category]?.text ?? 'text-slate-500'}`}>
                         {selectedPassword.category}
                       </span>
                     </div>
