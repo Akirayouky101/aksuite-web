@@ -104,6 +104,8 @@ export function useWarehouse() {
       .select()
       .single()
     if (error) { console.error('Add product error:', error); return null }
+    // Aggiorna lo state locale immediatamente (senza aspettare il realtime)
+    setProducts(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name)))
     logActivity('create', 'product', data.name || 'Prodotto', `Nuovo prodotto: ${data.name || ''} - SKU: ${data.sku || 'N/A'}`)
     return newItem
   }
@@ -113,31 +115,39 @@ export function useWarehouse() {
       .from('products')
       .update({ ...data, updated_at: new Date().toISOString() })
       .eq('id', id)
-    if (error) console.error('Update product error:', error)
-    else logActivity('update', 'product', data.name || 'Prodotto', `Aggiornato prodotto`)
+    if (error) { console.error('Update product error:', error); return }
+    // Aggiorna lo state locale immediatamente (senza aspettare il realtime)
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...data, updated_at: new Date().toISOString() } : p))
+    logActivity('update', 'product', data.name || 'Prodotto', `Aggiornato prodotto`)
   }
 
   const deleteProduct = async (id: string) => {
     const product = products.find(p => p.id === id)
     const { error } = await supabase.from('products').delete().eq('id', id)
-    if (error) console.error('Delete product error:', error)
-    else logActivity('delete', 'product', product?.name || 'Prodotto', `Eliminato prodotto: ${product?.name || ''}`)
+    if (error) { console.error('Delete product error:', error); return }
+    // Aggiorna lo state locale immediatamente
+    setProducts(prev => prev.filter(p => p.id !== id))
+    logActivity('delete', 'product', product?.name || 'Prodotto', `Eliminato prodotto: ${product?.name || ''}`)
   }
 
   const updateStock = async (productId: string, movementType: StockMovement['movement_type'], qty: number, reference?: string, notes?: string, orderId?: string) => {
     if (!user) return
     const product = products.find(p => p.id === productId)
-    if (!product) return
 
     // Leggi la quantita' attuale DIRETTAMENTE dal DB (non dallo state React)
     // per evitare race condition quando si caricano piu' prodotti in sequenza
+    // oppure quando il prodotto e' appena stato creato e non e' ancora nello state
     const { data: freshProduct } = await supabase
       .from('products')
       .select('quantity, name')
       .eq('id', productId)
       .single()
 
-    const prevQty = freshProduct?.quantity ?? product.quantity
+    // Se il prodotto non esiste ne' in state ne' nel DB, non procedere
+    if (!freshProduct && !product) return
+
+    const productName = freshProduct?.name || product?.name || 'Prodotto'
+    const prevQty = freshProduct?.quantity ?? product?.quantity ?? 0
     let newQty = prevQty
     if (movementType === 'carico' || movementType === 'reso') newQty = prevQty + qty
     else if (movementType === 'scarico') newQty = Math.max(0, prevQty - qty)
@@ -146,6 +156,8 @@ export function useWarehouse() {
 
     // Update product quantity
     await supabase.from('products').update({ quantity: newQty, updated_at: new Date().toISOString() }).eq('id', productId)
+    // Aggiorna lo state locale immediatamente
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, quantity: newQty, updated_at: new Date().toISOString() } : p))
 
     // Record movement
     await supabase.from('stock_movements').insert([{
@@ -159,7 +171,7 @@ export function useWarehouse() {
       reference: reference || null,
       notes: notes || null,
     }])
-    logActivity('update', 'product', product.name || 'Prodotto', `Movimento magazzino: ${movementType} x${qty} (${prevQty} -> ${newQty})`)
+    logActivity('update', 'product', productName, `Movimento magazzino: ${movementType} x${qty} (${prevQty} -> ${newQty})`)
   }
 
   const loadMovements = async (productId: string): Promise<StockMovement[]> => {

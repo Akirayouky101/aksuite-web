@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
@@ -162,6 +162,9 @@ export default function Home() {
   const [isCsvImportOpen, setIsCsvImportOpen] = useState(false)
   const [isLoadingListOpen, setIsLoadingListOpen] = useState(false)
   const [productPrefill, setProductPrefill] = useState<any>(null)
+  const [productPrefillQty, setProductPrefillQty] = useState<number>(0)
+  // Callback da LoadingListModal da chiamare dopo la creazione del prodotto
+  const onProductSavedRef = useRef<((newProductId: string) => void) | null>(null)
 
   // ═══ BADGE "SEEN" TRACKING ═══
   const [seenCalls, setSeenCalls] = useState<number | null>(null)
@@ -1253,8 +1256,22 @@ export default function Home() {
       />}
       {isProductModalOpen && <ProductModal
         isOpen={isProductModalOpen}
-        onClose={() => { setIsProductModalOpen(false); setEditingProduct(null); setProductPrefill(null) }}
-        onSave={async (data) => { if (editingProduct) { await updateProduct(editingProduct.id, data) } else { await addProduct(data) } }}
+        onClose={() => { setIsProductModalOpen(false); setEditingProduct(null); setProductPrefill(null); setProductPrefillQty(0); onProductSavedRef.current = null }}
+        onSave={async (data) => {
+          if (editingProduct) {
+            await updateProduct(editingProduct.id, data)
+          } else {
+            const newProduct = await addProduct(data)
+            // Se viene da LoadingList (productPrefillQty > 0), registra il carico
+            if (newProduct && productPrefillQty > 0) {
+              await updateStock(newProduct.id, 'carico', productPrefillQty, 'Lista di caricamento', `Carico iniziale da lista`)
+            }
+            // Notifica LoadingListModal per avanzare la coda
+            if (newProduct && onProductSavedRef.current) {
+              onProductSavedRef.current(newProduct.id)
+            }
+          }
+        }}
         editingProduct={editingProduct || productPrefill}
         suppliers={suppliers}
       />}
@@ -1290,9 +1307,11 @@ export default function Home() {
         onClose={() => setIsLoadingListOpen(false)}
         products={products}
         onUpdateStock={async (productId, type, qty, ref, notes) => { await updateStock(productId, type as any, qty, ref, notes) }}
-        onOpenProductModal={(prefill) => {
+        onOpenProductModal={(prefill, quantity, onSaved) => {
           setProductPrefill(prefill)
+          setProductPrefillQty(quantity)
           setEditingProduct(null)
+          onProductSavedRef.current = onSaved
           setIsProductModalOpen(true)
         }}
       />}

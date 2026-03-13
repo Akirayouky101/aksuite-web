@@ -32,7 +32,7 @@ interface LoadingListModalProps {
   onClose: () => void
   products: Product[]
   onUpdateStock: (productId: string, type: 'carico', qty: number, ref?: string, notes?: string) => Promise<void>
-  onOpenProductModal: (prefill: Partial<Product>) => void
+  onOpenProductModal: (prefill: Partial<Product>, quantity: number, onSaved: (newProductId: string) => void) => void
 }
 
 export default function LoadingListModal({ isOpen, onClose, products, onUpdateStock, onOpenProductModal }: LoadingListModalProps) {
@@ -45,6 +45,7 @@ export default function LoadingListModal({ isOpen, onClose, products, onUpdateSt
   const [confirmMode, setConfirmMode] = useState<'none' | 'confirm' | 'loading' | 'done'>('none')
   const [processedCount, setProcessedCount] = useState(0)
   const [newProductQueue, setNewProductQueue] = useState<LoadingItem[]>([])
+  const newProductQueueRef = useRef<LoadingItem[]>([])
   const [currentNewIdx, setCurrentNewIdx] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -60,6 +61,7 @@ export default function LoadingListModal({ isOpen, onClose, products, onUpdateSt
       setConfirmMode('none')
       setProcessedCount(0)
       setNewProductQueue([])
+      newProductQueueRef.current = []
       setCurrentNewIdx(0)
     }
   }, [isOpen])
@@ -213,11 +215,13 @@ export default function LoadingListModal({ isOpen, onClose, products, onUpdateSt
 
     // 2. Se include nuovi, apri modale creazione per ognuno
     if (includeNew && newItems.length > 0) {
-      setNewProductQueue([...newItems])
+      const queue = [...newItems]
+      setNewProductQueue(queue)
+      newProductQueueRef.current = queue
       setCurrentNewIdx(0)
       setConfirmMode('done')
       // Apri la prima modale di creazione prodotto
-      openNewProductModal(newItems[0])
+      openNewProductModal(queue[0])
     } else {
       setConfirmMode('done')
     }
@@ -225,17 +229,32 @@ export default function LoadingListModal({ isOpen, onClose, products, onUpdateSt
 
   // Apri modale creazione prodotto con dati precompilati
   const openNewProductModal = (item: LoadingItem) => {
-    onOpenProductModal({
-      name: item.name,
-      sku: item.sku,
-      brand: item.brand,
-      category: item.category || '',
-      model: item.model || item.sku,
-      unit: item.unit || 'Pezzi',
-      quantity: item.quantity,
-      purchase_price: item.purchase_price || 0,
-      description: item.description || '',
-    })
+    onOpenProductModal(
+      {
+        name: item.name,
+        sku: item.sku,
+        brand: item.brand,
+        category: item.category || '',
+        model: item.model || item.sku,
+        unit: item.unit || 'Pezzi',
+        quantity: item.quantity,
+        purchase_price: item.purchase_price || 0,
+        description: item.description || '',
+      },
+      item.quantity,
+      (newProductId: string) => {
+        // Callback chiamato dopo che il prodotto e' stato creato e il carico registrato
+        // Avanza al prossimo prodotto nella coda (usando il ref per evitare stale closure)
+        setCurrentNewIdx(prev => {
+          const nextIdx = prev + 1
+          const queue = newProductQueueRef.current
+          if (nextIdx < queue.length) {
+            openNewProductModal(queue[nextIdx])
+          }
+          return nextIdx
+        })
+      }
+    )
   }
 
   // Avanza al prossimo prodotto nuovo
