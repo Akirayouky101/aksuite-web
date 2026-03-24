@@ -15,6 +15,7 @@ interface ProductModalProps {
 }
 
 export default function ProductModal({ isOpen, onClose, onSave, editingProduct, suppliers }: ProductModalProps) {
+  const [isSaving, setIsSaving] = useState(false)
   const [form, setForm] = useState({
     name: '', sku: '', barcode: '', qr_code: '', category: '', brand: '', model: '',
     description: '', unit: 'pz', quantity: 0, min_quantity: 0, max_quantity: 0,
@@ -53,9 +54,14 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
 
   if (!isOpen) return null
 
-  const handleSave = () => {
-    if (!form.name.trim()) return
-    onSave({ ...form, purchase_price: Number(form.purchase_price), sell_price: Number(form.sell_price), quantity: Number(form.quantity), min_quantity: Number(form.min_quantity), max_quantity: Number(form.max_quantity) })
+  const handleSave = async () => {
+    if (!form.name.trim() || isSaving) return
+    setIsSaving(true)
+    try {
+      await onSave({ ...form, purchase_price: Number(form.purchase_price), sell_price: Number(form.sell_price), quantity: Number(form.quantity), min_quantity: Number(form.min_quantity), max_quantity: Number(form.max_quantity) })
+    } finally {
+      setIsSaving(false)
+    }
     onClose()
   }
 
@@ -252,10 +258,10 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
 
               {/* Actions */}
               <div className="flex gap-3 pt-2">
-                <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm font-bold transition-all">Annulla</button>
-                <button onClick={handleSave} disabled={!form.name.trim()}
+                <button onClick={onClose} disabled={isSaving} className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm font-bold transition-all disabled:opacity-40">Annulla</button>
+                <button onClick={handleSave} disabled={!form.name.trim() || isSaving}
                   className="flex-1 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-violet-500/25 hover:shadow-xl transition-all disabled:opacity-40">
-                  {editingProduct ? 'Salva Modifiche' : 'Aggiungi Prodotto'}
+                  {isSaving ? 'Salvataggio...' : editingProduct ? 'Salva Modifiche' : 'Aggiungi Prodotto'}
                 </button>
               </div>
             </div>
