@@ -96,29 +96,37 @@ export function useWarehouse() {
     return () => { mounted = false; supabase.removeChannel(channel) }
   }, [user?.id])
 
+  // Converti stringhe vuote in null per evitare errori PostgreSQL su colonne FK/UUID (es. supplier_id)
+  const sanitizeProductData = (data: Partial<Product>): Partial<Product> =>
+    Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [k, v === '' ? null : v])
+    ) as Partial<Product>
+
   const addProduct = async (data: Partial<Product>) => {
     if (!user) return null
+    const sanitized = sanitizeProductData(data)
     const { data: newItem, error } = await supabase
       .from('products')
-      .insert([{ ...data, user_id: user.id }])
+      .insert([{ ...sanitized, user_id: user.id }])
       .select()
       .single()
     if (error) { console.error('Add product error:', error); return null }
     // Aggiorna lo state locale immediatamente (senza aspettare il realtime)
     setProducts(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name)))
-    logActivity('create', 'product', data.name || 'Prodotto', `Nuovo prodotto: ${data.name || ''} - SKU: ${data.sku || 'N/A'}`)
+    logActivity('create', 'product', sanitized.name || 'Prodotto', `Nuovo prodotto: ${sanitized.name || ''} - SKU: ${sanitized.sku || 'N/A'}`)
     return newItem
   }
 
   const updateProduct = async (id: string, data: Partial<Product>) => {
+    const sanitized = sanitizeProductData(data)
     const { error } = await supabase
       .from('products')
-      .update({ ...data, updated_at: new Date().toISOString() })
+      .update({ ...sanitized, updated_at: new Date().toISOString() })
       .eq('id', id)
     if (error) { console.error('Update product error:', error); return }
     // Aggiorna lo state locale immediatamente (senza aspettare il realtime)
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...data, updated_at: new Date().toISOString() } : p))
-    logActivity('update', 'product', data.name || 'Prodotto', `Aggiornato prodotto`)
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...sanitized, updated_at: new Date().toISOString() } : p))
+    logActivity('update', 'product', sanitized.name || 'Prodotto', `Aggiornato prodotto`)
   }
 
   const deleteProduct = async (id: string) => {
