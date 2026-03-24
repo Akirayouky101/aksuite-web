@@ -17,6 +17,7 @@ interface WarehouseListModalProps {
   onUpdateStock: (productId: string, type: string, quantity: number, notes: string) => void
   onFindByBarcode: (code: string) => Product | undefined
   onLoadMovements: (productId: string) => Promise<StockMovement[]>
+  onUpdateProduct: (id: string, data: Partial<Product>) => Promise<void>
   onImportCsv?: () => void
 }
 
@@ -92,7 +93,7 @@ function normalizeSubcategory(sub: string): string {
   return sub
 }
 
-export default function WarehouseListModal({ isOpen, onClose, products, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onImportCsv }: WarehouseListModalProps) {
+export default function WarehouseListModal({ isOpen, onClose, products, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv }: WarehouseListModalProps) {
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [movements, setMovements] = useState<Record<string, StockMovement[]>>({})
@@ -105,6 +106,12 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
   // Navigation state: brand -> category -> products
   const [currentBrand, setCurrentBrand] = useState<string | null>(null)
   const [currentCategory, setCurrentCategory] = useState<string | null>(null)
+
+  // Category management state
+  const [customCategories, setCustomCategories] = useState<string[]>([])
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [deletingCategory, setDeletingCategory] = useState<string | null>(null)
 
   if (!isOpen) return null
 
@@ -121,6 +128,17 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
     }
     return map
   }, [products])
+
+  // Tutte le categorie disponibili (normalizzate da tree + categorie custom)
+  const allCategories = useMemo(() => {
+    const fromTree: string[] = []
+    for (const brand of Object.keys(tree)) {
+      for (const cat of Object.keys(tree[brand])) {
+        fromTree.push(cat)
+      }
+    }
+    return Array.from(new Set([...fromTree, ...customCategories])).sort()
+  }, [tree, customCategories])
 
   const brands = useMemo(() =>
     Object.keys(tree).sort().map(b => ({
@@ -213,6 +231,26 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
     setStockAction(null)
   }
 
+  const handleDeleteCategory = async (normalizedCat: string) => {
+    if (!currentBrand) return
+    const affected = tree[currentBrand]?.[normalizedCat]?.length || 0
+    if (!confirm(`Eliminare la categoria "${normalizedCat}"?${affected > 0 ? ` ${affected} prodott${affected === 1 ? 'o perderà' : 'i perderanno'} la categoria (diventano "Senza Categoria").` : ''}`)) return
+    setDeletingCategory(normalizedCat)
+    const toUpdate = tree[currentBrand]?.[normalizedCat] || []
+    for (const p of toUpdate) {
+      await onUpdateProduct(p.id, { category: '' })
+    }
+    setDeletingCategory(null)
+  }
+
+  const handleCreateCategory = () => {
+    const name = newCategoryName.trim()
+    if (!name) return
+    setCustomCategories(prev => [...prev, name])
+    setNewCategoryName('')
+    setShowNewCategoryInput(false)
+  }
+
   const getSupplierName = (id: string | null) => suppliers.find(s => s.id === id)?.name || ''
 
   const goHome = () => { setCurrentBrand(null); setCurrentCategory(null); setSearch('') }
@@ -287,6 +325,20 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
                     </div>
                   </div>
                 )}
+
+                {/* Categoria inline: seleziona o cambia senza aprire il modal completo */}
+                <div className="flex items-center gap-2 pt-1 pb-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex-shrink-0">Categoria</span>
+                  <select
+                    title="Cambia categoria"
+                    value={p.category ? normalizeSubcategory(extractSubcategory(p.category)) : ''}
+                    onChange={async (e) => { await onUpdateProduct(p.id, { category: e.target.value }) }}
+                    className="flex-1 text-xs rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+                  >
+                    <option value="">Senza categoria</option>
+                    {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
 
                 <div className="flex items-center gap-2 pt-1 flex-wrap">
                   <button onClick={() => setStockAction({productId: p.id, type: 'carico', qty: 1, notes: ''})} title="Carico merce"
@@ -549,21 +601,59 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
               {/* LEVEL 2: CATEGORIES (within brand) */}
               {!isSearching && currentBrand && !currentCategory && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {categoriesForBrand.map((c, i) => (
-                    <button key={c.name} onClick={() => goCategory(c.name)}
-                      className="text-left p-4 rounded-2xl bg-white/80 border border-slate-200/40 hover:shadow-lg hover:border-slate-300/60 transition-all group">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-2xl">
-                          {categoryIcons[c.name] || '\uD83D\uDCE6'}
+                  {categoriesForBrand.map((c) => (
+                    <div key={c.name} className="relative group/cat">
+                      <button onClick={() => goCategory(c.name)}
+                        className="w-full text-left p-4 rounded-2xl bg-white/80 border border-slate-200/40 hover:shadow-lg hover:border-slate-300/60 transition-all group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-2xl">
+                            {categoryIcons[c.name] || '\uD83D\uDCE6'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-bold text-slate-800 group-hover:text-violet-600 transition-colors truncate">{c.name}</h3>
+                            <p className="text-xs text-slate-400">{c.count} prodott{c.count === 1 ? 'o' : 'i'}</p>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-400 transition-colors" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-bold text-slate-800 group-hover:text-violet-600 transition-colors truncate">{c.name}</h3>
-                          <p className="text-xs text-slate-400">{c.count} prodott{c.count === 1 ? 'o' : 'i'}</p>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-400 transition-colors" />
-                      </div>
-                    </button>
+                      </button>
+                      {/* Bottone elimina categoria (appare sull'hover) */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c.name) }}
+                        disabled={deletingCategory === c.name}
+                        title={`Elimina categoria "${c.name}" (i prodotti diventano senza categoria)`}
+                        className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white border border-red-200/70 text-red-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center opacity-0 group-hover/cat:opacity-100 transition-all shadow-sm"
+                      >
+                        {deletingCategory === c.name
+                          ? <span className="text-[9px] font-bold">…</span>
+                          : <Trash2 className="w-3 h-3" />}
+                      </button>
+                    </div>
                   ))}
+
+                  {/* Crea nuova categoria */}
+                  {showNewCategoryInput ? (
+                    <div className="sm:col-span-2 flex items-center gap-2 p-3 rounded-2xl bg-violet-50/60 border border-violet-200/60">
+                      <input
+                        autoFocus
+                        value={newCategoryName}
+                        onChange={e => setNewCategoryName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleCreateCategory(); if (e.key === 'Escape') { setShowNewCategoryInput(false); setNewCategoryName('') } }}
+                        placeholder="Nome nuova categoria..."
+                        className="flex-1 px-3 py-2 text-sm rounded-xl bg-white border border-violet-200/60 focus:outline-none focus:ring-2 focus:ring-violet-400/30 text-slate-700"
+                      />
+                      <button onClick={handleCreateCategory} disabled={!newCategoryName.trim()}
+                        className="px-3 py-2 rounded-xl bg-violet-500 text-white text-xs font-bold disabled:opacity-40 hover:bg-violet-600 transition-all">Crea</button>
+                      <button onClick={() => { setShowNewCategoryInput(false); setNewCategoryName('') }}
+                        className="px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-xs font-bold hover:bg-slate-200 transition-all">Annulla</button>
+                    </div>
+                  ) : (
+                    <div className="sm:col-span-2">
+                      <button onClick={() => setShowNewCategoryInput(true)}
+                        className="w-full p-3 rounded-2xl border-2 border-dashed border-violet-200/60 text-violet-400 text-xs font-bold hover:bg-violet-50/50 hover:border-violet-300/60 hover:text-violet-500 transition-all flex items-center justify-center gap-2">
+                        <Plus className="w-4 h-4" /> Nuova Categoria
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

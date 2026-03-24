@@ -1284,6 +1284,7 @@ export default function Home() {
         onEdit={(product) => { setEditingProduct(product); setIsProductModalOpen(true); setIsWarehouseListModalOpen(false) }}
         onDelete={deleteProduct}
         onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
+        onUpdateProduct={async (id, data) => { await updateProduct(id, data) }}
         onFindByBarcode={findByBarcode}
         onLoadMovements={loadMovements}
         onImportCsv={() => setIsCsvImportOpen(true)}
