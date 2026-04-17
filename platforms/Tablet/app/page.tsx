@@ -6,7 +6,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, ChevronLeft, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -54,6 +54,8 @@ const UserManagementModal = dynamic(() => import('./components/UserManagementMod
 const ActivityLogModal = dynamic(() => import('./components/ActivityLogModal'), { ssr: false })
 const CsvImportModal = dynamic(() => import('./components/CsvImportModal'), { ssr: false })
 const LoadingListModal = dynamic(() => import('./components/LoadingListModal'), { ssr: false })
+const MaterialRequestModal = dynamic(() => import('./components/MaterialRequestModal'), { ssr: false })
+const WarehouseRequestsPanel = dynamic(() => import('./components/WarehouseRequestsPanel'), { ssr: false })
 const SopralluoghiListModal = dynamic(() => import('./components/SopralluoghiListModal'), { ssr: false })
 const SopralluogoModal = dynamic(() => import('./components/SopralluogoModal'), { ssr: false })
 const InstallationListModal = dynamic(() => import('./components/InstallationListModal'), { ssr: false })
@@ -86,6 +88,7 @@ import { useSopralluoghi } from './hooks/useSopralluoghi'
 import { useInstallations } from './hooks/useInstallations'
 import { useUserManagement } from './hooks/useUserManagement'
 import { useActivityLog } from './hooks/useActivityLog'
+import { useWarehouseRequests } from './hooks/useWarehouseRequests'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -156,6 +159,10 @@ export default function Home() {
   const [isLabelPrinterOpen, setIsLabelPrinterOpen] = useState(false)
   const [labelProduct, setLabelProduct] = useState<any>(null)
 
+  // ═══ WAREHOUSE REQUESTS STATE ═══
+  const [isMaterialRequestOpen, setIsMaterialRequestOpen] = useState(false)
+  const [isWarehouseRequestsOpen, setIsWarehouseRequestsOpen] = useState(false)
+
   // ═══ USER MANAGEMENT STATE ═══
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(false)
   const [isActivityLogOpen, setIsActivityLogOpen] = useState(false)
@@ -204,6 +211,7 @@ export default function Home() {
   const { installations, loadFull: loadInstallationFull, addInstallation, updateInstallation, deleteInstallation, addDevice, updateDevice, deleteDevice, addHdd, deleteHdd, addCredential, updateCredential, deleteCredential, addCamera, updateCamera, deleteCamera } = useInstallations()
   const { users: managedUsers, isAdmin, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
+  const { requests: warehouseRequests, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest } = useWarehouseRequests()
 
   const availableRelationItems = useMemo(() => ({ passwords, calls, visits, tasks, notes, events, transactions }), [passwords, calls, visits, tasks, notes, events, transactions])
 
@@ -351,6 +359,7 @@ export default function Home() {
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length, section: 'commerciale' },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
       { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true), section: 'commerciale' },
+      { id: 'prelievo', perm: 'can_warehouse' as const, label: 'Prelievi', icon: PackageMinus, onClick: () => setIsMaterialRequestOpen(true), section: 'commerciale' },
       { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventiviListModalOpen(true), count: preventivi.length, section: 'commerciale' },
       // --- Strumenti ---
       { id: 'passwords', perm: 'can_passwords' as const, label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length, section: 'strumenti' },
@@ -552,6 +561,22 @@ export default function Home() {
                       <>
                         <span className="flex-1 text-left">Cronologia</span>
                         <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => { setIsWarehouseRequestsOpen(true); setSidebarOpen(false) }}
+                    title={sidebarCollapsed ? 'Richieste Magazzino' : undefined}
+                    className={`w-full group flex items-center ${sidebarCollapsed ? 'justify-center px-0 py-2.5 rounded-xl' : 'gap-2.5 pl-3 pr-2 py-2 rounded-r-xl'} text-[13px] font-medium transition-all text-slate-600 hover:text-orange-700 hover:bg-orange-50 active:bg-orange-100`}
+                  >
+                    <div className={`${sidebarCollapsed ? 'w-9 h-9' : 'w-7 h-7'} rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0 relative`}>
+                      <PackageMinus className={`${sidebarCollapsed ? 'w-4 h-4' : 'w-3.5 h-3.5'} text-orange-500`} />
+                      {warehousePendingCount > 0 && <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center animate-pulse">{warehousePendingCount}</span>}
+                    </div>
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="flex-1 text-left">Richieste Magazzino</span>
+                        {warehousePendingCount > 0 && <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold animate-pulse">{warehousePendingCount}</span>}
                       </>
                     )}
                   </button>
@@ -1499,6 +1524,25 @@ export default function Home() {
         onLoadLogs={loadActivityLogs}
         onClearOldLogs={clearOldLogs}
         isAdmin={isAdmin}
+      />}
+
+      {/* ═══ PRELIEVO MATERIALE (Kiosk) ═══ */}
+      {isMaterialRequestOpen && <MaterialRequestModal
+        isOpen={isMaterialRequestOpen}
+        onClose={() => setIsMaterialRequestOpen(false)}
+        products={products}
+        onSubmit={submitWarehouseRequest}
+      />}
+
+      {/* ═══ RICHIESTE MAGAZZINO (Admin Panel) ═══ */}
+      {isWarehouseRequestsOpen && <WarehouseRequestsPanel
+        isOpen={isWarehouseRequestsOpen}
+        onClose={() => setIsWarehouseRequestsOpen(false)}
+        requests={warehouseRequests}
+        approverName={userProfile?.full_name || user.email || 'Admin'}
+        onApprove={approveWarehouseRequest}
+        onReject={rejectWarehouseRequest}
+        onUpdateStock={updateStock}
       />}
     </div>
   )
