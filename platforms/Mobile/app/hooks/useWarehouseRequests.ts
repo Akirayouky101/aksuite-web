@@ -56,13 +56,10 @@ export function useWarehouseRequests() {
     }
 
     const fetchProfiles = async () => {
-      // profiles è leggibile da tutti gli autenticati
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .order('full_name', { ascending: true })
+      // Usa funzione SECURITY DEFINER: restituisce solo utenti con can_warehouse=true
+      const { data, error } = await supabase.rpc('get_warehouse_users')
       if (!error && data && mounted) {
-        setUserProfiles(data.filter(p => p.full_name || p.email) as UserProfile[])
+        setUserProfiles(data.filter((p: UserProfile) => p.full_name || p.email) as UserProfile[])
       }
     }
 
@@ -170,13 +167,23 @@ export function useWarehouseRequests() {
     return true
   }
 
+  const deleteRequest = async (id: string): Promise<boolean> => {
+    const { error } = await supabase
+      .from('warehouse_requests')
+      .delete()
+      .eq('id', id)
+    if (error) { console.error('Delete request error:', error); return false }
+    setRequests(prev => prev.filter(r => r.id !== id))
+    return true
+  }
+
   const pendingCount = requests.filter(r => r.status === 'pending').length
   const pendingOrders = requests.filter(r => r.status === 'pending' && r.request_type === 'ordine').length
 
   return {
     requests, loading, userProfiles, pendingCount, pendingOrders,
     submitRequest, approveRequest, rejectRequest,
-    fulfillItem, unfulfillItem,
+    fulfillItem, unfulfillItem, deleteRequest,
   }
 }
 

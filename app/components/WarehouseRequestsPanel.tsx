@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Package, CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp,
-  AlertTriangle, Scan, Calendar, Truck, RefreshCw, CheckSquare
+  AlertTriangle, Scan, Calendar, Truck, RefreshCw, CheckSquare, Trash2
 } from 'lucide-react'
 import { WarehouseRequest, RequestItem } from '../hooks/useWarehouseRequests'
 import { StockMovement } from '../hooks/useWarehouse'
@@ -14,11 +14,13 @@ interface WarehouseRequestsPanelProps {
   onClose: () => void
   requests: WarehouseRequest[]
   approverName: string
+  isCreator: boolean
   onApprove: (id: string, approverName: string) => Promise<boolean>
   onReject: (id: string, approverName: string) => Promise<boolean>
   onUpdateStock: (productId: string, movementType: StockMovement['movement_type'], qty: number, reference?: string, notes?: string) => Promise<void>
   onFulfillItem: (requestId: string, productId: string, qty: number) => Promise<boolean>
   onUnfulfillItem: (requestId: string, productId: string) => Promise<boolean>
+  onDeleteRequest: (id: string) => Promise<boolean>
 }
 
 type Tab = 'prelievi' | 'ordini' | 'storico'
@@ -33,7 +35,7 @@ function itemFulfillPercent(item: RequestItem) {
 }
 
 export default function WarehouseRequestsPanel({
-  isOpen, onClose, requests, approverName, onApprove, onReject, onUpdateStock, onFulfillItem, onUnfulfillItem
+  isOpen, onClose, requests, approverName, isCreator, onApprove, onReject, onUpdateStock, onFulfillItem, onUnfulfillItem, onDeleteRequest
 }: WarehouseRequestsPanelProps) {
   const [tab, setTab] = useState<Tab>('prelievi')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -41,6 +43,8 @@ export default function WarehouseRequestsPanel({
   const [confirmReject, setConfirmReject] = useState<string | null>(null)
   const [scanInputs, setScanInputs] = useState<Record<string, string>>({})
   const [scanFeedback, setScanFeedback] = useState<Record<string, { ok: boolean; msg: string } | null>>({})
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const scanRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   if (!isOpen) return null
@@ -233,9 +237,10 @@ export default function WarehouseRequestsPanel({
                     }`}
                   >
                     {/* Card header */}
+                    <div className="flex items-start">
                     <button
                       onClick={() => setExpandedId(expanded ? null : req.id)}
-                      className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/40 transition-all"
+                      className="flex-1 flex items-center gap-3 p-4 text-left hover:bg-white/40 transition-all"
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-lg ${
                         isOrder ? (complete ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-500') : req.status === 'pending' ? 'bg-orange-100 text-orange-500' : req.status === 'approved' ? 'bg-emerald-100 text-emerald-500' : 'bg-red-100 text-red-400'
@@ -270,6 +275,29 @@ export default function WarehouseRequestsPanel({
                       </div>
                       {expanded ? <ChevronUp className="w-4 h-4 text-slate-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />}
                     </button>
+                    {/* Cestino — solo creator */}
+                    {isCreator && (
+                      confirmDelete === req.id ? (
+                        <div className="flex items-center gap-1.5 px-3 py-4 border-l border-white/40">
+                          <span className="text-[11px] text-red-500 font-bold whitespace-nowrap">Sicuro?</span>
+                          <button
+                            onClick={async () => { setDeleting(req.id); await onDeleteRequest(req.id); setConfirmDelete(null); setDeleting(null) }}
+                            disabled={deleting === req.id}
+                            className="px-2 py-1 text-[11px] font-black bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all disabled:opacity-50"
+                          >{deleting === req.id ? '...' : 'Sì'}</button>
+                          <button onClick={() => setConfirmDelete(null)} className="px-2 py-1 text-[11px] font-bold bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-all">No</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmDelete(req.id) }}
+                          title="Elimina"
+                          className="px-3 py-4 text-slate-300 hover:text-red-400 transition-colors border-l border-white/40 flex-shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )
+                    )}
+                    </div>
 
                     {/* Expanded */}
                     <AnimatePresence>
