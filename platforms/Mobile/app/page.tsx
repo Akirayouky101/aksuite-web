@@ -211,7 +211,7 @@ export default function Home() {
   const { installations, loadFull: loadInstallationFull, addInstallation, updateInstallation, deleteInstallation, addDevice, updateDevice, deleteDevice, addHdd, deleteHdd, addCredential, updateCredential, deleteCredential, addCamera, updateCamera, deleteCamera } = useInstallations()
   const { users: managedUsers, isAdmin, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
-  const { requests: warehouseRequests, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest } = useWarehouseRequests()
+  const { requests: warehouseRequests, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest, fulfillItem: fulfillWarehouseItem, unfulfillItem: unfulfillWarehouseItem } = useWarehouseRequests()
 
   const availableRelationItems = useMemo(() => ({ passwords, calls, visits, tasks, notes, events, transactions }), [passwords, calls, visits, tasks, notes, events, transactions])
 
@@ -1531,6 +1531,7 @@ export default function Home() {
         isOpen={isMaterialRequestOpen}
         onClose={() => setIsMaterialRequestOpen(false)}
         products={products}
+        users={managedUsers}
         onSubmit={submitWarehouseRequest}
       />}
 
@@ -1543,6 +1544,8 @@ export default function Home() {
         onApprove={approveWarehouseRequest}
         onReject={rejectWarehouseRequest}
         onUpdateStock={updateStock}
+        onFulfillItem={fulfillWarehouseItem}
+        onUnfulfillItem={unfulfillWarehouseItem}
       />}
     </div>
   )
