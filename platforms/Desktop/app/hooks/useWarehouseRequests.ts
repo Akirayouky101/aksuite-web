@@ -40,6 +40,14 @@ export function useWarehouseRequests() {
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
+  const fetchProfiles = async () => {
+    // Usa funzione SECURITY DEFINER: restituisce solo utenti con can_warehouse=true
+    const { data, error } = await supabase.rpc('get_warehouse_users')
+    if (!error && data) {
+      setUserProfiles(data.filter((p: UserProfile) => p.full_name || p.email) as UserProfile[])
+    }
+  }
+
   useEffect(() => {
     if (!user) { setRequests([]); setUserProfiles([]); setLoading(false); return }
     let mounted = true
@@ -55,14 +63,6 @@ export function useWarehouseRequests() {
       if (mounted) setLoading(false)
     }
 
-    const fetchProfiles = async () => {
-      // Usa funzione SECURITY DEFINER: restituisce solo utenti con can_warehouse=true
-      const { data, error } = await supabase.rpc('get_warehouse_users')
-      if (!error && data && mounted) {
-        setUserProfiles(data.filter((p: UserProfile) => p.full_name || p.email) as UserProfile[])
-      }
-    }
-
     fetchRequests()
     fetchProfiles()
 
@@ -70,9 +70,6 @@ export function useWarehouseRequests() {
       .channel('warehouse_requests_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'warehouse_requests' },
         () => { if (mounted) fetchRequests() }
-      )
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_permissions' },
-        () => { if (mounted) fetchProfiles() }
       )
       .subscribe()
 
@@ -187,7 +184,7 @@ export function useWarehouseRequests() {
   return {
     requests, loading, userProfiles, pendingCount, pendingOrders,
     submitRequest, approveRequest, rejectRequest,
-    fulfillItem, unfulfillItem, deleteRequest,
+    fulfillItem, unfulfillItem, deleteRequest, refetchProfiles: fetchProfiles,
   }
 }
 
