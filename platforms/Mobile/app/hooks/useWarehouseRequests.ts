@@ -70,7 +70,11 @@ export function useWarehouseRequests() {
       .channel('warehouse_requests_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'warehouse_requests' },
         () => { if (mounted) fetchRequests() }
-      ).subscribe()
+      )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_permissions' },
+        () => { if (mounted) fetchProfiles() }
+      )
+      .subscribe()
 
     return () => { mounted = false; supabase.removeChannel(channel) }
   }, [user?.id])
