@@ -209,10 +209,17 @@ export default function Home() {
   const { preventivi, addPreventivo, updatePreventivo, deletePreventivo, updateStato: updatePreventivoStato } = usePreventivi()
   const { sopralluoghi, addSopralluogo, updateSopralluogo, deleteSopralluogo, updateStato: updateSopralluogoStato } = useSopralluoghi()
   const { installations, loadFull: loadInstallationFull, addInstallation, updateInstallation, deleteInstallation, addDevice, updateDevice, deleteDevice, addHdd, deleteHdd, addCredential, updateCredential, deleteCredential, addCamera, updateCamera, deleteCamera } = useInstallations()
-  const { users: managedUsers, isAdmin, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
+  const { users: managedUsers, isAdmin, myPermissions, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
   const { requests: warehouseRequests, userProfiles: warehouseUserProfiles, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest, fulfillItem: fulfillWarehouseItem, unfulfillItem: unfulfillWarehouseItem, deleteRequest: deleteWarehouseRequest, refetchProfiles: refetchWarehouseProfiles } = useWarehouseRequests()
   const isWarehouseCreator = user?.email === 'diegomarruchi@outlook.it'
+  // Utente kiosk: ha SOLO can_prelievo, nessun altro modulo → schermata prelievi bloccata
+  const isKioskOnly = !isAdmin && !!myPermissions && !!myPermissions.can_prelievo &&
+    !myPermissions.can_warehouse && !myPermissions.can_calls && !myPermissions.can_lavorazioni &&
+    !myPermissions.can_tasks && !myPermissions.can_calendar && !myPermissions.can_budget &&
+    !myPermissions.can_passwords && !myPermissions.can_notes && !myPermissions.can_clients &&
+    !myPermissions.can_visits && !myPermissions.can_suppliers && !myPermissions.can_orders &&
+    !myPermissions.can_preventivi && !myPermissions.can_sopralluoghi && !myPermissions.can_installations
 
   const availableRelationItems = useMemo(() => ({ passwords, calls, visits, tasks, notes, events, transactions }), [passwords, calls, visits, tasks, notes, events, transactions])
 
@@ -321,6 +328,14 @@ export default function Home() {
     }
     loadProfile()
   }, [user?.id])
+
+  // ═══ Kiosk mode: auto-apre il modal prelievo per utenti con solo can_prelievo ═══
+  useEffect(() => {
+    if (isKioskOnly && !permissionsLoading) {
+      refetchWarehouseProfiles()
+      setIsMaterialRequestOpen(true)
+    }
+  }, [isKioskOnly, permissionsLoading])
 
   // ═══ Cmd+K Global Search Shortcut ═══
   useEffect(() => {
@@ -1530,9 +1545,10 @@ export default function Home() {
       {/* ═══ PRELIEVO MATERIALE (Kiosk) ═══ */}
       {isMaterialRequestOpen && <MaterialRequestModal
         isOpen={isMaterialRequestOpen}
-        onClose={() => setIsMaterialRequestOpen(false)}
+        onClose={() => { if (!isKioskOnly) setIsMaterialRequestOpen(false) }}
         products={products}
         users={warehouseUserProfiles}
+        kioskMode={isKioskOnly}
         onSubmit={submitWarehouseRequest}
       />}
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Search, Plus, Minus, Trash2, PackageCheck, ArrowRight, CheckCircle2,
@@ -14,6 +14,7 @@ interface MaterialRequestModalProps {
   onClose: () => void
   products: Product[]
   users: UserProfile[]
+  kioskMode?: boolean
   onSubmit: (
     requestedBy: string,
     items: RequestItem[],
@@ -25,7 +26,7 @@ interface MaterialRequestModalProps {
 
 type Step = 'welcome' | 'form' | 'review' | 'done'
 
-export default function MaterialRequestModal({ isOpen, onClose, products, users, onSubmit }: MaterialRequestModalProps) {
+export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onSubmit }: MaterialRequestModalProps) {
   const [step, setStep] = useState<Step>('welcome')
   const [requestType, setRequestType] = useState<'prelievo' | 'ordine'>('prelievo')
   const [selectedUser, setSelectedUser] = useState('')
@@ -38,6 +39,22 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
   const [qtyPicker, setQtyPicker] = useState<{ product: Product; qty: number } | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const scanRef = useRef<HTMLInputElement>(null)
+
+  // Kiosk mode: auto-torna al welcome dopo 5s dalla schermata done
+  useEffect(() => {
+    if (step !== 'done' || !kioskMode) return
+    const t = setTimeout(() => {
+      setStep('welcome')
+      setRequestType('prelievo')
+      setSelectedUser('')
+      setSearch('')
+      setItems([])
+      setNotes('')
+      setExpectedDate('')
+      setQtyPicker(null)
+    }, 5000)
+    return () => clearTimeout(t)
+  }, [step, kioskMode])
 
   if (!isOpen) return null
 
@@ -106,7 +123,7 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
     setNotes('')
     setExpectedDate('')
     setQtyPicker(null)
-    onClose()
+    if (!kioskMode) onClose()
   }
 
   const handleNewRequest = () => {
@@ -131,7 +148,7 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center">
-      <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={step === 'welcome' ? handleClose : undefined} />
+      <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={step === 'welcome' && !kioskMode ? handleClose : undefined} />
 
       <AnimatePresence mode="wait">
 
@@ -145,9 +162,11 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className="relative z-10 flex flex-col items-center justify-center text-center px-6"
           >
-            <button onClick={handleClose} className="absolute top-[-60px] right-0 w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all" title="Chiudi">
-              <X className="w-5 h-5 text-white" />
-            </button>
+            {!kioskMode && (
+              <button onClick={handleClose} className="absolute top-[-60px] right-0 w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all" title="Chiudi">
+                <X className="w-5 h-5 text-white" />
+              </button>
+            )}
 
             <motion.div
               animate={{ y: [0, -8, 0] }}
@@ -608,14 +627,19 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
               >
                 Altra operazione
               </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                onClick={handleClose}
-                className="px-8 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-base transition-all"
-              >
-                Chiudi
-              </motion.button>
+              {!kioskMode && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={handleClose}
+                  className="px-8 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-base transition-all"
+                >
+                  Chiudi
+                </motion.button>
+              )}
             </div>
+            {kioskMode && (
+              <p className="text-white/40 text-sm mt-5">Ritorno automatico tra 5 secondi...</p>
+            )}
           </motion.div>
         )}
 
