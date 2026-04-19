@@ -7,14 +7,13 @@ import {
   Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
-import { RequestItem, WarehouseRequest } from '../hooks/useWarehouseRequests'
-import { ManagedUser } from '../hooks/useUserManagement'
+import { RequestItem, WarehouseRequest, UserProfile } from '../hooks/useWarehouseRequests'
 
 interface MaterialRequestModalProps {
   isOpen: boolean
   onClose: () => void
   products: Product[]
-  users: ManagedUser[]
+  users: UserProfile[]
   onSubmit: (
     requestedBy: string,
     items: RequestItem[],
@@ -42,8 +41,8 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
 
   if (!isOpen) return null
 
-  // Solo utenti con almeno una permission impostata (abilitati nel sistema)
-  const enabledUsers = users.filter(u => u.permissions !== null)
+  // Tutti i profili caricati dall'hook (già filtrati con full_name o email)
+  const enabledUsers = users
 
   const searchResults = search.trim().length > 1
     ? products.filter(p =>
