@@ -360,7 +360,7 @@ export default function Home() {
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length, section: 'commerciale' },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
       { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true), section: 'commerciale' },
-      { id: 'prelievo', perm: 'can_warehouse' as const, label: 'Prelievi', icon: PackageMinus, onClick: () => { refetchWarehouseProfiles(); setIsMaterialRequestOpen(true) }, section: 'commerciale' },
+      { id: 'prelievo', perm: 'can_prelievo' as const, label: 'Prelievi', icon: PackageMinus, onClick: () => { refetchWarehouseProfiles(); setIsMaterialRequestOpen(true) }, section: 'commerciale' },
       { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventiviListModalOpen(true), count: preventivi.length, section: 'commerciale' },
       // --- Strumenti ---
       { id: 'passwords', perm: 'can_passwords' as const, label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length, section: 'strumenti' },

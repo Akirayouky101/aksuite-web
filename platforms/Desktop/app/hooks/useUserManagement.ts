@@ -23,6 +23,7 @@ export interface UserPermissions {
   can_preventivi: boolean
   can_sopralluoghi: boolean
   can_installations: boolean
+  can_prelievo: boolean
   created_at: string
   updated_at: string
 }
@@ -51,6 +52,7 @@ export const PERMISSION_MODULES = [
   { key: 'can_preventivi', label: 'Preventivi', icon: 'FileText' },
   { key: 'can_sopralluoghi', label: 'Sopralluoghi', icon: 'ClipboardList' },
   { key: 'can_installations', label: 'Impianti', icon: 'Monitor' },
+  { key: 'can_prelievo', label: 'Prelievi', icon: 'PackageMinus' },
 ] as const
 
 export type PermissionKey = typeof PERMISSION_MODULES[number]['key']
@@ -72,6 +74,7 @@ const DEFAULT_PERMISSIONS: Omit<UserPermissions, 'id' | 'user_id' | 'created_at'
   can_preventivi: false,
   can_sopralluoghi: false,
   can_installations: false,
+  can_prelievo: false,
 }
 
 export function useUserManagement() {
