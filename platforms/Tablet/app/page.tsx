@@ -1438,6 +1438,7 @@ export default function Home() {
         onGetAvailability={getKitAvailability}
         onPrintLabel={(k) => { setLabelKit(k); setLabelProduct(null); setIsLabelPrinterOpen(true) }}
         onCreatePrelievo={async (kit, items) => { await submitWarehouseRequest(user?.id || '', items, `Prelievo KIT: ${kit.name}`) }}
+        readOnly={isKioskOnly}
       />}
       {isKitModalOpen && <KitModal
         isOpen={isKitModalOpen}
@@ -1594,6 +1595,7 @@ export default function Home() {
         products={products}
         users={warehouseUserProfiles}
         kioskMode={isKioskOnly}
+        onOpenKits={myPermissions?.can_kits ? () => setIsKitsListModalOpen(true) : undefined}
         onSubmit={submitWarehouseRequest}
       />}
 

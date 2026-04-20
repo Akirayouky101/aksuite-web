@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Search, Plus, Minus, Trash2, PackageCheck, ArrowRight, CheckCircle2,
-  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle
+  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
 import { RequestItem, WarehouseRequest, UserProfile } from '../hooks/useWarehouseRequests'
@@ -15,6 +15,7 @@ interface MaterialRequestModalProps {
   products: Product[]
   users: UserProfile[]
   kioskMode?: boolean
+  onOpenKits?: () => void
   onSubmit: (
     requestedBy: string,
     items: RequestItem[],
@@ -26,7 +27,7 @@ interface MaterialRequestModalProps {
 
 type Step = 'welcome' | 'form' | 'review' | 'done'
 
-export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onSubmit }: MaterialRequestModalProps) {
+export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onOpenKits, onSubmit }: MaterialRequestModalProps) {
   const [step, setStep] = useState<Step>('welcome')
   const [requestType, setRequestType] = useState<'prelievo' | 'ordine'>('prelievo')
   const [selectedUser, setSelectedUser] = useState('')
@@ -176,7 +177,7 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
               <PackageCheck className="w-14 h-14 text-white" />
             </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
               {/* Prelievo immediato */}
               <motion.button
                 whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -204,6 +205,22 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
                 <p className="text-2xl font-black tracking-tight">MATERIALE</p>
                 <p className="text-xs font-medium text-blue-100/70 mt-2">Mi serve per una data</p>
               </motion.button>
+
+              {/* Consulta KIT */}
+              {onOpenKits && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={onOpenKits}
+                  className="w-[280px] py-7 px-8 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all border border-emerald-300/30"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <Layers className="w-10 h-10" />
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">CONSULTA</p>
+                  <p className="text-2xl font-black tracking-tight">KIT</p>
+                  <p className="text-xs font-medium text-emerald-100/70 mt-2">Verifica disponibilità</p>
+                </motion.button>
+              )}
             </div>
 
             <p className="text-white/40 text-sm mt-8">Magazzino AK Suite</p>

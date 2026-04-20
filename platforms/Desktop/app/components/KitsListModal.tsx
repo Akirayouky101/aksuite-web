@@ -23,11 +23,13 @@ interface KitsListModalProps {
   onGetAvailability: (kitId: string) => Promise<KitAvailability[]>
   onPrintLabel: (kit: Kit) => void
   onCreatePrelievo: (kit: Kit, items: RequestItem[]) => void
+  readOnly?: boolean
 }
 
 export default function KitsListModal({
   isOpen, onClose, kits, products, warehouseUsers,
-  onAdd, onEdit, onDelete, onGetAvailability, onPrintLabel, onCreatePrelievo
+  onAdd, onEdit, onDelete, onGetAvailability, onPrintLabel, onCreatePrelievo,
+  readOnly = false
 }: KitsListModalProps) {
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -154,9 +156,11 @@ export default function KitsListModal({
               >
                 <ScanLine className="w-5 h-5" />
               </button>
-              <button onClick={onAdd} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white text-sm font-bold transition-all">
-                <Plus className="w-4 h-4" /> Nuovo KIT
-              </button>
+              {!readOnly && (
+                <button onClick={onAdd} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white text-sm font-bold transition-all">
+                  <Plus className="w-4 h-4" /> Nuovo KIT
+                </button>
+              )}
               <button onClick={onClose} title="Chiudi" className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center">
                 <X className="w-5 h-5 text-slate-500" />
               </button>
@@ -205,7 +209,7 @@ export default function KitsListModal({
                 <p className="text-sm text-slate-400 font-medium">
                   {search ? 'Nessun kit trovato' : 'Nessun kit configurato'}
                 </p>
-                {!search && (
+                {!search && !readOnly && (
                   <button onClick={onAdd} className="mt-3 text-xs text-violet-600 font-bold hover:underline">
                     Crea il primo KIT
                   </button>
@@ -258,24 +262,26 @@ export default function KitsListModal({
                       </button>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-1 pr-3">
-                        <button onClick={() => onPrintLabel(kit)} title="Stampa etichetta QR" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-orange-100 flex items-center justify-center text-slate-400 hover:text-orange-500 transition-all">
-                          <Printer className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => onEdit(kit)} title="Modifica" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-violet-100 flex items-center justify-center text-slate-400 hover:text-violet-500 transition-all">
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        {confirmDelete === kit.id ? (
-                          <div className="flex gap-1">
-                            <button onClick={() => setConfirmDelete(null)} className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-all text-xs font-bold">No</button>
-                            <button onClick={() => handleDelete(kit.id)} disabled={deleting === kit.id} className="w-7 h-7 rounded-lg bg-red-500 flex items-center justify-center text-white hover:bg-red-600 transition-all text-xs font-bold">Sì</button>
-                          </div>
-                        ) : (
-                          <button onClick={() => setConfirmDelete(kit.id)} title="Elimina" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-100 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all">
-                            <Trash2 className="w-4 h-4" />
+                      {!readOnly && (
+                        <div className="flex items-center gap-1 pr-3">
+                          <button onClick={() => onPrintLabel(kit)} title="Stampa etichetta QR" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-orange-100 flex items-center justify-center text-slate-400 hover:text-orange-500 transition-all">
+                            <Printer className="w-4 h-4" />
                           </button>
-                        )}
-                      </div>
+                          <button onClick={() => onEdit(kit)} title="Modifica" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-violet-100 flex items-center justify-center text-slate-400 hover:text-violet-500 transition-all">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          {confirmDelete === kit.id ? (
+                            <div className="flex gap-1">
+                              <button onClick={() => setConfirmDelete(null)} className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-all text-xs font-bold">No</button>
+                              <button onClick={() => handleDelete(kit.id)} disabled={deleting === kit.id} className="w-7 h-7 rounded-lg bg-red-500 flex items-center justify-center text-white hover:bg-red-600 transition-all text-xs font-bold">Sì</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => setConfirmDelete(kit.id)} title="Elimina" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-100 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Expanded detail */}
@@ -336,21 +342,23 @@ export default function KitsListModal({
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-2 pt-1">
-                              <button
-                                onClick={() => handleCreatePrelievo(kit)}
-                                disabled={status === 'unavailable'}
-                                className="flex-1 py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-                              >
-                                <Package className="w-3.5 h-3.5" /> Crea Prelievo
-                              </button>
-                              <button
-                                onClick={() => onPrintLabel(kit)}
-                                className="py-2 px-4 rounded-xl bg-orange-100 text-orange-600 text-xs font-bold hover:bg-orange-200 transition-all flex items-center gap-1.5"
-                              >
-                                <Printer className="w-3.5 h-3.5" /> Etichetta
-                              </button>
-                            </div>
+                            {!readOnly && (
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  onClick={() => handleCreatePrelievo(kit)}
+                                  disabled={status === 'unavailable'}
+                                  className="flex-1 py-2 rounded-xl bg-violet-500 hover:bg-violet-600 text-white text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                                >
+                                  <Package className="w-3.5 h-3.5" /> Crea Prelievo
+                                </button>
+                                <button
+                                  onClick={() => onPrintLabel(kit)}
+                                  className="py-2 px-4 rounded-xl bg-orange-100 text-orange-600 text-xs font-bold hover:bg-orange-200 transition-all flex items-center gap-1.5"
+                                >
+                                  <Printer className="w-3.5 h-3.5" /> Etichetta
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </motion.div>
                       )}

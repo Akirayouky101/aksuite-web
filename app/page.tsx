@@ -1440,6 +1440,7 @@ export default function Home() {
         onCreatePrelievo={async (kit, items) => {
           await submitWarehouseRequest(user?.id || '', items, `Prelievo KIT: ${kit.name}`)
         }}
+        readOnly={isKioskOnly}
       />}
       {isKitModalOpen && <KitModal
         isOpen={isKitModalOpen}
@@ -1598,6 +1599,7 @@ export default function Home() {
         products={products}
         users={warehouseUserProfiles}
         kioskMode={isKioskOnly}
+        onOpenKits={myPermissions?.can_kits ? () => setIsKitsListModalOpen(true) : undefined}
         onSubmit={submitWarehouseRequest}
       />}
 
