@@ -8,7 +8,8 @@ import {
   Phone, Wrench, CheckSquare, Calendar, DollarSign,
   StickyNote, MapPin, Truck, ShoppingCart, Package, FileText,
   ToggleLeft, ToggleRight, Trash2, Search, CheckCircle2,
-  ChevronDown, ChevronUp, AlertTriangle
+  ChevronDown, ChevronUp, AlertTriangle,
+  ClipboardList, Monitor, PackageMinus, Layers, Ticket
 } from 'lucide-react'
 import { type ManagedUser, type PermissionKey, PERMISSION_MODULES } from '../hooks/useUserManagement'
 
@@ -16,6 +17,7 @@ import { type ManagedUser, type PermissionKey, PERMISSION_MODULES } from '../hoo
 const ICON_MAP: Record<string, any> = {
   Phone, Wrench, CheckSquare, Calendar, DollarSign,
   Lock, StickyNote, Users, MapPin, Truck, ShoppingCart, Package, FileText,
+  ClipboardList, Monitor, PackageMinus, Layers, Ticket,
 }
 
 interface UserManagementModalProps {

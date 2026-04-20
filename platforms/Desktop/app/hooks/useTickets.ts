@@ -11,6 +11,12 @@ export interface TicketAssignee {
   assigned_at: string
 }
 
+export interface TeamProfile {
+  id: string
+  full_name: string
+  email: string
+}
+
 export interface Ticket {
   id: string
   title: string
@@ -28,8 +34,43 @@ export interface Ticket {
 
 export function useTickets() {
   const [tickets, setTickets] = useState<Ticket[]>([])
+  const [teamProfiles, setTeamProfiles] = useState<TeamProfile[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
+
+  // Carica profili utenti con can_tickets (o tutti come fallback)
+  const loadTeamProfiles = useCallback(async () => {
+    try {
+      const { data: perms } = await supabase
+        .from('user_permissions')
+        .select('user_id')
+        .or('can_tickets.eq.true,is_admin.eq.true')
+
+      const userIds = (perms || []).map((p: any) => p.user_id)
+
+      if (userIds.length > 0) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds)
+          .order('full_name')
+        setTeamProfiles((data || []) as TeamProfile[])
+      } else {
+        // fallback: tutti i profili
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .order('full_name')
+        setTeamProfiles((data || []) as TeamProfile[])
+      }
+    } catch {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .order('full_name')
+      setTeamProfiles((data || []) as TeamProfile[])
+    }
+  }, [])
 
   const loadTickets = useCallback(async () => {
     if (!user) return
@@ -66,8 +107,8 @@ export function useTickets() {
   }, [user?.id])
 
   useEffect(() => {
-    if (user) loadTickets()
-    else setTickets([])
+    if (user) { loadTickets(); loadTeamProfiles() }
+    else { setTickets([]); setTeamProfiles([]) }
   }, [user?.id])
 
   // ─── Crea ticket ───────────────────────────────────────────────
@@ -151,5 +192,5 @@ export function useTickets() {
     logActivity('delete', 'ticket', ticket?.title || 'Ticket', `Eliminato ticket`)
   }
 
-  return { tickets, loading, addTicket, updateTicket, updateStatus, deleteTicket, reload: loadTickets }
+  return { tickets, teamProfiles, loading, addTicket, updateTicket, updateStatus, deleteTicket, reload: loadTickets }
 }
