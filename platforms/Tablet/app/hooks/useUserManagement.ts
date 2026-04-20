@@ -26,6 +26,7 @@ export interface UserPermissions {
   can_prelievo: boolean
   can_kits: boolean
   can_tickets: boolean
+  can_hr: boolean
   created_at: string
   updated_at: string
 }
@@ -57,6 +58,7 @@ export const PERMISSION_MODULES = [
   { key: 'can_prelievo', label: 'Prelievi', icon: 'PackageMinus' },
   { key: 'can_kits', label: 'Gestione KIT', icon: 'Layers' },
   { key: 'can_tickets', label: 'Ticket', icon: 'Ticket' },
+  { key: 'can_hr', label: 'HR / Dipendenti', icon: 'UserCheck' },
 ] as const
 
 export type PermissionKey = typeof PERMISSION_MODULES[number]['key']
@@ -81,6 +83,7 @@ const DEFAULT_PERMISSIONS: Omit<UserPermissions, 'id' | 'user_id' | 'created_at'
   can_prelievo: false,
   can_kits: false,
   can_tickets: false,
+  can_hr: false,
 }
 
 export function useUserManagement() {
@@ -121,6 +124,7 @@ export function useUserManagement() {
             can_budget: true, can_passwords: true, can_notes: true, can_clients: true,
             can_visits: true, can_suppliers: true, can_orders: true, can_warehouse: true,
             can_preventivi: true, can_sopralluoghi: true, can_installations: true,
+            can_prelievo: true, can_kits: true, can_tickets: true, can_hr: true,
           } as UserPermissions)
         }
       }

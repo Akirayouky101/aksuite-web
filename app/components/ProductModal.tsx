@@ -86,9 +86,25 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
     if (!file) return
     setUploadingImage(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-      const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
-      const { error } = await supabase.storage.from('product-images').upload(path, file, { cacheControl: '3600', upsert: false })
+      // Resize client-side to max 1200x1200 before upload
+      const resized = await new Promise<Blob>((resolve) => {
+        const img = new Image()
+        img.onload = () => {
+          const MAX = 1200
+          let { width, height } = img
+          if (width > MAX || height > MAX) {
+            if (width > height) { height = Math.round(height * MAX / width); width = MAX }
+            else { width = Math.round(width * MAX / height); height = MAX }
+          }
+          const canvas = document.createElement('canvas')
+          canvas.width = width; canvas.height = height
+          canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+          canvas.toBlob(b => resolve(b!), 'image/jpeg', 0.85)
+        }
+        img.src = URL.createObjectURL(file)
+      })
+      const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
+      const { error } = await supabase.storage.from('product-images').upload(path, resized, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' })
       if (error) { console.error('Image upload error:', error); return }
       const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path)
       setForm(prev => ({ ...prev, image_url: urlData.publicUrl }))
