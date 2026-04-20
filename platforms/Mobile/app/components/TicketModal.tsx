@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Ticket, AlignLeft, Calendar, Flag, Users, UserCheck, ChevronDown, Plus } from 'lucide-react'
+import { X, Ticket, UserCheck, ChevronDown, Users, Search, Check } from 'lucide-react'
 import { Ticket as TicketType } from '../hooks/useTickets'
 
 interface UserProfile {
@@ -42,7 +42,8 @@ export default function TicketModal({ isOpen, onClose, onSave, editTicket, teamP
   const [priority, setPriority] = useState<TicketType['priority']>('normale')
   const [dueDate, setDueDate] = useState('')
   const [selectedAssignees, setSelectedAssignees] = useState<{ user_id: string; user_name: string }[]>([])
-  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false)
+  const [showAssigneePicker, setShowAssigneePicker] = useState(false)
+  const [assigneeSearch, setAssigneeSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -188,51 +189,16 @@ export default function TicketModal({ isOpen, onClose, onSave, editTicket, teamP
                   </div>
                 )}
 
-                {/* Dropdown team */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
-                    className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl px-4 py-3 text-left text-slate-400 hover:border-violet-300 transition-colors flex items-center justify-between text-sm"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Plus size={14} /> Aggiungi persone...
-                    </span>
-                    <ChevronDown size={14} className={`transition-transform ${showAssigneeDropdown ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {showAssigneeDropdown && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="absolute z-10 top-full mt-1 w-full bg-white border border-slate-200/60 rounded-xl shadow-xl max-h-44 overflow-y-auto"
-                      >
-                        {teamProfiles.length === 0 && (
-                          <div className="px-4 py-3 text-slate-400 text-sm">Nessun membro disponibile</div>
-                        )}
-                        {teamProfiles.map(profile => {
-                          const isSelected = selectedAssignees.some(a => a.user_id === profile.id)
-                          return (
-                            <button
-                              key={profile.id}
-                              type="button"
-                              onClick={() => toggleAssignee(profile)}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors text-sm ${isSelected ? 'text-violet-600' : 'text-slate-700'}`}
-                            >
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isSelected ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-500'}`}>
-                                {(profile.full_name || profile.email || '?')[0].toUpperCase()}
-                              </div>
-                              <span className="flex-1">{profile.full_name || profile.email}</span>
-                              {isSelected && <UserCheck size={14} className="text-violet-500" />}
-                            </button>
-                          )
-                        })}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => { setAssigneeSearch(''); setShowAssigneePicker(true) }}
+                  className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl px-4 py-3 text-left text-slate-400 hover:border-violet-300 transition-colors flex items-center justify-between text-sm"
+                >
+                  <span className="flex items-center gap-2">
+                    <Users size={14} /> {selectedAssignees.length === 0 ? 'Seleziona persone...' : 'Modifica selezione'}
+                  </span>
+                  <ChevronDown size={14} />
+                </button>
               </div>
 
               {/* Errore */}
@@ -260,6 +226,110 @@ export default function TicketModal({ isOpen, onClose, onSave, editTicket, teamP
           </div>
         </motion.div>
       </div>
+
+      {/* ─── Modale selezione assegnatari ─────────────────────── */}
+      <AnimatePresence>
+        {showAssigneePicker && (
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-[60]">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setShowAssigneePicker(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-sm bg-white/95 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50 overflow-hidden"
+            >
+              {/* Header picker */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 bg-white/60">
+                <div>
+                  <h3 className="text-slate-800 font-semibold text-base">Seleziona persone</h3>
+                  <p className="text-slate-400 text-xs">{selectedAssignees.length} selezionati</p>
+                </div>
+                <button onClick={() => setShowAssigneePicker(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Ricerca */}
+              <div className="px-4 pt-3 pb-2">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={assigneeSearch}
+                    onChange={e => setAssigneeSearch(e.target.value)}
+                    placeholder="Cerca..."
+                    autoFocus
+                    className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl pl-8 pr-4 py-2 text-slate-800 text-sm placeholder-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Lista con checkbox */}
+              <div className="px-2 pb-2 max-h-64 overflow-y-auto">
+                {teamProfiles.length === 0 && (
+                  <p className="text-slate-400 text-sm text-center py-8">Nessun membro disponibile</p>
+                )}
+                {teamProfiles
+                  .filter(p => {
+                    const q = assigneeSearch.toLowerCase()
+                    return !q || (p.full_name || '').toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q)
+                  })
+                  .map(profile => {
+                    const isSelected = selectedAssignees.some(a => a.user_id === profile.id)
+                    const displayName = profile.full_name || profile.email || '?'
+                    return (
+                      <button
+                        key={profile.id}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedAssignees(prev => prev.filter(a => a.user_id !== profile.id))
+                          } else {
+                            setSelectedAssignees(prev => [...prev, { user_id: profile.id, user_name: displayName }])
+                          }
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors mb-0.5 ${isSelected ? 'bg-violet-50 text-violet-700' : 'hover:bg-slate-50 text-slate-700'}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${isSelected ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-500'}`}>
+                          {displayName[0].toUpperCase()}
+                        </div>
+                        <span className="flex-1 text-sm font-medium">{displayName}</span>
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'bg-violet-500 border-violet-500' : 'border-slate-300'}`}>
+                          {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
+                        </div>
+                      </button>
+                    )
+                  })}
+              </div>
+
+              {/* Footer picker */}
+              <div className="px-4 py-3 border-t border-slate-100 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedAssignees([])}
+                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-medium transition-colors"
+                >
+                  Deseleziona tutti
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAssigneePicker(false)}
+                  className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-xl py-2 text-sm font-medium transition-all shadow-md shadow-violet-200"
+                >
+                  Conferma {selectedAssignees.length > 0 ? `(${selectedAssignees.length})` : ''}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   )
 }
