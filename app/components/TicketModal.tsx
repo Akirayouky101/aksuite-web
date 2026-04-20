@@ -40,7 +40,7 @@ interface TicketModalProps {
     category: TicketCategory; call_direction?: TicketType['call_direction']
     preventivo_id?: string | null; preventivo_numero?: string | null
     due_date?: string | null; assignees: { user_id: string; user_name: string }[]
-  }) => Promise<void>
+  }) => Promise<string | null>
   onUploadAttachment?: (ticketId: string, file: File) => Promise<TicketAttachment | null>
   onDeleteAttachment?: (attachment: TicketAttachment) => Promise<void>
   editTicket?: TicketType | null
@@ -64,10 +64,12 @@ export default function TicketModal({
   const [selectedAssignees, setSelectedAssignees] = useState<{ user_id: string; user_name: string }[]>([])
   const [showAssigneePicker, setShowAssigneePicker] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState('')
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const newFileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (editTicket) {
@@ -83,6 +85,7 @@ export default function TicketModal({
       setTitle(''); setDescription(''); setPriority('normale'); setCategory('assistenza')
       setCallDirection('in'); setPreventivoId(''); setPreventivoSearch(''); setDueDate(''); setSelectedAssignees([])
     }
+    setPendingFiles([])
     setError('')
   }, [editTicket, isOpen])
 
@@ -92,7 +95,7 @@ export default function TicketModal({
     const selectedPrev = preventivi.find(p => p.id === preventivoId)
     setSaving(true)
     try {
-      await onSave({
+      const ticketId = await onSave({
         title: title.trim(),
         description: description.trim() || undefined,
         priority, category,
@@ -102,6 +105,14 @@ export default function TicketModal({
         due_date: dueDate || null,
         assignees: selectedAssignees,
       })
+      // Upload file in coda per ticket appena creato
+      if (!editTicket && ticketId && pendingFiles.length > 0 && onUploadAttachment) {
+        for (let i = 0; i < pendingFiles.length; i++) {
+          setUploadProgress({ current: i + 1, total: pendingFiles.length })
+          await onUploadAttachment(ticketId, pendingFiles[i])
+        }
+        setUploadProgress(null)
+      }
       onClose()
     } catch {
       setError('Errore durante il salvataggio')
@@ -119,6 +130,12 @@ export default function TicketModal({
     }
     setUploadProgress(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handlePendingFilesChange = (files: FileList | null) => {
+    if (!files) return
+    setPendingFiles(prev => [...prev, ...Array.from(files)])
+    if (newFileInputRef.current) newFileInputRef.current.value = ''
   }
 
   const filteredPreventivi = preventivi.filter(p => {
@@ -345,11 +362,32 @@ export default function TicketModal({
                 </div>
               )}
 
-              {/* Avviso allegati per ticket nuovo */}
+              {/* Allegati per ticket nuovo: file in coda */}
               {!editTicket && HAS_ATTACHMENTS.includes(category) && (
-                <p className="text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2">
-                  <Paperclip size={13} /> Potrai allegare documenti dopo aver creato il ticket
-                </p>
+                <div>
+                  <label className={labelClass}>Allegati (opzionale)</label>
+                  {pendingFiles.length > 0 && (
+                    <div className="space-y-1.5 mb-2">
+                      {pendingFiles.map((f, i) => (
+                        <div key={i} className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                          <Paperclip size={13} className="text-slate-400 shrink-0" />
+                          <span className="flex-1 text-sm text-slate-700 truncate">{f.name}</span>
+                          <span className="text-xs text-slate-400">{(f.size / 1024).toFixed(0)} KB</span>
+                          <button type="button" onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))} className="text-slate-300 hover:text-red-400 transition-colors p-0.5">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <input ref={newFileInputRef} type="file" multiple accept="*/*" className="hidden"
+                    onChange={e => handlePendingFilesChange(e.target.files)} />
+                  <button type="button" onClick={() => newFileInputRef.current?.click()}
+                    className="w-full flex items-center gap-2 justify-center bg-slate-50/80 border border-dashed border-slate-300 hover:border-violet-300 hover:bg-violet-50/40 rounded-xl px-4 py-3 text-slate-400 hover:text-violet-500 text-sm transition-all">
+                    <Upload size={15} /> Allega documenti
+                  </button>
+                  <p className="text-xs text-slate-400 mt-1 text-center">I file verranno caricati insieme al ticket</p>
+                </div>
               )}
 
               {error && <p className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}

@@ -1669,8 +1669,10 @@ export default function Home() {
         onSave={async (data) => {
           if (editingTicket) {
             await updateTicket(editingTicket.id, data)
+            return editingTicket.id
           } else {
-            await addTicket({ ...data, creatorName: userProfile?.full_name || user?.email || '' })
+            const t = await addTicket({ ...data, creatorName: userProfile?.full_name || user?.email || '' })
+            return t?.id ?? null
           }
         }}
       />}
