@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Ticket, Plus, Search, Calendar, User, Users, AlertCircle, CheckCircle2, Circle, PlayCircle, XCircle, Trash2, Edit2 } from 'lucide-react'
-import { Ticket as TicketType } from '../hooks/useTickets'
+import { Ticket as TicketType, TicketCategory } from '../hooks/useTickets'
+import { CATEGORY_CONFIG } from './TicketModal'
 
 interface TicketsListModalProps {
   isOpen: boolean
@@ -35,6 +36,8 @@ const STATUS_NEXT: Record<TicketType['status'], TicketType['status']> = {
 
 type FilterStatus = 'tutti' | TicketType['status']
 type FilterView = 'miei' | 'tutti'
+type FilterCategory = 'tutti' | TicketCategory
+const ALL_CATEGORIES: FilterCategory[] = ['tutti', 'ordine', 'preventivo', 'assistenza', 'documentazione', 'chiamata']
 
 export default function TicketsListModal({
   isOpen, onClose, tickets, currentUserId, isAdmin, canCreate,
@@ -43,6 +46,7 @@ export default function TicketsListModal({
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('tutti')
   const [filterView, setFilterView] = useState<FilterView>('miei')
+  const [filterCategory, setFilterCategory] = useState<FilterCategory>('tutti')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -52,12 +56,13 @@ export default function TicketsListModal({
       list = list.filter(t => t.created_by === currentUserId || t.assignees.some(a => a.user_id === currentUserId))
     }
     if (filterStatus !== 'tutti') list = list.filter(t => t.status === filterStatus)
+    if (filterCategory !== 'tutti') list = list.filter(t => t.category === filterCategory)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(t => t.title.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q) || t.assignees.some(a => a.user_name.toLowerCase().includes(q)))
     }
     return list
-  }, [tickets, filterView, filterStatus, search, currentUserId])
+  }, [tickets, filterView, filterStatus, filterCategory, search, currentUserId])
 
   const countMiei = useMemo(() =>
     tickets.filter(t => t.status !== 'chiuso' && t.status !== 'completato' && (t.created_by === currentUserId || t.assignees.some(a => a.user_id === currentUserId))).length,
@@ -140,6 +145,25 @@ export default function TicketsListModal({
               />
             </div>
 
+            {/* Filtro categoria */}
+            <div className="flex gap-2 overflow-x-auto pb-0.5">
+              {ALL_CATEGORIES.map(cat => {
+                const cfg = cat !== 'tutti' ? CATEGORY_CONFIG[cat] : null
+                const active = filterCategory === cat
+                return (
+                  <button key={cat} onClick={() => setFilterCategory(cat)}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      active
+                        ? cfg ? `${cfg.bg} ${cfg.color} border ${cfg.border}` : 'bg-violet-100 text-violet-700 border border-violet-200'
+                        : 'bg-slate-100 text-slate-500 hover:text-slate-700'
+                    }`}>
+                    {cfg && <span className="opacity-80">{cfg.icon}</span>}
+                    {cat === 'tutti' ? 'Tutti' : cfg?.label}
+                  </button>
+                )
+              })}
+            </div>
+
             {/* Filtro status */}
             <div className="flex gap-2 overflow-x-auto pb-0.5">
               {(['tutti', 'aperto', 'in_corso', 'completato', 'chiuso'] as FilterStatus[]).map(s => (
@@ -183,9 +207,16 @@ export default function TicketsListModal({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <span className="text-slate-800 font-medium text-sm leading-snug flex-1">{ticket.title}</span>
-                          <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border shrink-0 ${statusCfg.color} ${statusCfg.bg} ${statusCfg.border}`}>
-                            {statusCfg.icon} {statusCfg.label}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {ticket.category && CATEGORY_CONFIG[ticket.category as TicketCategory] && (
+                              <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${CATEGORY_CONFIG[ticket.category as TicketCategory].color} ${CATEGORY_CONFIG[ticket.category as TicketCategory].bg} ${CATEGORY_CONFIG[ticket.category as TicketCategory].border}`}>
+                                {CATEGORY_CONFIG[ticket.category as TicketCategory].icon}
+                              </span>
+                            )}
+                            <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${statusCfg.color} ${statusCfg.bg} ${statusCfg.border}`}>
+                              {statusCfg.icon} {statusCfg.label}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-400">

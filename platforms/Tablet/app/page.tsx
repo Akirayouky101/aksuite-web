@@ -232,7 +232,7 @@ export default function Home() {
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
   const { requests: warehouseRequests, userProfiles: warehouseUserProfiles, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest, fulfillItem: fulfillWarehouseItem, unfulfillItem: unfulfillWarehouseItem, deleteRequest: deleteWarehouseRequest, refetchProfiles: refetchWarehouseProfiles } = useWarehouseRequests()
   const { kits, addKit, updateKit, deleteKit, getKitAvailability, findByQrCode: findKitByQrCode } = useKits()
-  const { tickets, teamProfiles: ticketTeamProfiles, addTicket, updateTicket, updateStatus: updateTicketStatus, deleteTicket } = useTickets()
+  const { tickets, teamProfiles: ticketTeamProfiles, addTicket, updateTicket, updateStatus: updateTicketStatus, deleteTicket, uploadAttachment, deleteAttachment } = useTickets()
   const isWarehouseCreator = user?.email === 'diegomarruchi@outlook.it'
   // Utente kiosk: ha SOLO can_prelievo, nessun altro modulo → schermata prelievi bloccata
   const isKioskOnly = !isAdmin && !!myPermissions && !!myPermissions.can_prelievo &&
@@ -1662,7 +1662,10 @@ export default function Home() {
         onClose={() => { setIsTicketModalOpen(false); setIsTicketsListModalOpen(true) }}
         editTicket={editingTicket}
         teamProfiles={ticketTeamProfiles}
+        preventivi={preventivi}
         currentUserName={userProfile?.full_name || user?.email || ''}
+        onUploadAttachment={uploadAttachment}
+        onDeleteAttachment={deleteAttachment}
         onSave={async (data) => {
           if (editingTicket) {
             await updateTicket(editingTicket.id, data)
