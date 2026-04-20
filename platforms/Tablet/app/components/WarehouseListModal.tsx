@@ -26,6 +26,7 @@ interface WarehouseListModalProps {
   warehouseTitle?: string
   onMoveToWarehouse?: (product: Product) => void
   hideStock?: boolean
+  hideCategories?: boolean
 }
 
 // Estrae la categoria "pulita" dal campo category del CSV
@@ -100,7 +101,7 @@ function normalizeSubcategory(sub: string): string {
   return sub
 }
 
-export default function WarehouseListModal({ isOpen, onClose, products: allProducts, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal, warehouseFilter, warehouseTitle, onMoveToWarehouse, hideStock = false }: WarehouseListModalProps) {
+export default function WarehouseListModal({ isOpen, onClose, products: allProducts, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal, warehouseFilter, warehouseTitle, onMoveToWarehouse, hideStock = false, hideCategories = false }: WarehouseListModalProps) {
   // Filtra prodotti per warehouse se specificato
   const products = warehouseFilter
     ? allProducts.filter(p => (p.warehouse || 'listino') === warehouseFilter)
@@ -277,6 +278,12 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
     if (currentCategory) setCurrentCategory(null)
     else if (currentBrand) setCurrentBrand(null)
   }
+
+  // Tutti i prodotti del brand corrente (flat, senza categorie) — usato in hideCategories mode
+  const productsForBrand = useMemo(() => {
+    if (!currentBrand || !tree[currentBrand]) return []
+    return Object.values(tree[currentBrand]).flat().sort((a, b) => a.name.localeCompare(b.name))
+  }, [currentBrand, tree])
 
   // --- Render product card (reused in category view + search) ---
   const renderProduct = (p: Product) => {
@@ -515,7 +522,7 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                     </button>
                   </>
                 )}
-                {currentCategory && (
+                {!hideCategories && currentCategory && (
                   <>
                     <ChevronRight className="w-3 h-3 text-slate-300" />
                     <span className="text-xs font-medium text-violet-600 bg-violet-50 rounded-lg px-2 py-1">{currentCategory}</span>
@@ -627,8 +634,19 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                 </>
               )}
 
+              {/* LEVEL 2 (hideCategories): PRODUCTS directly under brand */}
+              {!isSearching && currentBrand && !currentCategory && hideCategories && (
+                <>
+                  {productsForBrand.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-slate-400">Nessun prodotto</p>
+                    </div>
+                  ) : productsForBrand.map(p => renderProduct(p))}
+                </>
+              )}
+
               {/* LEVEL 2: CATEGORIES (within brand) */}
-              {!isSearching && currentBrand && !currentCategory && (
+              {!isSearching && currentBrand && !currentCategory && !hideCategories && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {categoriesForBrand.map((c) => (
                     <div key={c.name} className="relative group/cat">
