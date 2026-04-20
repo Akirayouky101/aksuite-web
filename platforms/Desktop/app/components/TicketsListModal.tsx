@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Ticket, Plus, Search, Calendar, User, Users, AlertCircle, CheckCircle2, Circle, PlayCircle, XCircle, Trash2, Edit2, SlidersHorizontal } from 'lucide-react'
-import { Ticket as TicketType, TicketCategory } from '../hooks/useTickets'
+import { X, Ticket, Plus, Search, Calendar, User, Users, AlertCircle, CheckCircle2, Circle, PlayCircle, XCircle, Trash2, Edit2, SlidersHorizontal, Paperclip, Download, ExternalLink, FileText, Image as ImageIcon, ChevronLeft } from 'lucide-react'
+import { Ticket as TicketType, TicketCategory, TicketAttachment } from '../hooks/useTickets'
 import { CATEGORY_CONFIG } from './TicketModal'
 
 interface TicketsListModalProps {
@@ -50,6 +50,8 @@ export default function TicketsListModal({
   const [showFilters, setShowFilters] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [attachmentTicket, setAttachmentTicket] = useState<TicketType | null>(null)
+  const [previewAttachment, setPreviewAttachment] = useState<TicketAttachment | null>(null)
 
   const visibleTickets = useMemo(() => {
     let list = tickets
@@ -292,6 +294,16 @@ export default function TicketsListModal({
                             </div>
                           )}
 
+                          {ticket.attachments && ticket.attachments.length > 0 && (
+                            <button
+                              onClick={e => { e.stopPropagation(); setAttachmentTicket(ticket) }}
+                              className="flex items-center gap-1.5 text-xs text-violet-600 bg-violet-50 border border-violet-200 rounded-lg px-3 py-1.5 hover:bg-violet-100 transition-colors"
+                            >
+                              <Paperclip size={12} />
+                              {ticket.attachments.length} allegat{ticket.attachments.length === 1 ? 'o' : 'i'}
+                            </button>
+                          )}
+
                           <div className="flex items-center gap-2 pt-1">
                             <button
                               onClick={() => onStatusChange(ticket.id, STATUS_NEXT[ticket.status])}
@@ -330,6 +342,119 @@ export default function TicketsListModal({
           </div>
         </div>
       </motion.div>
+
+      {/* ── Modal lista allegati ── */}
+      <AnimatePresence>
+        {attachmentTicket && !previewAttachment && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" onClick={() => setAttachmentTicket(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div>
+                  <h3 className="font-semibold text-slate-800 text-sm">Allegati</h3>
+                  <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[280px]">{attachmentTicket.title}</p>
+                </div>
+                <button onClick={() => setAttachmentTicket(null)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+                {(attachmentTicket.attachments || []).map(att => {
+                  const isImage = att.file_type?.startsWith('image/')
+                  const isPdf = att.file_type === 'application/pdf'
+                  return (
+                    <div key={att.id}
+                      className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 cursor-pointer hover:border-violet-300 hover:bg-violet-50/40 transition-all"
+                      onClick={() => setPreviewAttachment(att)}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isImage ? 'bg-blue-50 text-blue-400' : isPdf ? 'bg-red-50 text-red-400' : 'bg-slate-100 text-slate-400'}`}>
+                        {isImage ? <ImageIcon size={16} /> : <FileText size={16} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-slate-700 truncate font-medium">{att.file_name}</p>
+                        <p className="text-xs text-slate-400">{att.file_size ? `${(att.file_size / 1024).toFixed(0)} KB` : ''}{att.uploaded_by_name ? ` · ${att.uploaded_by_name}` : ''}</p>
+                      </div>
+                      <ExternalLink size={13} className="text-slate-300 shrink-0" />
+                    </div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Modal anteprima allegato ── */}
+      <AnimatePresence>
+        {previewAttachment && (
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex flex-col z-[70]" onClick={() => setPreviewAttachment(null)}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col h-full"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Toolbar */}
+              <div className="flex items-center gap-3 px-4 py-3 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 shrink-0">
+                <button onClick={() => setPreviewAttachment(null)} className="text-white/70 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 flex items-center gap-1.5 text-sm">
+                  <ChevronLeft size={16} /> Indietro
+                </button>
+                <span className="text-white/90 text-sm font-medium truncate flex-1">{previewAttachment.file_name}</span>
+                <a
+                  href={previewAttachment.public_url}
+                  download={previewAttachment.file_name}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm px-3 py-1.5 rounded-lg hover:bg-white/10"
+                >
+                  <Download size={15} /> Scarica
+                </a>
+              </div>
+
+              {/* Contenuto */}
+              <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
+                {previewAttachment.file_type?.startsWith('image/') ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={previewAttachment.public_url}
+                    alt={previewAttachment.file_name}
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                  />
+                ) : previewAttachment.file_type === 'application/pdf' ? (
+                  <iframe
+                    src={previewAttachment.public_url}
+                    className="w-full h-full rounded-xl"
+                    title={previewAttachment.file_name}
+                  />
+                ) : (
+                  <div className="text-center text-white/80">
+                    <FileText size={64} className="mx-auto mb-4 opacity-40" />
+                    <p className="text-lg font-medium mb-1">{previewAttachment.file_name}</p>
+                    <p className="text-white/50 text-sm mb-6">{previewAttachment.file_size ? `${(previewAttachment.file_size / 1024).toFixed(0)} KB` : ''}</p>
+                    <a
+                      href={previewAttachment.public_url}
+                      download={previewAttachment.file_name}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-violet-500 hover:bg-violet-600 text-white rounded-xl px-5 py-2.5 font-medium transition-colors"
+                    >
+                      <Download size={16} /> Scarica file
+                    </a>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

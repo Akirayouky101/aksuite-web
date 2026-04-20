@@ -64,3 +64,21 @@ CREATE POLICY "ticket_attachments_delete" ON public.ticket_attachments FOR DELET
   auth.uid() = uploaded_by
   OR auth.uid() IN (SELECT user_id FROM public.user_permissions WHERE is_admin = true)
 );
+
+-- ──────────────────────────────────────────────────────────────
+-- Storage policies per bucket ticket-attachments
+-- ──────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "ticket_attachments_upload" ON storage.objects;
+CREATE POLICY "ticket_attachments_upload" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'ticket-attachments');
+
+DROP POLICY IF EXISTS "ticket_attachments_read" ON storage.objects;
+CREATE POLICY "ticket_attachments_read" ON storage.objects
+  FOR SELECT TO public
+  USING (bucket_id = 'ticket-attachments');
+
+DROP POLICY IF EXISTS "ticket_attachments_delete" ON storage.objects;
+CREATE POLICY "ticket_attachments_delete" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'ticket-attachments');
