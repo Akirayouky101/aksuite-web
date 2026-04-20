@@ -26,7 +26,6 @@ interface WarehouseListModalProps {
   warehouseTitle?: string
   onMoveToWarehouse?: (product: Product) => void
   hideStock?: boolean
-  hideCategories?: boolean
 }
 
 // Estrae la categoria "pulita" dal campo category del CSV
@@ -101,7 +100,7 @@ function normalizeSubcategory(sub: string): string {
   return sub
 }
 
-export default function WarehouseListModal({ isOpen, onClose, products: allProducts, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal, warehouseFilter, warehouseTitle, onMoveToWarehouse, hideStock = false, hideCategories = false }: WarehouseListModalProps) {
+export default function WarehouseListModal({ isOpen, onClose, products: allProducts, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal, warehouseFilter, warehouseTitle, onMoveToWarehouse, hideStock = false }: WarehouseListModalProps) {
   // Filtra prodotti per warehouse se specificato
   const products = warehouseFilter
     ? allProducts.filter(p => (p.warehouse || 'listino') === warehouseFilter)
@@ -115,63 +114,28 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
   const [stockAction, setStockAction] = useState<{productId: string, type: string, qty: number, notes: string} | null>(null)
   const scanInputRef = useRef<HTMLInputElement>(null)
 
-  // Navigation state: brand -> category -> products
+  // Navigation state: brand -> products
   const [currentBrand, setCurrentBrand] = useState<string | null>(null)
-  const [currentCategory, setCurrentCategory] = useState<string | null>(null)
-
-  // Category management state
-  const [customCategories, setCustomCategories] = useState<string[]>([])
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [deletingCategory, setDeletingCategory] = useState<string | null>(null)
 
   if (!isOpen) return null
 
-  // Build brand -> category -> products tree
+  // Build brand -> products map (solo per conteggi nella card brand)
   const tree = useMemo(() => {
-    const map: Record<string, Record<string, Product[]>> = {}
+    const map: Record<string, Product[]> = {}
     for (const p of products) {
       const brand = p.brand || 'Senza Marca'
-      const rawSub = extractSubcategory(p.category || '')
-      const cat = normalizeSubcategory(rawSub)
-      if (!map[brand]) map[brand] = {}
-      if (!map[brand][cat]) map[brand][cat] = []
-      map[brand][cat].push(p)
+      if (!map[brand]) map[brand] = []
+      map[brand].push(p)
     }
     return map
   }, [products])
 
-  // Tutte le categorie disponibili (normalizzate da tree + categorie custom)
-  const allCategories = useMemo(() => {
-    const fromTree: string[] = []
-    for (const brand of Object.keys(tree)) {
-      for (const cat of Object.keys(tree[brand])) {
-        fromTree.push(cat)
-      }
-    }
-    return Array.from(new Set([...fromTree, ...customCategories])).sort()
-  }, [tree, customCategories])
-
   const brands = useMemo(() =>
     Object.keys(tree).sort().map(b => ({
       name: b,
-      count: Object.values(tree[b]).reduce((sum, arr) => sum + arr.length, 0),
-      categories: Object.keys(tree[b]).length
+      count: tree[b].length
     })),
   [tree])
-
-  const categoriesForBrand = useMemo(() => {
-    if (!currentBrand || !tree[currentBrand]) return []
-    return Object.keys(tree[currentBrand]).sort().map(c => ({
-      name: c,
-      count: tree[currentBrand][c].length
-    }))
-  }, [currentBrand, tree])
-
-  const productsForCategory = useMemo(() => {
-    if (!currentBrand || !currentCategory || !tree[currentBrand]?.[currentCategory]) return []
-    return tree[currentBrand][currentCategory].sort((a, b) => a.name.localeCompare(b.name))
-  }, [currentBrand, currentCategory, tree])
 
   // Search mode: flat list across all products
   const isSearching = search.trim().length > 0 || scanFoundId !== null
@@ -249,37 +213,13 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
     setStockAction(null)
   }
 
-  const handleDeleteCategory = async (normalizedCat: string) => {
-    if (!currentBrand) return
-    const affected = tree[currentBrand]?.[normalizedCat]?.length || 0
-    if (!confirm(`Eliminare la categoria "${normalizedCat}"?${affected > 0 ? ` ${affected} prodott${affected === 1 ? 'o perderà' : 'i perderanno'} la categoria (diventano "Senza Categoria").` : ''}`)) return
-    setDeletingCategory(normalizedCat)
-    const toUpdate = tree[currentBrand]?.[normalizedCat] || []
-    for (const p of toUpdate) {
-      await onUpdateProduct(p.id, { category: '' })
-    }
-    setDeletingCategory(null)
-  }
-
-  const handleCreateCategory = () => {
-    const name = newCategoryName.trim()
-    if (!name) return
-    setCustomCategories(prev => [...prev, name])
-    setNewCategoryName('')
-    setShowNewCategoryInput(false)
-  }
-
   const getSupplierName = (id: string | null) => suppliers.find(s => s.id === id)?.name || ''
 
-  const goHome = () => { setCurrentBrand(null); setCurrentCategory(null); setSearch('') }
-  const goBrand = (brand: string) => { setCurrentBrand(brand); setCurrentCategory(null); setSearch('') }
-  const goCategory = (cat: string) => { setCurrentCategory(cat); setSearch('') }
-  const goBack = () => {
-    if (currentCategory) setCurrentCategory(null)
-    else if (currentBrand) setCurrentBrand(null)
-  }
+  const goHome = () => { setCurrentBrand(null); setSearch('') }
+  const goBrand = (brand: string) => { setCurrentBrand(brand); setSearch('') }
+  const goBack = () => { if (currentBrand) setCurrentBrand(null) }
 
-  // Tutti i prodotti del brand corrente (flat, senza categorie) — usato in hideCategories mode
+  // Prodotti del brand corrente (flat)
   const productsForBrand = useMemo(() => {
     if (!currentBrand) return []
     return products.filter(p => (p.brand || 'Senza Marca') === currentBrand).sort((a, b) => a.name.localeCompare(b.name))
@@ -351,20 +291,6 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                     </div>
                   </div>
                 )}
-
-                {/* Categoria inline: seleziona o cambia senza aprire il modal completo */}
-                <div className="flex items-center gap-2 pt-1 pb-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex-shrink-0">Categoria</span>
-                  <select
-                    title="Cambia categoria"
-                    value={p.category ? normalizeSubcategory(extractSubcategory(p.category)) : ''}
-                    onChange={async (e) => { await onUpdateProduct(p.id, { category: e.target.value }) }}
-                    className="flex-1 text-xs rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
-                  >
-                    <option value="">Senza categoria</option>
-                    {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
 
                 <div className="flex items-center gap-2 pt-1 flex-wrap">
                   {!hideStock && (
@@ -517,18 +443,12 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                 {currentBrand && (
                   <>
                     <ChevronRight className="w-3 h-3 text-slate-300" />
-                    <button onClick={() => goBrand(currentBrand)} className={`text-xs font-medium transition-all rounded-lg px-2 py-1 ${!currentCategory ? 'text-violet-600 bg-violet-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}>
+                    <button onClick={() => goBrand(currentBrand)} className="text-xs font-medium text-violet-600 bg-violet-50 rounded-lg px-2 py-1">
                       {currentBrand}
                     </button>
                   </>
                 )}
-                {!hideCategories && currentCategory && (
-                  <>
-                    <ChevronRight className="w-3 h-3 text-slate-300" />
-                    <span className="text-xs font-medium text-violet-600 bg-violet-50 rounded-lg px-2 py-1">{currentCategory}</span>
-                  </>
-                )}
-                {(currentBrand || currentCategory) && (
+                {(currentBrand) && (
                   <button onClick={goBack} title="Indietro" className="ml-auto flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-all rounded-lg px-2 py-1 hover:bg-slate-100">
                     <ArrowLeft className="w-3 h-3" />Indietro
                   </button>
@@ -537,7 +457,7 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                 <input value={search} onChange={e => { setSearch(e.target.value); setScanFoundId(null) }}
-                  placeholder={currentCategory ? 'Cerca in questa categoria...' : currentBrand ? 'Cerca in questa marca...' : 'Cerca prodotto, SKU, marca...'}
+                  placeholder={currentBrand ? 'Cerca in questa marca...' : 'Cerca prodotto, SKU, marca...'}
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white/80 border border-slate-200/60 text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
               </div>
             </div>
@@ -605,7 +525,7 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h3 className="text-lg font-bold text-slate-800 group-hover:text-violet-600 transition-colors">{b.name}</h3>
-                                <p className="text-xs text-slate-400 mt-0.5">{b.count} prodott{b.count === 1 ? 'o' : 'i'} {'\u2022'} {b.categories} categori{b.categories === 1 ? 'a' : 'e'}</p>
+                                <p className="text-xs text-slate-400 mt-0.5">{b.count} prodott{b.count === 1 ? 'o' : 'i'}</p>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 <span className="px-3 py-1 rounded-lg bg-violet-50 text-violet-600 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Apri</span>
@@ -622,7 +542,7 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h3 className="text-base font-bold text-slate-800 group-hover:text-violet-600 transition-colors truncate">{b.name}</h3>
-                                <p className="text-xs text-slate-400">{b.count} prodott{b.count === 1 ? 'o' : 'i'} {'\u2022'} {b.categories} categori{b.categories === 1 ? 'a' : 'e'}</p>
+                                <p className="text-xs text-slate-400">{b.count} prodott{b.count === 1 ? 'o' : 'i'}</p>
                               </div>
                               <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-400 transition-colors" />
                             </div>
@@ -634,84 +554,14 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                 </>
               )}
 
-              {/* LEVEL 2 (hideCategories): PRODUCTS directly under brand */}
-              {!isSearching && currentBrand && !currentCategory && hideCategories && (
+              {/* LEVEL 2: PRODUCTS (within brand) */}
+              {!isSearching && currentBrand && (
                 <>
                   {productsForBrand.length === 0 ? (
                     <div className="text-center py-12">
                       <p className="text-slate-400">Nessun prodotto</p>
                     </div>
                   ) : productsForBrand.map(p => renderProduct(p))}
-                </>
-              )}
-
-              {/* LEVEL 2: CATEGORIES (within brand) */}
-              {!isSearching && currentBrand && !currentCategory && !hideCategories && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {categoriesForBrand.map((c) => (
-                    <div key={c.name} className="relative group/cat">
-                      <button onClick={() => goCategory(c.name)}
-                        className="w-full text-left p-4 rounded-2xl bg-white/80 border border-slate-200/40 hover:shadow-lg hover:border-slate-300/60 transition-all group">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-2xl">
-                            {categoryIcons[c.name] || '\uD83D\uDCE6'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-bold text-slate-800 group-hover:text-violet-600 transition-colors truncate">{c.name}</h3>
-                            <p className="text-xs text-slate-400">{c.count} prodott{c.count === 1 ? 'o' : 'i'}</p>
-                          </div>
-                          <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-400 transition-colors" />
-                        </div>
-                      </button>
-                      {/* Bottone elimina categoria (appare sull'hover) */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c.name) }}
-                        disabled={deletingCategory === c.name}
-                        title={`Elimina categoria "${c.name}" (i prodotti diventano senza categoria)`}
-                        className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white border border-red-200/70 text-red-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center opacity-0 group-hover/cat:opacity-100 transition-all shadow-sm"
-                      >
-                        {deletingCategory === c.name
-                          ? <span className="text-[9px] font-bold">…</span>
-                          : <Trash2 className="w-3 h-3" />}
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Crea nuova categoria */}
-                  {showNewCategoryInput ? (
-                    <div className="sm:col-span-2 flex items-center gap-2 p-3 rounded-2xl bg-violet-50/60 border border-violet-200/60">
-                      <input
-                        autoFocus
-                        value={newCategoryName}
-                        onChange={e => setNewCategoryName(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') handleCreateCategory(); if (e.key === 'Escape') { setShowNewCategoryInput(false); setNewCategoryName('') } }}
-                        placeholder="Nome nuova categoria..."
-                        className="flex-1 px-3 py-2 text-sm rounded-xl bg-white border border-violet-200/60 focus:outline-none focus:ring-2 focus:ring-violet-400/30 text-slate-700"
-                      />
-                      <button onClick={handleCreateCategory} disabled={!newCategoryName.trim()}
-                        className="px-3 py-2 rounded-xl bg-violet-500 text-white text-xs font-bold disabled:opacity-40 hover:bg-violet-600 transition-all">Crea</button>
-                      <button onClick={() => { setShowNewCategoryInput(false); setNewCategoryName('') }}
-                        className="px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-xs font-bold hover:bg-slate-200 transition-all">Annulla</button>
-                    </div>
-                  ) : (
-                    <div className="sm:col-span-2">
-                      <button onClick={() => setShowNewCategoryInput(true)}
-                        className="w-full p-3 rounded-2xl border-2 border-dashed border-violet-200/60 text-violet-400 text-xs font-bold hover:bg-violet-50/50 hover:border-violet-300/60 hover:text-violet-500 transition-all flex items-center justify-center gap-2">
-                        <Plus className="w-4 h-4" /> Nuova Categoria
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* LEVEL 3: PRODUCTS (within category) */}
-              {!isSearching && currentBrand && currentCategory && (
-                <>
-                  {productsForCategory.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-slate-400">Nessun prodotto in questa categoria</p>
-                    </div>
-                  ) : productsForCategory.map(p => renderProduct(p))}
                 </>
               )}
 
