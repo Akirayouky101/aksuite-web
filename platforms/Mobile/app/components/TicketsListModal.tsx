@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Ticket, Plus, Search, Calendar, User, Users, AlertCircle, CheckCircle2, Circle, PlayCircle, XCircle, Trash2, Edit2 } from 'lucide-react'
+import { X, Ticket, Plus, Search, Calendar, User, Users, AlertCircle, CheckCircle2, Circle, PlayCircle, XCircle, Trash2, Edit2, SlidersHorizontal } from 'lucide-react'
 import { Ticket as TicketType, TicketCategory } from '../hooks/useTickets'
 import { CATEGORY_CONFIG } from './TicketModal'
 
@@ -47,6 +47,7 @@ export default function TicketsListModal({
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('tutti')
   const [filterView, setFilterView] = useState<FilterView>('miei')
   const [filterCategory, setFilterCategory] = useState<FilterCategory>('tutti')
+  const [showFilters, setShowFilters] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -117,65 +118,89 @@ export default function TicketsListModal({
             </div>
           </div>
 
-          {/* Filtri */}
-          <div className="px-6 py-4 border-b border-slate-100 shrink-0 space-y-3 bg-white/40">
-            {isAdmin && (
-              <div className="flex gap-2">
-                {(['miei', 'tutti'] as FilterView[]).map(v => (
-                  <button
-                    key={v}
-                    onClick={() => setFilterView(v)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterView === v ? 'bg-violet-100 text-violet-700 border border-violet-200' : 'bg-slate-100 text-slate-500 hover:text-slate-700'}`}
-                  >
-                    {v === 'miei' ? 'I miei' : 'Tutti'}
-                  </button>
-                ))}
+          {/* Barra ricerca + toggle filtri */}
+          <div className="px-4 py-3 border-b border-slate-100 shrink-0 bg-white/40 space-y-2">
+            <div className="flex gap-2">
+              {isAdmin && (
+                <div className="flex gap-1.5">
+                  {(['miei', 'tutti'] as FilterView[]).map(v => (
+                    <button key={v} onClick={() => setFilterView(v)}
+                      className={`px-3 py-2 rounded-xl text-xs font-medium transition-colors ${filterView === v ? 'bg-violet-100 text-violet-700 border border-violet-200' : 'bg-slate-100 text-slate-500 hover:text-slate-700'}`}>
+                      {v === 'miei' ? 'I miei' : 'Tutti'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Cerca ticket..."
+                  className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl pl-9 pr-4 py-2 text-slate-800 text-sm placeholder-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all" />
               </div>
-            )}
-
-            {/* Ricerca */}
-            <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Cerca ticket..."
-                className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl pl-9 pr-4 py-2.5 text-slate-800 text-sm placeholder-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all"
-              />
+              <button onClick={() => setShowFilters(f => !f)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${showFilters || filterCategory !== 'tutti' || filterStatus !== 'tutti' ? 'bg-violet-100 text-violet-700 border-violet-200' : 'bg-slate-100 text-slate-500 border-slate-200 hover:text-slate-700'}`}>
+                <SlidersHorizontal size={13} />
+                Filtri
+                {(filterCategory !== 'tutti' || filterStatus !== 'tutti') && (
+                  <span className="w-4 h-4 rounded-full bg-violet-500 text-white text-[10px] flex items-center justify-center leading-none">
+                    {(filterCategory !== 'tutti' ? 1 : 0) + (filterStatus !== 'tutti' ? 1 : 0)}
+                  </span>
+                )}
+              </button>
             </div>
 
-            {/* Filtro categoria */}
-            <div className="flex gap-2 overflow-x-auto pb-0.5">
-              {ALL_CATEGORIES.map(cat => {
-                const cfg = cat !== 'tutti' ? CATEGORY_CONFIG[cat] : null
-                const active = filterCategory === cat
-                return (
-                  <button key={cat} onClick={() => setFilterCategory(cat)}
-                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      active
-                        ? cfg ? `${cfg.bg} ${cfg.color} border ${cfg.border}` : 'bg-violet-100 text-violet-700 border border-violet-200'
-                        : 'bg-slate-100 text-slate-500 hover:text-slate-700'
-                    }`}>
-                    {cfg && <span className="opacity-80">{cfg.icon}</span>}
-                    {cat === 'tutti' ? 'Tutti' : cfg?.label}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Filtro status */}
-            <div className="flex gap-2 overflow-x-auto pb-0.5">
-              {(['tutti', 'aperto', 'in_corso', 'completato', 'chiuso'] as FilterStatus[]).map(s => (
-                <button
-                  key={s}
-                  onClick={() => setFilterStatus(s)}
-                  className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === s ? 'bg-violet-100 text-violet-700 border border-violet-200' : 'bg-slate-100 text-slate-500 hover:text-slate-700'}`}
+            {/* Pannello filtri collassabile */}
+            <AnimatePresence>
+              {showFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                  className="overflow-hidden"
                 >
-                  {s === 'tutti' ? 'Tutti' : STATUS_CONFIG[s].label}
-                </button>
-              ))}
-            </div>
+                  <div className="pt-1 space-y-2.5">
+                    <div>
+                      <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-1.5">Categoria</p>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {ALL_CATEGORIES.map(cat => {
+                          const cfg = cat !== 'tutti' ? CATEGORY_CONFIG[cat] : null
+                          const active = filterCategory === cat
+                          return (
+                            <button key={cat} onClick={() => setFilterCategory(cat)}
+                              className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                active
+                                  ? cfg ? `${cfg.bg} ${cfg.color} border ${cfg.border}` : 'bg-violet-100 text-violet-700 border border-violet-200'
+                                  : 'bg-slate-100 text-slate-500 hover:text-slate-700 border border-transparent'
+                              }`}>
+                              {cfg && <span className="opacity-80">{cfg.icon}</span>}
+                              {cat === 'tutti' ? 'Tutti' : cfg?.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-1.5">Stato</p>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {(['tutti', 'aperto', 'in_corso', 'completato', 'chiuso'] as FilterStatus[]).map(s => (
+                          <button key={s} onClick={() => setFilterStatus(s)}
+                            className={`shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border ${filterStatus === s ? 'bg-violet-100 text-violet-700 border-violet-200' : 'bg-slate-100 text-slate-500 border-transparent hover:text-slate-700'}`}>
+                            {s === 'tutti' ? 'Tutti' : STATUS_CONFIG[s].label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {(filterCategory !== 'tutti' || filterStatus !== 'tutti') && (
+                      <button onClick={() => { setFilterCategory('tutti'); setFilterStatus('tutti') }}
+                        className="text-xs text-slate-400 hover:text-red-400 transition-colors">
+                        Azzera filtri
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Lista */}

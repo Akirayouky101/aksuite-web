@@ -22,10 +22,10 @@ export const CATEGORY_CONFIG: Record<TicketCategory, { label: string; icon: Reac
 
 const CATEGORIES: TicketCategory[] = ['ordine', 'preventivo', 'assistenza', 'documentazione', 'chiamata']
 const PRIORITIES: { value: TicketType['priority']; label: string }[] = [
-  { value: 'bassa', label: '\U0001f7e2 Bassa' },
-  { value: 'normale', label: '\U0001f535 Normale' },
-  { value: 'alta', label: '\U0001f7e0 Alta' },
-  { value: 'urgente', label: '\U0001f534 Urgente' },
+  { value: 'bassa', label: '🟢 Bassa' },
+  { value: 'normale', label: '🔵 Normale' },
+  { value: 'alta', label: '🟠 Alta' },
+  { value: 'urgente', label: '🔴 Urgente' },
 ]
 const HAS_ATTACHMENTS: TicketCategory[] = ['ordine', 'assistenza', 'documentazione']
 
