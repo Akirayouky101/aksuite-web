@@ -29,6 +29,7 @@ export interface Product {
   image_url: string | null
   notes: string | null
   is_active: boolean
+  warehouse: string
   created_at: string
   updated_at: string
 }
@@ -197,6 +198,17 @@ export function useWarehouse() {
     return products.find(p => p.barcode === barcode || p.qr_code === barcode || p.sku === barcode)
   }
 
+  const moveToWarehouse = async (productId: string, warehouse: string) => {
+    const product = products.find(p => p.id === productId)
+    const { error } = await supabase
+      .from('products')
+      .update({ warehouse, updated_at: new Date().toISOString() })
+      .eq('id', productId)
+    if (error) { console.error('moveToWarehouse error:', error); return }
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, warehouse } : p))
+    logActivity('update', 'product', product?.name || 'Prodotto', `Spostato in magazzino: ${warehouse}`)
+  }
+
   const getLowStockProducts = (): Product[] => {
     return products.filter(p => p.is_active && p.min_quantity > 0 && p.quantity <= p.min_quantity)
   }
@@ -209,6 +221,6 @@ export function useWarehouse() {
     products, movements, loading,
     addProduct, updateProduct, deleteProduct,
     updateStock, loadMovements, findByBarcode,
-    getLowStockProducts, getOutOfStockProducts
+    getLowStockProducts, getOutOfStockProducts, moveToWarehouse
   }
 }

@@ -155,6 +155,7 @@ export default function Home() {
   const [editingSupplier, setEditingSupplier] = useState<any>(null)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [isWarehouseListModalOpen, setIsWarehouseListModalOpen] = useState(false)
+  const [isAstZgModalOpen, setIsAstZgModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
   const [isOrdersListModalOpen, setIsOrdersListModalOpen] = useState(false)
@@ -213,7 +214,7 @@ export default function Home() {
   const { entries: callTimelineEntries, loading: callTimelineLoading, loadTimeline: loadCallTimeline, addEntry: addCallTimelineEntry, deleteEntry: deleteCallTimelineEntry, updateEntry: updateCallTimelineEntry, uploadPhoto: uploadCallTimelinePhoto, clearTimeline: clearCallTimeline } = useCallTimeline()
   const { clients, addClient, updateClient, deleteClient, toggleFavorite: toggleClientFavorite } = useClients()
   const { suppliers, addSupplier, updateSupplier, deleteSupplier, toggleFavorite: toggleSupplierFavorite } = useSuppliers()
-  const { products, addProduct, updateProduct, deleteProduct, updateStock, loadMovements, findByBarcode } = useWarehouse()
+  const { products, addProduct, updateProduct, deleteProduct, updateStock, loadMovements, findByBarcode, moveToWarehouse } = useWarehouse()
   const { orders, addOrder, updateOrder, deleteOrder, addOrderItem, deleteOrderItem, getOrderItems, receiveOrder } = useOrders()
   const { preventivi, addPreventivo, updatePreventivo, deletePreventivo, updateStato: updatePreventivoStato } = usePreventivi()
   const { sopralluoghi, addSopralluogo, updateSopralluogo, deleteSopralluogo, updateStato: updateSopralluogoStato } = useSopralluoghi()
@@ -382,7 +383,8 @@ export default function Home() {
       { id: 'installations', perm: 'can_installations' as const, label: 'Impianti', icon: Monitor, onClick: () => setIsInstallationListModalOpen(true), count: installations.length, section: 'operativo' },
       // --- Magazzino & Commerciale ---
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
-      { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length, section: 'commerciale' },
+      { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Listini', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.filter(p => (p.warehouse || 'listino') === 'listino').length, section: 'commerciale' },
+      { id: 'warehouse_astzg', perm: 'can_warehouse' as const, label: 'Magazzino AST/ZG', icon: Package, onClick: () => setIsAstZgModalOpen(true), count: products.filter(p => p.warehouse === 'magazzino_astzg').length, section: 'commerciale' },
       { id: 'kits', perm: 'can_kits' as const, label: 'KIT', icon: Layers, onClick: () => setIsKitsListModalOpen(true), count: kits.length, section: 'commerciale' },
       { id: 'stock_dashboard', perm: 'can_kits' as const, label: 'Stock Critico', icon: TrendingDown, onClick: () => setIsStockDashboardOpen(true), badge: (() => { const neg = products.filter(p => p.quantity < 0).length; const zero = products.filter(p => p.quantity === 0).length; const low = products.filter(p => p.quantity > 0 && p.min_quantity > 0 && p.quantity <= p.min_quantity).length; const tot = neg + zero + low; return tot > 0 ? tot : undefined })(), section: 'commerciale' },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
@@ -1343,6 +1345,37 @@ export default function Home() {
         onImportCsv={() => setIsCsvImportOpen(true)}
         kits={kits}
         onOpenKitsModal={() => { setIsWarehouseListModalOpen(false); setIsKitsListModalOpen(true) }}
+        warehouseFilter="listino"
+        warehouseTitle="Listini"
+        onMoveToWarehouse={async (product) => {
+          if (confirm(`Spostare "${product.name}" in Magazzino AST/ZG?`)) {
+            await moveToWarehouse(product.id, 'magazzino_astzg')
+          }
+        }}
+      />}
+
+      {/* ═══ MAGAZZINO AST/ZG ═══ */}
+      {isAstZgModalOpen && <WarehouseListModal
+        isOpen={isAstZgModalOpen}
+        onClose={() => setIsAstZgModalOpen(false)}
+        products={products}
+        suppliers={suppliers}
+        onAdd={() => { setEditingProduct(null); setIsProductModalOpen(true) }}
+        onEdit={(product) => { setEditingProduct(product); setIsProductModalOpen(true); setIsAstZgModalOpen(false) }}
+        onDelete={deleteProduct}
+        onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
+        onUpdateProduct={async (id, data) => { await updateProduct(id, data) }}
+        onFindByBarcode={findByBarcode}
+        onLoadMovements={loadMovements}
+        kits={kits}
+        onOpenKitsModal={() => { setIsAstZgModalOpen(false); setIsKitsListModalOpen(true) }}
+        warehouseFilter="magazzino_astzg"
+        warehouseTitle="Magazzino AST/ZG"
+        onMoveToWarehouse={async (product) => {
+          if (confirm(`Riportare "${product.name}" nei Listini?`)) {
+            await moveToWarehouse(product.id, 'listino')
+          }
+        }}
       />}
 
       {isCsvImportOpen && <CsvImportModal

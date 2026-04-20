@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Package, Search, Plus, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, ScanLine, AlertTriangle, ArrowUpDown, MapPin, Tag, Minus, Upload, FolderOpen, Folder, ArrowLeft, Home, Layers } from 'lucide-react'
+import { X, Package, Search, Plus, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, ScanLine, AlertTriangle, ArrowUpDown, MapPin, Tag, Minus, Upload, FolderOpen, Folder, ArrowLeft, Home, Layers, ArrowRightLeft } from 'lucide-react'
 import { Product, StockMovement } from '../hooks/useWarehouse'
 import { Supplier } from '../hooks/useSuppliers'
 import { Kit } from '../hooks/useKits'
@@ -22,6 +22,9 @@ interface WarehouseListModalProps {
   onImportCsv?: () => void
   kits?: Kit[]
   onOpenKitsModal?: () => void
+  warehouseFilter?: string
+  warehouseTitle?: string
+  onMoveToWarehouse?: (product: Product) => void
 }
 
 // Estrae la categoria "pulita" dal campo category del CSV
@@ -96,7 +99,11 @@ function normalizeSubcategory(sub: string): string {
   return sub
 }
 
-export default function WarehouseListModal({ isOpen, onClose, products, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal }: WarehouseListModalProps) {
+export default function WarehouseListModal({ isOpen, onClose, products: allProducts, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal, warehouseFilter, warehouseTitle, onMoveToWarehouse }: WarehouseListModalProps) {
+  // Filtra prodotti per warehouse se specificato
+  const products = warehouseFilter
+    ? allProducts.filter(p => (p.warehouse || 'listino') === warehouseFilter)
+    : allProducts
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [movements, setMovements] = useState<Record<string, StockMovement[]>>({})
@@ -362,6 +369,12 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
                     className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-bold transition-all flex items-center gap-1 border border-indigo-200/50">
                     <Pencil className="w-3 h-3" />Modifica
                   </button>
+                  {onMoveToWarehouse && (
+                    <button onClick={() => onMoveToWarehouse(p)} title="Sposta in altro magazzino"
+                      className="px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-600 text-xs font-bold transition-all flex items-center gap-1 border border-teal-200/50">
+                      <ArrowRightLeft className="w-3 h-3" />Sposta
+                    </button>
+                  )}
                   <button onClick={() => { if (confirm(`Eliminare ${p.name}?`)) onDelete(p.id) }} title="Elimina prodotto"
                     className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 text-xs font-bold transition-all flex items-center gap-1 border border-red-200/50">
                     <Trash2 className="w-3 h-3" />Elimina
@@ -439,7 +452,7 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
                   <Package className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800">Magazzino</h2>
+                  <h2 className="text-lg font-bold text-slate-800">{warehouseTitle || 'Magazzino'}</h2>
                   <p className="text-xs text-slate-400">
                     {products.length} prodotti {'\u2022'} {brands.length} marche
                     {lowStock > 0 && <span className="text-amber-500 ml-1">{'\u2022'} {lowStock} scorta bassa</span>}
