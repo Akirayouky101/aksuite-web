@@ -1652,6 +1652,7 @@ export default function Home() {
         users={warehouseUserProfiles}
         kioskMode={isKioskOnly}
         onOpenKits={myPermissions?.can_kits ? () => setIsKitsListModalOpen(true) : undefined}
+        onOpenTickets={isAdmin || myPermissions?.can_tickets ? () => { setIsMaterialRequestOpen(false); setIsTicketsListModalOpen(true) } : undefined}
         onSubmit={submitWarehouseRequest}
       />}
 

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Search, Plus, Minus, Trash2, PackageCheck, ArrowRight, CheckCircle2,
-  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers
+  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
 import { RequestItem, WarehouseRequest, UserProfile } from '../hooks/useWarehouseRequests'
@@ -16,6 +16,7 @@ interface MaterialRequestModalProps {
   users: UserProfile[]
   kioskMode?: boolean
   onOpenKits?: () => void
+  onOpenTickets?: () => void
   onSubmit: (
     requestedBy: string,
     items: RequestItem[],
@@ -27,7 +28,7 @@ interface MaterialRequestModalProps {
 
 type Step = 'welcome' | 'form' | 'review' | 'done'
 
-export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onOpenKits, onSubmit }: MaterialRequestModalProps) {
+export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onOpenKits, onOpenTickets, onSubmit }: MaterialRequestModalProps) {
   const [step, setStep] = useState<Step>('welcome')
   const [requestType, setRequestType] = useState<'prelievo' | 'ordine'>('prelievo')
   const [selectedUser, setSelectedUser] = useState('')
@@ -219,6 +220,22 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
                   <p className="text-2xl font-black tracking-tight">CONSULTA</p>
                   <p className="text-2xl font-black tracking-tight">KIT</p>
                   <p className="text-xs font-medium text-emerald-100/70 mt-2">Verifica disponibilità</p>
+                </motion.button>
+              )}
+
+              {/* Ticket */}
+              {onOpenTickets && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={onOpenTickets}
+                  className="w-[280px] py-7 px-8 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-700 text-white shadow-2xl shadow-violet-500/40 hover:shadow-violet-500/60 transition-all border border-violet-300/30"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <Ticket className="w-10 h-10" />
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">APRI</p>
+                  <p className="text-2xl font-black tracking-tight">TICKET</p>
+                  <p className="text-xs font-medium text-violet-100/70 mt-2">Segnalazione o richiesta</p>
                 </motion.button>
               )}
             </div>
