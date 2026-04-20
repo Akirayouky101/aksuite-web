@@ -1664,7 +1664,7 @@ export default function Home() {
       {isTicketModalOpen && <TicketModal
         isOpen={isTicketModalOpen}
         onClose={() => { setIsTicketModalOpen(false); setIsTicketsListModalOpen(true) }}
-        editTicket={editingTicket}
+        editTicket={editingTicket ? (tickets.find(t => t.id === editingTicket.id) ?? editingTicket) : null}
         teamProfiles={ticketTeamProfiles}
         preventivi={preventivi}
         currentUserName={userProfile?.full_name || user?.email || ''}
