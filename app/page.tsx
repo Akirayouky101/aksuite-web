@@ -154,6 +154,7 @@ export default function Home() {
   const [isSuppliersListModalOpen, setIsSuppliersListModalOpen] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState<any>(null)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [pendingWarehouse, setPendingWarehouse] = useState<string>('listino')
   const [isWarehouseListModalOpen, setIsWarehouseListModalOpen] = useState(false)
   const [isAstZgModalOpen, setIsAstZgModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
@@ -1311,12 +1312,12 @@ export default function Home() {
       />}
       {isProductModalOpen && <ProductModal
         isOpen={isProductModalOpen}
-        onClose={() => { setIsProductModalOpen(false); setEditingProduct(null); setProductPrefill(null); setProductPrefillQty(0); onProductSavedRef.current = null }}
+        onClose={() => { setIsProductModalOpen(false); setEditingProduct(null); setProductPrefill(null); setProductPrefillQty(0); onProductSavedRef.current = null; setPendingWarehouse('listino') }}
         onSave={async (data) => {
           if (editingProduct) {
             await updateProduct(editingProduct.id, data)
           } else {
-            const newProduct = await addProduct(data)
+            const newProduct = await addProduct({ ...data, warehouse: pendingWarehouse })
             // Se viene da LoadingList (productPrefillQty > 0), registra il carico
             if (newProduct && productPrefillQty > 0) {
               await updateStock(newProduct.id, 'carico', productPrefillQty, 'Lista di caricamento', `Carico iniziale da lista`)
@@ -1361,7 +1362,7 @@ export default function Home() {
         onClose={() => setIsAstZgModalOpen(false)}
         products={products}
         suppliers={suppliers}
-        onAdd={() => { setEditingProduct(null); setIsProductModalOpen(true) }}
+        onAdd={() => { setEditingProduct(null); setPendingWarehouse('magazzino_astzg'); setIsProductModalOpen(true) }}
         onEdit={(product) => { setEditingProduct(product); setIsProductModalOpen(true); setIsAstZgModalOpen(false) }}
         onDelete={deleteProduct}
         onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
