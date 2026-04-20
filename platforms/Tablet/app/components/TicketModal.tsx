@@ -64,7 +64,7 @@ export default function TicketModal({
   const [selectedAssignees, setSelectedAssignees] = useState<{ user_id: string; user_name: string }[]>([])
   const [showAssigneePicker, setShowAssigneePicker] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState('')
-  const [uploadingFiles, setUploadingFiles] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -112,11 +112,12 @@ export default function TicketModal({
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || !editTicket || !onUploadAttachment) return
-    setUploadingFiles(true)
-    for (const file of Array.from(files)) {
-      await onUploadAttachment(editTicket.id, file)
+    const fileArr = Array.from(files)
+    for (let i = 0; i < fileArr.length; i++) {
+      setUploadProgress({ current: i + 1, total: fileArr.length })
+      await onUploadAttachment(editTicket.id, fileArr[i])
     }
-    setUploadingFiles(false)
+    setUploadProgress(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -313,10 +314,33 @@ export default function TicketModal({
                   )}
                   <input ref={fileInputRef} type="file" multiple accept="*/*" className="hidden"
                     onChange={e => handleFileUpload(e.target.files)} />
-                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingFiles}
-                    className="w-full flex items-center gap-2 justify-center bg-slate-50/80 border border-dashed border-slate-300 hover:border-violet-300 hover:bg-violet-50/40 rounded-xl px-4 py-3 text-slate-400 hover:text-violet-500 text-sm transition-all disabled:opacity-50">
-                    <Upload size={15} /> {uploadingFiles ? 'Caricamento...' : 'Carica documenti'}
-                  </button>
+
+                  {uploadProgress ? (
+                    <div className="rounded-xl border border-violet-200 bg-violet-50/60 px-4 py-3 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-violet-700 font-medium flex items-center gap-1.5">
+                          <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="inline-block">
+                            <Upload size={13} />
+                          </motion.span>
+                          Caricamento file {uploadProgress.current} di {uploadProgress.total}...
+                        </span>
+                        <span className="text-violet-500">{Math.round((uploadProgress.current / uploadProgress.total) * 100)}%</span>
+                      </div>
+                      <div className="h-1.5 bg-violet-100 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                          transition={{ duration: 0.3, ease: 'easeOut' }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                      className="w-full flex items-center gap-2 justify-center bg-slate-50/80 border border-dashed border-slate-300 hover:border-violet-300 hover:bg-violet-50/40 rounded-xl px-4 py-3 text-slate-400 hover:text-violet-500 text-sm transition-all">
+                      <Upload size={15} /> Carica documenti
+                    </button>
+                  )}
                   <p className="text-xs text-slate-400 mt-1 text-center">PDF, Word, immagini, ecc.</p>
                 </div>
               )}
