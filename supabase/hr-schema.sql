@@ -3,10 +3,12 @@
 -- Questo schema aggiunge solo le info HR extra senza duplicare gli utenti.
 -- Run this in Supabase SQL Editor
 
--- ── Pulizia eventuale schema v1 ────────────────────────────────
--- (se hai già eseguito lo schema v1, decommenta per pulire)
--- DROP TABLE IF EXISTS public.hr_employees CASCADE;
--- DROP TABLE IF EXISTS public.hr_leave_requests CASCADE;
+-- ── Pulizia schema v1 (drop sicuro, CASCADE rimuove dipendenze) ──
+DROP TABLE IF EXISTS public.hr_work_records    CASCADE;
+DROP TABLE IF EXISTS public.hr_documents       CASCADE;
+DROP TABLE IF EXISTS public.hr_leave_requests  CASCADE;
+DROP TABLE IF EXISTS public.hr_profiles        CASCADE;
+DROP TABLE IF EXISTS public.hr_employees       CASCADE;
 
 -- ── hr_profiles: dati HR aggiuntivi per utente (1:1 con profiles) ──
 CREATE TABLE IF NOT EXISTS public.hr_profiles (
