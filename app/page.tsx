@@ -6,7 +6,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, ChevronLeft, Plus,
   TrendingUp, TrendingDown, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus, Layers
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus, Layers, Ticket
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -64,6 +64,8 @@ const InstallationSchemaModal = dynamic(() => import('./components/InstallationS
 const KitModal = dynamic(() => import('./components/KitModal'), { ssr: false })
 const KitsListModal = dynamic(() => import('./components/KitsListModal'), { ssr: false })
 const StockDashboardModal = dynamic(() => import('./components/StockDashboardModal'), { ssr: false })
+const TicketsListModal = dynamic(() => import('./components/TicketsListModal'), { ssr: false })
+const TicketModal = dynamic(() => import('./components/TicketModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -93,6 +95,7 @@ import { useUserManagement } from './hooks/useUserManagement'
 import { useActivityLog } from './hooks/useActivityLog'
 import { useWarehouseRequests } from './hooks/useWarehouseRequests'
 import { useKits, Kit } from './hooks/useKits'
+import { useTickets, Ticket as TicketType } from './hooks/useTickets'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -170,6 +173,11 @@ export default function Home() {
   const [editingKit, setEditingKit] = useState<Kit | null>(null)
   const [isStockDashboardOpen, setIsStockDashboardOpen] = useState(false)
 
+  // ═══ TICKET STATE ═══
+  const [isTicketsListModalOpen, setIsTicketsListModalOpen] = useState(false)
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false)
+  const [editingTicket, setEditingTicket] = useState<TicketType | null>(null)
+
   // ═══ WAREHOUSE REQUESTS STATE ═══
   const [isMaterialRequestOpen, setIsMaterialRequestOpen] = useState(false)
   const [isWarehouseRequestsOpen, setIsWarehouseRequestsOpen] = useState(false)
@@ -224,6 +232,7 @@ export default function Home() {
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
   const { requests: warehouseRequests, userProfiles: warehouseUserProfiles, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest, fulfillItem: fulfillWarehouseItem, unfulfillItem: unfulfillWarehouseItem, deleteRequest: deleteWarehouseRequest, refetchProfiles: refetchWarehouseProfiles } = useWarehouseRequests()
   const { kits, addKit, updateKit, deleteKit, getKitAvailability, findByQrCode: findKitByQrCode } = useKits()
+  const { tickets, addTicket, updateTicket, updateStatus: updateTicketStatus, deleteTicket } = useTickets()
   const isWarehouseCreator = user?.email === 'diegomarruchi@outlook.it'
   // Utente kiosk: ha SOLO can_prelievo, nessun altro modulo → schermata prelievi bloccata
   const isKioskOnly = !isAdmin && !!myPermissions && !!myPermissions.can_prelievo &&
@@ -393,11 +402,12 @@ export default function Home() {
       { id: 'prelievo', perm: 'can_prelievo' as const, label: 'Prelievi', icon: PackageMinus, onClick: () => { refetchWarehouseProfiles(); setIsMaterialRequestOpen(true) }, section: 'commerciale' },
       { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventiviListModalOpen(true), count: preventivi.length, section: 'commerciale' },
       // --- Strumenti ---
+      { id: 'tickets', perm: 'can_tickets' as const, label: 'Ticket', icon: Ticket, onClick: () => setIsTicketsListModalOpen(true), count: tickets.filter(t => t.status !== 'chiuso' && t.status !== 'completato').length, badge: (() => { const mine = tickets.filter(t => t.status !== 'chiuso' && t.status !== 'completato' && (t.created_by === user?.id || t.assignees.some(a => a.user_id === user?.id))).length; return mine > 0 ? mine : undefined })(), section: 'operativo' },
       { id: 'passwords', perm: 'can_passwords' as const, label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length, section: 'strumenti' },
       { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length, section: 'strumenti' },
     ]
     return allItems.filter(item => hasPermission(item.perm))
-  }, [calls.length, lavorazioni.length, sopralluoghi.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, kits.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission])
+  }, [calls.length, lavorazioni.length, sopralluoghi.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, kits.length, tickets.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission, user?.id])
 
   const quickActions = useMemo(() => [
     { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true) },
@@ -1636,6 +1646,34 @@ export default function Home() {
         kioskMode={isKioskOnly}
         onOpenKits={myPermissions?.can_kits ? () => setIsKitsListModalOpen(true) : undefined}
         onSubmit={submitWarehouseRequest}
+      />}
+
+      {/* ═══ TICKET INTERNI ═══ */}
+      {isTicketsListModalOpen && <TicketsListModal
+        isOpen={isTicketsListModalOpen}
+        onClose={() => setIsTicketsListModalOpen(false)}
+        tickets={tickets}
+        currentUserId={user?.id || ''}
+        isAdmin={isAdmin}
+        canCreate={isAdmin || !!myPermissions?.can_tickets}
+        onAdd={() => { setEditingTicket(null); setIsTicketModalOpen(true) }}
+        onEdit={(t) => { setEditingTicket(t); setIsTicketModalOpen(true) }}
+        onDelete={deleteTicket}
+        onStatusChange={updateTicketStatus}
+      />}
+      {isTicketModalOpen && <TicketModal
+        isOpen={isTicketModalOpen}
+        onClose={() => { setIsTicketModalOpen(false); setIsTicketsListModalOpen(true) }}
+        editTicket={editingTicket}
+        teamProfiles={managedUsers.map(u => ({ id: u.id, full_name: u.full_name, email: u.email }))}
+        currentUserName={userProfile?.full_name || user?.email || ''}
+        onSave={async (data) => {
+          if (editingTicket) {
+            await updateTicket(editingTicket.id, data)
+          } else {
+            await addTicket({ ...data, creatorName: userProfile?.full_name || user?.email || '' })
+          }
+        }}
       />}
 
       {/* ═══ RICHIESTE MAGAZZINO (Admin Panel) ═══ */}
