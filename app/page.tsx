@@ -386,7 +386,7 @@ export default function Home() {
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Listini', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.filter(p => (p.warehouse || 'listino') === 'listino').length, section: 'commerciale' },
       { id: 'warehouse_astzg', perm: 'can_warehouse' as const, label: 'Magazzino AST/ZG', icon: Package, onClick: () => setIsAstZgModalOpen(true), count: products.filter(p => p.warehouse === 'magazzino_astzg').length, section: 'commerciale' },
       { id: 'kits', perm: 'can_kits' as const, label: 'KIT', icon: Layers, onClick: () => setIsKitsListModalOpen(true), count: kits.length, section: 'commerciale' },
-      { id: 'stock_dashboard', perm: 'can_kits' as const, label: 'Stock Critico', icon: TrendingDown, onClick: () => setIsStockDashboardOpen(true), badge: (() => { const neg = products.filter(p => p.quantity < 0).length; const zero = products.filter(p => p.quantity === 0).length; const low = products.filter(p => p.quantity > 0 && p.min_quantity > 0 && p.quantity <= p.min_quantity).length; const tot = neg + zero + low; return tot > 0 ? tot : undefined })(), section: 'commerciale' },
+      { id: 'stock_dashboard', perm: 'can_kits' as const, label: 'Stock Critico', icon: TrendingDown, onClick: () => setIsStockDashboardOpen(true), badge: (() => { const astzg = products.filter(p => p.warehouse === 'magazzino_astzg'); const neg = astzg.filter(p => p.quantity < 0).length; const zero = astzg.filter(p => p.quantity === 0).length; const low = astzg.filter(p => p.quantity > 0 && p.min_quantity > 0 && p.quantity <= p.min_quantity).length; const tot = neg + zero + low; return tot > 0 ? tot : undefined })(), section: 'commerciale' },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
       { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true), section: 'commerciale' },
       { id: 'prelievo', perm: 'can_prelievo' as const, label: 'Prelievi', icon: PackageMinus, onClick: () => { refetchWarehouseProfiles(); setIsMaterialRequestOpen(true) }, section: 'commerciale' },
@@ -1489,7 +1489,7 @@ export default function Home() {
       {isStockDashboardOpen && <StockDashboardModal
         isOpen={isStockDashboardOpen}
         onClose={() => setIsStockDashboardOpen(false)}
-        products={products}
+        products={products.filter(p => p.warehouse === 'magazzino_astzg')}
         onEditProduct={(p) => { setEditingProduct(p); setIsProductModalOpen(true) }}
         onUpdateStock={async (productId, type, quantity, notes) => {
           await updateStock(productId, type as any, quantity, notes)

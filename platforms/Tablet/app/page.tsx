@@ -1487,7 +1487,7 @@ export default function Home() {
       {isStockDashboardOpen && <StockDashboardModal
         isOpen={isStockDashboardOpen}
         onClose={() => setIsStockDashboardOpen(false)}
-        products={products}
+        products={products.filter(p => p.warehouse === 'magazzino_astzg')}
         onEditProduct={(p) => { setEditingProduct(p); setIsProductModalOpen(true) }}
         onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
       />}
