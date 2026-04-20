@@ -477,8 +477,21 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                   {items.map((item) => (
                     <div key={item.id} className="relative">
                       <div className="grid grid-cols-2 md:grid-cols-12 gap-2 items-center bg-slate-50/50 rounded-lg p-2 border border-slate-200/40">
-                        <div className="col-span-2 md:col-span-5 relative">
-                          <div className="flex gap-1">
+                      <div className="col-span-2 md:col-span-5 relative">
+                          <div className="flex gap-1 items-center">
+                            {/* Product thumbnail 36x36 fixed frame */}
+                            {item.product_id && (() => {
+                              const prod = products.find(p => p.id === item.product_id)
+                              return prod ? (
+                                <div className="w-9 h-9 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                  {prod.image_url
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    ? <img src={prod.image_url} alt={prod.name} className="w-full h-full object-contain" />
+                                    : <Package className="w-3.5 h-3.5 text-slate-300" />
+                                  }
+                                </div>
+                              ) : null
+                            })()}
                             {products.length > 0 && (
                               <button onClick={() => { setProductSearchId(productSearchId === item.id ? null : item.id); setProductSearchQuery('') }}
                                 title="Cerca prodotto da magazzino"
@@ -530,7 +543,13 @@ export default function PreventivoModal({ isOpen, onClose, clients, lavorazioni,
                                 <button key={p.id} onClick={() => selectProduct(item.id, p)}
                                   title={`Seleziona ${p.name}`}
                                   className="w-full text-left px-2 py-1.5 rounded hover:bg-indigo-50 transition-all flex items-center gap-2">
-                                  <Package className="w-3 h-3 text-indigo-400 flex-shrink-0" />
+                                  <div className="w-8 h-8 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    {p.image_url
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain" />
+                                      : <Package className="w-3 h-3 text-indigo-400" />
+                                    }
+                                  </div>
                                   <div className="flex-1 min-w-0">
                                     <span className="text-xs font-medium text-slate-700 truncate block">{p.name}</span>
                                     <span className="text-[10px] text-slate-400">{p.sku || p.model || ''} {p.brand ? `| ${p.brand}` : ''} {p.sell_price ? `| \u20AC${p.sell_price.toFixed(2)}` : ''}</span>

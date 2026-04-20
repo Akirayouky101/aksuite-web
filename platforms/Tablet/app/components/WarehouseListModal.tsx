@@ -234,8 +234,12 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
       <div key={p.id} className={`bg-white/80 rounded-xl border overflow-hidden hover:shadow-md transition-all ${!hideStock && stockStatus === 'out' ? 'border-red-200/60' : !hideStock && stockStatus === 'low' ? 'border-amber-200/60' : 'border-slate-200/40'}`}>
         <button onClick={() => handleExpand(p.id)}
           className="w-full px-4 py-3 text-left flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${'bg-gradient-to-br from-violet-500 to-purple-600'}`}>
-            <Package className="w-4 h-4 text-white" />
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden ${'bg-gradient-to-br from-violet-500 to-purple-600'}`}>
+            {p.image_url
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain" />
+              : <Package className="w-4 h-4 text-white" />
+            }
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">

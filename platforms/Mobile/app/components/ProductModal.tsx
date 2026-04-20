@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Package, ScanLine, QrCode, Camera } from 'lucide-react'
+import { X, Package, ScanLine, QrCode, Camera, Upload, Trash2, ImageOff } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
 import { Supplier } from '../hooks/useSuppliers'
+import { supabase } from '@/lib/supabase'
 
 interface ProductModalProps {
   isOpen: boolean
@@ -23,6 +24,8 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
   })
   const [showScanner, setShowScanner] = useState(false)
   const [scanTarget, setScanTarget] = useState<'barcode' | 'qr_code'>('barcode')
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (editingProduct) {
@@ -78,6 +81,22 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
 
   const labelCls = "text-xs font-bold text-slate-500 mb-1"
   const inputCls = "w-full px-3 py-2.5 rounded-xl bg-white/80 border border-slate-200/60 text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return
+    setUploadingImage(true)
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('product-images').upload(path, file, { cacheControl: '3600', upsert: false })
+      if (error) { console.error('Image upload error:', error); return }
+      const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path)
+      setForm(prev => ({ ...prev, image_url: urlData.publicUrl }))
+    } finally {
+      setUploadingImage(false)
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    }
+  }
 
   const productCategories = ['Materiale Elettrico', 'Cavi', 'Quadri Elettrici', 'Interruttori', 'Illuminazione', 'Networking', 'Server/Storage', 'PC/Notebook', 'Periferiche', 'Accessori', 'Consumabili', 'Software', 'Sicurezza', 'Domotica', 'Automazione', 'Altro']
 
@@ -246,6 +265,50 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
                       <option value="">Nessuno</option>
                       {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Foto prodotto */}
+              <div>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Foto Prodotto</h3>
+                <div className="flex items-start gap-4">
+                  {/* Fixed-size frame 80x80 */}
+                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {form.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={form.image_url} alt="Foto prodotto" className="w-full h-full object-contain" />
+                    ) : (
+                      <ImageOff className="w-7 h-7 text-slate-300" />
+                    )}
+                  </div>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f) }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-violet-50 border border-slate-200 hover:border-violet-300 text-slate-600 hover:text-violet-600 text-xs font-medium transition-all disabled:opacity-50"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      {uploadingImage ? 'Caricamento...' : form.image_url ? 'Cambia foto' : 'Carica foto'}
+                    </button>
+                    {form.image_url && (
+                      <button
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, image_url: '' }))}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-500 text-xs font-medium transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Rimuovi foto
+                      </button>
+                    )}
+                    <p className="text-[10px] text-slate-400">JPG, PNG, WebP — max 5MB</p>
                   </div>
                 </div>
               </div>
