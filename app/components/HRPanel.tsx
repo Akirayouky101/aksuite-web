@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, UserCheck, Search, Users, Calendar, BarChart2,
@@ -124,10 +124,21 @@ export default function HRPanel({
 
   const selectedUser = hrUsers.find(u => u.profile_id === selectedId) || null
 
+  // Sync profilo form whenever selectedId changes or hrUsers data updates
+  useEffect(() => {
+    if (!selectedId) { setProfForm({}); return }
+    const u = hrUsers.find(u => u.profile_id === selectedId)
+    if (!u) return
+    setProfForm(u.hr ? { ...u.hr } : {
+      status: 'attivo', ferie_giorni_anno: 26, ferie_giorni_residui: 26,
+      permessi_ore_anno: 104, permessi_ore_residui: 104,
+    })
+    setProfDirty(false)
+  }, [selectedId, hrUsers]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Sync profilo form when user changes
   const selectUser = (u: HRUser) => {
     setSelectedId(u.profile_id)
-    setProfForm(u.hr ? { ...u.hr } : { status: 'attivo', ferie_giorni_anno: 26, ferie_giorni_residui: 26, permessi_ore_anno: 104, permessi_ore_residui: 104 })
     setProfDirty(false)
     setDetailTab('profilo')
     setShowDocForm(false)
