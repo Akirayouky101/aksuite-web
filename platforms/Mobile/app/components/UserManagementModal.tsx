@@ -348,6 +348,15 @@ export default function UserManagementModal({
                                 }`}>
                                   {permCount}/{PERMISSION_MODULES.length}
                                 </span>
+                                {!isCurrentAdmin && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(confirmDelete === managedUser.id ? null : managedUser.id) }}
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                                    title="Elimina utente"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                                 {isExpanded ? (
                                   <ChevronUp className="w-4 h-4 text-slate-400" />
                                 ) : (
@@ -355,6 +364,40 @@ export default function UserManagementModal({
                                 )}
                               </div>
                             </button>
+
+                            {/* Confirm Delete — shown inline without needing to expand */}
+                            <AnimatePresence>
+                              {confirmDelete === managedUser.id && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="mx-4 mb-3 p-3 bg-red-50 border border-red-200/70 rounded-xl flex items-center justify-between">
+                                    <p className="text-red-600 text-xs font-semibold flex items-center gap-1.5">
+                                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                      Eliminare <span className="font-bold">{managedUser.full_name || managedUser.email}</span>?
+                                    </p>
+                                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                                      <button
+                                        onClick={() => handleDelete(managedUser.id)}
+                                        className="px-3 py-1 rounded-lg bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-all shadow-sm"
+                                      >
+                                        Elimina
+                                      </button>
+                                      <button
+                                        onClick={() => setConfirmDelete(null)}
+                                        className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-500 text-xs font-medium hover:bg-slate-50 transition-all"
+                                      >
+                                        Annulla
+                                      </button>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
 
                             {/* Expanded: Permission Checklist */}
                             <AnimatePresence>
@@ -391,31 +434,10 @@ export default function UserManagementModal({
                                           className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-lg text-rose-400 text-xs font-medium hover:bg-rose-50 hover:text-rose-600 transition-all"
                                         >
                                           <Trash2 className="w-3.5 h-3.5" />
-                                          Rimuovi
+                                          Elimina
                                         </button>
                                       )}
                                     </div>
-
-                                    {/* Confirm Delete */}
-                                    {confirmDelete === managedUser.id && (
-                                      <div className="mb-3 p-3 bg-rose-50/80 border border-rose-200/60 rounded-xl flex items-center justify-between">
-                                        <p className="text-rose-600 text-xs font-medium">Rimuovere tutti i permessi?</p>
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            onClick={() => handleDelete(managedUser.id)}
-                                            className="px-3 py-1 rounded-lg bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600 transition-all"
-                                          >
-                                            Conferma
-                                          </button>
-                                          <button
-                                            onClick={() => setConfirmDelete(null)}
-                                            className="px-3 py-1 rounded-lg bg-slate-100 text-slate-500 text-xs font-medium hover:bg-slate-200 transition-all"
-                                          >
-                                            Annulla
-                                          </button>
-                                        </div>
-                                      </div>
-                                    )}
 
                                     {/* Permission Grid */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
