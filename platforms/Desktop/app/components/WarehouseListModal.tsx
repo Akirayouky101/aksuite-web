@@ -25,6 +25,7 @@ interface WarehouseListModalProps {
   warehouseFilter?: string
   warehouseTitle?: string
   onMoveToWarehouse?: (product: Product) => void
+  hideStock?: boolean
 }
 
 // Estrae la categoria "pulita" dal campo category del CSV
@@ -99,7 +100,7 @@ function normalizeSubcategory(sub: string): string {
   return sub
 }
 
-export default function WarehouseListModal({ isOpen, onClose, products: allProducts, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal, warehouseFilter, warehouseTitle, onMoveToWarehouse }: WarehouseListModalProps) {
+export default function WarehouseListModal({ isOpen, onClose, products: allProducts, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal, warehouseFilter, warehouseTitle, onMoveToWarehouse, hideStock = false }: WarehouseListModalProps) {
   // Filtra prodotti per warehouse se specificato
   const products = warehouseFilter
     ? allProducts.filter(p => (p.warehouse || 'listino') === warehouseFilter)
@@ -283,10 +284,10 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
     const stockStatus = getStockStatus(p)
     const supplierName = getSupplierName(p.supplier_id)
     return (
-      <div key={p.id} className={`bg-white/80 rounded-xl border overflow-hidden hover:shadow-md transition-all ${stockStatus === 'out' ? 'border-red-200/60' : stockStatus === 'low' ? 'border-amber-200/60' : 'border-slate-200/40'}`}>
+      <div key={p.id} className={`bg-white/80 rounded-xl border overflow-hidden hover:shadow-md transition-all ${!hideStock && stockStatus === 'out' ? 'border-red-200/60' : !hideStock && stockStatus === 'low' ? 'border-amber-200/60' : 'border-slate-200/40'}`}>
         <button onClick={() => handleExpand(p.id)}
           className="w-full px-4 py-3 text-left flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${stockStatus === 'out' ? 'bg-gradient-to-br from-red-500 to-red-600' : stockStatus === 'low' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-violet-500 to-purple-600'}`}>
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${'bg-gradient-to-br from-violet-500 to-purple-600'}`}>
             <Package className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -300,10 +301,12 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="text-right">
-              <p className={`text-sm font-bold ${stockStatus === 'out' ? 'text-red-600' : stockStatus === 'low' ? 'text-amber-600' : 'text-slate-700'}`}>{p.quantity} {p.unit}</p>
-              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${stockStatusColors[stockStatus]}`}>{stockStatusLabels[stockStatus]}</span>
-            </div>
+            {!hideStock && (
+              <div className="text-right">
+                <p className={`text-sm font-bold ${stockStatus === 'out' ? 'text-red-600' : stockStatus === 'low' ? 'text-amber-600' : 'text-slate-700'}`}>{p.quantity} {p.unit}</p>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${stockStatusColors[stockStatus]}`}>{stockStatusLabels[stockStatus]}</span>
+              </div>
+            )}
             {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-300" /> : <ChevronDown className="w-4 h-4 text-slate-300" />}
           </div>
         </button>
@@ -317,14 +320,14 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                   {p.qr_code && <div className="flex items-center gap-1">QR: <span className="font-mono">{p.qr_code}</span></div>}
                   <div className="flex items-center gap-1"><Tag className="w-3 h-3" />Acquisto: {'\u20AC'}{p.purchase_price.toFixed(2)}</div>
                   <div className="flex items-center gap-1"><Tag className="w-3 h-3" />Vendita: {'\u20AC'}{p.sell_price.toFixed(2)}</div>
-                  {p.min_quantity > 0 && <div>Scorta min: {p.min_quantity}</div>}
-                  {(p.max_quantity ?? 0) > 0 && <div>Scorta max: {p.max_quantity}</div>}
+                  {!hideStock && p.min_quantity > 0 && <div>Scorta min: {p.min_quantity}</div>}
+                  {!hideStock && (p.max_quantity ?? 0) > 0 && <div>Scorta max: {p.max_quantity}</div>}
                   {p.location && <div className="flex items-center gap-1"><MapPin className="w-3 h-3" />{p.location}{p.shelf ? `/${p.shelf}` : ''}</div>}
                 </div>
                 {p.description && <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-2">{p.description}</p>}
                 {p.notes && <p className="text-xs text-slate-400 bg-slate-50/50 rounded-lg p-2 italic">{p.notes}</p>}
 
-                {movements[p.id] && movements[p.id].length > 0 && (
+                {!hideStock && movements[p.id] && movements[p.id].length > 0 && (
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><ArrowUpDown className="w-3 h-3" />Ultimi Movimenti</p>
                     <div className="space-y-0.5 max-h-24 overflow-y-auto">
@@ -357,14 +360,18 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                 </div>
 
                 <div className="flex items-center gap-2 pt-1 flex-wrap">
-                  <button onClick={() => setStockAction({productId: p.id, type: 'carico', qty: 1, notes: ''})} title="Carico merce"
-                    className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-bold transition-all flex items-center gap-1 border border-emerald-200/50">
-                    <Plus className="w-3 h-3" />Carico
-                  </button>
-                  <button onClick={() => setStockAction({productId: p.id, type: 'scarico', qty: 1, notes: ''})} title="Scarico merce"
-                    className="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 text-xs font-bold transition-all flex items-center gap-1 border border-orange-200/50">
-                    <Minus className="w-3 h-3" />Scarico
-                  </button>
+                  {!hideStock && (
+                    <>
+                      <button onClick={() => setStockAction({productId: p.id, type: 'carico', qty: 1, notes: ''})} title="Carico merce"
+                        className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-bold transition-all flex items-center gap-1 border border-emerald-200/50">
+                        <Plus className="w-3 h-3" />Carico
+                      </button>
+                      <button onClick={() => setStockAction({productId: p.id, type: 'scarico', qty: 1, notes: ''})} title="Scarico merce"
+                        className="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 text-xs font-bold transition-all flex items-center gap-1 border border-orange-200/50">
+                        <Minus className="w-3 h-3" />Scarico
+                      </button>
+                    </>
+                  )}
                   <button onClick={() => onEdit(p)} title="Modifica prodotto"
                     className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-bold transition-all flex items-center gap-1 border border-indigo-200/50">
                     <Pencil className="w-3 h-3" />Modifica

@@ -1347,6 +1347,7 @@ export default function Home() {
         onOpenKitsModal={() => { setIsWarehouseListModalOpen(false); setIsKitsListModalOpen(true) }}
         warehouseFilter="listino"
         warehouseTitle="Listini"
+        hideStock={true}
         onMoveToWarehouse={async (product) => {
           if (confirm(`Spostare "${product.name}" in Magazzino AST/ZG?`)) {
             await moveToWarehouse(product.id, 'magazzino_astzg')
