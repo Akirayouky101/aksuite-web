@@ -281,9 +281,9 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
 
   // Tutti i prodotti del brand corrente (flat, senza categorie) — usato in hideCategories mode
   const productsForBrand = useMemo(() => {
-    if (!currentBrand || !tree[currentBrand]) return []
-    return Object.values(tree[currentBrand]).flat().sort((a, b) => a.name.localeCompare(b.name))
-  }, [currentBrand, tree])
+    if (!currentBrand) return []
+    return products.filter(p => (p.brand || 'Senza Marca') === currentBrand).sort((a, b) => a.name.localeCompare(b.name))
+  }, [currentBrand, products])
 
   // --- Render product card (reused in category view + search) ---
   const renderProduct = (p: Product) => {
