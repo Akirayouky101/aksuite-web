@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Package, Search, Plus, Pencil, Trash2, ChevronDown, ChevronUp, ChevronRight, ScanLine, AlertTriangle, ArrowUpDown, MapPin, Tag, Minus, Upload, FolderOpen, Folder, ArrowLeft, Home, Layers } from 'lucide-react'
 import { Product, StockMovement } from '../hooks/useWarehouse'
 import { Supplier } from '../hooks/useSuppliers'
+import { Kit } from '../hooks/useKits'
 
 interface WarehouseListModalProps {
   isOpen: boolean
@@ -19,6 +20,8 @@ interface WarehouseListModalProps {
   onLoadMovements: (productId: string) => Promise<StockMovement[]>
   onUpdateProduct: (id: string, data: Partial<Product>) => Promise<void>
   onImportCsv?: () => void
+  kits?: Kit[]
+  onOpenKitsModal?: () => void
 }
 
 // Estrae la categoria "pulita" dal campo category del CSV
@@ -93,7 +96,7 @@ function normalizeSubcategory(sub: string): string {
   return sub
 }
 
-export default function WarehouseListModal({ isOpen, onClose, products, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv }: WarehouseListModalProps) {
+export default function WarehouseListModal({ isOpen, onClose, products, suppliers, onAdd, onEdit, onDelete, onUpdateStock, onFindByBarcode, onLoadMovements, onUpdateProduct, onImportCsv, kits, onOpenKitsModal }: WarehouseListModalProps) {
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [movements, setMovements] = useState<Record<string, StockMovement[]>>({})
@@ -213,6 +216,12 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
   const handleScan = useCallback((code: string) => {
     if (!code.trim()) return
     setScanResult(null)
+    // Check if it's a KIT QR code
+    if (code.trim().startsWith('KIT:') && onOpenKitsModal) {
+      setScanMode(false)
+      onOpenKitsModal()
+      return
+    }
     const found = onFindByBarcode(code.trim())
     if (found) {
       setSearch('')
@@ -223,7 +232,7 @@ export default function WarehouseListModal({ isOpen, onClose, products, supplier
       setScanFoundId(null)
       setScanResult(`Nessun prodotto trovato per: ${code}`)
     }
-  }, [onFindByBarcode])
+  }, [onFindByBarcode, onOpenKitsModal])
 
   const handleStockSave = () => {
     if (!stockAction || stockAction.qty <= 0) return

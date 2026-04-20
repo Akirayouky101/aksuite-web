@@ -6,7 +6,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, ChevronLeft, Plus,
   TrendingUp, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus, Layers, TrendingDown
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -61,6 +61,9 @@ const SopralluogoModal = dynamic(() => import('./components/SopralluogoModal'), 
 const InstallationListModal = dynamic(() => import('./components/InstallationListModal'), { ssr: false })
 const InstallationModal = dynamic(() => import('./components/InstallationModal'), { ssr: false })
 const InstallationSchemaModal = dynamic(() => import('./components/InstallationSchemaModal'), { ssr: false })
+const KitModal = dynamic(() => import('./components/KitModal'), { ssr: false })
+const KitsListModal = dynamic(() => import('./components/KitsListModal'), { ssr: false })
+const StockDashboardModal = dynamic(() => import('./components/StockDashboardModal'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -89,6 +92,7 @@ import { useInstallations } from './hooks/useInstallations'
 import { useUserManagement } from './hooks/useUserManagement'
 import { useActivityLog } from './hooks/useActivityLog'
 import { useWarehouseRequests } from './hooks/useWarehouseRequests'
+import { useKits, Kit } from './hooks/useKits'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -158,6 +162,11 @@ export default function Home() {
   const [orderItems, setOrderItems] = useState<any[]>([])
   const [isLabelPrinterOpen, setIsLabelPrinterOpen] = useState(false)
   const [labelProduct, setLabelProduct] = useState<any>(null)
+  const [labelKit, setLabelKit] = useState<Kit | null>(null)
+  const [isKitsListModalOpen, setIsKitsListModalOpen] = useState(false)
+  const [isKitModalOpen, setIsKitModalOpen] = useState(false)
+  const [editingKit, setEditingKit] = useState<Kit | null>(null)
+  const [isStockDashboardOpen, setIsStockDashboardOpen] = useState(false)
 
   // ═══ WAREHOUSE REQUESTS STATE ═══
   const [isMaterialRequestOpen, setIsMaterialRequestOpen] = useState(false)
@@ -212,6 +221,7 @@ export default function Home() {
   const { users: managedUsers, isAdmin, myPermissions, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
   const { requests: warehouseRequests, userProfiles: warehouseUserProfiles, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest, fulfillItem: fulfillWarehouseItem, unfulfillItem: unfulfillWarehouseItem, deleteRequest: deleteWarehouseRequest, refetchProfiles: refetchWarehouseProfiles } = useWarehouseRequests()
+  const { kits, addKit, updateKit, deleteKit, getKitAvailability, findByQrCode: findKitByQrCode } = useKits()
   const isWarehouseCreator = user?.email === 'diegomarruchi@outlook.it'
   // Utente kiosk: ha SOLO can_prelievo, nessun altro modulo → schermata prelievi bloccata
   const isKioskOnly = !isAdmin && !!myPermissions && !!myPermissions.can_prelievo &&
@@ -373,6 +383,8 @@ export default function Home() {
       // --- Magazzino & Commerciale ---
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Magazzino', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.length, section: 'commerciale' },
+      { id: 'kits', perm: 'can_kits' as const, label: 'KIT', icon: Layers, onClick: () => setIsKitsListModalOpen(true), count: kits.length, section: 'commerciale' },
+      { id: 'stock_dashboard', perm: 'can_kits' as const, label: 'Stock Critico', icon: TrendingDown, onClick: () => setIsStockDashboardOpen(true), section: 'commerciale' },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
       { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true), section: 'commerciale' },
       { id: 'prelievo', perm: 'can_prelievo' as const, label: 'Prelievi', icon: PackageMinus, onClick: () => { refetchWarehouseProfiles(); setIsMaterialRequestOpen(true) }, section: 'commerciale' },
@@ -382,7 +394,7 @@ export default function Home() {
       { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length, section: 'strumenti' },
     ]
     return allItems.filter(item => hasPermission(item.perm))
-  }, [calls.length, lavorazioni.length, sopralluoghi.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission])
+  }, [calls.length, lavorazioni.length, sopralluoghi.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, kits.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission])
 
   const quickActions = useMemo(() => [
     { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true) },
@@ -1329,6 +1341,8 @@ export default function Home() {
         onFindByBarcode={findByBarcode}
         onLoadMovements={loadMovements}
         onImportCsv={() => setIsCsvImportOpen(true)}
+        kits={kits}
+        onOpenKitsModal={() => { setIsWarehouseListModalOpen(false); setIsKitsListModalOpen(true) }}
       />}
 
       {isCsvImportOpen && <CsvImportModal
@@ -1408,8 +1422,39 @@ export default function Home() {
       />}
       {isLabelPrinterOpen && <LabelPrinterModal
         isOpen={isLabelPrinterOpen}
-        onClose={() => { setIsLabelPrinterOpen(false); setLabelProduct(null) }}
+        onClose={() => { setIsLabelPrinterOpen(false); setLabelProduct(null); setLabelKit(null) }}
         product={labelProduct}
+        kit={labelKit}
+      />}
+      {isKitsListModalOpen && <KitsListModal
+        isOpen={isKitsListModalOpen}
+        onClose={() => setIsKitsListModalOpen(false)}
+        kits={kits}
+        products={products}
+        warehouseUsers={warehouseUserProfiles}
+        onAdd={() => { setEditingKit(null); setIsKitModalOpen(true) }}
+        onEdit={(k) => { setEditingKit(k); setIsKitsListModalOpen(false); setIsKitModalOpen(true) }}
+        onDelete={deleteKit}
+        onGetAvailability={getKitAvailability}
+        onPrintLabel={(k) => { setLabelKit(k); setLabelProduct(null); setIsLabelPrinterOpen(true) }}
+        onCreatePrelievo={async (kit, items) => { await submitWarehouseRequest(user?.id || '', items, `Prelievo KIT: ${kit.name}`) }}
+      />}
+      {isKitModalOpen && <KitModal
+        isOpen={isKitModalOpen}
+        onClose={() => { setIsKitModalOpen(false); setIsKitsListModalOpen(true) }}
+        editKit={editingKit}
+        products={products}
+        onSave={async (data) => {
+          if (editingKit) { await updateKit(editingKit.id, data) } else { await addKit(data) }
+          setIsKitModalOpen(false); setIsKitsListModalOpen(true)
+        }}
+      />}
+      {isStockDashboardOpen && <StockDashboardModal
+        isOpen={isStockDashboardOpen}
+        onClose={() => setIsStockDashboardOpen(false)}
+        products={products}
+        onEditProduct={(p) => { setEditingProduct(p); setIsProductModalOpen(true) }}
+        onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
       />}
 
       {/* ═══ USER MANAGEMENT (Admin Only) ═══ */}
