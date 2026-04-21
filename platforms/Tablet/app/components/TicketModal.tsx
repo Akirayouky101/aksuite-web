@@ -47,12 +47,11 @@ interface TicketModalProps {
   teamProfiles: UserProfile[]
   preventivi?: Preventivo[]
   currentUserName?: string
-  fixedAssignees?: { user_id: string; user_name: string }[]
 }
 
 export default function TicketModal({
   isOpen, onClose, onSave, editTicket, teamProfiles, preventivi = [],
-  onUploadAttachment, onDeleteAttachment, fixedAssignees,
+  onUploadAttachment, onDeleteAttachment,
 }: TicketModalProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -84,8 +83,7 @@ export default function TicketModal({
       setSelectedAssignees(editTicket.assignees.map(a => ({ user_id: a.user_id, user_name: a.user_name })))
     } else {
       setTitle(''); setDescription(''); setPriority('normale'); setCategory('assistenza')
-      setCallDirection('in'); setPreventivoId(''); setPreventivoSearch(''); setDueDate('')
-      setSelectedAssignees(fixedAssignees ?? [])
+      setCallDirection('in'); setPreventivoId(''); setPreventivoSearch(''); setDueDate(''); setSelectedAssignees([])
     }
     setPendingFiles([])
     setError('')
@@ -287,25 +285,23 @@ export default function TicketModal({
               {/* Assegnatari */}
               <div>
                 <label className={labelClass}>
-                  {fixedAssignees ? 'Inviato a' : <>Assegna a *{selectedAssignees.length > 0 && <span className="text-violet-500 ml-1 normal-case">({selectedAssignees.length} selezionati)</span>}</>}
+                  Assegna a *{selectedAssignees.length > 0 && <span className="text-violet-500 ml-1 normal-case">({selectedAssignees.length} selezionati)</span>}
                 </label>
                 {selectedAssignees.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
                     {selectedAssignees.map(a => (
                       <span key={a.user_id} className="flex items-center gap-1.5 bg-violet-50 border border-violet-200 text-violet-700 text-xs rounded-lg px-2.5 py-1.5">
                         <UserCheck size={12} /> {a.user_name}
-                        {!fixedAssignees && <button onClick={() => setSelectedAssignees(prev => prev.filter(x => x.user_id !== a.user_id))} className="text-violet-400 hover:text-violet-700 ml-0.5"><X size={11} /></button>}
+                        <button onClick={() => setSelectedAssignees(prev => prev.filter(x => x.user_id !== a.user_id))} className="text-violet-400 hover:text-violet-700 ml-0.5"><X size={11} /></button>
                       </span>
                     ))}
                   </div>
                 )}
-                {!fixedAssignees && (
-                  <button type="button" onClick={() => { setAssigneeSearch(''); setShowAssigneePicker(true) }}
-                    className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl px-4 py-3 text-left text-slate-400 hover:border-violet-300 transition-colors flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2"><Users size={14} /> {selectedAssignees.length === 0 ? 'Seleziona persone...' : 'Modifica selezione'}</span>
-                    <ChevronDown size={14} />
-                  </button>
-                )}
+                <button type="button" onClick={() => { setAssigneeSearch(''); setShowAssigneePicker(true) }}
+                  className="w-full bg-slate-50/80 border border-slate-200/60 rounded-xl px-4 py-3 text-left text-slate-400 hover:border-violet-300 transition-colors flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2"><Users size={14} /> {selectedAssignees.length === 0 ? 'Seleziona persone...' : 'Modifica selezione'}</span>
+                  <ChevronDown size={14} />
+                </button>
               </div>
 
               {/* Allegati (solo ticket esistenti) */}

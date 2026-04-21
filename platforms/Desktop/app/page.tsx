@@ -1670,11 +1670,10 @@ export default function Home() {
         isOpen={isTicketModalOpen}
         onClose={() => { setIsTicketModalOpen(false); setIsTicketsListModalOpen(true) }}
         editTicket={editingTicket ? (tickets.find(t => t.id === editingTicket.id) ?? editingTicket) : null}
-        teamProfiles={ticketTeamProfiles}
+        teamProfiles={ticketFromWarehouse && !editingTicket ? ticketTeamProfiles.filter(p => ['akirayouky','serena cearini','pietro zocca'].some(n => p.full_name.toLowerCase().includes(n))) : ticketTeamProfiles}
         preventivi={preventivi}
         currentUserName={userProfile?.full_name || user?.email || ''}
         onUploadAttachment={uploadAttachment}
-        fixedAssignees={ticketFromWarehouse && !editingTicket ? (() => { const OFFICE = ["akirayouky","serena cearini","pietro zocca"]; return ticketTeamProfiles.filter(p => OFFICE.some(n => p.full_name.toLowerCase().includes(n))).map(p => ({ user_id: p.id, user_name: p.full_name })) })() : undefined}
         onDeleteAttachment={deleteAttachment}
         onSave={async (data) => {
           if (editingTicket) {
