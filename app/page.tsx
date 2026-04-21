@@ -1675,7 +1675,7 @@ export default function Home() {
         onClose={() => { setIsTicketModalOpen(false); setIsTicketsListModalOpen(true) }}
         editTicket={editingTicket ? (tickets.find(t => t.id === editingTicket.id) ?? editingTicket) : null}
         teamProfiles={ticketFromWarehouse && !editingTicket ? (() => {
-          const OFFICE = ['akirayouky', 'serena cearini', 'pietro zocca']
+          const OFFICE = ['akirayouky', 'serena', 'pietro']
           return ticketTeamProfiles.filter(p => OFFICE.some(n =>
             (p.full_name || '').toLowerCase().includes(n) ||
             (p.email || '').toLowerCase().includes(n)

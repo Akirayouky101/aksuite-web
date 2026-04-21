@@ -1670,7 +1670,7 @@ export default function Home() {
         isOpen={isTicketModalOpen}
         onClose={() => { setIsTicketModalOpen(false); setIsTicketsListModalOpen(true) }}
         editTicket={editingTicket ? (tickets.find(t => t.id === editingTicket.id) ?? editingTicket) : null}
-        teamProfiles={ticketFromWarehouse && !editingTicket ? ticketTeamProfiles.filter(p => ['akirayouky','serena cearini','pietro zocca'].some(n => (p.full_name || '').toLowerCase().includes(n) || (p.email || '').toLowerCase().includes(n))) : ticketTeamProfiles}
+        teamProfiles={ticketFromWarehouse && !editingTicket ? ticketTeamProfiles.filter(p => ['akirayouky','serena','pietro'].some(n => (p.full_name || '').toLowerCase().includes(n) || (p.email || '').toLowerCase().includes(n))) : ticketTeamProfiles}
         preventivi={preventivi}
         currentUserName={userProfile?.full_name || user?.email || ''}
         onUploadAttachment={uploadAttachment}
