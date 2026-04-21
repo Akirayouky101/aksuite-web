@@ -238,7 +238,7 @@ export default function Home() {
   const { logs: activityLogs, loading: activityLoading, loadLogs: loadActivityLogs, clearOldLogs } = useActivityLog()
   const { requests: warehouseRequests, userProfiles: warehouseUserProfiles, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest, fulfillItem: fulfillWarehouseItem, unfulfillItem: unfulfillWarehouseItem, deleteRequest: deleteWarehouseRequest, refetchProfiles: refetchWarehouseProfiles } = useWarehouseRequests()
   const { kits, addKit, updateKit, deleteKit, getKitAvailability, findByQrCode: findKitByQrCode } = useKits()
-  const { tickets, teamProfiles: ticketTeamProfiles, addTicket, updateTicket, updateStatus: updateTicketStatus, deleteTicket, uploadAttachment, deleteAttachment } = useTickets()
+  const { tickets, teamProfiles: ticketTeamProfiles, adminProfiles: ticketAdminProfiles, addTicket, updateTicket, updateStatus: updateTicketStatus, deleteTicket, uploadAttachment, deleteAttachment } = useTickets()
   const { hrUsers, documents: hrDocuments, leaveRequests: hrLeaveRequests, workRecords: hrWorkRecords, upsertHRProfile, addDocument: addHRDocument, deleteDocument: deleteHRDocument, addLeaveRequest, updateLeaveStatus, deleteLeaveRequest, addWorkRecord, deleteWorkRecord } = useHR()
   const isWarehouseCreator = user?.email === 'diegomarruchi@outlook.it'
   // Utente kiosk: ha SOLO can_prelievo, nessun altro modulo → schermata prelievi bloccata
@@ -1674,13 +1674,7 @@ export default function Home() {
         isOpen={isTicketModalOpen}
         onClose={() => { setIsTicketModalOpen(false); setIsTicketsListModalOpen(true) }}
         editTicket={editingTicket ? (tickets.find(t => t.id === editingTicket.id) ?? editingTicket) : null}
-        teamProfiles={ticketFromWarehouse && !editingTicket ? (() => {
-          const OFFICE = ['akirayouky', 'serena', 'pietro']
-          return ticketTeamProfiles.filter(p => OFFICE.some(n =>
-            (p.full_name || '').toLowerCase().includes(n) ||
-            (p.email || '').toLowerCase().includes(n)
-          ))
-        })() : ticketTeamProfiles}
+        teamProfiles={ticketFromWarehouse && !editingTicket ? ticketAdminProfiles : ticketTeamProfiles}
         preventivi={preventivi}
         currentUserName={userProfile?.full_name || user?.email || ''}
         onUploadAttachment={uploadAttachment}

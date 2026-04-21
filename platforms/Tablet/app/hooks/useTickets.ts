@@ -56,6 +56,7 @@ export interface Ticket {
 export function useTickets() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [teamProfiles, setTeamProfiles] = useState<TeamProfile[]>([])
+  const [adminProfiles, setAdminProfiles] = useState<TeamProfile[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
@@ -64,10 +65,11 @@ export function useTickets() {
     try {
       const { data: perms } = await supabase
         .from('user_permissions')
-        .select('user_id')
+        .select('user_id, is_admin')
         .or('can_tickets.eq.true,is_admin.eq.true')
 
       const userIds = (perms || []).map((p: any) => p.user_id)
+      const adminIds = (perms || []).filter((p: any) => p.is_admin).map((p: any) => p.user_id)
 
       if (userIds.length > 0) {
         const { data } = await supabase
@@ -76,6 +78,7 @@ export function useTickets() {
           .in('id', userIds)
           .order('full_name')
         setTeamProfiles((data || []) as TeamProfile[])
+        setAdminProfiles((data || []).filter((p: any) => adminIds.includes(p.id)) as TeamProfile[])
       } else {
         // fallback: tutti i profili
         const { data } = await supabase
@@ -83,6 +86,7 @@ export function useTickets() {
           .select('id, full_name, email')
           .order('full_name')
         setTeamProfiles((data || []) as TeamProfile[])
+        setAdminProfiles([])
       }
     } catch {
       const { data } = await supabase
@@ -90,6 +94,7 @@ export function useTickets() {
         .select('id, full_name, email')
         .order('full_name')
       setTeamProfiles((data || []) as TeamProfile[])
+      setAdminProfiles([])
     }
   }, [])
 
@@ -139,7 +144,7 @@ export function useTickets() {
 
   useEffect(() => {
     if (user) { loadTickets(); loadTeamProfiles() }
-    else { setTickets([]); setTeamProfiles([]) }
+    else { setTickets([]); setTeamProfiles([]); setAdminProfiles([]) }
   }, [user?.id])
 
   // ─── Crea ticket ───────────────────────────────────────────────
@@ -281,5 +286,5 @@ export function useTickets() {
     ))
   }
 
-  return { tickets, teamProfiles, loading, addTicket, updateTicket, updateStatus, deleteTicket, uploadAttachment, deleteAttachment, reload: loadTickets }
+  return { tickets, teamProfiles, adminProfiles, loading, addTicket, updateTicket, updateStatus, deleteTicket, uploadAttachment, deleteAttachment, reload: loadTickets }
 }
