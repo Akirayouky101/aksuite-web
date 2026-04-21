@@ -177,6 +177,7 @@ export default function Home() {
 
   // ═══ TICKET STATE ═══
   const [isTicketsListModalOpen, setIsTicketsListModalOpen] = useState(false)
+  const [ticketFromWarehouse, setTicketFromWarehouse] = useState(false)
 
   // ═══ HR STATE ═══
   const [isHRPanelOpen, setIsHRPanelOpen] = useState(false)
@@ -1652,14 +1653,14 @@ export default function Home() {
         users={warehouseUserProfiles}
         kioskMode={isKioskOnly}
         onOpenKits={myPermissions?.can_kits ? () => setIsKitsListModalOpen(true) : undefined}
-        onOpenTickets={isAdmin || myPermissions?.can_tickets ? () => { setIsMaterialRequestOpen(false); setIsTicketsListModalOpen(true) } : undefined}
+        onOpenTickets={isAdmin || myPermissions?.can_tickets ? () => { setIsMaterialRequestOpen(false); setTicketFromWarehouse(true); setIsTicketsListModalOpen(true) } : undefined}
         onSubmit={submitWarehouseRequest}
       />}
 
       {/* ═══ TICKET INTERNI ═══ */}
       {isTicketsListModalOpen && <TicketsListModal
         isOpen={isTicketsListModalOpen}
-        onClose={() => setIsTicketsListModalOpen(false)}
+        onClose={() => { setIsTicketsListModalOpen(false); if (ticketFromWarehouse) { setTicketFromWarehouse(false); setIsMaterialRequestOpen(true) } }}
         tickets={tickets}
         currentUserId={user?.id || ''}
         isAdmin={isAdmin}
