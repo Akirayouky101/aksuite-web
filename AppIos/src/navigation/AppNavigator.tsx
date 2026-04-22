@@ -8,6 +8,8 @@ import HomeScreen from '../screens/HomeScreen'
 import RequestScreen from '../screens/RequestScreen'
 import KitsScreen from '../screens/KitsScreen'
 import TicketScreen from '../screens/TicketScreen'
+import TimbratureScreen from '../screens/TimbratureScreen'
+import LavorazioniScreen from '../screens/LavorazioniScreen'
 
 export type RootStackParamList = {
   Login: undefined
@@ -16,6 +18,8 @@ export type RootStackParamList = {
   Order: { isOrdine: boolean }
   Kits: undefined
   Ticket: undefined
+  Timbrature: undefined
+  Lavorazioni: undefined
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -41,6 +45,8 @@ export default function AppNavigator() {
             <Stack.Screen name="Order" component={RequestScreen} initialParams={{ isOrdine: true }} />
             <Stack.Screen name="Kits" component={KitsScreen} />
             <Stack.Screen name="Ticket" component={TicketScreen} />
+            <Stack.Screen name="Timbrature" component={TimbratureScreen} />
+            <Stack.Screen name="Lavorazioni" component={LavorazioniScreen} />
           </>
         )}
       </Stack.Navigator>

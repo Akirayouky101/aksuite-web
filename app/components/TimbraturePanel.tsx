@@ -125,21 +125,44 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
   const [modCodes, setModCodes] = useState<ModCode[]>([])
   const [editModal, setEditModal] = useState<EditModal | null>(null)
 
+  const fetchModCodes = useCallback(async () => {
+    const { data: codes, error } = await supabase
+      .from('hr_modification_codes')
+      .select('*')
+      .is('used_at', null)
+      .gt('expires_at', new Date().toISOString())
+    if (error) {
+      console.error('[TimbraturePanel] hr_modification_codes fetch error:', error.message, error.code)
+    }
+    setModCodes((codes || []) as ModCode[])
+  }, [])
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     const [from, to] = monthRange(year, month)
-    const [{ data: recs }, { data: profs }, { data: codes }] = await Promise.all([
+    const [{ data: recs }, { data: profs }] = await Promise.all([
       supabase.from('hr_work_records').select('*').gte('date', from).lte('date', to).order('date', { ascending: false }),
       supabase.from('profiles').select('id, full_name, email').order('full_name'),
-      supabase.from('hr_modification_codes').select('*').is('used_at', null).gt('expires_at', new Date().toISOString()),
     ])
     setRecords((recs || []) as WorkRecord[])
     setProfiles((profs || []) as Profile[])
-    setModCodes((codes || []) as ModCode[])
     setLoading(false)
-  }, [year, month])
+    await fetchModCodes()
+  }, [year, month, fetchModCodes])
 
   useEffect(() => { if (isOpen) fetchData() }, [isOpen, fetchData])
+
+  // Realtime subscription: aggiorna i campanelli in tempo reale
+  useEffect(() => {
+    if (!isOpen) return
+    const channel = supabase
+      .channel('mod-codes-panel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hr_modification_codes' }, () => {
+        fetchModCodes()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [isOpen, fetchModCodes])
 
   const handleOpenEdit = (record: WorkRecord) => {
     setEditModal({
