@@ -69,6 +69,7 @@ const TicketModal = dynamic(() => import('./components/TicketModal'), { ssr: fal
 const HRPanel = dynamic(() => import('./components/HRPanel'), { ssr: false })
 const TimbraturePanel = dynamic(() => import('./components/TimbraturePanel'), { ssr: false })
 const EventsPanel = dynamic(() => import('./components/EventsPanel'), { ssr: false })
+const NotificationToast = dynamic(() => import('./components/NotificationToast'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -1723,6 +1724,9 @@ export default function Home() {
         onClose={() => setIsTimbraturePanelOpen(false)}
         isAdmin={isAdmin}
       />}
+
+      {/* ═══ GLOBAL NOTIFICATION TOAST (HR mod requests) ═══ */}
+      <NotificationToast onOpenHR={() => setIsHRPanelOpen(true)} />
 
       {/* ═══ RICHIESTE MAGAZZINO (Admin Panel) ═══ */}
       {isWarehouseRequestsOpen && <WarehouseRequestsPanel
