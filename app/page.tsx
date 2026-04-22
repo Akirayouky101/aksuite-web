@@ -67,6 +67,7 @@ const StockDashboardModal = dynamic(() => import('./components/StockDashboardMod
 const TicketsListModal = dynamic(() => import('./components/TicketsListModal'), { ssr: false })
 const TicketModal = dynamic(() => import('./components/TicketModal'), { ssr: false })
 const HRPanel = dynamic(() => import('./components/HRPanel'), { ssr: false })
+const TimbraturePanel = dynamic(() => import('./components/TimbraturePanel'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -181,6 +182,7 @@ export default function Home() {
 
   // ═══ HR STATE ═══
   const [isHRPanelOpen, setIsHRPanelOpen] = useState(false)
+  const [isTimbraturePanelOpen, setIsTimbraturePanelOpen] = useState(false)
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false)
   const [editingTicket, setEditingTicket] = useState<TicketType | null>(null)
 
@@ -239,7 +241,7 @@ export default function Home() {
   const { requests: warehouseRequests, userProfiles: warehouseUserProfiles, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest, fulfillItem: fulfillWarehouseItem, unfulfillItem: unfulfillWarehouseItem, deleteRequest: deleteWarehouseRequest, refetchProfiles: refetchWarehouseProfiles } = useWarehouseRequests()
   const { kits, addKit, updateKit, deleteKit, getKitAvailability, findByQrCode: findKitByQrCode } = useKits()
   const { tickets, teamProfiles: ticketTeamProfiles, adminProfiles: ticketAdminProfiles, addTicket, updateTicket, updateStatus: updateTicketStatus, deleteTicket, uploadAttachment, deleteAttachment } = useTickets()
-  const { hrUsers, documents: hrDocuments, leaveRequests: hrLeaveRequests, workRecords: hrWorkRecords, upsertHRProfile, addDocument: addHRDocument, deleteDocument: deleteHRDocument, addLeaveRequest, updateLeaveStatus, deleteLeaveRequest, addWorkRecord, deleteWorkRecord } = useHR()
+  const { hrUsers, documents: hrDocuments, leaveRequests: hrLeaveRequests, workRecords: hrWorkRecords, upsertHRProfile, addDocument: addHRDocument, deleteDocument: deleteHRDocument, addLeaveRequest, updateLeaveStatus, deleteLeaveRequest, addWorkRecord, deleteWorkRecord, updateWorkRecord } = useHR()
   const isWarehouseCreator = user?.email === 'diegomarruchi@outlook.it'
   // Utente kiosk: ha SOLO can_prelievo, nessun altro modulo → schermata prelievi bloccata
   const isKioskOnly = !isAdmin && !!myPermissions && !!myPermissions.can_prelievo &&
@@ -410,6 +412,7 @@ export default function Home() {
       { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventiviListModalOpen(true), count: preventivi.length, section: 'commerciale' },
       // --- Strumenti ---
       { id: 'hr', perm: 'can_hr' as const, label: 'HR', icon: UserCheck, onClick: () => setIsHRPanelOpen(true), count: hrUsers.filter(u => u.hr && (u.hr.status === 'attivo' || u.hr.status === 'in_prova')).length, section: 'operativo' },
+      { id: 'timbrature', perm: 'can_hr' as const, label: 'Timbrature', icon: Clock, onClick: () => setIsTimbraturePanelOpen(true), section: 'operativo' },
       { id: 'tickets', perm: 'can_tickets' as const, label: 'Ticket', icon: Ticket, onClick: () => setIsTicketsListModalOpen(true), count: tickets.filter(t => t.status !== 'chiuso' && t.status !== 'completato').length, badge: (() => { const mine = tickets.filter(t => t.status !== 'chiuso' && t.status !== 'completato' && (t.created_by === user?.id || t.assignees.some(a => a.user_id === user?.id))).length; return mine > 0 ? mine : undefined })(), section: 'operativo' },
       { id: 'passwords', perm: 'can_passwords' as const, label: 'Password', icon: Lock, onClick: () => setIsMenuModalOpen(true), count: passwords.length, section: 'strumenti' },
       { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length, section: 'strumenti' },
@@ -1709,6 +1712,14 @@ export default function Home() {
         onDeleteLeave={deleteLeaveRequest}
         onAddWorkRecord={addWorkRecord}
         onDeleteWorkRecord={deleteWorkRecord}
+        onUpdateWorkRecord={updateWorkRecord}
+      />}
+
+      {/* ═══ TIMBRATURE PANEL ═══ */}
+      {isTimbraturePanelOpen && <TimbraturePanel
+        isOpen={isTimbraturePanelOpen}
+        onClose={() => setIsTimbraturePanelOpen(false)}
+        isAdmin={isAdmin}
       />}
 
       {/* ═══ RICHIESTE MAGAZZINO (Admin Panel) ═══ */}
