@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Clock, ChevronLeft, ChevronRight, Plus, Trash2, Users, BarChart2, Pencil, ShieldCheck, Send } from 'lucide-react'
+import { X, Clock, ChevronLeft, ChevronRight, Plus, Trash2, Users, BarChart2, Pencil, ShieldCheck, Send, Bell } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface WorkRecord {
@@ -122,17 +122,20 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
   const [showAddForm, setShowAddForm] = useState(false)
   const [addForm, setAddForm] = useState({ profile_id: '', date: '', check_in: '', check_out: '', hours_worked: '', break_minutes: 60, notes: '' })
   const [saving, setSaving] = useState(false)
+  const [modCodes, setModCodes] = useState<ModCode[]>([])
   const [editModal, setEditModal] = useState<EditModal | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     const [from, to] = monthRange(year, month)
-    const [{ data: recs }, { data: profs }] = await Promise.all([
+    const [{ data: recs }, { data: profs }, { data: codes }] = await Promise.all([
       supabase.from('hr_work_records').select('*').gte('date', from).lte('date', to).order('date', { ascending: false }),
       supabase.from('profiles').select('id, full_name, email').order('full_name'),
+      supabase.from('hr_modification_codes').select('*').is('used_at', null).gt('expires_at', new Date().toISOString()),
     ])
     setRecords((recs || []) as WorkRecord[])
     setProfiles((profs || []) as Profile[])
+    setModCodes((codes || []) as ModCode[])
     setLoading(false)
   }, [year, month])
 
@@ -231,6 +234,7 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
 
   const allProfiles = Array.from(byProfile.values())
   const displayProfiles = selectedProfile ? allProfiles.filter(p => p.profile.id === selectedProfile) : allProfiles
+  const pendingRecordIds = useMemo(() => new Set(modCodes.map(c => c.record_id)), [modCodes])
   const totalHoursAll = records.reduce((s, r) => s + Number(r.hours_worked), 0)
   const activeDays = new Set(records.map(r => r.date)).size
 
@@ -388,8 +392,10 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
                     <p className="text-slate-400 text-sm px-4 py-3 text-center">Nessuna timbratura questo mese</p>
                   ) : (
                     <div className="divide-y divide-slate-200/60">
-                      {recs.map(r => (
-                        <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-white/80 transition-colors group">
+                      {recs.map(r => {
+                        const hasPending = pendingRecordIds.has(r.id)
+                        return (
+                        <div key={r.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-white/80 transition-colors group ${hasPending ? 'bg-amber-50' : ''}`}>
                           <div className="w-16 flex-shrink-0">
                             <p className="text-xs font-bold text-slate-700">
                               {new Date(r.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
@@ -400,9 +406,15 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
                           </div>
                           <div className="flex-1">
                             {r.check_in && (
-                              <p className="text-xs text-slate-600">
-                                {r.check_in}{r.check_out ? ` → ${r.check_out}` : ' → in corso'}
-                              </p>
+                              <div className="flex items-center gap-1">
+                                {hasPending && <Bell size={11} className="text-amber-500 animate-pulse flex-shrink-0" />}
+                                <p className={`text-xs ${hasPending ? 'text-amber-700 font-bold animate-pulse' : 'text-slate-600'}`}>
+                                  {r.check_in}{r.check_out ? ` → ${r.check_out}` : ' → in corso'}
+                                </p>
+                              </div>
+                            )}
+                            {hasPending && (
+                              <p className="text-xs text-amber-600 font-semibold mt-0.5">Richiesta modifica in attesa</p>
                             )}
                             <p className={`text-xs font-semibold mt-0.5 ${(r.break_minutes ?? 60) === 0 ? 'text-emerald-600' : 'text-orange-500'}`}>
                               {fmtBreak(r.break_minutes ?? 60)}
@@ -431,7 +443,8 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
                             </div>
                           )}
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -468,6 +481,11 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
                 <p className="text-xs text-slate-500 mt-0.5">
                   {new Date(editModal.record.date + 'T00:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
                 </p>
+                {editModal.record.check_in && (
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {editModal.record.check_in}{editModal.record.check_out ? ` → ${editModal.record.check_out}` : ' → in corso'}
+                  </p>
+                )}
               </div>
 
               {editModal.step === 'request' && (

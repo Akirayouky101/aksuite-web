@@ -24,6 +24,7 @@ interface PendingCode {
   record_id: string
   code: string
   created_at: string
+  used_at: string | null
   date?: string
 }
 
@@ -55,6 +56,10 @@ function fmtDate(iso: string) {
 
 function todayISO() { return new Date().toISOString().slice(0, 10) }
 function nowTime() { return new Date().toTimeString().slice(0, 5) }
+function generateCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+}
 
 export default function TimbratureScreen({ navigation }: any) {
   const { user, profile } = useAuth()
@@ -64,6 +69,9 @@ export default function TimbratureScreen({ navigation }: any) {
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [breakMinutes, setBreakMinutes] = useState(60)
+  const [codesCollapsed, setCodesCollapsed] = useState(false)
+  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null)
+  const [requestingFor, setRequestingFor] = useState<string | null>(null)
   const [form, setForm] = useState({
     date: todayISO(), check_in: '', check_out: '', hours_worked: '', break_minutes: 60, notes: '',
   })
@@ -84,20 +92,37 @@ export default function TimbratureScreen({ navigation }: any) {
   const fetchPendingCodes = useCallback(async () => {
     if (!user) return
     try {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       const { data: codes, error } = await supabase
         .from('hr_modification_codes')
         .select('*')
         .eq('profile_id', user.id)
-        .is('used_at', null)
-        .gt('expires_at', new Date().toISOString())
+        .gte('created_at', sevenDaysAgo)
+        .order('created_at', { ascending: false })
       if (error || !codes?.length) { setPendingCodes([]); return }
-      const recordIds = codes.map((c: any) => c.record_id)
+      const recordIds = [...new Set(codes.map((c: any) => c.record_id))]
       const { data: recs } = await supabase
         .from('hr_work_records').select('id, date').in('id', recordIds)
       const recMap = new Map((recs || []).map((r: any) => [r.id, r.date]))
       setPendingCodes(codes.map((c: any) => ({ ...c, date: recMap.get(c.record_id) })))
     } catch { setPendingCodes([]) }
   }, [user?.id])
+
+  const handleRequestModification = async (record: WorkRecord) => {
+    if (!user) return
+    setRequestingFor(record.id)
+    const code = generateCode()
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    await supabase.from('hr_modification_codes').insert([{
+      record_id: record.id,
+      profile_id: user.id,
+      code,
+      expires_at: expires,
+    }])
+    setRequestingFor(null)
+    setSelectedRecordId(null)
+    fetchPendingCodes()
+  }
 
   useEffect(() => {
     fetchRecords()
@@ -166,6 +191,10 @@ export default function TimbratureScreen({ navigation }: any) {
 
   const todayRec = records.find(r => r.date === todayISO())
   const totalHours = records.slice(0, 30).reduce((s, r) => s + Number(r.hours_worked), 0)
+  const activeCodes = pendingCodes.filter(c => !c.used_at)
+  const usedCodes = pendingCodes.filter(c => !!c.used_at)
+  const sortedCodes = [...activeCodes, ...usedCodes]
+  const pendingRecordIds = new Set(activeCodes.map(c => c.record_id))
 
   return (
     <View style={s.screen}>
@@ -229,20 +258,37 @@ export default function TimbratureScreen({ navigation }: any) {
         ))}
       </View>
 
-      {pendingCodes.length > 0 && (
+      {sortedCodes.length > 0 && (
         <View style={s.codesSection}>
-          <Text style={s.codesSectionTitle}>{'\uD83D\uDD14 Richieste di modifica'}</Text>
-          {pendingCodes.map(c => (
-            <View key={c.id} style={s.codeCard}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.codeCardDate}>{c.date ? fmtDate(c.date) : '\u2014'}</Text>
-                <Text style={s.codeCardSub}>Mostra questo codice al responsabile</Text>
+          <TouchableOpacity style={s.codesSectionHeader} onPress={() => setCodesCollapsed(p => !p)}>
+            <Text style={s.codesSectionTitle}>{'🔔 Richieste di modifica'}</Text>
+            <Text style={s.codesCollapseBtn}>{codesCollapsed ? '▼' : '▲'}</Text>
+          </TouchableOpacity>
+          {!codesCollapsed && sortedCodes.map(c => {
+            const isActive = !c.used_at
+            return (
+              <View key={c.id} style={[s.codeCard, isActive ? s.codeCardActive : s.codeCardUsed]}>
+                <View style={[s.codeDot, isActive ? s.codeDotGreen : s.codeDotRed]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.codeCardDate, !isActive && { color: '#6B7280' }]}>
+                    {c.date ? fmtDate(c.date) : '—'}
+                  </Text>
+                  <Text style={[s.codeCardSub, !isActive && { color: '#9CA3AF' }]}>
+                    {isActive ? 'Mostra questo codice al responsabile' : 'Codice utilizzato'}
+                  </Text>
+                </View>
+                {isActive ? (
+                  <View style={s.codeBox}>
+                    <Text style={s.codeText}>{c.code}</Text>
+                  </View>
+                ) : (
+                  <View style={s.codeBoxUsed}>
+                    <Text style={s.codeTextUsed}>{c.code}</Text>
+                  </View>
+                )}
               </View>
-              <View style={s.codeBox}>
-                <Text style={s.codeText}>{c.code}</Text>
-              </View>
-            </View>
-          ))}
+            )
+          })}
         </View>
       )}
 
@@ -253,25 +299,49 @@ export default function TimbratureScreen({ navigation }: any) {
             keyExtractor={r => r.id}
             contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item: r }) => (
-              <View style={s.row}>
-                <View style={s.rowDate}>
-                  <Text style={s.rowDateText}>{fmtDate(r.date)}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.rowHours}>{Number(r.hours_worked).toFixed(1)}h</Text>
-                  {r.check_in && (
-                    <Text style={s.rowTimes}>
-                      {r.check_in}{r.check_out ? ` \u2192 ${r.check_out}` : ' \u2192 in corso'}
+            renderItem={({ item: r }) => {
+              const isSelected = selectedRecordId === r.id
+              const hasPending = pendingRecordIds.has(r.id)
+              return (
+                <TouchableOpacity
+                  style={[s.row, hasPending && s.rowPending]}
+                  onPress={() => setSelectedRecordId(p => p === r.id ? null : r.id)}
+                  activeOpacity={0.8}
+                >
+                  <View style={[s.rowDate, hasPending && { backgroundColor: '#FDE68A' }]}>
+                    {hasPending && <Text style={{ fontSize: 10, textAlign: 'center' }}>{'🔔'}</Text>}
+                    <Text style={s.rowDateText}>{fmtDate(r.date)}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.rowHours}>{Number(r.hours_worked).toFixed(1)}h</Text>
+                    {r.check_in && (
+                      <Text style={s.rowTimes}>
+                        {r.check_in}{r.check_out ? ` \u2192 ${r.check_out}` : ' \u2192 in corso'}
+                      </Text>
+                    )}
+                    <Text style={[s.rowBreak, r.break_minutes === 0 && { color: '#059669' }]}>
+                      {fmtBreak(r.break_minutes ?? 60)}
                     </Text>
-                  )}
-                  <Text style={[s.rowBreak, r.break_minutes === 0 && { color: '#059669' }]}>
-                    {fmtBreak(r.break_minutes ?? 60)}
-                  </Text>
-                  {r.notes ? <Text style={s.rowNotes}>{r.notes}</Text> : null}
-                </View>
-              </View>
-            )}
+                    {r.notes ? <Text style={s.rowNotes}>{r.notes}</Text> : null}
+                    {isSelected && (
+                      <TouchableOpacity
+                        style={[s.requestModBtn, hasPending && { opacity: 0.6 }]}
+                        onPress={() => !hasPending && handleRequestModification(r)}
+                        disabled={requestingFor === r.id || hasPending}
+                      >
+                        <Text style={s.requestModBtnText}>
+                          {requestingFor === r.id
+                            ? 'Invio in corso...'
+                            : hasPending
+                              ? '\uD83D\uDD14 Richiesta in attesa'
+                              : '\u270F Richiedi modifica'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )
+            }}
             ListEmptyComponent={
               <View style={s.emptyBox}>
                 <Text style={s.emptyIcon}>{'\uD83D\uDD50'}</Text>
@@ -374,12 +444,21 @@ const s = StyleSheet.create({
   breakChipText: { fontSize: 12, fontWeight: '700', color: '#6B7280' },
   breakChipTextActive: { color: '#fff' },
   codesSection: { paddingHorizontal: 16, marginBottom: 4 },
-  codesSectionTitle: { fontSize: 13, fontWeight: '700', color: '#92400E', marginBottom: 8 },
-  codeCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FEF3C7', borderRadius: 14, padding: 14, borderWidth: 1.5, borderColor: '#FCD34D', marginBottom: 8 },
+  codesSectionTitle: { fontSize: 13, fontWeight: '700', color: '#92400E' },
+  codesSectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  codesCollapseBtn: { fontSize: 14, color: '#92400E', fontWeight: '700' },
+  codeCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, padding: 14, borderWidth: 1.5, marginBottom: 8 },
+  codeCardActive: { backgroundColor: '#FEF3C7', borderColor: '#FCD34D' },
+  codeCardUsed: { backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' },
+  codeDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8, alignSelf: 'center', flexShrink: 0 },
+  codeDotGreen: { backgroundColor: '#22C55E' },
+  codeDotRed: { backgroundColor: '#EF4444' },
   codeCardDate: { fontSize: 13, fontWeight: '700', color: '#78350F' },
   codeCardSub: { fontSize: 11, color: '#92400E', marginTop: 2 },
   codeBox: { backgroundColor: '#D97706', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
+  codeBoxUsed: { backgroundColor: '#9CA3AF', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
   codeText: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: 4 },
+  codeTextUsed: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: 4, textDecorationLine: 'line-through', opacity: 0.8 },
   row: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, gap: 12, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
   rowDate: { width: 72, backgroundColor: '#FEF3C7', borderRadius: 10, justifyContent: 'center', alignItems: 'center', padding: 8 },
   rowDateText: { fontSize: 11, fontWeight: '700', color: '#D97706', textAlign: 'center' },
@@ -406,4 +485,7 @@ const s = StyleSheet.create({
   cancelBtnText: { color: '#6B7280', fontWeight: '700' },
   saveBtn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  rowPending: { borderLeftWidth: 3, borderLeftColor: '#F59E0B' },
+  requestModBtn: { marginTop: 10, backgroundColor: '#FEF3C7', borderRadius: 10, paddingVertical: 9, alignItems: 'center', borderWidth: 1.5, borderColor: '#FCD34D' },
+  requestModBtnText: { color: '#92400E', fontWeight: '700', fontSize: 13 },
 })
