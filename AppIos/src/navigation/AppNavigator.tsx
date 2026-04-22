@@ -32,6 +32,7 @@ export default function AppNavigator() {
   const navRef = useRef<any>(null)
   const [pendingLav, setPendingLav] = useState<LavorazioneNotif | null>(null)
   const [pendingHRCode, setPendingHRCode] = useState<HRCodeNotif | null>(null)
+  const shownNotifIds = useRef<Set<string>>(new Set())
 
   // Subscribe to new lavorazioni assigned to the current user
   useEffect(() => {
@@ -57,6 +58,27 @@ export default function AppNavigator() {
     const userId = session.user.id
     const channel = supabase
       .channel(`hr-code-notif-${userId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'hr_modification_codes',
+        filter: `profile_id=eq.${userId}`,
+      }, async (payload) => {
+        const row = payload.new as any
+        if (row.status !== 'code_sent' || !row.code) return
+        if (shownNotifIds.current.has(row.id)) return
+        shownNotifIds.current.add(row.id)
+        let record_date: string | null = null
+        try {
+          const { data } = await supabase
+            .from('hr_work_records')
+            .select('date')
+            .eq('id', row.record_id)
+            .single()
+          record_date = data?.date ?? null
+        } catch {}
+        setPendingHRCode({ id: row.id, code: row.code, record_date, created_at: row.created_at })
+      })
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
@@ -88,8 +110,10 @@ export default function AppNavigator() {
           return
         }
 
-        // Nuovo codice generato — mostra modale
+        // Nuovo codice generato via UPDATE (da 'requested' → 'code_sent') — mostra modale
         if (row.status !== 'code_sent' || !row.code) return
+        if (shownNotifIds.current.has(row.id)) return
+        shownNotifIds.current.add(row.id)
         let record_date: string | null = null
         try {
           const { data } = await supabase

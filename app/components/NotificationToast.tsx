@@ -9,10 +9,11 @@ interface HRNotification {
   id: string
   employeeName: string
   recordDate: string
+  profileId: string
 }
 
 interface NotificationToastProps {
-  onOpenHR?: () => void
+  onOpenHR?: (profileId: string) => void
 }
 
 export default function NotificationToast({ onOpenHR }: NotificationToastProps) {
@@ -39,7 +40,7 @@ export default function NotificationToast({ onOpenHR }: NotificationToastProps) 
       const recordDate = recordData?.date
         ? new Date(recordData.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })
         : 'data sconosciuta'
-      setNotifications(prev => [...prev, { id, employeeName, recordDate }])
+      setNotifications(prev => [...prev, { id, employeeName, recordDate, profileId }])
       setTimeout(() => {
         if (mountedRef.current) dismiss(id)
       }, 10000)
@@ -119,7 +120,7 @@ export default function NotificationToast({ onOpenHR }: NotificationToastProps) 
 
             <div className="flex gap-2.5">
               <button
-                onClick={() => { onOpenHR?.(); notifications.forEach(x => dismiss(x.id)) }}
+                onClick={() => { onOpenHR?.(n.profileId); notifications.forEach(x => dismiss(x.id)) }}
                 className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-bold rounded-2xl hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-indigo-500/25"
               >
                 Apri pannello HR

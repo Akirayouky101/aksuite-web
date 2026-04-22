@@ -76,6 +76,7 @@ interface HRPanelProps {
   onAddWorkRecord: (data: Omit<HRWorkRecord,'id'|'user_id'|'created_at'>) => Promise<HRWorkRecord|null>
   onDeleteWorkRecord: (id: string) => Promise<void>
   onUpdateWorkRecord: (id: string, data: Partial<Omit<HRWorkRecord,'id'|'user_id'|'created_at'>>) => Promise<boolean>
+  initialProfileId?: string
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -108,6 +109,7 @@ export default function HRPanel({
   onUpsertHRProfile, onAddDocument, onDeleteDocument,
   onAddLeave, onUpdateLeaveStatus, onDeleteLeave,
   onAddWorkRecord, onDeleteWorkRecord, onUpdateWorkRecord,
+  initialProfileId,
 }: HRPanelProps) {
   const [mainTab, setMainTab] = useState<MainTab>('dipendenti')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -139,6 +141,7 @@ export default function HRPanel({
 
   const [hrEditModal, setHrEditModal] = useState<HREditModal | null>(null)
   const [savingHREdit, setSavingHREdit] = useState(false)
+  const [sendingCode, setSendingCode] = useState(false)
 
   const [modCodes, setModCodes] = useState<{ id: string; record_id: string; status: string }[]>([])
 
@@ -180,6 +183,13 @@ export default function HRPanel({
     setSelectedId(u.profile_id); setProfDirty(false)
     setDetailTab('profilo'); setShowDocForm(false); setShowWorkForm(false)
   }
+
+  // Auto-navigate to specific employee's timbrature tab (deep-link from notification toast)
+  useEffect(() => {
+    if (!initialProfileId || !hrUsers.length || !isOpen) return
+    const u = hrUsers.find(u => u.profile_id === initialProfileId)
+    if (u) { setSelectedId(initialProfileId); setDetailTab('timbrature') }
+  }, [initialProfileId, hrUsers, isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = hrUsers.filter(u => {
     if (filterStatus !== 'tutti' && u.hr?.status !== filterStatus) return false
@@ -248,7 +258,8 @@ export default function HRPanel({
   }
 
   const handleHRSendCode = async () => {
-    if (!hrEditModal) return
+    if (!hrEditModal || sendingCode) return
+    setSendingCode(true)
     const code = Math.random().toString(36).substring(2, 8).toUpperCase()
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     const existing = modCodes.find(c => c.record_id === hrEditModal.record.id && c.status === 'requested')
@@ -267,6 +278,7 @@ export default function HRPanel({
     }
     fetchModCodes()
     setHrEditModal(p => p ? { ...p, step: 'verify' } : null)
+    setSendingCode(false)
   }
 
   const handleHRVerifyCode = async () => {
@@ -979,14 +991,14 @@ export default function HRPanel({
                         <Bell size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
                         <p className="text-xs text-amber-700 font-medium">Il dipendente ha già richiesto la modifica. Genera il codice e comunicaglielo verbalmente.</p>
                       </div>
-                      <button onClick={handleHRSendCode} className="w-full bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-amber-200 hover:shadow-amber-300 transition-all">
+                      <button onClick={handleHRSendCode} disabled={sendingCode} className="w-full bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-amber-200 hover:shadow-amber-300 transition-all disabled:opacity-60">
                         Genera codice
                       </button>
                     </>
                   ) : (
                     <>
                       <p className="text-xs text-slate-500">Verrà generato un codice da comunicare verbalmente al dipendente per autorizzare la modifica.</p>
-                      <button onClick={handleHRSendCode} className="w-full bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all">
+                      <button onClick={handleHRSendCode} disabled={sendingCode} className="w-full bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all disabled:opacity-60">
                         Genera codice di autorizzazione
                       </button>
                     </>

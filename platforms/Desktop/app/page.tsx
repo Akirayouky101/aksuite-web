@@ -185,6 +185,7 @@ export default function Home() {
 
   // ═══ HR STATE ═══
   const [isHRPanelOpen, setIsHRPanelOpen] = useState(false)
+  const [hrInitialProfileId, setHrInitialProfileId] = useState<string | null>(null)
   const [isTimbraturePanelOpen, setIsTimbraturePanelOpen] = useState(false)
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false)
   const [editingTicket, setEditingTicket] = useState<TicketType | null>(null)
@@ -1699,7 +1700,7 @@ export default function Home() {
       {/* ═══ HR PANEL ═══ */}
       {isHRPanelOpen && <HRPanel
         isOpen={isHRPanelOpen}
-        onClose={() => setIsHRPanelOpen(false)}
+        onClose={() => { setIsHRPanelOpen(false); setHrInitialProfileId(null) }}
         hrUsers={hrUsers}
         documents={hrDocuments}
         leaveRequests={hrLeaveRequests}
@@ -1716,6 +1717,7 @@ export default function Home() {
         onAddWorkRecord={addWorkRecord}
         onDeleteWorkRecord={deleteWorkRecord}
         onUpdateWorkRecord={updateWorkRecord}
+        initialProfileId={hrInitialProfileId ?? undefined}
       />}
 
       {/* ═══ TIMBRATURE PANEL ═══ */}
@@ -1726,7 +1728,7 @@ export default function Home() {
       />}
 
       {/* ═══ GLOBAL NOTIFICATION TOAST (HR mod requests) ═══ */}
-      <NotificationToast onOpenHR={() => setIsHRPanelOpen(true)} />
+      <NotificationToast onOpenHR={(pid) => { setHrInitialProfileId(pid); setIsHRPanelOpen(true) }} />
 
       {/* ═══ RICHIESTE MAGAZZINO (Admin Panel) ═══ */}
       {isWarehouseRequestsOpen && <WarehouseRequestsPanel
