@@ -12,6 +12,7 @@ import TicketScreen from '../screens/TicketScreen'
 import TimbratureScreen from '../screens/TimbratureScreen'
 import LavorazioniScreen from '../screens/LavorazioniScreen'
 import LavorazioneNotificationModal, { LavorazioneNotif } from '../components/LavorazioneNotificationModal'
+import HRCodeNotificationModal, { HRCodeNotif } from '../components/HRCodeNotificationModal'
 
 export type RootStackParamList = {
   Login: undefined
@@ -30,6 +31,7 @@ export default function AppNavigator() {
   const { session, loading } = useAuth()
   const navRef = useRef<any>(null)
   const [pendingLav, setPendingLav] = useState<LavorazioneNotif | null>(null)
+  const [pendingHRCode, setPendingHRCode] = useState<HRCodeNotif | null>(null)
 
   // Subscribe to new lavorazioni assigned to the current user
   useEffect(() => {
@@ -44,6 +46,36 @@ export default function AppNavigator() {
         filter: `assignee_id=eq.${userId}`,
       }, (payload) => {
         setPendingLav(payload.new as LavorazioneNotif)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Subscribe to new HR modification codes generated for current user
+  useEffect(() => {
+    if (!session) return
+    const userId = session.user.id
+    const channel = supabase
+      .channel(`hr-code-notif-${userId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'hr_modification_codes',
+        filter: `profile_id=eq.${userId}`,
+      }, async (payload) => {
+        const row = payload.new as any
+        if (row.status !== 'code_sent' || !row.code) return
+        // Fetch the record date for display
+        let record_date: string | null = null
+        try {
+          const { data } = await supabase
+            .from('hr_work_records')
+            .select('date')
+            .eq('id', row.record_id)
+            .single()
+          record_date = data?.date ?? null
+        } catch {}
+        setPendingHRCode({ id: row.id, code: row.code, record_date, created_at: row.created_at })
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -82,6 +114,16 @@ export default function AppNavigator() {
           onGoToLavorazioni={() => {
             setPendingLav(null)
             navRef.current?.navigate('Lavorazioni')
+          }}
+        />
+      )}
+      {pendingHRCode && (
+        <HRCodeNotificationModal
+          notif={pendingHRCode}
+          onClose={() => setPendingHRCode(null)}
+          onGoToTimbrature={() => {
+            setPendingHRCode(null)
+            navRef.current?.navigate('Timbrature')
           }}
         />
       )}

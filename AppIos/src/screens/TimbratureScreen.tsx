@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, FlatList,
-  ActivityIndicator, Alert, Modal, TextInput, ScrollView, RefreshControl,
+  ActivityIndicator, Alert, Animated, Modal, TextInput, ScrollView, RefreshControl,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { supabase } from '../lib/supabase'
@@ -78,6 +78,14 @@ export default function TimbratureScreen({ navigation }: any) {
     date: todayISO(), check_in: '', check_out: '', hours_worked: '', break_minutes: 60, notes: '',
   })
 
+  const [successModal, setSuccessModal] = useState<{
+    visible: boolean; type: 'in' | 'out'; time: string; hours?: number
+  }>({ visible: false, type: 'in', time: '' })
+  const successScale   = useRef(new Animated.Value(0)).current
+  const successOpacity = useRef(new Animated.Value(0)).current
+  const successProgress = useRef(new Animated.Value(1)).current
+  const dismissTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const fetchRecords = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -145,6 +153,25 @@ export default function TimbratureScreen({ navigation }: any) {
     setRefreshing(false)
   }, [fetchRecords, fetchPendingCodes])
 
+  const showSuccessModal = useCallback((type: 'in' | 'out', time: string, hours?: number) => {
+    if (dismissTimer.current) clearTimeout(dismissTimer.current)
+    successScale.setValue(0)
+    successOpacity.setValue(0)
+    successProgress.setValue(1)
+    setSuccessModal({ visible: true, type, time, hours })
+    Animated.parallel([
+      Animated.spring(successScale, { toValue: 1, tension: 180, friction: 12, useNativeDriver: true }),
+      Animated.timing(successOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.timing(successProgress, { toValue: 0, duration: 2500, useNativeDriver: false }),
+    ]).start()
+    dismissTimer.current = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(successScale, { toValue: 0.88, duration: 180, useNativeDriver: true }),
+        Animated.timing(successOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
+      ]).start(() => setSuccessModal(p => ({ ...p, visible: false })))
+    }, 2500)
+  }, [successScale, successOpacity, successProgress])
+
   const handleClockIn = async () => {
     if (!user) return
     const today = todayISO()
@@ -158,7 +185,7 @@ export default function TimbratureScreen({ navigation }: any) {
     }])
     setSaving(false)
     if (error) Alert.alert('Errore', error.message)
-    else { Alert.alert('Entrata registrata', `Entrata alle ${nowTime()}`); fetchRecords() }
+    else { showSuccessModal('in', nowTime()); fetchRecords() }
   }
 
   const handleClockOut = async () => {
@@ -174,7 +201,7 @@ export default function TimbratureScreen({ navigation }: any) {
     }).eq('id', rec.id)
     setSaving(false)
     if (error) Alert.alert('Errore', error.message)
-    else { Alert.alert('Uscita registrata', `${hrs}h nette (${fmtBreak(breakMinutes)})`); fetchRecords() }
+    else { showSuccessModal('out', checkOut, hrs); fetchRecords() }
   }
 
   const handleManualSave = async () => {
@@ -443,6 +470,65 @@ export default function TimbratureScreen({ navigation }: any) {
           />
       }
 
+      {/* ── Success Modal (Entrata / Uscita) ── */}
+      <Modal visible={successModal.visible} transparent animationType="none" statusBarTranslucent>
+        <Animated.View style={[s.successOverlay, { opacity: successOpacity }]}>
+          <Animated.View style={[s.successCard, { transform: [{ scale: successScale }] }]}>
+            <LinearGradient
+              colors={successModal.type === 'in' ? ['#065F46', '#059669', '#10B981'] : ['#7C2D12', '#DC2626', '#F97316']}
+              style={s.successHeader}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            >
+              <View style={s.successCheckCircle}>
+                <Text style={s.successCheckmark}>✓</Text>
+              </View>
+              <Text style={s.successHeaderTitle}>
+                {successModal.type === 'in' ? 'Entrata registrata' : 'Uscita registrata'}
+              </Text>
+              <Text style={s.successHeaderSub}>
+                {successModal.type === 'in' ? 'Oggi · ' : 'Oggi · '}{successModal.time}
+              </Text>
+            </LinearGradient>
+
+            <View style={s.successBody}>
+              {successModal.type === 'in' ? (
+                <>
+                  <Text style={s.successEmoji}>🌅</Text>
+                  <Text style={s.successBigTime}>{successModal.time}</Text>
+                  <Text style={s.successTagline}>Buona giornata!</Text>
+                  <Text style={s.successHint}>L'orario di entrata è stato salvato</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={s.successEmoji}>🎉</Text>
+                  <Text style={s.successBigHours}>{successModal.hours?.toFixed(1)}<Text style={s.successBigHoursSub}>h</Text></Text>
+                  <Text style={s.successTagline}>Ottimo lavoro!</Text>
+                  <Text style={s.successHint}>Uscita alle {successModal.time}</Text>
+                </>
+              )}
+
+              <View style={s.successProgressBar}>
+                <Animated.View style={[s.successProgressFill, {
+                  backgroundColor: successModal.type === 'in' ? '#10B981' : '#F97316',
+                  width: successProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                }]} />
+              </View>
+
+              <TouchableOpacity
+                style={[s.successCloseBtn, { backgroundColor: successModal.type === 'in' ? '#059669' : '#DC2626' }]}
+                onPress={() => {
+                  if (dismissTimer.current) clearTimeout(dismissTimer.current)
+                  setSuccessModal(p => ({ ...p, visible: false }))
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={s.successCloseBtnText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+
       <Modal visible={showForm} transparent animationType="slide">
         <View style={s.overlay}>
           <ScrollView>
@@ -618,4 +704,24 @@ const s = StyleSheet.create({
   cancelBtnText: { color: '#6B7280', fontWeight: '700' },
   saveBtn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+
+  // ── Success Modal ──
+  successOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 },
+  successCard: { width: '100%', borderRadius: 28, overflow: 'hidden', backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: 12 }, elevation: 20 },
+  successHeader: { paddingTop: 36, paddingBottom: 28, alignItems: 'center', gap: 8 },
+  successCheckCircle: { width: 68, height: 68, borderRadius: 34, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  successCheckmark: { fontSize: 36, color: '#fff', fontWeight: '900', lineHeight: 42 },
+  successHeaderTitle: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: -0.3 },
+  successHeaderSub: { fontSize: 14, color: 'rgba(255,255,255,0.75)', fontWeight: '600' },
+  successBody: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 28, alignItems: 'center' },
+  successEmoji: { fontSize: 40, marginBottom: 10 },
+  successBigTime: { fontSize: 48, fontWeight: '900', color: '#111827', letterSpacing: -1, lineHeight: 54 },
+  successBigHours: { fontSize: 64, fontWeight: '900', color: '#111827', letterSpacing: -2, lineHeight: 70 },
+  successBigHoursSub: { fontSize: 32, fontWeight: '700', color: '#6B7280' },
+  successTagline: { fontSize: 18, fontWeight: '800', color: '#374151', marginTop: 6 },
+  successHint: { fontSize: 13, color: '#9CA3AF', marginTop: 4, marginBottom: 20 },
+  successProgressBar: { width: '100%', height: 4, backgroundColor: '#F3F4F6', borderRadius: 2, overflow: 'hidden', marginBottom: 20 },
+  successProgressFill: { height: '100%', borderRadius: 2 },
+  successCloseBtn: { width: '100%', borderRadius: 16, paddingVertical: 14, alignItems: 'center' },
+  successCloseBtnText: { color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: 0.2 },
 })
