@@ -46,3 +46,20 @@ CREATE POLICY "authenticated_delete_codes"
 
 -- 8. Abilita realtime per aggiornamenti live nel pannello web
 ALTER PUBLICATION supabase_realtime ADD TABLE public.hr_modification_codes;
+
+-- ═══════════════════════════════════════════════════════════
+-- MIGRATION v2 — Esegui se la tabella esiste già
+-- Aggiunge colonna status e rende code nullable
+-- ═══════════════════════════════════════════════════════════
+
+-- 9. Aggiungi colonna status (se non esiste)
+ALTER TABLE public.hr_modification_codes
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'code_sent';
+
+-- 10. Rendi code nullable (il dipendente invia richiesta senza codice)
+ALTER TABLE public.hr_modification_codes
+  ALTER COLUMN code DROP NOT NULL;
+
+-- 11. Aggiorna righe esistenti
+UPDATE public.hr_modification_codes SET status = 'used'      WHERE used_at IS NOT NULL AND status = 'code_sent';
+UPDATE public.hr_modification_codes SET status = 'code_sent' WHERE used_at IS NULL  AND code IS NOT NULL AND status = 'code_sent';

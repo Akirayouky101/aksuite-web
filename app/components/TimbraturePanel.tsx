@@ -50,9 +50,10 @@ interface ModCode {
   id: string
   record_id: string
   profile_id: string
-  code: string
+  code: string | null
   expires_at: string
   used_at: string | null
+  status: string
 }
 
 type EditStep = 'request' | 'verify' | 'edit'
@@ -126,15 +127,14 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
   const [editModal, setEditModal] = useState<EditModal | null>(null)
 
   const fetchModCodes = useCallback(async () => {
-    const { data: codes, error } = await supabase
+    const { data, error } = await supabase
       .from('hr_modification_codes')
       .select('*')
-      .is('used_at', null)
-      .gt('expires_at', new Date().toISOString())
+      .in('status', ['requested', 'code_sent'])
     if (error) {
       console.error('[TimbraturePanel] hr_modification_codes fetch error:', error.message, error.code)
     }
-    setModCodes((codes || []) as ModCode[])
+    setModCodes((data || []) as ModCode[])
   }, [])
 
   const fetchData = useCallback(async () => {
@@ -165,9 +165,11 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
   }, [isOpen, fetchModCodes])
 
   const handleOpenEdit = (record: WorkRecord) => {
+    const pending = modCodes.find(c => c.record_id === record.id)
+    const step: EditStep = pending?.status === 'code_sent' ? 'verify' : 'request'
     setEditModal({
       record,
-      step: 'request',
+      step,
       codeInput: '',
       error: '',
       editForm: {
@@ -184,12 +186,21 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
     if (!editModal) return
     const code = generateCode()
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    await supabase.from('hr_modification_codes').insert([{
-      record_id: editModal.record.id,
-      profile_id: editModal.record.profile_id,
-      code,
-      expires_at: expires,
-    }])
+    const existing = modCodes.find(c => c.record_id === editModal.record.id && c.status === 'requested')
+    if (existing) {
+      await supabase.from('hr_modification_codes')
+        .update({ code, status: 'code_sent', expires_at: expires })
+        .eq('id', existing.id)
+    } else {
+      await supabase.from('hr_modification_codes').insert([{
+        record_id: editModal.record.id,
+        profile_id: editModal.record.profile_id,
+        code,
+        status: 'code_sent',
+        expires_at: expires,
+      }])
+    }
+    fetchModCodes()
     setEditModal(prev => prev ? { ...prev, step: 'verify' } : null)
   }
 
@@ -228,7 +239,10 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
       notes: editForm.notes || null,
     }).eq('id', record.id)
     setSaving(false)
-    if (!error) { setEditModal(null); fetchData() }
+    if (!error) {
+      await supabase.from('hr_modification_codes').delete().eq('record_id', record.id)
+      setEditModal(null); fetchData()
+    }
   }
 
   const prevMonth = () => {
@@ -513,21 +527,42 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
 
               {editModal.step === 'request' && (
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                      <Send className="w-5 h-5 text-orange-500" />
-                    </div>
-                    <p className="text-sm text-slate-600">
-                      Per modificare questa timbratura serve il consenso del dipendente.
-                      Verrà inviato un codice sull&apos;app del dipendente.
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleSendCode}
-                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-semibold text-sm hover:from-orange-600 hover:to-amber-600 transition-colors"
-                  >
-                    Invia richiesta codice all&apos;operatore
-                  </button>
+                  {modCodes.find(c => c.record_id === editModal.record.id)?.status === 'requested' ? (
+                    <>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-amber-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                          <Bell className="w-5 h-5 text-amber-500" />
+                        </div>
+                        <p className="text-sm text-slate-600">
+                          Il dipendente ha richiesto la modifica. Genera un codice e comunicaglielo verbalmente.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleSendCode}
+                        className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold text-sm hover:from-amber-600 hover:to-orange-600 transition-colors"
+                      >
+                        Genera codice
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                          <Send className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <p className="text-sm text-slate-600">
+                          Per modificare questa timbratura serve il consenso del dipendente.
+                          Genera un codice da comunicargli verbalmente.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleSendCode}
+                        className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-semibold text-sm hover:from-orange-600 hover:to-amber-600 transition-colors"
+                      >
+                        Genera codice
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 

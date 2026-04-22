@@ -140,16 +140,16 @@ export default function HRPanel({
   const [hrEditModal, setHrEditModal] = useState<HREditModal | null>(null)
   const [savingHREdit, setSavingHREdit] = useState(false)
 
-  const [modCodes, setModCodes] = useState<{ id: string; record_id: string }[]>([])
+  const [modCodes, setModCodes] = useState<{ id: string; record_id: string; status: string }[]>([])
 
   const fetchModCodes = useCallback(async () => {
+    if (!isOpen) return
     const { data } = await supabase
       .from('hr_modification_codes')
-      .select('id, record_id')
-      .is('used_at', null)
-      .gt('expires_at', new Date().toISOString())
+      .select('id, record_id, status')
+      .in('status', ['requested', 'code_sent'])
     setModCodes(data || [])
-  }, [])
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
@@ -233,8 +233,10 @@ export default function HRPanel({
   }
 
   const handleHROpenEdit = (r: HRWorkRecord) => {
+    const pending = modCodes.find(c => c.record_id === r.id)
+    const step = pending?.status === 'code_sent' ? 'verify' as const : 'request' as const
     setHrEditModal({
-      record: r, step: 'request', codeInput: '', error: '',
+      record: r, step, codeInput: '', error: '',
       editForm: {
         check_in: r.check_in || '',
         check_out: r.check_out || '',
@@ -248,12 +250,22 @@ export default function HRPanel({
   const handleHRSendCode = async () => {
     if (!hrEditModal) return
     const code = Math.random().toString(36).substring(2, 8).toUpperCase()
-    await supabase.from('hr_modification_codes').insert([{
-      record_id: hrEditModal.record.id,
-      profile_id: hrEditModal.record.profile_id,
-      code,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    }])
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    const existing = modCodes.find(c => c.record_id === hrEditModal.record.id && c.status === 'requested')
+    if (existing) {
+      await supabase.from('hr_modification_codes')
+        .update({ code, status: 'code_sent', expires_at: expires })
+        .eq('id', existing.id)
+    } else {
+      await supabase.from('hr_modification_codes').insert([{
+        record_id: hrEditModal.record.id,
+        profile_id: hrEditModal.record.profile_id,
+        code,
+        status: 'code_sent',
+        expires_at: expires,
+      }])
+    }
+    fetchModCodes()
     setHrEditModal(p => p ? { ...p, step: 'verify' } : null)
   }
 
@@ -291,7 +303,11 @@ export default function HRPanel({
       notes: editForm.notes || null,
     })
     setSavingHREdit(false)
-    if (ok) setHrEditModal(null)
+    if (ok) {
+      await supabase.from('hr_modification_codes').delete().eq('record_id', record.id)
+      fetchModCodes()
+      setHrEditModal(null)
+    }
   }
 
   const handleAddLeave = async () => {
@@ -955,10 +971,24 @@ export default function HRPanel({
                     <p className="font-semibold text-slate-700 mb-1">Dati attuali</p>
                     <p>{hrEditModal.record.check_in && hrEditModal.record.check_out ? `${hrEditModal.record.check_in} → ${hrEditModal.record.check_out}` : `${hrEditModal.record.hours_worked}h`}</p>
                   </div>
-                  <p className="text-xs text-slate-500">Verrà generato un codice di autorizzazione che il dipendente dovrà comunicarti dall&apos;app.</p>
-                  <button onClick={handleHRSendCode} className="w-full bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all">
-                    Genera codice di autorizzazione
-                  </button>
+                  {modCodes.find(c => c.record_id === hrEditModal.record.id)?.status === 'requested' ? (
+                    <>
+                      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-start gap-3">
+                        <Bell size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-amber-700 font-medium">Il dipendente ha già richiesto la modifica. Genera il codice e comunicaglielo verbalmente.</p>
+                      </div>
+                      <button onClick={handleHRSendCode} className="w-full bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-amber-200 hover:shadow-amber-300 transition-all">
+                        Genera codice
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs text-slate-500">Verrà generato un codice da comunicare verbalmente al dipendente per autorizzare la modifica.</p>
+                      <button onClick={handleHRSendCode} className="w-full bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all">
+                        Genera codice di autorizzazione
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 

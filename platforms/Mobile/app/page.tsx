@@ -68,6 +68,7 @@ const TicketsListModal = dynamic(() => import('./components/TicketsListModal'), 
 const TicketModal = dynamic(() => import('./components/TicketModal'), { ssr: false })
 const HRPanel = dynamic(() => import('./components/HRPanel'), { ssr: false })
 const TimbraturePanel = dynamic(() => import('./components/TimbraturePanel'), { ssr: false })
+const EventsPanel = dynamic(() => import('./components/EventsPanel'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -677,6 +678,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
+                <EventsPanel onOpenHR={() => setIsHRPanelOpen(true)} />
                 <button onClick={() => setIsSearchModalOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm active:scale-95 transition-all" title="Cerca (⌘K)">
                   <Search className="w-[18px] h-[18px]" />
                 </button>

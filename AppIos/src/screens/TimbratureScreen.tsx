@@ -22,9 +22,10 @@ interface WorkRecord {
 interface PendingCode {
   id: string
   record_id: string
-  code: string
+  code: string | null
   created_at: string
   used_at: string | null
+  status: string // 'requested' | 'code_sent' | 'used'
   date?: string
 }
 
@@ -110,14 +111,13 @@ export default function TimbratureScreen({ navigation }: any) {
 
   const handleRequestModification = async (record: WorkRecord) => {
     if (!user) return
+    if (pendingRecordIds.has(record.id)) return // già in attesa
     setRequestingFor(record.id)
-    const code = generateCode()
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     await supabase.from('hr_modification_codes').insert([{
       record_id: record.id,
       profile_id: user.id,
-      code,
-      expires_at: expires,
+      status: 'requested',
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     }])
     setRequestingFor(null)
     setSelectedRecordId(null)
@@ -191,10 +191,11 @@ export default function TimbratureScreen({ navigation }: any) {
 
   const todayRec = records.find(r => r.date === todayISO())
   const totalHours = records.slice(0, 30).reduce((s, r) => s + Number(r.hours_worked), 0)
-  const activeCodes = pendingCodes.filter(c => !c.used_at)
-  const usedCodes = pendingCodes.filter(c => !!c.used_at)
-  const sortedCodes = [...activeCodes, ...usedCodes]
-  const pendingRecordIds = new Set(activeCodes.map(c => c.record_id))
+  const codeSentCodes = pendingCodes.filter(c => c.status === 'code_sent' && !c.used_at)
+  const requestedCodes = pendingCodes.filter(c => c.status === 'requested')
+  const usedCodes = pendingCodes.filter(c => !!c.used_at || c.status === 'used')
+  const sortedCodes = [...codeSentCodes, ...requestedCodes, ...usedCodes]
+  const pendingRecordIds = new Set([...codeSentCodes, ...requestedCodes].map(c => c.record_id))
 
   return (
     <View style={s.screen}>
@@ -265,23 +266,35 @@ export default function TimbratureScreen({ navigation }: any) {
             <Text style={s.codesCollapseBtn}>{codesCollapsed ? '▼' : '▲'}</Text>
           </TouchableOpacity>
           {!codesCollapsed && sortedCodes.map(c => {
-            const isActive = !c.used_at
+            const isCodeSent = c.status === 'code_sent' && !c.used_at
+            const isRequested = c.status === 'requested'
+            const isUsed = !!c.used_at || c.status === 'used'
+            const cardStyle = isCodeSent ? s.codeCardActive : isRequested ? s.codeCardRequested : s.codeCardUsed
+            const dotStyle = isCodeSent ? s.codeDotGreen : isRequested ? s.codeDotOrange : s.codeDotRed
             return (
-              <View key={c.id} style={[s.codeCard, isActive ? s.codeCardActive : s.codeCardUsed]}>
-                <View style={[s.codeDot, isActive ? s.codeDotGreen : s.codeDotRed]} />
+              <View key={c.id} style={[s.codeCard, cardStyle]}>
+                <View style={[s.codeDot, dotStyle]} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[s.codeCardDate, !isActive && { color: '#6B7280' }]}>
+                  <Text style={[s.codeCardDate, (isUsed || isRequested) && { color: '#6B7280' }]}>
                     {c.date ? fmtDate(c.date) : '—'}
                   </Text>
-                  <Text style={[s.codeCardSub, !isActive && { color: '#9CA3AF' }]}>
-                    {isActive ? 'Mostra questo codice al responsabile' : 'Codice utilizzato'}
+                  <Text style={[s.codeCardSub, (isUsed || isRequested) && { color: '#9CA3AF' }]}>
+                    {isCodeSent ? 'Mostra questo codice al responsabile' :
+                     isRequested ? 'In attesa che il responsabile generi il codice' :
+                     'Codice utilizzato'}
                   </Text>
                 </View>
-                {isActive ? (
+                {isCodeSent && (
                   <View style={s.codeBox}>
                     <Text style={s.codeText}>{c.code}</Text>
                   </View>
-                ) : (
+                )}
+                {isRequested && (
+                  <View style={s.codeBoxPending}>
+                    <Text style={s.codeTextPending}>{'⏳'}</Text>
+                  </View>
+                )}
+                {isUsed && c.code && (
                   <View style={s.codeBoxUsed}>
                     <Text style={s.codeTextUsed}>{c.code}</Text>
                   </View>
@@ -452,7 +465,11 @@ const s = StyleSheet.create({
   codeCardUsed: { backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' },
   codeDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8, alignSelf: 'center', flexShrink: 0 },
   codeDotGreen: { backgroundColor: '#22C55E' },
+  codeDotOrange: { backgroundColor: '#F59E0B' },
   codeDotRed: { backgroundColor: '#EF4444' },
+  codeCardRequested: { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' },
+  codeBoxPending: { backgroundColor: '#F59E0B', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, alignItems: 'center', justifyContent: 'center' },
+  codeTextPending: { fontSize: 22 },
   codeCardDate: { fontSize: 13, fontWeight: '700', color: '#78350F' },
   codeCardSub: { fontSize: 11, color: '#92400E', marginTop: 2 },
   codeBox: { backgroundColor: '#D97706', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
