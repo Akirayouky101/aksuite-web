@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, UserCheck, Search, Users, Calendar, BarChart2,
   Upload, Trash2, FileText, CheckCircle2, XCircle, Clock,
   Shield, Heart, Dumbbell, Timer, Plus, ImageOff,
   Save, GraduationCap, AlertTriangle, ChevronLeft, ChevronRight,
-  Briefcase, Phone, MapPin, CreditCard, User, Banknote, Pencil,
+  Briefcase, Phone, MapPin, CreditCard, User, Banknote, Pencil, Bell,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type {
@@ -139,6 +139,29 @@ export default function HRPanel({
 
   const [hrEditModal, setHrEditModal] = useState<HREditModal | null>(null)
   const [savingHREdit, setSavingHREdit] = useState(false)
+
+  const [modCodes, setModCodes] = useState<{ id: string; record_id: string }[]>([])
+
+  const fetchModCodes = useCallback(async () => {
+    const { data } = await supabase
+      .from('hr_modification_codes')
+      .select('id, record_id')
+      .is('used_at', null)
+      .gt('expires_at', new Date().toISOString())
+    setModCodes(data || [])
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen) return
+    fetchModCodes()
+    const channel = supabase
+      .channel('hr-panel-mod-codes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hr_modification_codes' }, () => fetchModCodes())
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [isOpen, fetchModCodes])
+
+  const pendingRecordIds = useMemo(() => new Set(modCodes.map(c => c.record_id)), [modCodes])
 
   const [statsYear, setStatsYear] = useState(new Date().getFullYear())
   const [statsMonth, setStatsMonth] = useState<number | null>(null)
@@ -663,16 +686,20 @@ export default function HRPanel({
                         )}
                         {workRecords.filter(r => { const d = new Date(r.date); return r.profile_id === selectedId && d.getFullYear() === workMonth.y && d.getMonth() === workMonth.m })
                           .sort((a, b) => b.date.localeCompare(a.date))
-                          .map(r => (
-                          <div key={r.id} className="flex items-center gap-3 bg-white rounded-2xl border border-slate-200/70 px-4 py-2.5 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                              <span className="text-[10px] font-bold text-blue-600">{new Date(r.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }).replace(' ', '\n')}</span>
+                          .map(r => {
+                          const hasPending = pendingRecordIds.has(r.id)
+                          return (
+                          <div key={r.id} className={`flex items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-sm hover:shadow-md transition-shadow ${hasPending ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200/70'}`}>
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${hasPending ? 'bg-amber-100 border border-amber-200' : 'bg-blue-50 border border-blue-100'}`}>
+                              <span className={`text-[10px] font-bold ${hasPending ? 'text-amber-700' : 'text-blue-600'}`}>{new Date(r.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }).replace(' ', '\n')}</span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800">{r.hours_worked}h</span>
-                                {r.check_in && r.check_out && <span className="text-xs text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg">{r.check_in} → {r.check_out}</span>}
+                                {hasPending && <Bell size={11} className="text-amber-500 animate-pulse flex-shrink-0" />}
+                                <span className={`font-bold ${hasPending ? 'text-amber-700 animate-pulse' : 'text-slate-800'}`}>{r.hours_worked}h</span>
+                                {r.check_in && r.check_out && <span className={`text-xs px-2 py-0.5 rounded-lg ${hasPending ? 'text-amber-700 bg-amber-100' : 'text-slate-400 bg-slate-50'}`}>{r.check_in} → {r.check_out}</span>}
                               </div>
+                              {hasPending && <p className="text-[10px] text-amber-600 font-semibold mt-0.5">Richiesta modifica in attesa</p>}
                               {r.notes && <p className="text-[10px] text-slate-400 truncate mt-0.5">{r.notes}</p>}
                             </div>
                             {isAdmin && (
@@ -682,7 +709,8 @@ export default function HRPanel({
                               </div>
                             )}
                           </div>
-                        ))}
+                          )
+                        })}
                       </div>
                       {isAdmin && (
                         <div className="px-6 py-3 border-t border-slate-100 shrink-0 bg-slate-50/30">
