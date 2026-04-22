@@ -45,7 +45,17 @@ CREATE POLICY "authenticated_delete_codes"
   USING (auth.role() = 'authenticated');
 
 -- 8. Abilita realtime per aggiornamenti live nel pannello web
-ALTER PUBLICATION supabase_realtime ADD TABLE public.hr_modification_codes;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'hr_modification_codes'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.hr_modification_codes;
+  END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- MIGRATION v2 — Esegui se la tabella esiste già

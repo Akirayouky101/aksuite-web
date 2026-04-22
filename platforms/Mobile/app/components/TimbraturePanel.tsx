@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Clock, ChevronLeft, ChevronRight, Plus, Trash2, Users, BarChart2, Pencil, ShieldCheck, Send, Bell } from 'lucide-react'
+import { X, Clock, ChevronLeft, ChevronRight, Plus, Trash2, Users, BarChart2, Pencil, ShieldCheck, Send, Bell, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface WorkRecord {
@@ -125,6 +125,7 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
   const [saving, setSaving] = useState(false)
   const [modCodes, setModCodes] = useState<ModCode[]>([])
   const [editModal, setEditModal] = useState<EditModal | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
   const fetchModCodes = useCallback(async () => {
     const { data, error } = await supabase
@@ -151,6 +152,19 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
   }, [year, month, fetchModCodes])
 
   useEffect(() => { if (isOpen) fetchData() }, [isOpen, fetchData])
+
+  // Auto-refresh ogni 60 secondi quando il pannello è aperto
+  useEffect(() => {
+    if (!isOpen) return
+    const interval = setInterval(() => fetchData(), 60_000)
+    return () => clearInterval(interval)
+  }, [isOpen, fetchData])
+
+  const handleManualRefresh = useCallback(async () => {
+    setRefreshing(true)
+    await fetchData()
+    setRefreshing(false)
+  }, [fetchData])
 
   // Realtime subscription: aggiorna i campanelli in tempo reale
   useEffect(() => {
@@ -335,9 +349,14 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
                 <p className="text-white/70 text-xs mt-0.5">Gestione presenze dipendenti</p>
               </div>
             </div>
-            <button title="Chiudi" onClick={onClose} className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-colors">
-              <X size={16} className="text-white" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button title="Aggiorna" onClick={handleManualRefresh} className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-colors">
+                <RefreshCw size={14} className={`text-white ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <button title="Chiudi" onClick={onClose} className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-colors">
+                <X size={16} className="text-white" />
+              </button>
+            </div>
           </div>
 
           {/* Month nav + stats */}

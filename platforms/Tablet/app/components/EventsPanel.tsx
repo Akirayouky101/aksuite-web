@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, Clock, CheckCircle2 } from 'lucide-react'
+import { Bell, X, Clock, CheckCircle2, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface ModEvent {
@@ -21,44 +21,67 @@ interface Props {
 export default function EventsPanel({ onOpenHR }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [events, setEvents] = useState<ModEvent[]>([])
+  const [loading, setLoading] = useState(false)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
   const fetchEvents = useCallback(async () => {
-    const { data: codes } = await supabase
-      .from('hr_modification_codes')
-      .select('id, record_id, profile_id, created_at')
-      .eq('status', 'requested')
-      .order('created_at', { ascending: false })
+    setLoading(true)
+    try {
+      const { data: codes, error } = await supabase
+        .from('hr_modification_codes')
+        .select('id, record_id, profile_id, created_at')
+        .eq('status', 'requested')
+        .order('created_at', { ascending: false })
 
-    if (!codes?.length) { setEvents([]); return }
+      if (error) { console.error('[EventsPanel] codes error:', error); if (mountedRef.current) setLoading(false); return }
+      if (!codes?.length) { if (mountedRef.current) { setEvents([]); setLoading(false) }; return }
 
-    const profileIds = Array.from(new Set(codes.map((c: any) => c.profile_id)))
-    const recordIds = codes.map((c: any) => c.record_id)
+      const profileIds = Array.from(new Set(codes.map((c: any) => c.profile_id)))
+      const recordIds = codes.map((c: any) => c.record_id)
 
-    const [{ data: profiles }, { data: records }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, email').in('id', profileIds),
-      supabase.from('hr_work_records').select('id, date').in('id', recordIds),
-    ])
+      const [{ data: profiles }, { data: records }] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, email').in('id', profileIds),
+        supabase.from('hr_work_records').select('id, date').in('id', recordIds),
+      ])
 
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.full_name || p.email || 'Dipendente']))
-    const recordMap = new Map((records || []).map((r: any) => [r.id, r.date]))
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.full_name || p.email || 'Dipendente']))
+      const recordMap = new Map((records || []).map((r: any) => [r.id, r.date]))
 
-    setEvents(codes.map((c: any) => ({
-      id: c.id,
-      record_id: c.record_id,
-      profile_id: c.profile_id,
-      created_at: c.created_at,
-      employee_name: profileMap.get(c.profile_id) || 'Dipendente',
-      record_date: recordMap.get(c.record_id) || null,
-    })))
+      if (mountedRef.current) {
+        setEvents(codes.map((c: any) => ({
+          id: c.id,
+          record_id: c.record_id,
+          profile_id: c.profile_id,
+          created_at: c.created_at,
+          employee_name: profileMap.get(c.profile_id) || 'Dipendente',
+          record_date: recordMap.get(c.record_id) || null,
+        })))
+      }
+    } finally {
+      if (mountedRef.current) setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
     fetchEvents()
+
+    // Polling ogni 30 secondi come fallback al realtime
+    const interval = setInterval(fetchEvents, 30_000)
+
     const channel = supabase
       .channel('events-panel-global')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'hr_modification_codes' }, fetchEvents)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hr_modification_codes' }, () => fetchEvents())
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(channel)
+    }
   }, [fetchEvents])
 
   const count = events.length
@@ -71,6 +94,9 @@ export default function EventsPanel({ onOpenHR }: Props) {
         title="Avvisi"
       >
         <Bell className="w-[18px] h-[18px]" />
+        {loading && count === 0 && (
+          <span className="absolute -top-1.5 -right-1.5 w-[14px] h-[14px] bg-slate-300 rounded-full animate-pulse" />
+        )}
         {count > 0 && (
           <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 animate-pulse">
             {count > 9 ? '9+' : count}
