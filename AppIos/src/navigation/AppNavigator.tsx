@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { ActivityIndicator, View } from 'react-native'
+import { ActivityIndicator, View, Alert } from 'react-native'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import LoginScreen from '../screens/LoginScreen'
@@ -64,8 +64,32 @@ export default function AppNavigator() {
         filter: `profile_id=eq.${userId}`,
       }, async (payload) => {
         const row = payload.new as any
+
+        // Timbratura salvata — notifica conferma
+        if (row.status === 'completed') {
+          let dateLabel = ''
+          try {
+            const { data } = await supabase
+              .from('hr_work_records')
+              .select('date')
+              .eq('id', row.record_id)
+              .single()
+            if (data?.date) {
+              dateLabel = new Date(data.date).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+            }
+          } catch {}
+          Alert.alert(
+            '✅ Timbratura modificata',
+            dateLabel
+              ? `La timbratura del ${dateLabel} è stata aggiornata dal responsabile.`
+              : 'La tua timbratura è stata aggiornata dal responsabile.',
+            [{ text: 'OK', onPress: () => navRef.current?.navigate('Timbrature') }]
+          )
+          return
+        }
+
+        // Nuovo codice generato — mostra modale
         if (row.status !== 'code_sent' || !row.code) return
-        // Fetch the record date for display
         let record_date: string | null = null
         try {
           const { data } = await supabase

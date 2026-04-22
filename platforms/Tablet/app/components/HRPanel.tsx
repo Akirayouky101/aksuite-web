@@ -273,7 +273,7 @@ export default function HRPanel({
     if (!hrEditModal) return
     const { count } = await supabase
       .from('hr_modification_codes')
-      .update({ used_at: new Date().toISOString() }, { count: 'exact' })
+      .update({ used_at: new Date().toISOString(), status: 'code_verified' }, { count: 'exact' })
       .eq('record_id', hrEditModal.record.id)
       .eq('code', hrEditModal.codeInput.toUpperCase().trim())
       .is('used_at', null)
@@ -304,7 +304,9 @@ export default function HRPanel({
     })
     setSavingHREdit(false)
     if (ok) {
-      await supabase.from('hr_modification_codes').delete().eq('record_id', record.id)
+      await supabase.from('hr_modification_codes')
+        .update({ status: 'completed' })
+        .eq('record_id', record.id)
       fetchModCodes()
       setHrEditModal(null)
     }
