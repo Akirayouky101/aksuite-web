@@ -1,27 +1,21 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Dimensions, StatusBar } from 'react-native'
+import {
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, Alert, Dimensions, StatusBar,
+} from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useAuth } from '../hooks/useAuth'
 
 const { width } = Dimensions.get('window')
-const CARD_W = (width - 52) / 2
+const CARD_W = (width - 44) / 2   // 16px padding each side + 12px gap
 
-interface MenuCard {
-  icon: string
-  label: string
-  sublabel: string
-  colors: [string, string, string]
-  screen: string
-  accent: string
-}
-
-const MENU: MenuCard[] = [
-  { icon: '📦', label: 'Prelievo',    sublabel: 'Ritira materiale',   colors: ['#6D28D9','#7C3AED','#8B5CF6'], accent: '#C4B5FD', screen: 'Request' },
-  { icon: '🛒', label: 'Ordine',      sublabel: 'Richiedi materiale', colors: ['#0369A1','#0891B2','#06B6D4'], accent: '#A5F3FC', screen: 'Order' },
-  { icon: '🧰', label: 'KIT',         sublabel: 'Visualizza kit',     colors: ['#065F46','#059669','#10B981'], accent: '#A7F3D0', screen: 'Kits' },
-  { icon: '🎫', label: 'Ticket',      sublabel: 'Comunicazioni',      colors: ['#991B1B','#DC2626','#EF4444'], accent: '#FCA5A5', screen: 'Ticket' },
-  { icon: '⏱',  label: 'Timbrature', sublabel: 'Entrata / Uscita',   colors: ['#B45309','#D97706','#F59E0B'], accent: '#FDE68A', screen: 'Timbrature' },
-  { icon: '🔧', label: 'Lavorazioni', sublabel: 'Le mie attività',    colors: ['#0F766E','#0D9488','#14B8A6'], accent: '#99F6E4', screen: 'Lavorazioni' },
+const MENU = [
+  { icon: '📦', label: 'Prelievo',    sub: 'Ritira materiale',   grad: ['#5B21B6','#8B5CF6'] as [string,string], glow: '#6D28D9', screen: 'Request' },
+  { icon: '🛒', label: 'Ordine',      sub: 'Richiedi materiale', grad: ['#0369A1','#38BDF8'] as [string,string], glow: '#0284C7', screen: 'Order' },
+  { icon: '🧰', label: 'KIT',         sub: 'Visualizza kit',     grad: ['#065F46','#34D399'] as [string,string], glow: '#059669', screen: 'Kits' },
+  { icon: '🎫', label: 'Ticket',      sub: 'Comunicazioni',      grad: ['#9B1C1C','#F87171'] as [string,string], glow: '#DC2626', screen: 'Ticket' },
+  { icon: '⏱',  label: 'Timbrature', sub: 'Entrata / Uscita',   grad: ['#92400E','#FCD34D'] as [string,string], glow: '#D97706', screen: 'Timbrature' },
+  { icon: '🔧', label: 'Lavorazioni', sub: 'Le mie attività',    grad: ['#134E4A','#5EEAD4'] as [string,string], glow: '#0D9488', screen: 'Lavorazioni' },
 ]
 
 function useClock() {
@@ -47,42 +41,47 @@ export default function HomeScreen({ navigation }: any) {
       <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* ── Header ── */}
-        <LinearGradient colors={['#3B0FAB', '#5B21B6', '#7C3AED']} style={s.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          {/* Decorative blobs */}
-          <View style={s.blob1} />
-          <View style={s.blob2} />
-
-          {/* Top row */}
-          <View style={s.headerRow}>
-            <View>
-              <Text style={s.greetLabel}>{greeting} 👋</Text>
-              <Text style={s.greetName}>{firstName}</Text>
-            </View>
+        <View style={s.header}>
+          {/* Brand row */}
+          <View style={s.brandRow}>
+            <LinearGradient colors={['#6D28D9','#8B5CF6']} style={s.brandPill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <Text style={s.brandMark}>AK</Text>
+            </LinearGradient>
+            <Text style={s.brandName}>AKSUITE</Text>
+            <View style={s.spacer} />
             <TouchableOpacity
-              style={s.avatar}
+              style={s.avatarBtn}
               onPress={() => Alert.alert('Esci', 'Vuoi disconnetterti?', [
                 { text: 'Annulla', style: 'cancel' },
                 { text: 'Esci', style: 'destructive', onPress: signOut },
               ])}
-              activeOpacity={0.8}
+              activeOpacity={0.75}
             >
-              <LinearGradient colors={['rgba(255,255,255,0.35)','rgba(255,255,255,0.15)']} style={s.avatarGrad}>
-                <Text style={s.avatarLetter}>{firstName[0].toUpperCase()}</Text>
-              </LinearGradient>
+              <Text style={s.avatarText}>{firstName[0].toUpperCase()}</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Time + date */}
-          <View style={s.timeRow}>
-            <Text style={s.timeBig}>{time}</Text>
-            <View style={s.dateBadge}>
-              <Text style={s.dateBadgeText}>{dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}</Text>
-            </View>
+          {/* Greeting + name */}
+          <Text style={s.greetSmall}>{greeting},</Text>
+          <Text style={s.greetName}>{firstName} 👋</Text>
+
+          {/* Big clock */}
+          <Text style={s.timeBig}>{time}</Text>
+
+          {/* Date pill */}
+          <View style={s.datePill}>
+            <Text style={s.datePillText}>{dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}</Text>
           </View>
-        </LinearGradient>
+
+          {/* Divider */}
+          <View style={s.headerDivider} />
+        </View>
 
         {/* ── Section label ── */}
-        <Text style={s.sectionLabel}>Cosa vuoi fare?</Text>
+        <View style={s.sectionRow}>
+          <Text style={s.sectionLabel}>Accesso rapido</Text>
+          <View style={s.sectionLine} />
+        </View>
 
         {/* ── Grid ── */}
         <View style={s.grid}>
@@ -90,30 +89,28 @@ export default function HomeScreen({ navigation }: any) {
             <TouchableOpacity
               key={card.screen}
               onPress={() => navigation.navigate(card.screen)}
-              activeOpacity={0.88}
-              style={s.cardOuter}
+              activeOpacity={0.82}
+              style={[s.cardWrap, { shadowColor: card.glow }]}
             >
+              {/* Colored strip with icon */}
               <LinearGradient
-                colors={card.colors}
+                colors={card.grad}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={s.card}
+                style={s.cardStrip}
               >
-                {/* Subtle top shine */}
-                <View style={s.cardShine} />
-
-                {/* Icon bubble */}
-                <View style={[s.iconBubble, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-                  <Text style={s.iconText}>{card.icon}</Text>
-                </View>
-
-                <Text style={s.cardLabel} adjustsFontSizeToFit numberOfLines={1}>{card.label}</Text>
-                <Text style={s.cardSub} numberOfLines={2}>{card.sublabel}</Text>
-
-                {/* Arrow chip */}
-                <View style={[s.arrowChip, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                  <Text style={s.arrowText}>→</Text>
-                </View>
+                <Text style={s.cardIcon}>{card.icon}</Text>
               </LinearGradient>
+
+              {/* Text body */}
+              <View style={s.cardBody}>
+                <Text style={s.cardLabel} adjustsFontSizeToFit numberOfLines={1}>
+                  {card.label}
+                </Text>
+                <Text style={s.cardSub} numberOfLines={1}>{card.sub}</Text>
+                <View style={[s.arrowChip, { backgroundColor: card.glow + '28' }]}>
+                  <Text style={[s.arrowText, { color: card.grad[1] }]}>›</Text>
+                </View>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -124,95 +121,111 @@ export default function HomeScreen({ navigation }: any) {
   )
 }
 
+const STRIP_H = CARD_W * 0.54
+
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F0F0F6' },
+  root: { flex: 1, backgroundColor: '#0B0D17' },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 40 },
+  scrollContent: { paddingBottom: 50 },
 
   // ── Header ──
   header: {
-    paddingTop: 64,
-    paddingBottom: 38,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-    overflow: 'hidden',
+    paddingTop: 66,
+    paddingHorizontal: 22,
+    paddingBottom: 8,
   },
-  blob1: {
-    position: 'absolute', top: -40, right: -40,
-    width: 180, height: 180, borderRadius: 90,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 32,
+  },
+  brandPill: {
+    width: 32, height: 32, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  brandMark: { color: '#fff', fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
+  brandName: { fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.28)', letterSpacing: 2.5 },
+  spacer: { flex: 1 },
+  avatarBtn: {
+    width: 40, height: 40, borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  blob2: {
-    position: 'absolute', bottom: -20, left: 20,
-    width: 120, height: 120, borderRadius: 60,
+  avatarText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+
+  greetSmall: { fontSize: 15, color: 'rgba(255,255,255,0.38)', fontWeight: '500', marginBottom: 3 },
+  greetName: { fontSize: 30, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.5, marginBottom: 16 },
+  timeBig: { fontSize: 68, fontWeight: '800', color: '#FFFFFF', letterSpacing: -3, lineHeight: 72 },
+  datePill: {
+    alignSelf: 'flex-start', marginTop: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.09)',
+  },
+  datePillText: { color: 'rgba(255,255,255,0.42)', fontSize: 12, fontWeight: '600' },
+  headerDivider: {
+    marginTop: 28,
+    height: 1,
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  headerRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20,
-  },
-  greetLabel: { fontSize: 15, color: 'rgba(255,255,255,0.65)', fontWeight: '500' },
-  greetName: { fontSize: 30, fontWeight: '900', color: '#fff', letterSpacing: -0.5, marginTop: 1 },
-  avatar: { borderRadius: 26, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
-  avatarGrad: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)' },
-  avatarLetter: { fontSize: 22, fontWeight: '900', color: '#fff' },
-  timeRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 14 },
-  timeBig: { fontSize: 48, fontWeight: '800', color: '#fff', letterSpacing: -1.5, lineHeight: 52 },
-  dateBadge: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7,
-    marginBottom: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
-  },
-  dateBadgeText: { color: '#fff', fontSize: 12, fontWeight: '600' },
 
-  // ── Section label ──
-  sectionLabel: {
-    fontSize: 13, fontWeight: '800', color: '#9B9BAD',
-    textTransform: 'uppercase', letterSpacing: 1.2,
-    marginTop: 28, marginBottom: 14, marginLeft: 22,
+  // ── Section ──
+  sectionRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, marginTop: 22, marginBottom: 14,
   },
+  sectionLabel: {
+    fontSize: 11, fontWeight: '800', letterSpacing: 1.8,
+    color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase',
+  },
+  sectionLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.05)' },
 
   // ── Grid ──
-  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 14 },
-  cardOuter: {
-    width: CARD_W,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+  grid: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    paddingHorizontal: 16, gap: 12,
   },
-  card: {
+  cardWrap: {
     width: CARD_W,
-    height: CARD_W * 1.18,
-    borderRadius: 24,
-    padding: 18,
-    justifyContent: 'space-between',
+    borderRadius: 20,
+    backgroundColor: '#14172A',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    shadowOpacity: 0.38,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
   },
-  cardShine: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    height: '45%', borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+  cardStrip: {
+    width: '100%',
+    height: STRIP_H,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  iconBubble: {
-    width: 52, height: 52, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center',
+  cardIcon: { fontSize: 46 },
+  cardBody: {
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
-  iconText: { fontSize: 28 },
-  cardLabel: { fontSize: 18, fontWeight: '900', color: '#fff', letterSpacing: -0.2 },
-  cardSub: { fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '500', lineHeight: 15 },
+  cardLabel: {
+    fontSize: 16, fontWeight: '900', color: '#FFFFFF',
+    letterSpacing: -0.2, marginBottom: 3,
+  },
+  cardSub: { fontSize: 11, color: 'rgba(255,255,255,0.32)', fontWeight: '500' },
   arrowChip: {
-    alignSelf: 'flex-end',
-    width: 30, height: 30, borderRadius: 15,
+    marginTop: 10, alignSelf: 'flex-end',
+    width: 26, height: 26, borderRadius: 13,
     alignItems: 'center', justifyContent: 'center',
   },
-  arrowText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  arrowText: { fontSize: 18, fontWeight: '900', lineHeight: 22 },
 
   footer: {
-    textAlign: 'center', color: '#BCBCCC', fontSize: 10,
-    marginTop: 28, fontWeight: '700', letterSpacing: 2.5,
+    textAlign: 'center', color: 'rgba(255,255,255,0.1)', fontSize: 10,
+    marginTop: 26, fontWeight: '700', letterSpacing: 2.5,
   },
 })
 
