@@ -67,7 +67,7 @@ const StockDashboardModal = dynamic(() => import('./components/StockDashboardMod
 const TicketsListModal = dynamic(() => import('./components/TicketsListModal'), { ssr: false })
 const TicketModal = dynamic(() => import('./components/TicketModal'), { ssr: false })
 const HRPanel = dynamic(() => import('./components/HRPanel'), { ssr: false })
-const TimbraturePanel = dynamic(() => import('../../../app/components/TimbraturePanel'), { ssr: false })
+const TimbraturePanel = dynamic(() => import('./components/TimbraturePanel'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -241,7 +241,7 @@ export default function Home() {
   const { requests: warehouseRequests, userProfiles: warehouseUserProfiles, pendingCount: warehousePendingCount, submitRequest: submitWarehouseRequest, approveRequest: approveWarehouseRequest, rejectRequest: rejectWarehouseRequest, fulfillItem: fulfillWarehouseItem, unfulfillItem: unfulfillWarehouseItem, deleteRequest: deleteWarehouseRequest, refetchProfiles: refetchWarehouseProfiles } = useWarehouseRequests()
   const { kits, addKit, updateKit, deleteKit, getKitAvailability, findByQrCode: findKitByQrCode } = useKits()
   const { tickets, teamProfiles: ticketTeamProfiles, adminProfiles: ticketAdminProfiles, addTicket, updateTicket, updateStatus: updateTicketStatus, deleteTicket, uploadAttachment, deleteAttachment } = useTickets()
-  const { hrUsers, documents: hrDocuments, leaveRequests: hrLeaveRequests, workRecords: hrWorkRecords, upsertHRProfile, addDocument: addHRDocument, deleteDocument: deleteHRDocument, addLeaveRequest, updateLeaveStatus, deleteLeaveRequest, addWorkRecord, deleteWorkRecord } = useHR()
+  const { hrUsers, documents: hrDocuments, leaveRequests: hrLeaveRequests, workRecords: hrWorkRecords, upsertHRProfile, addDocument: addHRDocument, deleteDocument: deleteHRDocument, addLeaveRequest, updateLeaveStatus, deleteLeaveRequest, addWorkRecord, deleteWorkRecord, updateWorkRecord } = useHR()
   const isWarehouseCreator = user?.email === 'diegomarruchi@outlook.it'
   // Utente kiosk: ha SOLO can_prelievo, nessun altro modulo → schermata prelievi bloccata
   const isKioskOnly = !isAdmin && !!myPermissions && !!myPermissions.can_prelievo &&
@@ -1708,6 +1708,7 @@ export default function Home() {
         onDeleteLeave={deleteLeaveRequest}
         onAddWorkRecord={addWorkRecord}
         onDeleteWorkRecord={deleteWorkRecord}
+        onUpdateWorkRecord={updateWorkRecord}
       />}
 
       {/* ═══ TIMBRATURE PANEL ═══ */}

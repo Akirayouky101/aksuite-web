@@ -7,7 +7,7 @@ import {
   Upload, Trash2, FileText, CheckCircle2, XCircle, Clock,
   Shield, Heart, Dumbbell, Timer, Plus, ImageOff,
   Save, GraduationCap, AlertTriangle, ChevronLeft, ChevronRight,
-  Briefcase, Phone, MapPin, CreditCard, User, Banknote,
+  Briefcase, Phone, MapPin, CreditCard, User, Banknote, Pencil,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type {
@@ -55,6 +55,14 @@ const AVATAR_GRADIENTS = [
 function avatarGradient(name: string) { return AVATAR_GRADIENTS[(name.charCodeAt(0) || 0) % AVATAR_GRADIENTS.length] }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
+interface HREditModal {
+  record: HRWorkRecord
+  step: 'request' | 'verify' | 'edit'
+  codeInput: string
+  error: string
+  editForm: { check_in: string; check_out: string; hours_worked: string; break_minutes: number; notes: string }
+}
+
 interface HRPanelProps {
   isOpen: boolean; onClose: () => void
   hrUsers: HRUser[]; documents: HRDocument[]; leaveRequests: HRLeaveRequest[]; workRecords: HRWorkRecord[]
@@ -67,6 +75,7 @@ interface HRPanelProps {
   onDeleteLeave: (id: string) => Promise<void>
   onAddWorkRecord: (data: Omit<HRWorkRecord,'id'|'user_id'|'created_at'>) => Promise<HRWorkRecord|null>
   onDeleteWorkRecord: (id: string) => Promise<void>
+  onUpdateWorkRecord: (id: string, data: Partial<Omit<HRWorkRecord,'id'|'user_id'|'created_at'>>) => Promise<boolean>
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -98,7 +107,7 @@ export default function HRPanel({
   currentUserId, currentUserName,
   onUpsertHRProfile, onAddDocument, onDeleteDocument,
   onAddLeave, onUpdateLeaveStatus, onDeleteLeave,
-  onAddWorkRecord, onDeleteWorkRecord,
+  onAddWorkRecord, onDeleteWorkRecord, onUpdateWorkRecord,
 }: HRPanelProps) {
   const [mainTab, setMainTab] = useState<MainTab>('dipendenti')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -127,6 +136,9 @@ export default function HRPanel({
   const [showLeaveForm, setShowLeaveForm] = useState(false)
   const [leaveForm, setLeaveForm] = useState({ profile_id: '', type: 'ferie' as LeaveType, start_date: '', end_date: '', hours: '', notes: '' })
   const [savingLeave, setSavingLeave] = useState(false)
+
+  const [hrEditModal, setHrEditModal] = useState<HREditModal | null>(null)
+  const [savingHREdit, setSavingHREdit] = useState(false)
 
   const [statsYear, setStatsYear] = useState(new Date().getFullYear())
   const [statsMonth, setStatsMonth] = useState<number | null>(null)
@@ -195,6 +207,68 @@ export default function HRPanel({
     if (!hrs && workForm.check_in && workForm.check_out) hrs = calcHoursFromTime(workForm.check_in, workForm.check_out)
     await onAddWorkRecord({ profile_id: selectedId, date: workForm.date, hours_worked: hrs, check_in: workForm.check_in || null, check_out: workForm.check_out || null, notes: workForm.notes || null })
     setSavingWork(false); setShowWorkForm(false); setWorkForm({ date: '', hours_worked: '', check_in: '', check_out: '', notes: '' })
+  }
+
+  const handleHROpenEdit = (r: HRWorkRecord) => {
+    setHrEditModal({
+      record: r, step: 'request', codeInput: '', error: '',
+      editForm: {
+        check_in: r.check_in || '',
+        check_out: r.check_out || '',
+        hours_worked: String(r.hours_worked),
+        break_minutes: (r as any).break_minutes ?? 60,
+        notes: r.notes || '',
+      },
+    })
+  }
+
+  const handleHRSendCode = async () => {
+    if (!hrEditModal) return
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase()
+    await supabase.from('hr_modification_codes').insert([{
+      record_id: hrEditModal.record.id,
+      profile_id: hrEditModal.record.profile_id,
+      code,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    }])
+    setHrEditModal(p => p ? { ...p, step: 'verify' } : null)
+  }
+
+  const handleHRVerifyCode = async () => {
+    if (!hrEditModal) return
+    const { count } = await supabase
+      .from('hr_modification_codes')
+      .update({ used_at: new Date().toISOString() }, { count: 'exact' })
+      .eq('record_id', hrEditModal.record.id)
+      .eq('code', hrEditModal.codeInput.toUpperCase().trim())
+      .is('used_at', null)
+      .gt('expires_at', new Date().toISOString())
+    if (count && count > 0) {
+      setHrEditModal(p => p ? { ...p, step: 'edit', error: '' } : null)
+    } else {
+      setHrEditModal(p => p ? { ...p, error: 'Codice non valido o scaduto' } : null)
+    }
+  }
+
+  const handleHREditSave = async () => {
+    if (!hrEditModal) return
+    const { editForm, record } = hrEditModal
+    let hrs: number
+    if (editForm.check_in && editForm.check_out) {
+      hrs = calcHoursFromTime(editForm.check_in, editForm.check_out)
+    } else {
+      hrs = parseFloat(editForm.hours_worked)
+    }
+    if (isNaN(hrs) || hrs < 0) return
+    setSavingHREdit(true)
+    const ok = await onUpdateWorkRecord(record.id, {
+      check_in: editForm.check_in || null,
+      check_out: editForm.check_out || null,
+      hours_worked: hrs,
+      notes: editForm.notes || null,
+    })
+    setSavingHREdit(false)
+    if (ok) setHrEditModal(null)
   }
 
   const handleAddLeave = async () => {
@@ -601,7 +675,12 @@ export default function HRPanel({
                               </div>
                               {r.notes && <p className="text-[10px] text-slate-400 truncate mt-0.5">{r.notes}</p>}
                             </div>
-                            {isAdmin && <button onClick={() => onDeleteWorkRecord(r.id)} className="text-slate-200 hover:text-red-400 transition-colors p-1 hover:bg-red-50 rounded-lg"><Trash2 size={13}/></button>}
+                            {isAdmin && (
+                              <div className="flex items-center gap-0.5">
+                                <button onClick={() => handleHROpenEdit(r)} title="Richiedi modifica" className="text-slate-200 hover:text-orange-400 transition-colors p-1 hover:bg-orange-50 rounded-lg"><Pencil size={13}/></button>
+                                <button onClick={() => onDeleteWorkRecord(r.id)} title="Elimina" className="text-slate-200 hover:text-red-400 transition-colors p-1 hover:bg-red-50 rounded-lg"><Trash2 size={13}/></button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -818,6 +897,104 @@ export default function HRPanel({
                   {savingLeave ? 'Invio…' : 'Invia Richiesta'}
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ HR EDIT RECORD MODAL ═══ */}
+      <AnimatePresence>
+        {hrEditModal && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center p-4 z-[60]" onClick={e => { if (e.target === e.currentTarget) setHrEditModal(null) }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }} onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm bg-white rounded-3xl shadow-2xl shadow-slate-900/20 overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-orange-50 to-amber-50">
+                <div>
+                  <h3 className="font-bold text-slate-800">
+                    {hrEditModal.step === 'request' ? 'Richiedi modifica' : hrEditModal.step === 'verify' ? 'Inserisci codice' : 'Modifica timbratura'}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {new Date(hrEditModal.record.date + 'T00:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'long' })}
+                  </p>
+                </div>
+                <button onClick={() => setHrEditModal(null)} title="Chiudi" className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-white transition-colors"><X size={18}/></button>
+              </div>
+
+              {hrEditModal.step === 'request' && (
+                <div className="p-6 space-y-4">
+                  <div className="bg-slate-50 rounded-2xl p-4 text-sm text-slate-600">
+                    <p className="font-semibold text-slate-700 mb-1">Dati attuali</p>
+                    <p>{hrEditModal.record.check_in && hrEditModal.record.check_out ? `${hrEditModal.record.check_in} → ${hrEditModal.record.check_out}` : `${hrEditModal.record.hours_worked}h`}</p>
+                  </div>
+                  <p className="text-xs text-slate-500">Verrà generato un codice di autorizzazione che il dipendente dovrà comunicarti dall&apos;app.</p>
+                  <button onClick={handleHRSendCode} className="w-full bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-orange-200 hover:shadow-orange-300 transition-all">
+                    Genera codice di autorizzazione
+                  </button>
+                </div>
+              )}
+
+              {hrEditModal.step === 'verify' && (
+                <div className="p-6 space-y-4">
+                  <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 text-center">
+                    <p className="text-xs font-semibold text-orange-600 mb-1">In attesa del codice</p>
+                    <p className="text-xs text-slate-500">Chiedi al dipendente di aprire l&apos;app e comunicarti il codice nella sezione Timbrature</p>
+                  </div>
+                  <div>
+                    <label className={lbl}>Codice di autorizzazione</label>
+                    <input
+                      value={hrEditModal.codeInput}
+                      onChange={e => setHrEditModal(p => p ? { ...p, codeInput: e.target.value.toUpperCase(), error: '' } : null)}
+                      placeholder="Es: A1B2C3"
+                      maxLength={6}
+                      className={inp + ' text-center text-xl font-mono tracking-widest uppercase'}
+                    />
+                    {hrEditModal.error && <p className="text-xs text-red-500 mt-1">{hrEditModal.error}</p>}
+                  </div>
+                  <button onClick={handleHRVerifyCode} disabled={hrEditModal.codeInput.length < 6} className="w-full bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-2xl py-3 text-sm font-semibold shadow-lg shadow-orange-200 disabled:opacity-50 transition-all">
+                    Verifica codice
+                  </button>
+                </div>
+              )}
+
+              {hrEditModal.step === 'edit' && (
+                <div className="p-6 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={lbl}>Entrata</label>
+                      <input type="time" value={hrEditModal.editForm.check_in} title="Ora entrata"
+                        onChange={e => setHrEditModal(p => p ? { ...p, editForm: { ...p.editForm, check_in: e.target.value } } : null)}
+                        className={inp + ' text-xs py-2'}/>
+                    </div>
+                    <div>
+                      <label className={lbl}>Uscita</label>
+                      <input type="time" value={hrEditModal.editForm.check_out} title="Ora uscita"
+                        onChange={e => setHrEditModal(p => p ? { ...p, editForm: { ...p.editForm, check_out: e.target.value } } : null)}
+                        className={inp + ' text-xs py-2'}/>
+                    </div>
+                  </div>
+                  {(!hrEditModal.editForm.check_in || !hrEditModal.editForm.check_out) && (
+                    <div>
+                      <label className={lbl}>Ore lavorate</label>
+                      <input type="number" step="0.5" value={hrEditModal.editForm.hours_worked} title="Ore lavorate" placeholder="0.0"
+                        onChange={e => setHrEditModal(p => p ? { ...p, editForm: { ...p.editForm, hours_worked: e.target.value } } : null)}
+                        className={inp + ' text-xs py-2'}/>
+                    </div>
+                  )}
+                  <div>
+                    <label className={lbl}>Note</label>
+                    <input value={hrEditModal.editForm.notes} title="Note"
+                      onChange={e => setHrEditModal(p => p ? { ...p, editForm: { ...p.editForm, notes: e.target.value } } : null)}
+                      placeholder="Note opzionali…" className={inp + ' text-xs py-2'}/>
+                  </div>
+                  <div className="flex gap-3 pt-1">
+                    <button onClick={() => setHrEditModal(null)} className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-2xl py-2.5 text-sm font-semibold transition-colors">Annulla</button>
+                    <button onClick={handleHREditSave} disabled={savingHREdit} className="flex-1 bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-2xl py-2.5 text-sm font-semibold shadow-lg shadow-orange-200 disabled:opacity-50 transition-all">
+                      {savingHREdit ? 'Salvo…' : 'Salva'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         )}

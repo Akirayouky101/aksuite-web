@@ -209,11 +209,18 @@ export function useHR() {
     setWorkRecords(prev => prev.filter(r => r.id !== id))
   }
 
+  const updateWorkRecord = async (id: string, data: Partial<Omit<HRWorkRecord, 'id' | 'user_id' | 'created_at'>>): Promise<boolean> => {
+    const { error } = await supabase.from('hr_work_records').update(data).eq('id', id)
+    if (error) { console.error('updateWorkRecord error:', error); return false }
+    setWorkRecords(prev => prev.map(r => r.id === id ? { ...r, ...data } : r))
+    return true
+  }
+
   return {
     hrUsers, documents, leaveRequests, workRecords, loading,
     upsertHRProfile, addDocument, deleteDocument,
     addLeaveRequest, updateLeaveStatus, deleteLeaveRequest,
-    addWorkRecord, deleteWorkRecord,
+    addWorkRecord, deleteWorkRecord, updateWorkRecord,
     reload: loadData,
   }
 }
