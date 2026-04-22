@@ -70,6 +70,7 @@ const HRPanel = dynamic(() => import('./components/HRPanel'), { ssr: false })
 const TimbraturePanel = dynamic(() => import('./components/TimbraturePanel'), { ssr: false })
 const EventsPanel = dynamic(() => import('./components/EventsPanel'), { ssr: false })
 const NotificationToast = dynamic(() => import('./components/NotificationToast'), { ssr: false })
+const LiveHREventsWidget = dynamic(() => import('./components/LiveHREventsWidget'), { ssr: false })
 
 // ═══ NON-MODAL COMPONENTS (loaded normally) ═══
 import TodayDashboard from './components/TodayDashboard'
@@ -706,6 +707,9 @@ export default function Home() {
               onOpenCalendar={() => setIsCalendarViewOpen(true)}
               onOpenLavorazioni={() => setIsLavorazioniListModalOpen(true)}
             />
+
+            {/* ═══ LIVE HR EVENTS ═══ */}
+            {isAdmin && <LiveHREventsWidget onOpenHR={() => setIsHRPanelOpen(true)} />}
 
             {/* ═══ TODAY DASHBOARD ═══ */}
             <TodayDashboard

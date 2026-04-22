@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, FlatList,
-  ActivityIndicator, Alert, Modal, TextInput, ScrollView,
+  ActivityIndicator, Alert, Modal, TextInput, ScrollView, RefreshControl,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { supabase } from '../lib/supabase'
@@ -67,6 +67,7 @@ export default function TimbratureScreen({ navigation }: any) {
   const [records, setRecords] = useState<WorkRecord[]>([])
   const [pendingCodes, setPendingCodes] = useState<PendingCode[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [breakMinutes, setBreakMinutes] = useState(60)
@@ -127,6 +128,21 @@ export default function TimbratureScreen({ navigation }: any) {
   useEffect(() => {
     fetchRecords()
     fetchPendingCodes()
+  }, [fetchRecords, fetchPendingCodes])
+
+  // Auto-refresh ogni 30 secondi
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchRecords()
+      fetchPendingCodes()
+    }, 30_000)
+    return () => clearInterval(interval)
+  }, [fetchRecords, fetchPendingCodes])
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true)
+    await Promise.all([fetchRecords(), fetchPendingCodes()])
+    setRefreshing(false)
   }, [fetchRecords, fetchPendingCodes])
 
   const handleClockIn = async () => {
@@ -199,64 +215,107 @@ export default function TimbratureScreen({ navigation }: any) {
 
   return (
     <View style={s.screen}>
-      <LinearGradient colors={['#D97706', '#F59E0B']} style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <Text style={s.backText}>{'\u2190 Indietro'}</Text>
-        </TouchableOpacity>
-        <View style={s.headerRow}>
-          <Text style={s.headerTitle}>{'\uD83D\uDD50 Timbrature'}</Text>
+      <LinearGradient colors={['#B45309', '#D97706', '#F59E0B']} style={s.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <View style={s.headerTop}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
+            <Text style={s.backText}>← Indietro</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleRefresh} style={s.refreshBtn} disabled={refreshing}>
+            <Text style={[s.refreshIcon, refreshing && { opacity: 0.5 }]}>↻</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={s.headerSub}>
-          {(profile as any)?.full_name || 'Le mie ore'}{' \u00b7 '}{records.length} registrazioni
-        </Text>
+        <View style={s.headerMain}>
+          <View style={s.headerIconWrap}>
+            <Text style={s.headerIconText}>⏱</Text>
+          </View>
+          <View>
+            <Text style={s.headerTitle}>Timbrature</Text>
+            <Text style={s.headerSub}>
+              {(profile as any)?.full_name || 'Le mie ore'} · {records.length} registrazioni
+            </Text>
+          </View>
+        </View>
       </LinearGradient>
 
-      <View style={s.quickRow}>
-        <View style={s.todayCard}>
-          <Text style={s.todayLabel}>Oggi</Text>
+      <View style={s.statsRow}>
+        <View style={[s.statCard, { backgroundColor: '#FEF9EE' }]}>
+          <Text style={s.statLabel}>OGGI</Text>
           {todayRec ? (
-            <Text style={s.todayVal}>
-              {todayRec.check_in ?? '--:--'} {todayRec.check_out ? `\u2192 ${todayRec.check_out}` : '\u2192 in corso'}
+            <Text style={s.statVal}>
+              {todayRec.check_in ?? '--:--'}{todayRec.check_out ? ` → ${todayRec.check_out}` : ' → in corso'}
             </Text>
           ) : (
-            <Text style={s.todayVal}>Non timbrato</Text>
+            <Text style={[s.statVal, { color: '#9CA3AF' }]}>Non timbrato</Text>
+          )}
+          {todayRec && todayRec.hours_worked > 0 && (
+            <Text style={s.statSub}>{Number(todayRec.hours_worked).toFixed(1)}h lavorate</Text>
           )}
         </View>
-        <View style={s.todayCard}>
-          <Text style={s.todayLabel}>Ultimi 30gg</Text>
-          <Text style={s.todayVal}>{totalHours.toFixed(1)}h</Text>
+        <View style={[s.statCard, { backgroundColor: '#F0FDF4' }]}>
+          <Text style={[s.statLabel, { color: '#16A34A' }]}>ULTIMI 30GG</Text>
+          <Text style={[s.statVal, { color: '#15803D' }]}>{totalHours.toFixed(1)}h</Text>
+          <Text style={s.statSub}>{records.slice(0, 30).length} giorni</Text>
         </View>
       </View>
 
-      <View style={s.btnRow}>
-        <TouchableOpacity style={s.clockBtn} onPress={handleClockIn} disabled={saving || !!todayRec?.check_in}>
-          <LinearGradient colors={['#059669', '#34D399']} style={[s.clockBtnGrad, (saving || !!todayRec?.check_in) && { opacity: 0.4 }]}>
-            <Text style={s.clockBtnText}>{'\u25ba Entrata'}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-        <TouchableOpacity style={s.clockBtn} onPress={handleClockOut} disabled={saving || !todayRec?.check_in || !!todayRec?.check_out}>
-          <LinearGradient colors={['#DC2626', '#F87171']} style={[s.clockBtnGrad, (saving || !todayRec?.check_in || !!todayRec?.check_out) && { opacity: 0.4 }]}>
-            <Text style={s.clockBtnText}>{'\u25a0 Uscita'}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-        <TouchableOpacity style={s.manualBtn} onPress={() => setShowForm(true)}>
-          <Text style={s.manualBtnText}>+ Manuale</Text>
+      <View style={s.actionSection}>
+        <Text style={s.actionLabel}>Timbra</Text>
+        <View style={s.btnRow}>
+          <TouchableOpacity
+            style={[s.actionBtn, (saving || !!todayRec?.check_in) && s.actionBtnDisabled]}
+            onPress={handleClockIn}
+            disabled={saving || !!todayRec?.check_in}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={todayRec?.check_in ? ['#D1FAE5', '#D1FAE5'] : ['#059669', '#10B981']}
+              style={s.actionBtnGrad}
+            >
+              <Text style={[s.actionBtnIcon, todayRec?.check_in && { opacity: 0.4 }]}>▶</Text>
+              <Text style={[s.actionBtnText, todayRec?.check_in && { color: '#6EE7B7', opacity: 0.6 }]}>
+                {todayRec?.check_in ? `Entrata: ${todayRec.check_in}` : 'Entrata'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[s.actionBtn, (saving || !todayRec?.check_in || !!todayRec?.check_out) && s.actionBtnDisabled]}
+            onPress={handleClockOut}
+            disabled={saving || !todayRec?.check_in || !!todayRec?.check_out}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={todayRec?.check_out ? ['#FEE2E2', '#FEE2E2'] : ['#DC2626', '#EF4444']}
+              style={s.actionBtnGrad}
+            >
+              <Text style={[s.actionBtnIcon, (!todayRec?.check_in || !!todayRec?.check_out) && { opacity: 0.4 }]}>■</Text>
+              <Text style={[s.actionBtnText, (!todayRec?.check_in || !!todayRec?.check_out) && { color: '#FCA5A5', opacity: 0.6 }]}>
+                {todayRec?.check_out ? `Uscita: ${todayRec.check_out}` : 'Uscita'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={s.manualBtn} onPress={() => setShowForm(true)} activeOpacity={0.8}>
+          <Text style={s.manualBtnText}>+ Inserimento manuale</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={s.breakRow}>
-        <Text style={s.breakLabel}>Pausa:</Text>
-        {BREAK_OPTIONS.map(opt => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[s.breakChip, breakMinutes === opt.value && s.breakChipActive]}
-            onPress={() => setBreakMinutes(opt.value)}
-          >
-            <Text style={[s.breakChipText, breakMinutes === opt.value && s.breakChipTextActive]}>
-              {opt.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={s.breakSection}>
+        <Text style={s.breakSectionLabel}>Pausa prevista</Text>
+        <View style={s.breakRow}>
+          {BREAK_OPTIONS.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[s.breakChip, breakMinutes === opt.value && s.breakChipActive]}
+              onPress={() => setBreakMinutes(opt.value)}
+              activeOpacity={0.7}
+            >
+              <Text style={[s.breakChipText, breakMinutes === opt.value && s.breakChipTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {sortedCodes.length > 0 && (
@@ -310,8 +369,14 @@ export default function TimbratureScreen({ navigation }: any) {
         : <FlatList
             data={records}
             keyExtractor={r => r.id}
-            contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 8 }}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#D97706" colors={['#D97706']} />
+            }
+            ListHeaderComponent={
+              <Text style={s.listSectionTitle}>Storico Registrazioni</Text>
+            }
             renderItem={({ item: r }) => {
               const isSelected = selectedRecordId === r.id
               const hasPending = pendingRecordIds.has(r.id)
@@ -321,33 +386,46 @@ export default function TimbratureScreen({ navigation }: any) {
                   onPress={() => setSelectedRecordId(p => p === r.id ? null : r.id)}
                   activeOpacity={0.8}
                 >
-                  <View style={[s.rowDate, hasPending && { backgroundColor: '#FDE68A' }]}>
-                    {hasPending && <Text style={{ fontSize: 10, textAlign: 'center' }}>{'🔔'}</Text>}
-                    <Text style={s.rowDateText}>{fmtDate(r.date)}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.rowHours}>{Number(r.hours_worked).toFixed(1)}h</Text>
-                    {r.check_in && (
-                      <Text style={s.rowTimes}>
-                        {r.check_in}{r.check_out ? ` \u2192 ${r.check_out}` : ' \u2192 in corso'}
-                      </Text>
-                    )}
-                    <Text style={[s.rowBreak, r.break_minutes === 0 && { color: '#059669' }]}>
-                      {fmtBreak(r.break_minutes ?? 60)}
+                  <View style={[s.rowDateBadge, hasPending && s.rowDateBadgePending]}>
+                    {hasPending && <Text style={{ fontSize: 10, textAlign: 'center', marginBottom: 1 }}>🔔</Text>}
+                    <Text style={[s.rowDateDay, hasPending && { color: '#92400E' }]}>
+                      {new Date(r.date + 'T00:00:00').toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase()}
                     </Text>
-                    {r.notes ? <Text style={s.rowNotes}>{r.notes}</Text> : null}
+                    <Text style={[s.rowDateNum, hasPending && { color: '#78350F' }]}>
+                      {new Date(r.date + 'T00:00:00').getDate()}
+                    </Text>
+                    <Text style={[s.rowDateMonth, hasPending && { color: '#92400E' }]}>
+                      {new Date(r.date + 'T00:00:00').toLocaleDateString('it-IT', { month: 'short' })}
+                    </Text>
+                  </View>
+                  <View style={s.rowContent}>
+                    <View style={s.rowTopRow}>
+                      <Text style={s.rowHours}>{Number(r.hours_worked).toFixed(1)}h</Text>
+                      <View style={[s.rowBreakBadge, r.break_minutes === 0 && { backgroundColor: '#D1FAE5' }]}>
+                        <Text style={[s.rowBreakText, r.break_minutes === 0 && { color: '#059669' }]}>
+                          {fmtBreak(r.break_minutes ?? 60)}
+                        </Text>
+                      </View>
+                    </View>
+                    {r.check_in ? (
+                      <Text style={s.rowTimes}>
+                        {r.check_in}{r.check_out ? ` → ${r.check_out}` : ' → in corso'}
+                      </Text>
+                    ) : null}
+                    {r.notes ? <Text style={s.rowNotes} numberOfLines={1}>📝 {r.notes}</Text> : null}
                     {isSelected && (
                       <TouchableOpacity
-                        style={[s.requestModBtn, hasPending && { opacity: 0.6 }]}
+                        style={[s.requestModBtn, hasPending && s.requestModBtnDisabled]}
                         onPress={() => !hasPending && handleRequestModification(r)}
                         disabled={requestingFor === r.id || hasPending}
+                        activeOpacity={0.8}
                       >
-                        <Text style={s.requestModBtnText}>
+                        <Text style={[s.requestModBtnText, hasPending && { color: '#9CA3AF' }]}>
                           {requestingFor === r.id
-                            ? 'Invio in corso...'
+                            ? '⏳ Invio in corso...'
                             : hasPending
-                              ? '\uD83D\uDD14 Richiesta in attesa'
-                              : '\u270F Richiedi modifica'}
+                              ? '🔔 Richiesta già inviata'
+                              : '✏️ Richiedi modifica'}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -357,8 +435,9 @@ export default function TimbratureScreen({ navigation }: any) {
             }}
             ListEmptyComponent={
               <View style={s.emptyBox}>
-                <Text style={s.emptyIcon}>{'\uD83D\uDD50'}</Text>
+                <Text style={s.emptyIcon}>⏱</Text>
                 <Text style={s.emptyText}>Nessuna timbratura registrata</Text>
+                <Text style={s.emptyHint}>Usa i pulsanti sopra per iniziare</Text>
               </View>
             }
           />
@@ -433,37 +512,58 @@ export default function TimbratureScreen({ navigation }: any) {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFFBF0' },
-  header: { paddingTop: 60, paddingBottom: 24, paddingHorizontal: 20 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  headerTitle: { fontSize: 26, fontWeight: '800', color: '#fff' },
+  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+
+  // ── Header ──
+  header: { paddingTop: 55, paddingBottom: 24, paddingHorizontal: 20 },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  backBtn: {},
+  backText: { color: 'rgba(255,255,255,0.9)', fontSize: 15, fontWeight: '600' },
+  refreshBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  refreshIcon: { fontSize: 20, color: '#fff', fontWeight: '700', lineHeight: 22 },
+  headerMain: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerIconWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  headerIconText: { fontSize: 24 },
+  headerTitle: { fontSize: 26, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
   headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
-  backBtn: { marginBottom: 8 },
-  backText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '600' },
-  quickRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 16 },
-  todayCard: { flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 14, shadowColor: '#D97706', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
-  todayLabel: { fontSize: 11, fontWeight: '700', color: '#D97706', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  todayVal: { fontSize: 14, fontWeight: '700', color: '#111827' },
-  btnRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: 14, marginBottom: 0 },
-  clockBtn: { flex: 1 },
-  clockBtnGrad: { borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  clockBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  manualBtn: { paddingHorizontal: 14, justifyContent: 'center', backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12 },
-  manualBtnText: { color: '#6B7280', fontWeight: '700', fontSize: 13 },
-  breakRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 6 },
-  breakLabel: { fontSize: 12, fontWeight: '700', color: '#9CA3AF', marginRight: 2 },
-  breakChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#fff' },
+
+  // ── Stats ──
+  statsRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 16, marginBottom: 4 },
+  statCard: { flex: 1, borderRadius: 18, padding: 14, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  statLabel: { fontSize: 10, fontWeight: '800', color: '#D97706', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
+  statVal: { fontSize: 15, fontWeight: '800', color: '#111827', lineHeight: 20 },
+  statSub: { fontSize: 11, color: '#9CA3AF', marginTop: 3 },
+
+  // ── Action Section ──
+  actionSection: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
+  actionLabel: { fontSize: 11, fontWeight: '800', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
+  btnRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  actionBtn: { flex: 1, borderRadius: 16, overflow: 'hidden' },
+  actionBtnDisabled: { opacity: 0.7 },
+  actionBtnGrad: { paddingVertical: 14, paddingHorizontal: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 7 },
+  actionBtnIcon: { fontSize: 13, color: '#fff', fontWeight: '900' },
+  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  manualBtn: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
+  manualBtnText: { color: '#374151', fontWeight: '700', fontSize: 14 },
+
+  // ── Break Section ──
+  breakSection: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 },
+  breakSectionLabel: { fontSize: 11, fontWeight: '800', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
+  breakRow: { flexDirection: 'row', gap: 8 },
+  breakChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#fff' },
   breakChipActive: { backgroundColor: '#D97706', borderColor: '#D97706' },
-  breakChipText: { fontSize: 12, fontWeight: '700', color: '#6B7280' },
+  breakChipText: { fontSize: 13, fontWeight: '700', color: '#6B7280' },
   breakChipTextActive: { color: '#fff' },
-  codesSection: { paddingHorizontal: 16, marginBottom: 4 },
-  codesSectionTitle: { fontSize: 13, fontWeight: '700', color: '#92400E' },
-  codesSectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+
+  // ── Codes section ──
+  codesSection: { paddingHorizontal: 16, marginBottom: 4, marginTop: 4 },
+  codesSectionTitle: { fontSize: 13, fontWeight: '800', color: '#92400E' },
+  codesSectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 14, backgroundColor: '#FEF3C7', borderRadius: 14, marginBottom: 8 },
   codesCollapseBtn: { fontSize: 14, color: '#92400E', fontWeight: '700' },
   codeCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, padding: 14, borderWidth: 1.5, marginBottom: 8 },
   codeCardActive: { backgroundColor: '#FEF3C7', borderColor: '#FCD34D' },
   codeCardUsed: { backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' },
-  codeDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8, alignSelf: 'center', flexShrink: 0 },
+  codeDot: { width: 10, height: 10, borderRadius: 5, marginRight: 10, alignSelf: 'center', flexShrink: 0 },
   codeDotGreen: { backgroundColor: '#22C55E' },
   codeDotOrange: { backgroundColor: '#F59E0B' },
   codeDotRed: { backgroundColor: '#EF4444' },
@@ -476,22 +576,38 @@ const s = StyleSheet.create({
   codeBoxUsed: { backgroundColor: '#9CA3AF', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10 },
   codeText: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: 4 },
   codeTextUsed: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: 4, textDecorationLine: 'line-through', opacity: 0.8 },
-  row: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, gap: 12, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
-  rowDate: { width: 72, backgroundColor: '#FEF3C7', borderRadius: 10, justifyContent: 'center', alignItems: 'center', padding: 8 },
-  rowDateText: { fontSize: 11, fontWeight: '700', color: '#D97706', textAlign: 'center' },
-  rowHours: { fontSize: 18, fontWeight: '800', color: '#111827' },
-  rowTimes: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  rowBreak: { fontSize: 11, color: '#D97706', fontWeight: '600', marginTop: 2 },
-  rowNotes: { fontSize: 11, color: '#9CA3AF', marginTop: 3 },
-  emptyBox: { alignItems: 'center', paddingTop: 80 },
+
+  // ── List ──
+  listSectionTitle: { fontSize: 11, fontWeight: '800', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, marginTop: 4 },
+  row: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 18, padding: 14, marginBottom: 10, gap: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  rowPending: { borderLeftWidth: 3, borderLeftColor: '#F59E0B', backgroundColor: '#FFFDF5' },
+  rowDateBadge: { width: 58, backgroundColor: '#FEF9EE', borderRadius: 14, justifyContent: 'center', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 4 },
+  rowDateBadgePending: { backgroundColor: '#FDE68A' },
+  rowDateDay: { fontSize: 10, fontWeight: '800', color: '#D97706', letterSpacing: 0.3, marginBottom: 2 },
+  rowDateNum: { fontSize: 22, fontWeight: '900', color: '#92400E', lineHeight: 26 },
+  rowDateMonth: { fontSize: 11, fontWeight: '700', color: '#D97706', marginTop: 1 },
+  rowContent: { flex: 1 },
+  rowTopRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  rowHours: { fontSize: 20, fontWeight: '900', color: '#111827' },
+  rowBreakBadge: { backgroundColor: '#FEF3C7', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  rowBreakText: { fontSize: 11, fontWeight: '700', color: '#D97706' },
+  rowTimes: { fontSize: 12, color: '#6B7280', marginBottom: 3, fontWeight: '600' },
+  rowNotes: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
+  requestModBtn: { marginTop: 10, backgroundColor: '#FEF3C7', borderRadius: 12, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, borderColor: '#FCD34D' },
+  requestModBtnDisabled: { backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' },
+  requestModBtnText: { color: '#92400E', fontWeight: '700', fontSize: 13 },
+  emptyBox: { alignItems: 'center', paddingTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, fontWeight: '700', color: '#374151' },
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  emptyText: { fontSize: 17, fontWeight: '800', color: '#374151' },
+  emptyHint: { fontSize: 13, color: '#9CA3AF', marginTop: 6 },
+
+  // ── Form modal ──
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 44 },
   handle: { width: 36, height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
   sheetTitle: { fontSize: 20, fontWeight: '800', color: '#111827', marginBottom: 16 },
   fieldLabel: { fontSize: 13, fontWeight: '700', color: '#374151', marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: '#F9FAFB', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 14, color: '#111827' },
+  input: { backgroundColor: '#F9FAFB', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: '#111827' },
   breakRowForm: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 },
   breakChipLg: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#fff' },
   breakChipLgActive: { backgroundColor: '#D97706', borderColor: '#D97706' },
@@ -502,7 +618,4 @@ const s = StyleSheet.create({
   cancelBtnText: { color: '#6B7280', fontWeight: '700' },
   saveBtn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  rowPending: { borderLeftWidth: 3, borderLeftColor: '#F59E0B' },
-  requestModBtn: { marginTop: 10, backgroundColor: '#FEF3C7', borderRadius: 10, paddingVertical: 9, alignItems: 'center', borderWidth: 1.5, borderColor: '#FCD34D' },
-  requestModBtnText: { color: '#92400E', fontWeight: '700', fontSize: 13 },
 })
