@@ -4,10 +4,51 @@ import {
   ScrollView, Alert, Dimensions, StatusBar,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../hooks/useAuth'
 
 const { width } = Dimensions.get('window')
-const CARD_W = (width - 44) / 2   // 16px padding each side + 12px gap
+const CARD_W = (width - 44) / 2
+
+// ── Theme tokens ─────────────────────────────────────────────
+const DARK = {
+  bg:          '#0B0D17',
+  cardBg:      '#14172A',
+  cardBorder:  'rgba(255,255,255,0.05)',
+  headerText:  '#FFFFFF',
+  greetDim:    'rgba(255,255,255,0.38)',
+  timeDim:     'rgba(255,255,255,0.42)',
+  divider:     'rgba(255,255,255,0.05)',
+  section:     'rgba(255,255,255,0.25)',
+  cardLabel:   '#FFFFFF',
+  cardSub:     'rgba(255,255,255,0.32)',
+  footer:      'rgba(255,255,255,0.1)',
+  avatarBg:    'rgba(255,255,255,0.07)',
+  avatarBorder:'rgba(255,255,255,0.1)',
+  pillBg:      'rgba(255,255,255,0.06)',
+  pillBorder:  'rgba(255,255,255,0.09)',
+  statusBar:   'light-content' as const,
+  themeIcon:   '☀️',
+}
+const LIGHT = {
+  bg:          '#F2F3FA',
+  cardBg:      '#FFFFFF',
+  cardBorder:  'rgba(0,0,0,0.07)',
+  headerText:  '#1A1A2E',
+  greetDim:    'rgba(0,0,0,0.38)',
+  timeDim:     'rgba(0,0,0,0.4)',
+  divider:     'rgba(0,0,0,0.07)',
+  section:     'rgba(0,0,0,0.28)',
+  cardLabel:   '#FFFFFF',
+  cardSub:     'rgba(255,255,255,0.7)',
+  footer:      'rgba(0,0,0,0.18)',
+  avatarBg:    'rgba(0,0,0,0.06)',
+  avatarBorder:'rgba(0,0,0,0.1)',
+  pillBg:      'rgba(0,0,0,0.05)',
+  pillBorder:  'rgba(0,0,0,0.08)',
+  statusBar:   'dark-content' as const,
+  themeIcon:   '🌙',
+}
 
 const MENU = [
   { icon: '📦', label: 'Prelievo',    sub: 'Ritira materiale',   grad: ['#5B21B6','#8B5CF6'] as [string,string], glow: '#6D28D9', screen: 'Request' },
@@ -35,52 +76,74 @@ export default function HomeScreen({ navigation }: any) {
   const time = useClock()
   const dateStr = new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
 
+  const [dark, setDark] = useState(true)
+  const T = dark ? DARK : LIGHT
+
+  // Persist theme
+  useEffect(() => {
+    AsyncStorage.getItem('theme').then(v => { if (v !== null) setDark(v === 'dark') })
+  }, [])
+  const toggleTheme = () => {
+    const next = !dark
+    setDark(next)
+    AsyncStorage.setItem('theme', next ? 'dark' : 'light')
+  }
+
   return (
-    <View style={s.root}>
-      <StatusBar barStyle="light-content" />
+    <View style={[s.root, { backgroundColor: T.bg }]}>
+      <StatusBar barStyle={T.statusBar} />
       <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* ── Header ── */}
         <View style={s.header}>
-          {/* Brand row */}
-          <View style={s.brandRow}>
+          {/* Top bar: AK brand left, controls right */}
+          <View style={s.topBar}>
             <LinearGradient colors={['#6D28D9','#8B5CF6']} style={s.brandPill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
               <Text style={s.brandMark}>AK</Text>
             </LinearGradient>
-            <Text style={s.brandName}>AKSUITE</Text>
+            <Text style={[s.brandName, { color: dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)' }]}>AKSUITE</Text>
             <View style={s.spacer} />
+            {/* Theme toggle */}
             <TouchableOpacity
-              style={s.avatarBtn}
+              style={[s.iconBtn, { backgroundColor: T.avatarBg, borderColor: T.avatarBorder }]}
+              onPress={toggleTheme}
+              activeOpacity={0.7}
+            >
+              <Text style={s.iconBtnText}>{T.themeIcon}</Text>
+            </TouchableOpacity>
+            {/* Avatar / logout */}
+            <TouchableOpacity
+              style={[s.avatarBtn, { backgroundColor: T.avatarBg, borderColor: T.avatarBorder }]}
               onPress={() => Alert.alert('Esci', 'Vuoi disconnetterti?', [
                 { text: 'Annulla', style: 'cancel' },
                 { text: 'Esci', style: 'destructive', onPress: signOut },
               ])}
               activeOpacity={0.75}
             >
-              <Text style={s.avatarText}>{firstName[0].toUpperCase()}</Text>
+              <Text style={[s.avatarText, { color: T.headerText }]}>{firstName[0].toUpperCase()}</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Greeting + name */}
-          <Text style={s.greetSmall}>{greeting},</Text>
-          <Text style={s.greetName}>{firstName} 👋</Text>
-
-          {/* Big clock */}
-          <Text style={s.timeBig}>{time}</Text>
-
-          {/* Date pill */}
-          <View style={s.datePill}>
-            <Text style={s.datePillText}>{dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}</Text>
+          {/* Centered greeting + clock + date */}
+          <View style={s.headerCenter}>
+            <Text style={[s.greetSmall, { color: T.greetDim }]}>{greeting} 👋</Text>
+            <Text style={[s.greetName, { color: T.headerText }]}>{firstName}</Text>
+            <Text style={[s.timeBig, { color: T.headerText }]}>{time}</Text>
+            <View style={[s.datePill, { backgroundColor: T.pillBg, borderColor: T.pillBorder }]}>
+              <Text style={[s.datePillText, { color: T.timeDim }]}>
+                {dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}
+              </Text>
+            </View>
           </View>
 
-          {/* Divider */}
-          <View style={s.headerDivider} />
+          <View style={[s.headerDivider, { backgroundColor: T.divider }]} />
         </View>
 
         {/* ── Section label ── */}
         <View style={s.sectionRow}>
-          <Text style={s.sectionLabel}>Accesso rapido</Text>
-          <View style={s.sectionLine} />
+          <View style={[s.sectionLine, { backgroundColor: T.divider }]} />
+          <Text style={[s.sectionLabel, { color: T.section }]}>Accesso rapido</Text>
+          <View style={[s.sectionLine, { backgroundColor: T.divider }]} />
         </View>
 
         {/* ── Grid ── */}
@@ -90,9 +153,12 @@ export default function HomeScreen({ navigation }: any) {
               key={card.screen}
               onPress={() => navigation.navigate(card.screen)}
               activeOpacity={0.82}
-              style={[s.cardWrap, { shadowColor: card.glow }]}
+              style={[s.cardWrap, {
+                backgroundColor: T.cardBg,
+                borderColor: T.cardBorder,
+                shadowColor: card.glow,
+              }]}
             >
-              {/* Colored strip with icon */}
               <LinearGradient
                 colors={card.grad}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -100,13 +166,11 @@ export default function HomeScreen({ navigation }: any) {
               >
                 <Text style={s.cardIcon}>{card.icon}</Text>
               </LinearGradient>
-
-              {/* Text body */}
               <View style={s.cardBody}>
-                <Text style={s.cardLabel} adjustsFontSizeToFit numberOfLines={1}>
+                <Text style={[s.cardLabel, { color: T.cardLabel }]} adjustsFontSizeToFit numberOfLines={1}>
                   {card.label}
                 </Text>
-                <Text style={s.cardSub} numberOfLines={1}>{card.sub}</Text>
+                <Text style={[s.cardSub, { color: dark ? T.cardSub : '#555' }]} numberOfLines={1}>{card.sub}</Text>
                 <View style={[s.arrowChip, { backgroundColor: card.glow + '28' }]}>
                   <Text style={[s.arrowText, { color: card.grad[1] }]}>›</Text>
                 </View>
@@ -115,7 +179,7 @@ export default function HomeScreen({ navigation }: any) {
           ))}
         </View>
 
-        <Text style={s.footer}>AKSUITE MAGAZZINO</Text>
+        <Text style={[s.footer, { color: T.footer }]}>AKSUITE MAGAZZINO</Text>
       </ScrollView>
     </View>
   )
@@ -124,98 +188,61 @@ export default function HomeScreen({ navigation }: any) {
 const STRIP_H = CARD_W * 0.54
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0B0D17' },
+  root: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 50 },
 
   // ── Header ──
-  header: {
-    paddingTop: 66,
-    paddingHorizontal: 22,
-    paddingBottom: 8,
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 32,
-  },
-  brandPill: {
-    width: 32, height: 32, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  header: { paddingTop: 60, paddingHorizontal: 22, paddingBottom: 8 },
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 28 },
+  brandPill: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   brandMark: { color: '#fff', fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
-  brandName: { fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.28)', letterSpacing: 2.5 },
+  brandName: { fontSize: 11, fontWeight: '800', letterSpacing: 2.5 },
   spacer: { flex: 1 },
+  iconBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    borderWidth: 1, alignItems: 'center', justifyContent: 'center',
+    marginRight: 6,
+  },
+  iconBtnText: { fontSize: 16 },
   avatarBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center', justifyContent: 'center',
+    width: 38, height: 38, borderRadius: 19,
+    borderWidth: 1, alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  avatarText: { fontSize: 15, fontWeight: '800' },
 
-  greetSmall: { fontSize: 15, color: 'rgba(255,255,255,0.38)', fontWeight: '500', marginBottom: 3 },
-  greetName: { fontSize: 30, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.5, marginBottom: 16 },
-  timeBig: { fontSize: 68, fontWeight: '800', color: '#FFFFFF', letterSpacing: -3, lineHeight: 72 },
+  headerCenter: { alignItems: 'center', gap: 4 },
+  greetSmall: { fontSize: 15, fontWeight: '500' },
+  greetName: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5 },
+  timeBig: { fontSize: 72, fontWeight: '800', letterSpacing: -3, lineHeight: 76, marginTop: 4 },
   datePill: {
-    alignSelf: 'flex-start', marginTop: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.09)',
+    marginTop: 10, borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 7,
+    borderWidth: 1,
   },
-  datePillText: { color: 'rgba(255,255,255,0.42)', fontSize: 12, fontWeight: '600' },
-  headerDivider: {
-    marginTop: 28,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
+  datePillText: { fontSize: 12, fontWeight: '600' },
+  headerDivider: { marginTop: 28, height: 1 },
 
   // ── Section ──
   sectionRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingHorizontal: 16, marginTop: 22, marginBottom: 14,
   },
-  sectionLabel: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.8,
-    color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase',
-  },
-  sectionLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.05)' },
+  sectionLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 1.8, textTransform: 'uppercase' },
+  sectionLine: { flex: 1, height: 1 },
 
   // ── Grid ──
-  grid: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    paddingHorizontal: 16, gap: 12,
-  },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12 },
   cardWrap: {
-    width: CARD_W,
-    borderRadius: 20,
-    backgroundColor: '#14172A',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    shadowOpacity: 0.38,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12,
+    width: CARD_W, borderRadius: 20, overflow: 'hidden',
+    borderWidth: 1, shadowOpacity: 0.38, shadowRadius: 22,
+    shadowOffset: { width: 0, height: 8 }, elevation: 12,
   },
-  cardStrip: {
-    width: '100%',
-    height: STRIP_H,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  cardStrip: { width: '100%', height: STRIP_H, alignItems: 'center', justifyContent: 'center' },
   cardIcon: { fontSize: 46 },
-  cardBody: {
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 12,
-  },
-  cardLabel: {
-    fontSize: 16, fontWeight: '900', color: '#FFFFFF',
-    letterSpacing: -0.2, marginBottom: 3,
-  },
-  cardSub: { fontSize: 11, color: 'rgba(255,255,255,0.32)', fontWeight: '500' },
+  cardBody: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12 },
+  cardLabel: { fontSize: 16, fontWeight: '900', letterSpacing: -0.2, marginBottom: 3 },
+  cardSub: { fontSize: 11, fontWeight: '500' },
   arrowChip: {
     marginTop: 10, alignSelf: 'flex-end',
     width: 26, height: 26, borderRadius: 13,
@@ -223,9 +250,6 @@ const s = StyleSheet.create({
   },
   arrowText: { fontSize: 18, fontWeight: '900', lineHeight: 22 },
 
-  footer: {
-    textAlign: 'center', color: 'rgba(255,255,255,0.1)', fontSize: 10,
-    marginTop: 26, fontWeight: '700', letterSpacing: 2.5,
-  },
+  footer: { textAlign: 'center', fontSize: 10, marginTop: 26, fontWeight: '700', letterSpacing: 2.5 },
 })
 
