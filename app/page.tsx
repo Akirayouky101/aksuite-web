@@ -6,7 +6,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, ChevronLeft, Plus,
   TrendingUp, TrendingDown, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus, Layers, Ticket
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus, Layers, Ticket, DoorOpen
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -61,6 +61,7 @@ const SopralluogoModal = dynamic(() => import('./components/SopralluogoModal'), 
 const InstallationListModal = dynamic(() => import('./components/InstallationListModal'), { ssr: false })
 const InstallationModal = dynamic(() => import('./components/InstallationModal'), { ssr: false })
 const InstallationSchemaModal = dynamic(() => import('./components/InstallationSchemaModal'), { ssr: false })
+const GatesPanel = dynamic(() => import('./components/GatesPanel'), { ssr: false })
 const KitModal = dynamic(() => import('./components/KitModal'), { ssr: false })
 const KitsListModal = dynamic(() => import('./components/KitsListModal'), { ssr: false })
 const StockDashboardModal = dynamic(() => import('./components/StockDashboardModal'), { ssr: false })
@@ -153,6 +154,7 @@ export default function Home() {
   const [editingInstallation, setEditingInstallation] = useState<any>(null)
   const [isInstallationSchemaOpen, setIsInstallationSchemaOpen] = useState(false)
   const [schemaInstallation, setSchemaInstallation] = useState<any>(null)
+  const [isGatesPanelOpen, setIsGatesPanelOpen] = useState(false)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -405,6 +407,7 @@ export default function Home() {
       { id: 'lavorazioni', perm: 'can_lavorazioni' as const, label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni, section: 'operativo' },
       { id: 'sopralluoghi', perm: 'can_sopralluoghi' as const, label: 'Sopralluoghi', icon: MapPin, onClick: () => setIsSopralluoghiListModalOpen(true), count: sopralluoghi.length, section: 'operativo' },
       { id: 'installations', perm: 'can_installations' as const, label: 'Impianti', icon: Monitor, onClick: () => setIsInstallationListModalOpen(true), count: installations.length, section: 'operativo' },
+      { id: 'cancelli', perm: 'can_cancelli' as const, label: 'Cancelli', icon: DoorOpen, onClick: () => setIsGatesPanelOpen(true), section: 'operativo' },
       // --- Magazzino & Commerciale ---
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Listini', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.filter(p => (p.warehouse || 'listino') === 'listino').length, section: 'commerciale' },
@@ -1633,6 +1636,13 @@ export default function Home() {
         onClose={() => setIsInstallationSchemaOpen(false)}
         installation={schemaInstallation}
         clients={clients}
+      />}
+
+      {isGatesPanelOpen && <GatesPanel
+        isOpen={isGatesPanelOpen}
+        onClose={() => setIsGatesPanelOpen(false)}
+        clients={clients}
+        isAdmin={isAdmin}
       />}
 
       {isUserManagementOpen && <UserManagementModal
