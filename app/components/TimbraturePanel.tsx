@@ -262,7 +262,9 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false, init
     if (!error) {
       const profile = profiles.find(p => p.id === record.profile_id)
       const dateStr = new Date(record.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })
-      await supabase.from('hr_modification_codes').delete().eq('record_id', record.id)
+      // Prima segna come 'completed' per triggerare la notifica sull'app iOS, poi cancella
+      await supabase.from('hr_modification_codes').update({ status: 'completed' }).eq('record_id', record.id)
+      setTimeout(() => supabase.from('hr_modification_codes').delete().eq('record_id', record.id), 3000)
       setEditModal(null)
       setSaveConfirm({ employeeName: profile?.full_name || 'Dipendente', date: dateStr })
       fetchData()
