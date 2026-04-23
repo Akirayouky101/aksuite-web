@@ -75,6 +75,7 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   isAdmin?: boolean
+  initialProfileId?: string
 }
 
 const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']
@@ -110,7 +111,7 @@ const AVATAR_COLORS = [
   'from-cyan-500 to-sky-600',
 ]
 
-export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Props) {
+export default function TimbraturePanel({ isOpen, onClose, isAdmin = false, initialProfileId }: Props) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth()) // 0-indexed
@@ -118,6 +119,10 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false }: Pr
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isOpen && initialProfileId) setSelectedProfile(initialProfileId)
+  }, [isOpen, initialProfileId])
 
   // Add form state
   const [showAddForm, setShowAddForm] = useState(false)

@@ -187,6 +187,7 @@ export default function Home() {
   const [isHRPanelOpen, setIsHRPanelOpen] = useState(false)
   const [hrInitialProfileId, setHrInitialProfileId] = useState<string | null>(null)
   const [isTimbraturePanelOpen, setIsTimbraturePanelOpen] = useState(false)
+  const [timbratureInitialProfileId, setTimbratureInitialProfileId] = useState<string | null>(null)
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false)
   const [editingTicket, setEditingTicket] = useState<TicketType | null>(null)
 
@@ -1727,12 +1728,13 @@ export default function Home() {
       {/* ═══ TIMBRATURE PANEL ═══ */}
       {isTimbraturePanelOpen && <TimbraturePanel
         isOpen={isTimbraturePanelOpen}
-        onClose={() => setIsTimbraturePanelOpen(false)}
+        onClose={() => { setIsTimbraturePanelOpen(false); setTimbratureInitialProfileId(null) }}
         isAdmin={isAdmin}
+        initialProfileId={timbratureInitialProfileId ?? undefined}
       />}
 
       {/* ═══ GLOBAL NOTIFICATION TOAST (HR mod requests) ═══ */}
-      <NotificationToast onOpenHR={(pid) => { setHrInitialProfileId(pid); setIsHRPanelOpen(true) }} />
+      <NotificationToast onOpenHR={(pid) => { setTimbratureInitialProfileId(pid); setIsTimbraturePanelOpen(true) }} />
 
       {/* ═══ RICHIESTE MAGAZZINO (Admin Panel) ═══ */}
       {isWarehouseRequestsOpen && <WarehouseRequestsPanel
