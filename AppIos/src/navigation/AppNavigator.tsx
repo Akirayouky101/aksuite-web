@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { ActivityIndicator, View, Alert } from 'react-native'
+import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import LoginScreen from '../screens/LoginScreen'
@@ -13,6 +13,7 @@ import TimbratureScreen from '../screens/TimbratureScreen'
 import LavorazioniScreen from '../screens/LavorazioniScreen'
 import LavorazioneNotificationModal, { LavorazioneNotif } from '../components/LavorazioneNotificationModal'
 import HRCodeNotificationModal, { HRCodeNotif } from '../components/HRCodeNotificationModal'
+import HRTimbratureModifiedModal from '../components/HRTimbratureModifiedModal'
 
 export type RootStackParamList = {
   Login: undefined
@@ -32,6 +33,7 @@ export default function AppNavigator() {
   const navRef = useRef<any>(null)
   const [pendingLav, setPendingLav] = useState<LavorazioneNotif | null>(null)
   const [pendingHRCode, setPendingHRCode] = useState<HRCodeNotif | null>(null)
+  const [pendingModified, setPendingModified] = useState<{ dateLabel: string } | null>(null)
   const shownNotifIds = useRef<Set<string>>(new Set())
 
   // Subscribe to new lavorazioni assigned to the current user
@@ -102,13 +104,7 @@ export default function AppNavigator() {
               dateLabel = new Date(data.date).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
             }
           } catch {}
-          Alert.alert(
-            '✅ Timbratura modificata',
-            dateLabel
-              ? `La timbratura del ${dateLabel} è stata aggiornata dal responsabile.`
-              : 'La tua timbratura è stata aggiornata dal responsabile.',
-            [{ text: 'OK', onPress: () => navRef.current?.navigate('Timbrature') }]
-          )
+          setPendingModified({ dateLabel })
           return
         }
 
@@ -173,6 +169,16 @@ export default function AppNavigator() {
           onClose={() => setPendingHRCode(null)}
           onGoToTimbrature={() => {
             setPendingHRCode(null)
+            navRef.current?.navigate('Timbrature')
+          }}
+        />
+      )}
+      {pendingModified && (
+        <HRTimbratureModifiedModal
+          dateLabel={pendingModified.dateLabel}
+          onClose={() => setPendingModified(null)}
+          onGoToTimbrature={() => {
+            setPendingModified(null)
             navRef.current?.navigate('Timbrature')
           }}
         />
