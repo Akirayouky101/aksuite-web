@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.gates (
   install_date DATE,
   serial_number TEXT,
   notes       TEXT,
+  oview_params JSONB,                                 -- Parametri O-View attuali (JSON con m1_*/m2_* keys)
   created_by  UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at  TIMESTAMPTZ DEFAULT now(),
   updated_at  TIMESTAMPTZ DEFAULT now()

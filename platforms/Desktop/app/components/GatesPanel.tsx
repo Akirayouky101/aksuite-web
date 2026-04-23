@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Plus, Search, ChevronDown, ChevronUp, Pencil, Trash2,
-  DoorOpen, Wrench, Calendar, User, ChevronRight, Save,
-  ClipboardList, AlertCircle, CheckCircle2, Loader2, Building2
+  DoorOpen, Calendar, User, Save,
+  ClipboardList, AlertCircle, Loader2, Building2, Settings2
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -24,6 +24,7 @@ interface Gate {
   install_date: string | null
   serial_number: string | null
   notes: string | null
+  oview_params: Record<string, string> | null
   created_at: string
 }
 
@@ -82,7 +83,7 @@ const ENABLED_OPTS = [
   { val: 'disabilitato', label: 'Disabilitato' },
 ]
 
-const NICE_PARAMS: { key: keyof GateMaintenance; label: string; fn: string; opts?: { val: string; label: string }[] }[] = [
+const NICE_PARAMS: { key: string; label: string; fn: string; opts?: { val: string; label: string }[] }[] = [
   { key: 'm1_work_mode',    label: 'Modo lavoro',           fn: 'F1', opts: WORK_MODES },
   { key: 'm1_pause_time',   label: 'Tempo pausa (s)',       fn: 'F2' },
   { key: 'm1_partial_open', label: 'Apertura parziale (%)', fn: 'F3' },
@@ -102,41 +103,77 @@ const NICE_PARAMS_M2 = NICE_PARAMS.map(p => ({
   key: p.key.replace('m1_', 'm2_') as keyof GateMaintenance,
 }))
 
+const EMPTY_OVIEW = (): Record<string, string> => {
+  const o: Record<string, string> = {}
+  ;[...NICE_PARAMS, ...NICE_PARAMS_M2].forEach(p => { o[p.key] = '' })
+  return o
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const inp = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400'
 const lbl = 'block text-xs font-semibold text-slate-500 mb-1'
 const sel = `${inp} appearance-none`
 
-function NiceDisplay({ params, motor, values }: {
+function NiceDisplay({ params, motor, values, accentColor = 'emerald' }: {
   params: typeof NICE_PARAMS
   motor: string
-  values: Partial<GateMaintenance>
+  values: Record<string, string | null | undefined>
+  accentColor?: 'emerald' | 'blue'
 }) {
+  const dot   = accentColor === 'blue' ? 'bg-blue-400'   : 'bg-emerald-400'
+  const label = accentColor === 'blue' ? 'text-blue-400'  : 'text-emerald-400'
+  const val   = accentColor === 'blue' ? 'text-blue-400'  : 'text-emerald-400'
   return (
     <div className="bg-[#1C2333] rounded-xl p-4 font-mono">
-      {/* Display header */}
       <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#2D3748]">
-        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase">
-          NICE — Motore {motor}
+        <div className={`w-2 h-2 rounded-full ${dot} animate-pulse`} />
+        <span className={`${label} text-xs font-bold tracking-widest uppercase`}>
+          NICE O-View — Motore {motor}
         </span>
       </div>
-      {/* Parameter grid */}
       <div className="grid grid-cols-2 gap-1.5">
         {params.map(p => {
-          const val = values[p.key] as string | null
+          const v = values[p.key]
           return (
             <div key={p.key} className="flex items-center gap-2 bg-[#0F1623] rounded-lg px-3 py-2">
               <span className="text-[10px] font-bold text-slate-500 w-8 shrink-0">{p.fn}</span>
               <span className="text-[11px] text-slate-400 flex-1 truncate">{p.label}</span>
-              <span className={`text-xs font-bold tabular-nums ${val ? 'text-emerald-400' : 'text-slate-600'}`}>
-                {val || '—'}
-              </span>
+              <span className={`text-xs font-bold tabular-nums ${v ? val : 'text-slate-600'}`}>{v || '—'}</span>
             </div>
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function NiceForm({ params, values, onChange, accentColor = 'emerald' }: {
+  params: typeof NICE_PARAMS
+  values: Record<string, string>
+  onChange: (key: string, val: string) => void
+  accentColor?: 'emerald' | 'blue'
+}) {
+  const accentText  = accentColor === 'blue' ? 'text-blue-400'       : 'text-emerald-400'
+  const focusBorder = accentColor === 'blue' ? 'focus:border-blue-500' : 'focus:border-emerald-500'
+  const inputCls = `bg-[#0F1623] ${accentText} border border-[#2D3748] rounded-lg px-2 py-1.5 text-xs font-mono focus:outline-none ${focusBorder}`
+  return (
+    <div className="bg-[#1C2333] rounded-xl p-4 grid grid-cols-2 gap-2.5">
+      {params.map(p => (
+        <div key={p.key} className="flex flex-col gap-1">
+          <label className="text-[10px] font-bold text-slate-400 font-mono flex items-center gap-1">
+            <span className={accentText}>{p.fn}</span> {p.label}
+          </label>
+          {p.opts ? (
+            <select value={values[p.key] || ''} onChange={e => onChange(p.key, e.target.value)} className={inputCls}>
+              <option value="">—</option>
+              {p.opts.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
+            </select>
+          ) : (
+            <input value={values[p.key] || ''} onChange={e => onChange(p.key, e.target.value)} className={inputCls} placeholder="—" />
+          )}
+        </div>
+      ))}
     </div>
   )
 }
@@ -163,23 +200,20 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
   const [maintModal, setMaintModal] = useState<{ mode: 'add' | 'edit'; gateId: string; maint?: GateMaintenance } | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'gate' | 'maint'; id: string } | null>(null)
+  const [showOview, setShowOview] = useState(false)
 
   // Gate form
   const [gateForm, setGateForm] = useState({
-    name: '', client_id: '', brand: '', model: '', type: 'scorrevole',
+    name: '', client_id: '', brand: 'Nice', model: '', type: 'scorrevole',
     motor_count: 1, install_date: '', serial_number: '', notes: ''
   })
+  const [oviewForm, setOviewForm] = useState<Record<string, string>>(EMPTY_OVIEW())
 
   // Maintenance form
   const [maintForm, setMaintForm] = useState<Record<string, string>>({
     date: new Date().toISOString().split('T')[0],
     type: 'ordinaria', description: '',
-    m1_work_mode: '', m1_pause_time: '', m1_partial_open: '', m1_obstacle_sens: '',
-    m1_preflash: '', m1_encoder: '', m1_slowdown: '', m1_electric_lock: '',
-    m1_open_limit: '', m1_close_limit: '', m1_open_force: '', m1_close_force: '',
-    m2_work_mode: '', m2_pause_time: '', m2_partial_open: '', m2_obstacle_sens: '',
-    m2_preflash: '', m2_encoder: '', m2_slowdown: '', m2_electric_lock: '',
-    m2_open_limit: '', m2_close_limit: '', m2_open_force: '', m2_close_force: '',
+    ...EMPTY_OVIEW(),
   })
   const [motorCount, setMotorCount] = useState(1)
 
@@ -223,25 +257,35 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
     return c ? `${c.name}${c.company ? ` — ${c.company}` : ''}` : null
   }
 
+  const hasOview = (g: Gate) => g.oview_params && Object.values(g.oview_params).some(v => v)
+
   // ── Gate CRUD ──────────────────────────────────────────────────────────────
 
   const openAddGate = () => {
     setGateForm({ name: '', client_id: '', brand: 'Nice', model: '', type: 'scorrevole', motor_count: 1, install_date: '', serial_number: '', notes: '' })
+    setOviewForm(EMPTY_OVIEW())
+    setShowOview(false)
     setGateModal({ mode: 'add' })
   }
 
   const openEditGate = (gate: Gate) => {
     setGateForm({
-      name: gate.name, client_id: gate.client_id || '', brand: gate.brand || '',
+      name: gate.name, client_id: gate.client_id || '', brand: gate.brand || 'Nice',
       model: gate.model || '', type: gate.type || 'scorrevole', motor_count: gate.motor_count,
       install_date: gate.install_date || '', serial_number: gate.serial_number || '', notes: gate.notes || ''
     })
+    const o = EMPTY_OVIEW()
+    if (gate.oview_params) Object.assign(o, gate.oview_params)
+    setOviewForm(o)
+    setShowOview(!!hasOview(gate))
     setGateModal({ mode: 'edit', gate })
   }
 
   const saveGate = async () => {
     if (!gateForm.name.trim()) return
     setSaving(true)
+    const oviewPayload: Record<string, string> = {}
+    Object.entries(oviewForm).forEach(([k, v]) => { if (v.trim()) oviewPayload[k] = v.trim() })
     const payload = {
       name: gateForm.name.trim(),
       client_id: gateForm.client_id || null,
@@ -252,6 +296,7 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
       install_date: gateForm.install_date || null,
       serial_number: gateForm.serial_number || null,
       notes: gateForm.notes || null,
+      oview_params: Object.keys(oviewPayload).length ? oviewPayload : null,
     }
     if (gateModal?.mode === 'add') {
       await supabase.from('gates').insert(payload)
@@ -272,18 +317,11 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
 
   // ── Maintenance CRUD ───────────────────────────────────────────────────────
 
-  const openAddMaint = (gateId: string, motorCount: number) => {
-    setMotorCount(motorCount)
-    setMaintForm({
-      date: new Date().toISOString().split('T')[0],
-      type: 'ordinaria', description: '',
-      m1_work_mode: '', m1_pause_time: '', m1_partial_open: '', m1_obstacle_sens: '',
-      m1_preflash: '', m1_encoder: '', m1_slowdown: '', m1_electric_lock: '',
-      m1_open_limit: '', m1_close_limit: '', m1_open_force: '', m1_close_force: '',
-      m2_work_mode: '', m2_pause_time: '', m2_partial_open: '', m2_obstacle_sens: '',
-      m2_preflash: '', m2_encoder: '', m2_slowdown: '', m2_electric_lock: '',
-      m2_open_limit: '', m2_close_limit: '', m2_open_force: '', m2_close_force: '',
-    })
+  const openAddMaint = (gateId: string, mc: number, gate?: Gate) => {
+    setMotorCount(mc)
+    const base = EMPTY_OVIEW()
+    if (gate?.oview_params) Object.assign(base, gate.oview_params)
+    setMaintForm({ date: new Date().toISOString().split('T')[0], type: 'ordinaria', description: '', ...base })
     setMaintModal({ mode: 'add', gateId })
   }
 
@@ -291,7 +329,7 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
     setMotorCount(mc)
     const f: Record<string, string> = { date: maint.date, type: maint.type, description: maint.description || '' }
     ;[...NICE_PARAMS, ...NICE_PARAMS_M2].forEach(p => {
-      f[p.key as string] = (maint[p.key] as string | null) || ''
+      f[p.key] = (maint[p.key as keyof GateMaintenance] as string | null) || ''
     })
     setMaintForm(f)
     setMaintModal({ mode: 'edit', gateId, maint })
@@ -301,36 +339,15 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
     if (!maintModal) return
     setSaving(true)
     const nullify = (v: string) => v.trim() || null
-    const payload = {
+    const payload: Record<string, unknown> = {
       gate_id: maintModal.gateId,
       date: maintForm.date,
       type: maintForm.type,
       description: nullify(maintForm.description),
-      m1_work_mode: nullify(maintForm.m1_work_mode),
-      m1_pause_time: nullify(maintForm.m1_pause_time),
-      m1_partial_open: nullify(maintForm.m1_partial_open),
-      m1_obstacle_sens: nullify(maintForm.m1_obstacle_sens),
-      m1_preflash: nullify(maintForm.m1_preflash),
-      m1_encoder: nullify(maintForm.m1_encoder),
-      m1_slowdown: nullify(maintForm.m1_slowdown),
-      m1_electric_lock: nullify(maintForm.m1_electric_lock),
-      m1_open_limit: nullify(maintForm.m1_open_limit),
-      m1_close_limit: nullify(maintForm.m1_close_limit),
-      m1_open_force: nullify(maintForm.m1_open_force),
-      m1_close_force: nullify(maintForm.m1_close_force),
-      m2_work_mode: nullify(maintForm.m2_work_mode),
-      m2_pause_time: nullify(maintForm.m2_pause_time),
-      m2_partial_open: nullify(maintForm.m2_partial_open),
-      m2_obstacle_sens: nullify(maintForm.m2_obstacle_sens),
-      m2_preflash: nullify(maintForm.m2_preflash),
-      m2_encoder: nullify(maintForm.m2_encoder),
-      m2_slowdown: nullify(maintForm.m2_slowdown),
-      m2_electric_lock: nullify(maintForm.m2_electric_lock),
-      m2_open_limit: nullify(maintForm.m2_open_limit),
-      m2_close_limit: nullify(maintForm.m2_close_limit),
-      m2_open_force: nullify(maintForm.m2_open_force),
-      m2_close_force: nullify(maintForm.m2_close_force),
     }
+    ;[...NICE_PARAMS, ...NICE_PARAMS_M2].forEach(p => {
+      payload[p.key] = nullify(maintForm[p.key] || '')
+    })
     if (maintModal.mode === 'add') {
       await supabase.from('gate_maintenances').insert(payload)
     } else if (maintModal.maint) {
@@ -371,29 +388,35 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
 
   if (!isOpen) return null
 
+  const maintDisplayVals = (params: typeof NICE_PARAMS, m: GateMaintenance) =>
+    Object.fromEntries(params.map(p => [p.key, m[p.key as keyof GateMaintenance] as string | null]))
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
-
-      {/* Panel */}
-      <motion.div
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl z-50 flex flex-col"
+      {/* ── Main Modal (centered) ── */}
+      <div
+        className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+        onClick={onClose}
       >
+        <motion.div
+          initial={{ scale: 0.96, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.96, opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden"
+          style={{ maxHeight: '90vh' }}
+          onClick={e => e.stopPropagation()}
+        >
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4 flex items-center gap-3">
+        <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4 flex items-center gap-3 shrink-0">
           <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
             <DoorOpen size={20} className="text-white" />
           </div>
           <div className="flex-1">
             <h2 className="text-white font-bold text-lg">Cancelli & Automazioni</h2>
-            <p className="text-slate-400 text-xs">Archivio manutenzioni e parametri</p>
+            <p className="text-slate-400 text-xs">Archivio impianti, parametri O-View e manutenzioni</p>
           </div>
           {isAdmin && (
             <button
@@ -409,7 +432,7 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
         </div>
 
         {/* Search */}
-        <div className="px-6 py-3 border-b border-slate-100">
+        <div className="px-6 py-3 border-b border-slate-100 shrink-0">
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -460,6 +483,11 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
                         <Building2 size={10} /> {clientName(gate.client_id)}
                       </span>
                     )}
+                    {hasOview(gate) && (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                        <Settings2 size={8} /> O-View
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -496,14 +524,47 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden border-t border-slate-100"
                   >
-                    <div className="px-4 py-3 bg-slate-50/60">
+                    <div className="px-4 py-3 bg-slate-50/60 space-y-3">
+                      {/* Gate details */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-600">
+                        {gate.serial_number && <span><span className="font-semibold text-slate-500">S/N:</span> {gate.serial_number}</span>}
+                        {gate.install_date && <span><span className="font-semibold text-slate-500">Installato:</span> {new Date(gate.install_date + 'T00:00:00').toLocaleDateString('it-IT')}</span>}
+                        {gate.notes && <span className="col-span-2 sm:col-span-3 italic text-slate-500">{gate.notes}</span>}
+                      </div>
+
+                      {/* O-View params */}
+                      {hasOview(gate) && (
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                            <Settings2 size={11} /> Parametri O-View — Configurazione attuale
+                          </p>
+                          <NiceDisplay
+                            params={NICE_PARAMS}
+                            motor="1"
+                            values={Object.fromEntries(NICE_PARAMS.map(p => [p.key, gate.oview_params?.[p.key] ?? null]))}
+                          />
+                          {gate.motor_count === 2 && (
+                            <div className="mt-2">
+                              <NiceDisplay
+                                params={NICE_PARAMS_M2}
+                                motor="2"
+                                values={Object.fromEntries(NICE_PARAMS_M2.map(p => [p.key, gate.oview_params?.[p.key] ?? null]))}
+                                accentColor="blue"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Maintenance list */}
+                      <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1">
                           <ClipboardList size={12} /> Interventi
                         </span>
                         {isAdmin && (
                           <button
-                            onClick={() => openAddMaint(gate.id, gate.motor_count)}
+                            onClick={() => openAddMaint(gate.id, gate.motor_count, gate)}
                             className="flex items-center gap-1 text-xs bg-slate-700 text-white px-2.5 py-1 rounded-lg hover:bg-slate-600 font-semibold transition-colors"
                           >
                             <Plus size={11} /> Nuovo intervento
@@ -560,17 +621,18 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
 
                           {/* Display Nice M1 */}
                           <div className="p-3">
-                            <NiceDisplay params={NICE_PARAMS} motor="1" values={m} />
+                            <NiceDisplay params={NICE_PARAMS} motor="1" values={maintDisplayVals(NICE_PARAMS, m)} />
                           </div>
 
                           {/* Display Nice M2 (se doppio motore) */}
                           {gate.motor_count === 2 && (
                             <div className="px-3 pb-3">
-                              <NiceDisplay params={NICE_PARAMS_M2} motor="2" values={m} />
+                              <NiceDisplay params={NICE_PARAMS_M2} motor="2" values={maintDisplayVals(NICE_PARAMS_M2, m)} accentColor="blue" />
                             </div>
                           )}
                         </div>
-                      ))}
+                      ))}}
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -578,7 +640,8 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
             </div>
           ))}
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* ── Gate Modal ────────────────────────────────────────────────────── */}
       <AnimatePresence>
@@ -592,13 +655,14 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
+              style={{ maxHeight: '90vh' }}
             >
-              <div className="bg-slate-800 px-6 py-4 flex items-center justify-between">
+              <div className="bg-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
                 <h3 className="text-white font-bold">{gateModal.mode === 'add' ? 'Nuovo cancello' : 'Modifica cancello'}</h3>
                 <button onClick={() => setGateModal(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
               </div>
-              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="p-6 space-y-4 overflow-y-auto">
                 <div>
                   <label className={lbl}>Nome *</label>
                   <input value={gateForm.name} onChange={e => setGateForm(p => ({ ...p, name: e.target.value }))} placeholder="es. Cancello Principale" className={inp} />
@@ -652,8 +716,61 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
                   <label className={lbl}>Note</label>
                   <textarea value={gateForm.notes} onChange={e => setGateForm(p => ({ ...p, notes: e.target.value }))} rows={2} className={inp} />
                 </div>
+
+                {/* ── O-View parameters (collapsible) ── */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowOview(v => !v)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-[#1C2333] rounded-xl text-white text-sm font-mono font-bold hover:bg-[#232d40] transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Parametri O-View — configurazione attuale</span>
+                    </div>
+                    {showOview ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+                  <AnimatePresence>
+                    {showOview && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-3 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                            <span className="text-xs font-bold text-slate-700 uppercase tracking-widest font-mono">Motore 1</span>
+                          </div>
+                          <NiceForm
+                            params={NICE_PARAMS}
+                            values={oviewForm}
+                            onChange={(k, v) => setOviewForm(p => ({ ...p, [k]: v }))}
+                            accentColor="emerald"
+                          />
+                          {gateForm.motor_count === 2 && (
+                            <>
+                              <div className="flex items-center gap-2 mt-2">
+                                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                <span className="text-xs font-bold text-slate-700 uppercase tracking-widest font-mono">Motore 2</span>
+                              </div>
+                              <NiceForm
+                                params={NICE_PARAMS_M2}
+                                values={oviewForm}
+                                onChange={(k, v) => setOviewForm(p => ({ ...p, [k]: v }))}
+                                accentColor="blue"
+                              />
+                            </>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
-              <div className="px-6 py-4 border-t flex justify-end gap-2">
+              <div className="px-6 py-4 border-t flex justify-end gap-2 shrink-0">
                 <button onClick={() => setGateModal(null)} className="px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">Annulla</button>
                 <button
                   onClick={saveGate}
@@ -681,9 +798,10 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
+              style={{ maxHeight: '90vh' }}
             >
-              <div className="bg-[#1C2333] px-6 py-4 flex items-center justify-between">
+              <div className="bg-[#1C2333] px-6 py-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <h3 className="text-white font-bold font-mono tracking-wide">
@@ -693,7 +811,7 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
                 <button onClick={() => setMaintModal(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
               </div>
 
-              <div className="p-6 max-h-[75vh] overflow-y-auto space-y-5">
+              <div className="p-6 overflow-y-auto space-y-5">
                 {/* Base fields */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -712,78 +830,38 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
                   <textarea value={maintForm.description} onChange={e => setMaintForm(p => ({ ...p, description: e.target.value }))} rows={2} placeholder="Cosa è stato fatto…" className={inp} />
                 </div>
 
-                {/* ── Nice T4 Parameters — Motore 1 ── */}
+                {/* Motore 1 */}
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-2 h-2 rounded-full bg-emerald-400" />
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-widest font-mono">Parametri Motore 1</span>
                   </div>
-                  <div className="bg-[#1C2333] rounded-xl p-4 grid grid-cols-2 gap-2.5">
-                    {NICE_PARAMS.map(p => (
-                      <div key={p.key as string} className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-slate-400 font-mono flex items-center gap-1">
-                          <span className="text-emerald-400">{p.fn}</span> {p.label}
-                        </label>
-                        {p.opts ? (
-                          <select
-                            value={maintForm[p.key as string] || ''}
-                            onChange={e => setMaintForm(prev => ({ ...prev, [p.key as string]: e.target.value }))}
-                            className="bg-[#0F1623] text-emerald-400 border border-[#2D3748] rounded-lg px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-emerald-500"
-                          >
-                            <option value="">—</option>
-                            {p.opts.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
-                          </select>
-                        ) : (
-                          <input
-                            value={maintForm[p.key as string] || ''}
-                            onChange={e => setMaintForm(prev => ({ ...prev, [p.key as string]: e.target.value }))}
-                            className="bg-[#0F1623] text-emerald-400 border border-[#2D3748] rounded-lg px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-emerald-500"
-                            placeholder="—"
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <NiceForm
+                    params={NICE_PARAMS}
+                    values={maintForm}
+                    onChange={(k, v) => setMaintForm(p => ({ ...p, [k]: v }))}
+                    accentColor="emerald"
+                  />
                 </div>
 
-                {/* ── Nice T4 Parameters — Motore 2 (se doppio) ── */}
+                {/* Motore 2 */}
                 {motorCount === 2 && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-2 h-2 rounded-full bg-blue-400" />
                       <span className="text-xs font-bold text-slate-700 uppercase tracking-widest font-mono">Parametri Motore 2</span>
                     </div>
-                    <div className="bg-[#1C2333] rounded-xl p-4 grid grid-cols-2 gap-2.5">
-                      {NICE_PARAMS_M2.map(p => (
-                        <div key={p.key as string} className="flex flex-col gap-1">
-                          <label className="text-[10px] font-bold text-slate-400 font-mono flex items-center gap-1">
-                            <span className="text-blue-400">{p.fn}</span> {p.label}
-                          </label>
-                          {p.opts ? (
-                            <select
-                              value={maintForm[p.key as string] || ''}
-                              onChange={e => setMaintForm(prev => ({ ...prev, [p.key as string]: e.target.value }))}
-                              className="bg-[#0F1623] text-blue-400 border border-[#2D3748] rounded-lg px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-500"
-                            >
-                              <option value="">—</option>
-                              {p.opts.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
-                            </select>
-                          ) : (
-                            <input
-                              value={maintForm[p.key as string] || ''}
-                              onChange={e => setMaintForm(prev => ({ ...prev, [p.key as string]: e.target.value }))}
-                              className="bg-[#0F1623] text-blue-400 border border-[#2D3748] rounded-lg px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-500"
-                              placeholder="—"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                    <NiceForm
+                      params={NICE_PARAMS_M2}
+                      values={maintForm}
+                      onChange={(k, v) => setMaintForm(p => ({ ...p, [k]: v }))}
+                      accentColor="blue"
+                    />
                   </div>
                 )}
               </div>
 
-              <div className="px-6 py-4 border-t flex justify-end gap-2">
+              <div className="px-6 py-4 border-t flex justify-end gap-2 shrink-0">
                 <button onClick={() => setMaintModal(null)} className="px-4 py-2 rounded-lg border text-sm text-slate-600 hover:bg-slate-50">Annulla</button>
                 <button
                   onClick={saveMaint}
