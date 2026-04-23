@@ -631,7 +631,7 @@ export default function GatesPanel({ isOpen, onClose, clients, isAdmin }: Props)
                             </div>
                           )}
                         </div>
-                      ))}}
+                      ))}
                       </div>
                     </div>
                   </motion.div>
