@@ -83,9 +83,11 @@ export default function AppNavigator() {
         event: 'UPDATE',
         schema: 'public',
         table: 'hr_modification_codes',
-        filter: `profile_id=eq.${userId}`,
       }, async (payload) => {
         const row = payload.new as any
+
+        // Filtra solo le righe del dipendente corrente
+        if (row.profile_id !== userId) return
 
         // Timbratura salvata — notifica conferma
         if (row.status === 'completed') {
