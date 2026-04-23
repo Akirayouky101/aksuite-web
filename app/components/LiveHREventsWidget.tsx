@@ -15,7 +15,7 @@ interface HREvent {
 }
 
 interface Props {
-  onOpenHR?: () => void
+  onOpenHR?: (profileId?: string) => void
 }
 
 export default function LiveHREventsWidget({ onOpenHR }: Props) {
@@ -135,8 +135,7 @@ export default function LiveHREventsWidget({ onOpenHR }: Props) {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
-              onClick={() => onOpenHR?.()}
-              className="w-full text-left px-5 py-3 hover:bg-amber-50/60 transition-colors flex items-center gap-3 group"
+              onClick={() => onOpenHR?.(e.profile_id)}
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
                 {e.employee_name.charAt(0).toUpperCase()}

@@ -711,7 +711,7 @@ export default function Home() {
             />
 
             {/* ═══ LIVE HR EVENTS ═══ */}
-            {isAdmin && <LiveHREventsWidget onOpenHR={() => setIsHRPanelOpen(true)} />}
+            {isAdmin && <LiveHREventsWidget onOpenHR={(pid) => { setTimbratureInitialProfileId(pid ?? null); setIsTimbraturePanelOpen(true) }} />}
 
             {/* ═══ TODAY DASHBOARD ═══ */}
             <TodayDashboard
