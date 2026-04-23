@@ -131,6 +131,7 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false, init
   const [modCodes, setModCodes] = useState<ModCode[]>([])
   const [editModal, setEditModal] = useState<EditModal | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [saveConfirm, setSaveConfirm] = useState<{ employeeName: string; date: string } | null>(null)
 
   const fetchModCodes = useCallback(async () => {
     const { data, error } = await supabase
@@ -259,8 +260,12 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false, init
     }).eq('id', record.id)
     setSaving(false)
     if (!error) {
+      const profile = profiles.find(p => p.id === record.profile_id)
+      const dateStr = new Date(record.date + 'T00:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })
       await supabase.from('hr_modification_codes').delete().eq('record_id', record.id)
-      setEditModal(null); fetchData()
+      setEditModal(null)
+      setSaveConfirm({ employeeName: profile?.full_name || 'Dipendente', date: dateStr })
+      fetchData()
     }
   }
 
@@ -762,6 +767,52 @@ export default function TimbraturePanel({ isOpen, onClose, isAdmin = false, init
                   className="flex-2 flex-[2] py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-semibold text-sm transition-colors disabled:opacity-50"
                 >
                   {saving ? 'Salvo...' : 'Salva'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ SAVE CONFIRM MODAL ═══ */}
+      <AnimatePresence>
+        {saveConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center px-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+            onClick={() => setSaveConfirm(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.88, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 12 }}
+              transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="bg-gradient-to-br from-emerald-400 to-teal-500 px-6 pt-6 pb-8 text-white">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
+                  <ShieldCheck className="w-6 h-6 text-white" />
+                </div>
+                <p className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1">Operazione completata</p>
+                <h2 className="text-xl font-bold">Timbratura modificata</h2>
+              </div>
+              <div className="px-6 py-5">
+                <div className="flex items-center gap-3 bg-emerald-50 rounded-2xl px-4 py-3 mb-5">
+                  <div className="w-9 h-9 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700 font-bold text-sm">
+                    {saveConfirm.employeeName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{saveConfirm.employeeName}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">📅 Record del <span className="font-semibold text-slate-600">{saveConfirm.date}</span></p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSaveConfirm(null)}
+                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-bold rounded-2xl hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-emerald-500/25"
+                >
+                  Chiudi
                 </button>
               </div>
             </motion.div>
