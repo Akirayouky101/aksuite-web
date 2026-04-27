@@ -131,7 +131,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
   }
 
   const f = (k: keyof typeof form, v: string | boolean) => setForm(p => ({ ...p, [k]: v }))
-  const inp = 'w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:border-slate-400 focus:outline-none placeholder-slate-300'
+  const inp = 'w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:border-slate-400 focus:bg-white focus:outline-none transition-colors placeholder-slate-300'
   const lbl = 'block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide'
 
   const showNetwork = ['PC','Server','NAS','Router','Switch','NVR','DVR','Firewall','Stampante','Altro'].includes(form.type)
@@ -571,32 +571,41 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               onClick={e => e.stopPropagation()}
               className="rounded-3xl w-full max-w-lg flex flex-col overflow-hidden"
-              style={{ maxHeight: '92vh', background: '#fff', boxShadow: '0 40px 100px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08)' }}
+              style={{ maxHeight: '92vh', background: '#f8fafc', boxShadow: '0 40px 100px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08)' }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
-                <div className="flex items-center gap-3">
-                  {(() => {
-                    const c = TYPE_CONFIG[form.type]
-                    return (
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: `linear-gradient(135deg,${c.from},${c.to})`, boxShadow: `0 4px 10px ${c.from}40` }}>
-                        <c.icon className="w-4 h-4 text-white" />
+              {/* Gradient header */}
+              {(() => {
+                const c = TYPE_CONFIG[form.type]
+                return (
+                  <div className="relative px-6 pt-6 pb-6 shrink-0"
+                    style={{ background: `linear-gradient(145deg, ${c.from}, ${c.to})` }}>
+                    <div className="absolute inset-0 opacity-25 pointer-events-none"
+                      style={{ background: 'radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.6) 0%, transparent 60%)' }} />
+                    <button onClick={() => setModal(null)} aria-label="Chiudi"
+                      className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center backdrop-blur-sm transition-all hover:scale-105 active:scale-95"
+                      style={{ background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                      <X className="w-3.5 h-3.5 text-white" />
+                    </button>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}>
+                        <c.icon className="w-6 h-6 text-white drop-shadow" />
                       </div>
-                    )
-                  })()}
-                  <h3 className="text-[15px] font-black text-slate-900 tracking-tight">
-                    {modal.mode === 'add' ? `Nuovo ${TYPE_CONFIG[form.type].label}` : `Modifica — ${modal.item.name}`}
-                  </h3>
-                </div>
-                <button onClick={() => setModal(null)} aria-label="Chiudi"
-                  className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all hover:scale-105 active:scale-95">
-                  <X className="w-3.5 h-3.5 text-slate-500" />
-                </button>
-              </div>
+                      <div>
+                        <h3 className="text-[17px] font-black text-white tracking-tight leading-tight">
+                          {modal.mode === 'add' ? `Nuovo ${c.label}` : `Modifica`}
+                        </h3>
+                        <p className="text-[12px] font-semibold mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                          {modal.mode === 'edit' ? modal.item.name : c.label}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* Body */}
-              <div className="p-6 overflow-y-auto space-y-5">
+              <div className="p-5 overflow-y-auto space-y-4 bg-white rounded-t-3xl -mt-3" style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.04)' }}>
                 {modal.mode === 'edit' && (
                   <div>
                     <label className={lbl}>Tipo</label>
@@ -688,7 +697,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Credenziali principali</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest mb-3 px-1" style={{ color: TYPE_CONFIG[form.type].text }}>Credenziali principali</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className={lbl}>Username</label>
@@ -710,7 +719,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
 
                 {showDual && (
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Credenziali secondarie</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-3 px-1" style={{ color: TYPE_CONFIG[form.type].text }}>Credenziali secondarie</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className={lbl}>Username 2</label>
@@ -746,7 +755,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-2.5 shrink-0">
+              <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2.5 shrink-0 bg-white">
                 <button onClick={() => setModal(null)}
                   className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95">
                   Annulla
