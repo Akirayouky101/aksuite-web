@@ -239,7 +239,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {filtered.map(item => {
                       const c = TYPE_CONFIG[item.type]
                       return (
@@ -247,33 +247,38 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                           key={item.id}
                           layout
                           onClick={() => setDetailItem(item)}
-                          whileHover={{ x: 2 }}
-                          whileTap={{ scale: 0.99 }}
+                          whileHover={{ scale: 1.03, y: -2 }}
+                          whileTap={{ scale: 0.97 }}
                           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                          className="text-left rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow flex items-center gap-3 px-4 py-3"
+                          className="text-left rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
                         >
-                          {/* Colored icon */}
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          {/* Gradient top */}
+                          <div className="h-20 relative flex items-center justify-center"
                             style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}>
-                            <c.icon className="w-5 h-5 text-white" />
+                            <c.icon className="w-9 h-9 text-white opacity-90" />
+                            {item.isFavorite && (
+                              <div className="absolute top-2 right-2">
+                                <Star className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
+                              </div>
+                            )}
+                            {item.username && (
+                              <div className="absolute bottom-2 left-2">
+                                <Lock className="w-3 h-3 text-white/50" />
+                              </div>
+                            )}
                           </div>
-                          {/* Name + info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              {item.isFavorite && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 flex-shrink-0" />}
-                              <p className="text-sm font-bold text-slate-800 truncate">{item.name}</p>
-                            </div>
+                          {/* White bottom */}
+                          <div className="bg-white px-3 py-2.5">
+                            <p className="text-sm font-black text-slate-800 truncate">{item.name}</p>
                             <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
                               {item.ip_address || item.hostname || item.location || '—'}
                             </p>
-                          </div>
-                          {/* Right: type badge + lock */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {item.username && <Lock className="w-3.5 h-3.5 text-slate-300" />}
-                            <span className="text-[10px] font-bold px-2 py-1 rounded-lg"
-                              style={{ background: c.light, color: c.text }}>
-                              {c.label}
-                            </span>
+                            <div className="mt-1.5">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
+                                style={{ background: c.light, color: c.text }}>
+                                {c.label}
+                              </span>
+                            </div>
                           </div>
                         </motion.button>
                       )
