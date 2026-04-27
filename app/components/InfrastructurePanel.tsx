@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Plus, Search, Eye, EyeOff, Copy, Trash2, Pencil, Save, Loader2,
   Monitor, Server, HardDrive, Mail, Router, Network, Video, Printer,
-  Shield, Cpu, Star, Lock, Globe, Hash,
+  Shield, Cpu, Star, Lock, Globe, Hash, ChevronRight,
 } from 'lucide-react'
 import { useInfrastructure, InfrastructureItem, InfraType } from '../hooks/useInfrastructure'
 
@@ -33,8 +33,8 @@ const TYPE_CONFIG: Record<InfraType, {
 
 const ALL_TYPES = Object.keys(TYPE_CONFIG) as InfraType[]
 
-const EMPTY_FORM = (): Omit<InfrastructureItem, 'id' | 'createdAt' | 'updatedAt'> => ({
-  type: 'PC', name: '', hostname: '', ip_address: '', mac_address: '',
+const EMPTY_FORM = (type: InfraType = 'PC'): Omit<InfrastructureItem, 'id' | 'createdAt' | 'updatedAt'> => ({
+  type, name: '', hostname: '', ip_address: '', mac_address: '',
   location: '', username: '', password: '', secondary_username: '',
   secondary_password: '', port: '', domain: '', os_version: '',
   serial_number: '', notes: '', isFavorite: false,
@@ -59,16 +59,18 @@ function CopyBtn({ text, id, copiedId, onCopy, light }: {
   )
 }
 
-// ─── Props / Types ────────────────────────────────────────────────────────────
+// ─── Props ───────────────────────────────────────────────────────────────────
 interface Props { isOpen: boolean; onClose: () => void }
-type ModalMode = { mode: 'add' } | { mode: 'edit'; item: InfrastructureItem }
+type ModalMode = { mode: 'add'; type: InfraType } | { mode: 'edit'; item: InfrastructureItem }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function InfrastructurePanel({ isOpen, onClose }: Props) {
   const { items, isLoading, addItem, updateItem, deleteItem } = useInfrastructure()
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType]   = useState<InfraType | 'Tutti'>('Tutti')
+  // which type modal is open
+  const [activeType, setActiveType]   = useState<InfraType | null>(null)
+  const [typeSearch, setTypeSearch]   = useState('')
+
   const [detailItem, setDetailItem]   = useState<InfrastructureItem | null>(null)
   const [modal, setModal]             = useState<ModalMode | null>(null)
   const [form, setForm]               = useState(EMPTY_FORM())
@@ -88,19 +90,25 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
   const toggleVis = (id: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) =>
     setter(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
 
-  const filtered = useMemo(() => {
-    const q = searchQuery.toLowerCase()
+  // items filtered for the open type modal
+  const typeItems = useMemo(() => {
+    if (!activeType) return []
+    const q = typeSearch.toLowerCase()
     return items.filter(item => {
-      if (filterType !== 'Tutti' && item.type !== filterType) return false
+      if (item.type !== activeType) return false
       if (!q) return true
       return [item.name, item.hostname, item.ip_address, item.location,
-              item.username, item.domain, item.notes, item.os_version,
-              item.serial_number, TYPE_CONFIG[item.type].label]
-        .some(v => v.toLowerCase().includes(q))
+              item.username, item.domain, item.notes]
+        .some(v => v && v.toLowerCase().includes(q))
     })
-  }, [items, searchQuery, filterType])
+  }, [items, activeType, typeSearch])
 
-  const openAdd = () => { setForm(EMPTY_FORM()); setShowFormPwd(false); setShowFormPwd2(false); setModal({ mode: 'add' }) }
+  const openAdd = (type: InfraType) => {
+    setForm(EMPTY_FORM(type))
+    setShowFormPwd(false); setShowFormPwd2(false)
+    setModal({ mode: 'add', type })
+  }
+
   const openEdit = (item: InfrastructureItem) => {
     setForm({ type: item.type, name: item.name, hostname: item.hostname,
       ip_address: item.ip_address, mac_address: item.mac_address, location: item.location,
@@ -152,134 +160,67 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
               exit={{ opacity: 0, scale: 0.97, y: 16 }}
               transition={{ type: 'spring', stiffness: 280, damping: 26 }}
               onClick={e => e.stopPropagation()}
-              className="bg-slate-50 rounded-3xl w-full max-w-5xl flex flex-col overflow-hidden"
-              style={{ maxHeight: '92vh', boxShadow: '0 32px 80px rgba(0,0,0,0.3)' }}
+              className="bg-slate-50 rounded-3xl w-full max-w-2xl flex flex-col overflow-hidden"
+              style={{ maxHeight: '88vh', boxShadow: '0 32px 80px rgba(0,0,0,0.3)' }}
             >
               {/* Top bar */}
-              <div className="bg-white px-6 py-4 border-b border-slate-100 shrink-0">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
-                      style={{ background: 'linear-gradient(135deg,#1e293b,#475569)' }}>
-                      <Server className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-black text-slate-900 leading-none">Infrastruttura</h2>
-                      <p className="text-xs text-slate-400 mt-0.5 font-medium">{items.length} dispositivi registrati</p>
-                    </div>
+              <div className="bg-white px-6 py-5 border-b border-slate-100 shrink-0 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
+                    style={{ background: 'linear-gradient(135deg,#1e293b,#475569)' }}>
+                    <Server className="w-5 h-5 text-white" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={openAdd}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
-                      style={{ background: 'linear-gradient(135deg,#1e293b,#334155)' }}>
-                      <Plus className="w-4 h-4" /> Aggiungi
-                    </button>
-                    <button onClick={onClose} aria-label="Chiudi"
-                      className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-                      <X className="w-4 h-4 text-slate-500" />
-                    </button>
+                  <div>
+                    <h2 className="text-lg font-black text-slate-900 leading-none">Infrastruttura</h2>
+                    <p className="text-xs text-slate-400 mt-0.5 font-medium">{items.length} dispositivi registrati</p>
                   </div>
                 </div>
-
-                {/* Search */}
-                <div className="relative mb-3">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Cerca nome, IP, hostname, posizione…"
-                    className="w-full bg-slate-100 rounded-2xl pl-10 pr-9 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none" />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} aria-label="Cancella ricerca"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-300 flex items-center justify-center">
-                      <X className="w-3 h-3 text-slate-600" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Type filter pills */}
-                <div className="flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none]">
-                  <button onClick={() => setFilterType('Tutti')}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      filterType === 'Tutti' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                    }`}>
-                    Tutti ({items.length})
-                  </button>
-                  {ALL_TYPES.map(t => {
-                    const c = TYPE_CONFIG[t]
-                    const count = items.filter(i => i.type === t).length
-                    if (count === 0) return null
-                    const active = filterType === t
-                    return (
-                      <button key={t} onClick={() => setFilterType(t)}
-                        style={active ? { background: c.from, color: '#fff' } : { background: c.light, color: c.text }}
-                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
-                        <c.icon className="w-3 h-3" />
-                        {c.label} <span className="opacity-70">({count})</span>
-                      </button>
-                    )
-                  })}
-                </div>
+                <button onClick={onClose} aria-label="Chiudi"
+                  className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
               </div>
 
-              {/* Cards */}
+              {/* Type cards grid */}
               <div className="overflow-y-auto flex-1 p-6">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-20">
                     <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
                   </div>
-                ) : filtered.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="w-16 h-16 rounded-3xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center mx-auto mb-4">
-                      <Server className="w-7 h-7 text-slate-300" />
-                    </div>
-                    <p className="text-base font-bold text-slate-500">
-                      {searchQuery ? 'Nessun risultato' : 'Nessun dispositivo'}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-1">
-                      {searchQuery ? `Nessun risultato per "${searchQuery}"` : 'Clicca Aggiungi per iniziare'}
-                    </p>
-                  </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {filtered.map(item => {
-                      const c = TYPE_CONFIG[item.type]
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {ALL_TYPES.map(type => {
+                      const c = TYPE_CONFIG[type]
+                      const count = items.filter(i => i.type === type).length
                       return (
                         <motion.button
-                          key={item.id}
-                          layout
-                          onClick={() => setDetailItem(item)}
-                          whileHover={{ scale: 1.03, y: -2 }}
-                          whileTap={{ scale: 0.97 }}
+                          key={type}
+                          onClick={() => { setActiveType(type); setTypeSearch('') }}
+                          whileHover={{ scale: 1.04, y: -2 }}
+                          whileTap={{ scale: 0.96 }}
                           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                          className="text-left rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
+                          className="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
                         >
                           {/* Gradient top */}
-                          <div className="h-20 relative flex items-center justify-center"
+                          <div className="h-24 flex flex-col items-center justify-center gap-2"
                             style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}>
-                            <c.icon className="w-9 h-9 text-white opacity-90" />
-                            {item.isFavorite && (
-                              <div className="absolute top-2 right-2">
-                                <Star className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
-                              </div>
-                            )}
-                            {item.username && (
-                              <div className="absolute bottom-2 left-2">
-                                <Lock className="w-3 h-3 text-white/50" />
-                              </div>
-                            )}
+                            <c.icon className="w-10 h-10 text-white" />
                           </div>
                           {/* White bottom */}
-                          <div className="bg-white px-3 py-2.5">
-                            <p className="text-sm font-black text-slate-800 truncate">{item.name}</p>
-                            <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
-                              {item.ip_address || item.hostname || item.location || '—'}
-                            </p>
-                            <div className="mt-1.5">
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
-                                style={{ background: c.light, color: c.text }}>
-                                {c.label}
-                              </span>
+                          <div className="bg-white px-3 py-3 flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-black text-slate-800">{c.label}</p>
+                              <p className="text-[11px] text-slate-400 font-medium">{count} {count === 1 ? 'dispositivo' : 'dispositivi'}</p>
                             </div>
+                            <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
                           </div>
+                          {/* Count badge */}
+                          {count > 0 && (
+                            <div className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
+                              style={{ background: 'rgba(255,255,255,0.9)', color: c.from }}>
+                              {count}
+                            </div>
+                          )}
                         </motion.button>
                       )
                     })}
@@ -289,6 +230,123 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* ── TYPE MODAL (lista + ricerca + aggiungi) ──────────────────────── */}
+      <AnimatePresence>
+        {activeType && (() => {
+          const c = TYPE_CONFIG[activeType]
+          return (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveType(null)}
+              className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+              style={{ background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)' }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.94, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: 12 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-slate-50 rounded-3xl w-full max-w-md flex flex-col overflow-hidden"
+                style={{ maxHeight: '88vh', boxShadow: '0 32px 80px rgba(0,0,0,0.3)' }}
+              >
+                {/* Gradient header */}
+                <div className="relative px-5 pt-6 pb-14 shrink-0"
+                  style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}>
+                  <button onClick={() => setActiveType(null)} aria-label="Chiudi"
+                    className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ background: 'rgba(255,255,255,0.2)' }}>
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
+                    style={{ background: 'rgba(255,255,255,0.2)' }}>
+                    <c.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-black text-white">{c.label}</h3>
+                  <p className="text-sm font-semibold mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    {items.filter(i => i.type === activeType).length} dispositivi
+                  </p>
+                </div>
+
+                {/* White body pulled up */}
+                <div className="relative -mt-8 rounded-t-3xl bg-slate-50 flex-1 flex flex-col overflow-hidden">
+                  {/* Search + Add */}
+                  <div className="bg-white px-4 pt-5 pb-4 rounded-t-3xl shrink-0">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          value={typeSearch}
+                          onChange={e => setTypeSearch(e.target.value)}
+                          placeholder={`Cerca ${c.label}…`}
+                          className="w-full bg-slate-100 rounded-xl pl-9 pr-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none"
+                          onClick={e => e.stopPropagation()}
+                        />
+                      </div>
+                      <button
+                        onClick={() => openAdd(activeType)}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0 transition-all hover:opacity-90 active:scale-95"
+                        style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}>
+                        <Plus className="w-3.5 h-3.5" />
+                        Aggiungi
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Device list */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {typeItems.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-14 h-14 rounded-2xl border-2 border-dashed flex items-center justify-center mx-auto mb-3"
+                          style={{ borderColor: c.from + '40' }}>
+                          <c.icon className="w-6 h-6" style={{ color: c.from + '80' }} />
+                        </div>
+                        <p className="text-sm font-bold text-slate-500">
+                          {typeSearch ? 'Nessun risultato' : `Nessun ${c.label} registrato`}
+                        </p>
+                        {!typeSearch && (
+                          <p className="text-xs text-slate-400 mt-1">Clicca Aggiungi per iniziare</p>
+                        )}
+                      </div>
+                    ) : (
+                      typeItems.map(item => (
+                        <motion.button
+                          key={item.id}
+                          onClick={() => setDetailItem(item)}
+                          whileHover={{ x: 2 }}
+                          whileTap={{ scale: 0.98 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                          className="w-full text-left bg-white rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}>
+                            <c.icon className="w-4.5 h-4.5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1">
+                              {item.isFavorite && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 flex-shrink-0" />}
+                              <p className="text-sm font-bold text-slate-800 truncate">{item.name}</p>
+                            </div>
+                            <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
+                              {item.ip_address || item.hostname || item.location || '—'}
+                            </p>
+                          </div>
+                          {item.username && <Lock className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />}
+                          <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                        </motion.button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )
+        })()}
       </AnimatePresence>
 
       {/* ── DETAIL MODAL ────────────────────────────────────────────────── */}
@@ -314,7 +372,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setDetailItem(null)}
-              className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+              className="fixed inset-0 z-[65] flex items-center justify-center p-4"
               style={{ background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)' }}
             >
               <motion.div
@@ -327,10 +385,10 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                 style={{ maxHeight: '88vh', boxShadow: '0 32px 80px rgba(0,0,0,0.3)' }}
               >
                 {/* Gradient header */}
-                <div className="relative px-5 pt-6 pb-14"
+                <div className="relative px-5 pt-6 pb-14 shrink-0"
                   style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}>
                   <button onClick={() => setDetailItem(null)} aria-label="Chiudi"
-                    className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+                    className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center"
                     style={{ background: 'rgba(255,255,255,0.2)' }}>
                     <X className="w-4 h-4 text-white" />
                   </button>
@@ -345,10 +403,9 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                   <p className="text-sm font-semibold mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>{c.label}</p>
                 </div>
 
-                {/* White body pulled up */}
+                {/* White body */}
                 <div className="relative -mt-8 rounded-t-3xl bg-white flex-1 overflow-y-auto">
                   <div className="p-5 space-y-4">
-                    {/* Info */}
                     {infoFields.length > 0 && (
                       <div className="rounded-2xl overflow-hidden border border-slate-100">
                         {infoFields.map((fld, i) => (
@@ -368,19 +425,14 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                       </div>
                     )}
 
-                    {/* Credentials */}
                     {(item.username || item.password || item.secondary_username || item.secondary_password) && (
                       <div className="rounded-2xl overflow-hidden border border-slate-100">
-                        <div className="px-4 py-2.5 border-b border-slate-50"
-                          style={{ background: c.light }}>
-                          <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: c.text }}>
-                            Credenziali
-                          </p>
+                        <div className="px-4 py-2.5 border-b border-slate-50" style={{ background: c.light }}>
+                          <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: c.text }}>Credenziali</p>
                         </div>
                         {item.username && (
                           <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-50">
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{ background: c.light }}>
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.light }}>
                               <Lock className="w-3.5 h-3.5" style={{ color: c.text }} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -392,30 +444,23 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                         )}
                         {item.password && (
                           <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-50">
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{ background: c.light }}>
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.light }}>
                               <Lock className="w-3.5 h-3.5" style={{ color: c.text }} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Password</p>
-                              <p className="text-sm font-mono text-slate-800">
-                                {visiblePwd.has(item.id) ? item.password : '••••••••••'}
-                              </p>
+                              <p className="text-sm font-mono text-slate-800">{visiblePwd.has(item.id) ? item.password : '••••••••••'}</p>
                             </div>
                             <button onClick={() => toggleVis(item.id, setVisiblePwd)} aria-label="Mostra password"
-                              className="w-6 h-6 rounded-md flex items-center justify-center transition-colors"
-                              style={{ background: c.light }}>
-                              {visiblePwd.has(item.id)
-                                ? <EyeOff className="w-3 h-3" style={{ color: c.text }} />
-                                : <Eye className="w-3 h-3" style={{ color: c.text }} />}
+                              className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: c.light }}>
+                              {visiblePwd.has(item.id) ? <EyeOff className="w-3 h-3" style={{ color: c.text }} /> : <Eye className="w-3 h-3" style={{ color: c.text }} />}
                             </button>
                             <CopyBtn text={item.password} id={`d-${item.id}-pwd`} copiedId={copiedId} onCopy={copy} light={c.light} />
                           </div>
                         )}
                         {item.secondary_username && (
                           <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-50">
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{ background: c.light }}>
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.light }}>
                               <Lock className="w-3.5 h-3.5" style={{ color: c.text }} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -427,22 +472,16 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                         )}
                         {item.secondary_password && (
                           <div className="flex items-center gap-3 px-4 py-3">
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{ background: c.light }}>
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.light }}>
                               <Lock className="w-3.5 h-3.5" style={{ color: c.text }} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Password 2</p>
-                              <p className="text-sm font-mono text-slate-800">
-                                {visiblePwd2.has(item.id) ? item.secondary_password : '••••••••••'}
-                              </p>
+                              <p className="text-sm font-mono text-slate-800">{visiblePwd2.has(item.id) ? item.secondary_password : '••••••••••'}</p>
                             </div>
                             <button onClick={() => toggleVis(item.id, setVisiblePwd2)} aria-label="Mostra password 2"
-                              className="w-6 h-6 rounded-md flex items-center justify-center transition-colors"
-                              style={{ background: c.light }}>
-                              {visiblePwd2.has(item.id)
-                                ? <EyeOff className="w-3 h-3" style={{ color: c.text }} />
-                                : <Eye className="w-3 h-3" style={{ color: c.text }} />}
+                              className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: c.light }}>
+                              {visiblePwd2.has(item.id) ? <EyeOff className="w-3 h-3" style={{ color: c.text }} /> : <Eye className="w-3 h-3" style={{ color: c.text }} />}
                             </button>
                             <CopyBtn text={item.secondary_password} id={`d-${item.id}-p2`} copiedId={copiedId} onCopy={copy} light={c.light} />
                           </div>
@@ -458,7 +497,6 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                     )}
                   </div>
 
-                  {/* Actions */}
                   <div className="px-5 pb-5 grid grid-cols-3 gap-2">
                     <button
                       onClick={() => updateItem(item.id, { isFavorite: !item.isFavorite }).then(u => { if (u) setDetailItem(u) })}
@@ -469,15 +507,13 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                       <Star className={`w-4 h-4 ${item.isFavorite ? 'fill-amber-400 text-amber-500' : ''}`} />
                       <span className="text-[10px] font-bold">{item.isFavorite ? 'Preferito' : 'Aggiungi'}</span>
                     </button>
-                    <button
-                      onClick={() => openEdit(item)}
+                    <button onClick={() => openEdit(item)}
                       className="flex flex-col items-center gap-1 py-3 rounded-2xl border-2 transition-all"
                       style={{ background: c.light, borderColor: c.from + '40', color: c.text }}>
                       <Pencil className="w-4 h-4" />
                       <span className="text-[10px] font-bold">Modifica</span>
                     </button>
-                    <button
-                      onClick={() => setDeleteConfirm(item.id)}
+                    <button onClick={() => setDeleteConfirm(item.id)}
                       className="flex flex-col items-center gap-1 py-3 rounded-2xl border-2 border-red-100 bg-red-50 text-red-500 transition-all hover:bg-red-100">
                       <Trash2 className="w-4 h-4" />
                       <span className="text-[10px] font-bold">Elimina</span>
@@ -498,7 +534,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={e => { e.stopPropagation(); if (e.target === e.currentTarget) setModal(null) }}
-            className="fixed inset-0 z-[65] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[70] flex items-center justify-center p-4"
             style={{ background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)' }}
           >
             <motion.div
@@ -518,12 +554,12 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                     return (
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
                         style={{ background: `linear-gradient(135deg,${c.from},${c.to})` }}>
-                        <c.icon className="w-4.5 h-4.5 text-white" />
+                        <c.icon className="w-4 h-4 text-white" />
                       </div>
                     )
                   })()}
                   <h3 className="text-base font-black text-slate-900">
-                    {modal.mode === 'add' ? 'Nuovo dispositivo' : `Modifica — ${modal.item.name}`}
+                    {modal.mode === 'add' ? `Nuovo ${TYPE_CONFIG[form.type].label}` : `Modifica — ${modal.item.name}`}
                   </h3>
                 </div>
                 <button onClick={() => setModal(null)} aria-label="Chiudi"
@@ -534,26 +570,28 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
 
               {/* Body */}
               <div className="p-6 overflow-y-auto space-y-5">
-                {/* Tipo */}
-                <div>
-                  <label className={lbl}>Tipo *</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {ALL_TYPES.map(t => {
-                      const c = TYPE_CONFIG[t]
-                      const active = form.type === t
-                      return (
-                        <button key={t} type="button" onClick={() => f('type', t)}
-                          className="flex flex-col items-center gap-1 py-2.5 rounded-2xl border-2 transition-all text-center"
-                          style={active
-                            ? { background: `linear-gradient(135deg,${c.from},${c.to})`, borderColor: c.from, color: '#fff' }
-                            : { background: c.light, borderColor: 'transparent', color: c.text }}>
-                          <c.icon className="w-4 h-4" />
-                          <span className="text-[10px] font-black leading-none">{c.label}</span>
-                        </button>
-                      )
-                    })}
+                {/* Tipo — only shown in edit mode */}
+                {modal.mode === 'edit' && (
+                  <div>
+                    <label className={lbl}>Tipo</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {ALL_TYPES.map(t => {
+                        const c = TYPE_CONFIG[t]
+                        const active = form.type === t
+                        return (
+                          <button key={t} type="button" onClick={() => f('type', t)}
+                            className="flex flex-col items-center gap-1 py-2.5 rounded-2xl border-2 transition-all text-center"
+                            style={active
+                              ? { background: `linear-gradient(135deg,${c.from},${c.to})`, borderColor: c.from, color: '#fff' }
+                              : { background: c.light, borderColor: 'transparent', color: c.text }}>
+                            <c.icon className="w-4 h-4" />
+                            <span className="text-[10px] font-black leading-none">{c.label}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Nome + Posizione */}
                 <div className="grid grid-cols-2 gap-3">
@@ -689,7 +727,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                 </button>
                 <button onClick={save} disabled={saving || !form.name.trim()}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-all hover:opacity-90 active:scale-95"
-                  style={{ background: 'linear-gradient(135deg,#1e293b,#334155)' }}>
+                  style={{ background: `linear-gradient(135deg, ${TYPE_CONFIG[form.type].from}, ${TYPE_CONFIG[form.type].to})` }}>
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Salva
                 </button>
@@ -707,7 +745,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={e => e.stopPropagation()}
-            className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[75] flex items-center justify-center p-4"
             style={{ background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)' }}
           >
             <motion.div
