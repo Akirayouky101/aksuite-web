@@ -1,15 +1,16 @@
 'use client'
 
-import { X, Plus, List, Lock } from 'lucide-react'
+import { X, Plus, List, Lock, Server } from 'lucide-react'
 
 interface PasswordMenuModalProps {
   isOpen: boolean
   onClose: () => void
   onSelectNew: () => void
   onSelectList: () => void
+  onSelectInfrastructure?: () => void
 }
 
-export default function PasswordMenuModal({ isOpen, onClose, onSelectNew, onSelectList }: PasswordMenuModalProps) {
+export default function PasswordMenuModal({ isOpen, onClose, onSelectNew, onSelectList, onSelectInfrastructure }: PasswordMenuModalProps) {
   if (!isOpen) return null
 
   return (
@@ -45,6 +46,17 @@ export default function PasswordMenuModal({ isOpen, onClose, onSelectNew, onSele
               <p className="text-xs text-slate-400">Visualizza tutte le password</p>
             </div>
           </button>
+          {onSelectInfrastructure && (
+            <button onClick={() => { onSelectInfrastructure(); onClose() }} className="w-full flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white border border-slate-200/40 hover:border-slate-200 transition-all text-left group">
+              <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                <Server className="w-5 h-5 text-slate-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700">Infrastruttura Aziendale</h3>
+                <p className="text-xs text-slate-400">PC, Server, NAS, Email, Router…</p>
+              </div>
+            </button>
+          )}
         </div>
       </div>
     </div>

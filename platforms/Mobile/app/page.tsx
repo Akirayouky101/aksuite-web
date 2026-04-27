@@ -13,6 +13,7 @@ import {
 const PasswordModal = dynamic(() => import('./components/PasswordModal'), { ssr: false })
 const PasswordMenuModal = dynamic(() => import('./components/PasswordMenuModal'), { ssr: false })
 const PasswordListModal = dynamic(() => import('./components/PasswordListModal'), { ssr: false })
+const InfrastructurePanel = dynamic(() => import('./components/InfrastructurePanel'), { ssr: false })
 const BudgetModal = dynamic(() => import('./components/BudgetModal'), { ssr: false })
 const BudgetMenuModal = dynamic(() => import('./components/BudgetMenuModal'), { ssr: false })
 const BudgetViewModal = dynamic(() => import('./components/BudgetViewModal'), { ssr: false })
@@ -111,6 +112,7 @@ export default function Home() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isListModalOpen, setIsListModalOpen] = useState(false)
+  const [isInfrastructureOpen, setIsInfrastructureOpen] = useState(false)
   const [editPasswordData, setEditPasswordData] = useState<any>(null)
   const [isBudgetMenuModalOpen, setIsBudgetMenuModalOpen] = useState(false)
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false)
@@ -977,7 +979,9 @@ export default function Home() {
       {/* ALL MODALS — Unchanged Logic */}
       {/* ═══════════════════════════════════════════ */}
       {isMenuModalOpen && <PasswordMenuModal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}
-        onSelectNew={() => setIsPasswordModalOpen(true)} onSelectList={() => setIsListModalOpen(true)} />}
+        onSelectNew={() => setIsPasswordModalOpen(true)} onSelectList={() => setIsListModalOpen(true)}
+        onSelectInfrastructure={() => setIsInfrastructureOpen(true)} />}
+      {isInfrastructureOpen && <InfrastructurePanel isOpen={isInfrastructureOpen} onClose={() => setIsInfrastructureOpen(false)} />}
       {isPasswordModalOpen && <PasswordModal isOpen={isPasswordModalOpen} onClose={() => { setIsPasswordModalOpen(false); setEditPasswordData(null) }}
         editPassword={editPasswordData}
         onSave={(data) => {
