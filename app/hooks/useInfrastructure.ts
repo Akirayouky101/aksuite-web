@@ -139,8 +139,15 @@ export function useInfrastructure() {
       .eq('id', id)
 
     if (!error) {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item))
+      let updated: InfrastructureItem | undefined
+      setItems(prev => prev.map(item => {
+        if (item.id !== id) return item
+        updated = { ...item, ...updates }
+        return updated
+      }))
+      return updated
     }
+    return undefined
   }
 
   const deleteItem = async (id: string) => {

@@ -410,7 +410,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                 {/* Footer */}
                 <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => updateItem(item.id, { isFavorite: !item.isFavorite }).then(u => u && setDetailItem(u))}
+                    onClick={() => updateItem(item.id, { isFavorite: !item.isFavorite }).then(u => { if (u) setDetailItem(u) })}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
                       item.isFavorite ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50'
                     }`}

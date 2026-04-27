@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>debugging</string>
+    <key>teamID</key>
+    <string>3DGFKB5XK4</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.aksuite.magazzino</key>
+        <string>974afbb2-3cce-45a6-ba1a-fbbab1b332ca</string>
+    </dict>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>compileBitcode</key>
+    <false/>
+</dict>
+</plist>

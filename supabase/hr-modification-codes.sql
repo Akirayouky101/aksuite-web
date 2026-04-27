@@ -73,3 +73,11 @@ ALTER TABLE public.hr_modification_codes
 -- 11. Aggiorna righe esistenti
 UPDATE public.hr_modification_codes SET status = 'used'      WHERE used_at IS NOT NULL AND status = 'code_sent';
 UPDATE public.hr_modification_codes SET status = 'code_sent' WHERE used_at IS NULL  AND code IS NOT NULL AND status = 'code_sent';
+
+-- ═══════════════════════════════════════════════════════════
+-- MIGRATION v3 — REPLICA IDENTITY FULL (OBBLIGATORIO per filtri realtime su UPDATE)
+-- Senza questo, Supabase non invia UPDATE events filtrati su profile_id
+-- ═══════════════════════════════════════════════════════════
+
+-- 12. REPLICA IDENTITY FULL — necessario per filtri realtime su colonne non-PK
+ALTER TABLE public.hr_modification_codes REPLICA IDENTITY FULL;
