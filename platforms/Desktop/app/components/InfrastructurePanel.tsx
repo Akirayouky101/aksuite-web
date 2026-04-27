@@ -5,77 +5,51 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Plus, Search, Eye, EyeOff, Copy, Trash2, Pencil, Save, Loader2,
   Monitor, Server, HardDrive, Mail, Router, Network, Video, Printer,
-  Shield, Cpu, Star, ChevronDown, ChevronUp, MapPin, Globe, Hash,
-  User, Lock, Wifi
+  Shield, Cpu, Star, ChevronRight
 } from 'lucide-react'
 import { useInfrastructure, InfrastructureItem, InfraType } from '../hooks/useInfrastructure'
-import { encryptPassword } from '@/lib/supabase'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Config per tipo
+// Config
 // ─────────────────────────────────────────────────────────────────────────────
-const TYPE_CONFIG: Record<InfraType, { label: string; icon: React.ElementType; color: string; bg: string; border: string }> = {
-  PC:        { label: 'PC / Workstation', icon: Monitor,   color: 'text-sky-600',     bg: 'bg-sky-50',      border: 'border-sky-200' },
-  Server:    { label: 'Server',           icon: Server,    color: 'text-violet-600',  bg: 'bg-violet-50',   border: 'border-violet-200' },
-  NAS:       { label: 'NAS / Storage',    icon: HardDrive, color: 'text-emerald-600', bg: 'bg-emerald-50',  border: 'border-emerald-200' },
-  Email:     { label: 'Email / SMTP',     icon: Mail,      color: 'text-amber-600',   bg: 'bg-amber-50',    border: 'border-amber-200' },
-  Router:    { label: 'Router',           icon: Router,    color: 'text-orange-600',  bg: 'bg-orange-50',   border: 'border-orange-200' },
-  Switch:    { label: 'Switch',           icon: Network,   color: 'text-cyan-600',    bg: 'bg-cyan-50',     border: 'border-cyan-200' },
-  NVR:       { label: 'NVR / Videosorv.', icon: Video,     color: 'text-rose-600',    bg: 'bg-rose-50',     border: 'border-rose-200' },
-  DVR:       { label: 'DVR',              icon: Video,     color: 'text-pink-600',    bg: 'bg-pink-50',     border: 'border-pink-200' },
-  Firewall:  { label: 'Firewall',         icon: Shield,    color: 'text-red-600',     bg: 'bg-red-50',      border: 'border-red-200' },
-  Stampante: { label: 'Stampante',        icon: Printer,   color: 'text-indigo-600',  bg: 'bg-indigo-50',   border: 'border-indigo-200' },
-  Altro:     { label: 'Altro',            icon: Cpu,       color: 'text-slate-600',   bg: 'bg-slate-100',   border: 'border-slate-200' },
+const TYPE_CONFIG: Record<InfraType, { label: string; icon: React.ElementType; gradient: string }> = {
+  PC:        { label: 'PC / Workstation', icon: Monitor,   gradient: 'from-sky-400 to-sky-600' },
+  Server:    { label: 'Server',           icon: Server,    gradient: 'from-violet-500 to-violet-700' },
+  NAS:       { label: 'NAS / Storage',    icon: HardDrive, gradient: 'from-emerald-400 to-emerald-600' },
+  Email:     { label: 'Email / SMTP',     icon: Mail,      gradient: 'from-amber-400 to-amber-600' },
+  Router:    { label: 'Router',           icon: Router,    gradient: 'from-orange-400 to-orange-600' },
+  Switch:    { label: 'Switch',           icon: Network,   gradient: 'from-cyan-400 to-cyan-600' },
+  NVR:       { label: 'NVR / Videosorv.', icon: Video,     gradient: 'from-rose-400 to-rose-600' },
+  DVR:       { label: 'DVR',              icon: Video,     gradient: 'from-pink-400 to-pink-600' },
+  Firewall:  { label: 'Firewall',         icon: Shield,    gradient: 'from-red-400 to-red-600' },
+  Stampante: { label: 'Stampante',        icon: Printer,   gradient: 'from-indigo-400 to-indigo-600' },
+  Altro:     { label: 'Altro',            icon: Cpu,       gradient: 'from-slate-400 to-slate-600' },
 }
 
 const ALL_TYPES = Object.keys(TYPE_CONFIG) as InfraType[]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Form vuoto
-// ─────────────────────────────────────────────────────────────────────────────
 const EMPTY_FORM = (): Omit<InfrastructureItem, 'id' | 'createdAt' | 'updatedAt'> => ({
-  type: 'PC',
-  name: '',
-  hostname: '',
-  ip_address: '',
-  mac_address: '',
-  location: '',
-  username: '',
-  password: '',
-  secondary_username: '',
-  secondary_password: '',
-  port: '',
-  domain: '',
-  os_version: '',
-  serial_number: '',
-  notes: '',
-  isFavorite: false,
+  type: 'PC', name: '', hostname: '', ip_address: '', mac_address: '',
+  location: '', username: '', password: '', secondary_username: '',
+  secondary_password: '', port: '', domain: '', os_version: '',
+  serial_number: '', notes: '', isFavorite: false,
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sub-components
+// CopyBtn
 // ─────────────────────────────────────────────────────────────────────────────
-function CopyBtn({ text, id, copiedId, onCopy }: { text: string; id: string; copiedId: string | null; onCopy: (t: string, id: string) => void }) {
-  return (
-    <button onClick={(e) => { e.stopPropagation(); onCopy(text, id) }} className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0">
-      {copiedId === id
-        ? <span className="text-green-500 text-xs font-bold">✓</span>
-        : <Copy className="w-3 h-3 text-slate-400" />}
-    </button>
-  )
-}
-
-function SecretField({ value, visible, onToggle, onCopy, copyId, copiedId }: {
-  value: string; visible: boolean; onToggle: () => void; onCopy: (t: string, id: string) => void; copyId: string; copiedId: string | null
+function CopyBtn({ text, id, copiedId, onCopy }: {
+  text: string; id: string; copiedId: string | null; onCopy: (t: string, id: string) => void
 }) {
   return (
-    <div className="flex items-center gap-1">
-      <code className="text-sm font-mono text-slate-700">{visible ? value : '••••••••'}</code>
-      <button onClick={(e) => { e.stopPropagation(); onToggle() }} className="p-1 hover:bg-slate-200 rounded transition-colors">
-        {visible ? <EyeOff className="w-3.5 h-3.5 text-slate-400" /> : <Eye className="w-3.5 h-3.5 text-slate-400" />}
-      </button>
-      <CopyBtn text={value} id={copyId} copiedId={copiedId} onCopy={onCopy} />
-    </div>
+    <button
+      onClick={e => { e.stopPropagation(); onCopy(text, id) }}
+      className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0"
+    >
+      {copiedId === id
+        ? <span className="text-green-500 text-[10px] font-bold">✓</span>
+        : <Copy className="w-3 h-3 text-slate-400" />}
+    </button>
   )
 }
 
@@ -92,10 +66,9 @@ type ModalMode = { mode: 'add' } | { mode: 'edit'; item: InfrastructureItem }
 export default function InfrastructurePanel({ isOpen, onClose }: Props) {
   const { items, isLoading, addItem, updateItem, deleteItem } = useInfrastructure()
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState<InfraType | 'Tutti'>('Tutti')
-  const [favOnly, setFavOnly] = useState(false)
-  const [expandedType, setExpandedType] = useState<InfraType | null>(null)
+  const [searchQuery, setSearchQuery]   = useState('')
+  const [filterType, setFilterType]     = useState<InfraType | 'Tutti'>('Tutti')
+  const [expandedItem, setExpandedItem] = useState<string | null>(null)
 
   const [modal, setModal] = useState<ModalMode | null>(null)
   const [form, setForm] = useState(EMPTY_FORM())
@@ -121,7 +94,6 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase()
     return items.filter(item => {
-      if (favOnly && !item.isFavorite) return false
       if (filterType !== 'Tutti' && item.type !== filterType) return false
       if (!q) return true
       return (
@@ -137,7 +109,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
         TYPE_CONFIG[item.type].label.toLowerCase().includes(q)
       )
     })
-  }, [items, searchQuery, filterType, favOnly])
+  }, [items, searchQuery, filterType])
 
   // Group by type
   const grouped = useMemo(() => {
@@ -184,8 +156,8 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
   }
 
   // ── Input helpers ──────────────────────────────────────────────────────────
-  const inp  = 'w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:border-indigo-400 focus:outline-none'
-  const lbl  = 'block text-xs font-semibold text-slate-500 mb-1'
+  const inp  = 'w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:border-slate-400 focus:outline-none'
+  const lbl  = 'block text-xs font-medium text-slate-500 mb-1'
   const f    = (k: keyof typeof form, v: string | boolean) => setForm(p => ({ ...p, [k]: v }))
 
   // ── Type-specific fields config ─────────────────────────────────────────────
@@ -204,75 +176,64 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[55] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/40 z-[55] flex items-center justify-center p-4"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 24 }}
             onClick={e => e.stopPropagation()}
-            className="relative bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 w-full max-w-5xl flex flex-col overflow-hidden"
-            style={{ maxHeight: '92vh' }}
+            className="bg-white rounded-2xl w-full max-w-lg flex flex-col overflow-hidden shadow-xl"
+            style={{ maxHeight: '90vh' }}
           >
-            {/* ── Header ─────────────────────────────────────────────────── */}
-            <div className="relative z-10 px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
-              <div className="flex items-center justify-between">
+            {/* ── Header ──────────────────────────────────────────────────── */}
+            <div className="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-900 flex items-center justify-center shadow-lg shadow-slate-500/20">
-                    <Server className="w-5 h-5 text-white" />
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow">
+                    <Server className="w-[18px] h-[18px] text-white" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-800">Infrastruttura Aziendale</h2>
-                    <p className="text-xs text-slate-400 mt-0.5">{items.length} dispositivi · {filtered.length} visibili</p>
+                    <h2 className="text-base font-bold text-slate-800 leading-none">Infrastruttura</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">{items.length} dispositivi</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openAdd()}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-slate-700 to-slate-900 text-white text-sm font-semibold rounded-xl hover:from-slate-600 hover:to-slate-800 transition-all shadow shadow-slate-900/20"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-700 transition-colors"
                   >
-                    <Plus size={15} />
-                    Aggiungi
+                    <Plus className="w-3.5 h-3.5" /> Aggiungi
                   </button>
                   <button
                     onClick={onClose}
-                    title="Chiudi"
-                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+                    className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
                   >
-                    <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+                    <X className="w-4 h-4 text-slate-500" />
                   </button>
                 </div>
               </div>
 
               {/* Search */}
-              <div className="relative mt-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Cerca per nome, IP, hostname, dominio, posizione, S/N…"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:border-indigo-400 focus:outline-none transition-all"
+                  placeholder="Cerca dispositivo…"
+                  className="w-full bg-slate-100 rounded-xl pl-8 pr-8 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none"
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                    <X className="w-4 h-4" />
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <X className="w-3.5 h-3.5 text-slate-400" />
                   </button>
                 )}
               </div>
 
-              {/* Filters */}
-              <div className="flex flex-wrap gap-2 items-center mt-3">
-                <button
-                  onClick={() => setFavOnly(v => !v)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                    favOnly ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  <Star className={`w-3.5 h-3.5 ${favOnly ? 'fill-amber-400 text-amber-400' : ''}`} />
-                  Solo preferiti
-                </button>
+              {/* Type filter */}
+              <div className="flex gap-1.5 mt-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
                 {(['Tutti', ...ALL_TYPES] as const).map(t => {
                   const active = filterType === t
                   const cfg = t !== 'Tutti' ? TYPE_CONFIG[t] : null
@@ -280,13 +241,15 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                     <button
                       key={t}
                       onClick={() => setFilterType(t)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                        active
-                          ? cfg ? `${cfg.bg} ${cfg.color} ${cfg.border}` : 'bg-slate-800 text-white border-slate-800'
-                          : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                      className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                        active ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                       }`}
                     >
-                      {cfg && <cfg.icon className="w-3 h-3" />}
+                      {cfg && (
+                        <div className={`w-3 h-3 rounded bg-gradient-to-br ${cfg.gradient} flex items-center justify-center`}>
+                          <cfg.icon className="w-2 h-2 text-white" />
+                        </div>
+                      )}
                       {t === 'Tutti' ? 'Tutti' : cfg?.label}
                     </button>
                   )
@@ -294,292 +257,230 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
               </div>
             </div>
 
-            {/* ── List ───────────────────────────────────────────────────── */}
-            <div className="relative z-10 overflow-y-auto flex-1 p-6">
+            {/* ── List ────────────────────────────────────────────────────── */}
+            <div className="overflow-y-auto flex-1">
               {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="text-center py-20">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                    <Server className="w-6 h-6 text-slate-400" />
+                <div className="text-center py-16 px-4">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                    <Server className="w-5 h-5 text-slate-400" />
                   </div>
-                  <h3 className="text-sm font-semibold text-slate-600 mb-1">
-                    {searchQuery ? 'Nessun risultato' : 'Nessun dispositivo salvato'}
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    {searchQuery ? 'Prova con termini diversi' : 'Aggiungi il primo dispositivo con il pulsante in alto'}
+                  <p className="text-sm font-semibold text-slate-600">
+                    {searchQuery ? 'Nessun risultato' : 'Nessun dispositivo'}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {searchQuery ? 'Prova con altri termini' : 'Aggiungi il primo dispositivo'}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-5">
-                  {usedTypes.map(type => {
-                    const cfg = TYPE_CONFIG[type]
-                    const typeItems = grouped.get(type)!
-                    const expanded = expandedType === type || !!searchQuery || filterType !== 'Tutti'
+                usedTypes.map((type, sectionIdx) => {
+                  const cfg = TYPE_CONFIG[type]
+                  const typeItems = grouped.get(type)!
+                  return (
+                    <div key={type}>
+                      {/* Section label */}
+                      <div className={`flex items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-100 ${sectionIdx > 0 ? 'border-t border-slate-100' : ''}`}>
+                        <div className={`w-5 h-5 rounded bg-gradient-to-br ${cfg.gradient} flex items-center justify-center`}>
+                          <cfg.icon className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-500">{cfg.label}</span>
+                        <span className="text-xs text-slate-400 ml-auto">{typeItems.length}</span>
+                      </div>
 
-                    return (
-                      <div key={type}>
-                        {/* Section header */}
-                        <button
-                          onClick={() => setExpandedType(expanded && !searchQuery && filterType === 'Tutti' ? null : type)}
-                          className="w-full flex items-center justify-between mb-2 group"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <div className={`w-7 h-7 rounded-lg ${cfg.bg} border ${cfg.border} flex items-center justify-center`}>
-                              <cfg.icon className={`w-3.5 h-3.5 ${cfg.color}`} />
-                            </div>
-                            <span className="text-sm font-bold text-slate-700">{cfg.label}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.color} border ${cfg.border}`}>
-                              {typeItems.length}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
+                      {/* Rows */}
+                      {typeItems.map((item, idx) => {
+                        const isExp    = expandedItem === item.id
+                        const subtitle = item.ip_address || item.hostname || item.location || '—'
+                        const hasMore  = idx < typeItems.length - 1 || isExp
+
+                        type FieldDef = { label: string; value: string; id: string; mono: boolean }
+                        const fields: FieldDef[] = [
+                          item.ip_address    && { label: 'IP',        value: item.ip_address,    id: `${item.id}-ip`,   mono: true  },
+                          item.hostname      && { label: 'Hostname',  value: item.hostname,       id: `${item.id}-host`, mono: true  },
+                          item.domain        && { label: 'Dominio',   value: item.domain,         id: `${item.id}-dom`,  mono: true  },
+                          item.mac_address   && { label: 'MAC',       value: item.mac_address,    id: `${item.id}-mac`,  mono: true  },
+                          item.port          && { label: 'Porta',     value: item.port,           id: `${item.id}-port`, mono: true  },
+                          item.os_version    && { label: 'OS',        value: item.os_version,     id: `${item.id}-os`,   mono: false },
+                          item.serial_number && { label: 'S/N',       value: item.serial_number,  id: `${item.id}-sn`,   mono: true  },
+                          item.location      && { label: 'Posizione', value: item.location,       id: `${item.id}-loc`,  mono: false },
+                        ].filter((x): x is FieldDef => !!x)
+
+                        return (
+                          <div key={item.id} className="bg-white">
+                            {/* Row */}
                             <button
-                              onClick={e => { e.stopPropagation(); openAdd(type) }}
-                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${cfg.color} border ${cfg.border} ${cfg.bg} hover:brightness-95 transition-all`}
+                              onClick={() => setExpandedItem(isExp ? null : item.id)}
+                              className={`w-full flex items-center px-4 py-3 text-left hover:bg-slate-50/80 transition-colors ${hasMore ? 'border-b border-slate-100' : ''}`}
                             >
-                              <Plus className="w-3 h-3" /> Aggiungi
-                            </button>
-                            {!searchQuery && filterType === 'Tutti' && (
-                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${cfg.bg} border ${cfg.border}`}>
-                                {expanded
-                                  ? <ChevronUp className={`w-3.5 h-3.5 ${cfg.color}`} />
-                                  : <ChevronDown className={`w-3.5 h-3.5 ${cfg.color}`} />}
+                              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${cfg.gradient} flex items-center justify-center shadow-sm mr-3 flex-shrink-0`}>
+                                <cfg.icon className="w-[18px] h-[18px] text-white" />
                               </div>
-                            )}
-                          </div>
-                        </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  {item.isFavorite && <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />}
+                                  <span className="text-sm font-semibold text-slate-800 truncate">{item.name}</span>
+                                </div>
+                                <span className="text-xs text-slate-400 font-mono">{subtitle}</span>
+                              </div>
+                              <ChevronRight className={`w-4 h-4 text-slate-300 flex-shrink-0 transition-transform duration-200 ${isExp ? 'rotate-90' : ''}`} />
+                            </button>
 
-                        {/* Item cards */}
-                        <AnimatePresence>
-                          {expanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="space-y-2">
-                                {typeItems.map(item => (
-                                  <div
-                                    key={item.id}
-                                    className={`bg-white border rounded-xl p-4 hover:border-slate-300 hover:bg-slate-50/50 transition-all ${cfg.border}`}
-                                  >
-                                    <div className="flex items-start gap-3">
-                                      {/* Icon */}
-                                      <div className={`w-10 h-10 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                                        <cfg.icon className={`w-5 h-5 ${cfg.color}`} />
+                            {/* Expanded detail */}
+                            <AnimatePresence>
+                              {isExp && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.18 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="bg-slate-50 border-b border-slate-100 px-4 py-3 space-y-1.5">
+                                    {/* Info fields */}
+                                    {fields.map(fld => (
+                                      <div key={fld.id} className="flex items-center gap-2">
+                                        <span className="text-[11px] text-slate-400 w-16 flex-shrink-0">{fld.label}</span>
+                                        <code className={`text-xs flex-1 truncate ${fld.mono ? 'font-mono text-slate-700' : 'text-slate-700'}`}>{fld.value}</code>
+                                        <CopyBtn text={fld.value} id={fld.id} copiedId={copiedId} onCopy={copy} />
                                       </div>
+                                    ))}
 
-                                      {/* Content */}
-                                      <div className="flex-1 min-w-0">
-                                        {/* Title */}
-                                        <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-                                          {item.isFavorite && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />}
-                                          <span className="text-sm font-bold text-slate-800">{item.name}</span>
-                                          {item.location && (
-                                            <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color} border ${cfg.border}`}>
-                                              <MapPin className="w-2.5 h-2.5" /> {item.location}
-                                            </span>
-                                          )}
-                                          {item.os_version && (
-                                            <span className="text-xs text-slate-400 font-mono">{item.os_version}</span>
-                                          )}
-                                        </div>
-
-                                        {/* Fields grid */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
-                                          {item.ip_address && (
-                                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-8 flex-shrink-0">IP</span>
-                                              <code className="text-xs font-mono text-slate-700 flex-1 truncate">{item.ip_address}</code>
-                                              <CopyBtn text={item.ip_address} id={`${item.id}-ip`} copiedId={copiedId} onCopy={copy} />
-                                            </div>
-                                          )}
-                                          {item.hostname && (
-                                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-8 flex-shrink-0">HOST</span>
-                                              <code className="text-xs font-mono text-slate-700 flex-1 truncate">{item.hostname}</code>
-                                              <CopyBtn text={item.hostname} id={`${item.id}-host`} copiedId={copiedId} onCopy={copy} />
-                                            </div>
-                                          )}
-                                          {item.domain && (
-                                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-8 flex-shrink-0">DOM</span>
-                                              <code className="text-xs font-mono text-slate-700 flex-1 truncate">{item.domain}</code>
-                                              <CopyBtn text={item.domain} id={`${item.id}-domain`} copiedId={copiedId} onCopy={copy} />
-                                            </div>
-                                          )}
-                                          {item.port && (
-                                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-8 flex-shrink-0">PORT</span>
-                                              <code className="text-xs font-mono text-slate-700">{item.port}</code>
-                                            </div>
-                                          )}
-                                          {item.mac_address && (
-                                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-8 flex-shrink-0">MAC</span>
-                                              <code className="text-xs font-mono text-slate-700 flex-1 truncate">{item.mac_address}</code>
-                                              <CopyBtn text={item.mac_address} id={`${item.id}-mac`} copiedId={copiedId} onCopy={copy} />
-                                            </div>
-                                          )}
-                                          {item.serial_number && (
-                                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-8 flex-shrink-0">S/N</span>
-                                              <code className="text-xs font-mono text-slate-700 flex-1 truncate">{item.serial_number}</code>
-                                              <CopyBtn text={item.serial_number} id={`${item.id}-sn`} copiedId={copiedId} onCopy={copy} />
-                                            </div>
-                                          )}
-                                        </div>
-
-                                        {/* Credentials */}
-                                        {(item.username || item.password || item.secondary_username || item.secondary_password) && (
-                                          <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                                            {item.username && (
-                                              <div className="flex items-center gap-1.5">
-                                                <span className="text-xs text-slate-400 w-16 flex-shrink-0">Utente</span>
-                                                <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-1 flex-1 min-w-0">
-                                                  <code className="text-xs font-mono text-indigo-700 flex-1 truncate">{item.username}</code>
-                                                  <CopyBtn text={item.username} id={`${item.id}-user`} copiedId={copiedId} onCopy={copy} />
-                                                </div>
-                                              </div>
-                                            )}
-                                            {item.password && (
-                                              <div className="flex items-center gap-1.5">
-                                                <span className="text-xs text-slate-400 w-16 flex-shrink-0">Password</span>
-                                                <div className="flex items-center gap-1 bg-violet-50 border border-violet-100 rounded-lg px-2.5 py-1 flex-1 min-w-0">
-                                                  <code className="text-xs font-mono text-violet-700 flex-1">
-                                                    {visiblePwd.has(item.id) ? item.password : '••••••••'}
-                                                  </code>
-                                                  <button onClick={e => { e.stopPropagation(); toggleVis(item.id, visiblePwd, setVisiblePwd) }} className="p-0.5 hover:bg-violet-100 rounded transition-colors">
-                                                    {visiblePwd.has(item.id) ? <EyeOff className="w-3 h-3 text-violet-400" /> : <Eye className="w-3 h-3 text-violet-400" />}
-                                                  </button>
-                                                  <CopyBtn text={item.password} id={`${item.id}-pwd`} copiedId={copiedId} onCopy={copy} />
-                                                </div>
-                                              </div>
-                                            )}
-                                            {item.secondary_username && (
-                                              <div className="flex items-center gap-1.5">
-                                                <span className="text-xs text-slate-400 w-16 flex-shrink-0">Utente 2</span>
-                                                <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-1 flex-1 min-w-0">
-                                                  <code className="text-xs font-mono text-indigo-700 flex-1 truncate">{item.secondary_username}</code>
-                                                  <CopyBtn text={item.secondary_username} id={`${item.id}-user2`} copiedId={copiedId} onCopy={copy} />
-                                                </div>
-                                              </div>
-                                            )}
-                                            {item.secondary_password && (
-                                              <div className="flex items-center gap-1.5">
-                                                <span className="text-xs text-slate-400 w-16 flex-shrink-0">Password 2</span>
-                                                <div className="flex items-center gap-1 bg-violet-50 border border-violet-100 rounded-lg px-2.5 py-1 flex-1 min-w-0">
-                                                  <code className="text-xs font-mono text-violet-700 flex-1">
-                                                    {visiblePwd2.has(item.id) ? item.secondary_password : '••••••••'}
-                                                  </code>
-                                                  <button onClick={e => { e.stopPropagation(); toggleVis(item.id, visiblePwd2, setVisiblePwd2) }} className="p-0.5 hover:bg-violet-100 rounded transition-colors">
-                                                    {visiblePwd2.has(item.id) ? <EyeOff className="w-3 h-3 text-violet-400" /> : <Eye className="w-3 h-3 text-violet-400" />}
-                                                  </button>
-                                                  <CopyBtn text={item.secondary_password} id={`${item.id}-pwd2`} copiedId={copiedId} onCopy={copy} />
-                                                </div>
-                                              </div>
-                                            )}
+                                    {/* Credentials */}
+                                    {(item.username || item.password || item.secondary_username || item.secondary_password) && (
+                                      <div className={`space-y-1.5 ${fields.length > 0 ? 'pt-1.5 mt-1 border-t border-slate-200' : ''}`}>
+                                        {item.username && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[11px] text-slate-400 w-16 flex-shrink-0">Utente</span>
+                                            <code className="text-xs font-mono text-indigo-700 flex-1 truncate">{item.username}</code>
+                                            <CopyBtn text={item.username} id={`${item.id}-user`} copiedId={copiedId} onCopy={copy} />
                                           </div>
                                         )}
-
-                                        {item.notes && (
-                                          <p className="mt-2 text-xs text-slate-400 italic border-t border-slate-100 pt-2">{item.notes}</p>
+                                        {item.password && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[11px] text-slate-400 w-16 flex-shrink-0">Password</span>
+                                            <code className="text-xs font-mono text-violet-700 flex-1">
+                                              {visiblePwd.has(item.id) ? item.password : '••••••••'}
+                                            </code>
+                                            <button onClick={e => { e.stopPropagation(); toggleVis(item.id, visiblePwd, setVisiblePwd) }} className="p-1 hover:bg-slate-200 rounded transition-colors">
+                                              {visiblePwd.has(item.id) ? <EyeOff className="w-3 h-3 text-slate-400" /> : <Eye className="w-3 h-3 text-slate-400" />}
+                                            </button>
+                                            <CopyBtn text={item.password} id={`${item.id}-pwd`} copiedId={copiedId} onCopy={copy} />
+                                          </div>
+                                        )}
+                                        {item.secondary_username && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[11px] text-slate-400 w-16 flex-shrink-0">Utente 2</span>
+                                            <code className="text-xs font-mono text-indigo-700 flex-1 truncate">{item.secondary_username}</code>
+                                            <CopyBtn text={item.secondary_username} id={`${item.id}-user2`} copiedId={copiedId} onCopy={copy} />
+                                          </div>
+                                        )}
+                                        {item.secondary_password && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[11px] text-slate-400 w-16 flex-shrink-0">Password 2</span>
+                                            <code className="text-xs font-mono text-violet-700 flex-1">
+                                              {visiblePwd2.has(item.id) ? item.secondary_password : '••••••••'}
+                                            </code>
+                                            <button onClick={e => { e.stopPropagation(); toggleVis(item.id, visiblePwd2, setVisiblePwd2) }} className="p-1 hover:bg-slate-200 rounded transition-colors">
+                                              {visiblePwd2.has(item.id) ? <EyeOff className="w-3 h-3 text-slate-400" /> : <Eye className="w-3 h-3 text-slate-400" />}
+                                            </button>
+                                            <CopyBtn text={item.secondary_password} id={`${item.id}-pwd2`} copiedId={copiedId} onCopy={copy} />
+                                          </div>
                                         )}
                                       </div>
+                                    )}
 
-                                      {/* Actions */}
-                                      <div className="flex flex-col gap-1.5 flex-shrink-0">
-                                        <button
-                                          onClick={() => updateItem(item.id, { isFavorite: !item.isFavorite })}
-                                          className={`p-1.5 rounded-lg border transition-all ${
-                                            item.isFavorite
-                                              ? 'bg-amber-50 border-amber-200'
-                                              : 'bg-white border-slate-200 hover:bg-amber-50 hover:border-amber-200'
-                                          }`}
-                                          title={item.isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
-                                        >
-                                          <Star className={`w-3.5 h-3.5 ${item.isFavorite ? 'text-amber-400 fill-amber-400' : 'text-slate-400'}`} />
-                                        </button>
-                                        <button
-                                          onClick={() => openEdit(item)}
-                                          className="p-1.5 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-all"
-                                          title="Modifica"
-                                        >
-                                          <Pencil className="w-3.5 h-3.5 text-slate-400 hover:text-indigo-500" />
-                                        </button>
-                                        <button
-                                          onClick={() => setDeleteConfirm(item.id)}
-                                          className="p-1.5 bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-lg transition-all"
-                                          title="Elimina"
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-400" />
-                                        </button>
-                                      </div>
+                                    {item.notes && (
+                                      <p className="text-xs text-slate-400 italic pt-1.5 border-t border-slate-200">{item.notes}</p>
+                                    )}
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
+                                      <button
+                                        onClick={e => { e.stopPropagation(); updateItem(item.id, { isFavorite: !item.isFavorite }) }}
+                                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                          item.isFavorite ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-amber-50'
+                                        }`}
+                                      >
+                                        <Star className={`w-3 h-3 ${item.isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
+                                        {item.isFavorite ? 'Preferito' : 'Preferiti'}
+                                      </button>
+                                      <button
+                                        onClick={e => { e.stopPropagation(); openEdit(item) }}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 transition-colors"
+                                      >
+                                        <Pencil className="w-3 h-3" /> Modifica
+                                      </button>
+                                      <button
+                                        onClick={e => { e.stopPropagation(); setDeleteConfirm(item.id) }}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border bg-white text-red-500 border-red-200 hover:bg-red-50 transition-colors ml-auto"
+                                      >
+                                        <Trash2 className="w-3 h-3" /> Elimina
+                                      </button>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    )
-                  })}
-                </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })
               )}
             </div>
           </motion.div>
 
-          {/* ── Add/Edit Modal ──────────────────────────────────────────────── */}
+          {/* ── Add/Edit Modal ───────────────────────────────────────────── */}
           <AnimatePresence>
             {modal && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[65] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+                className="fixed inset-0 z-[65] bg-black/50 flex items-center justify-center p-4"
                 onClick={e => { if (e.target === e.currentTarget) setModal(null) }}
               >
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                  initial={{ opacity: 0, scale: 0.96, y: 8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                  exit={{ opacity: 0, scale: 0.96, y: 8 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
-                  className="relative bg-white/95 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 w-full max-w-2xl flex flex-col overflow-hidden"
+                  className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden"
                   style={{ maxHeight: '90vh' }}
                 >
                   {/* Modal header */}
-                  <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 shrink-0">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
                     <div className="flex items-center gap-3">
-                      {modal.mode === 'add' ? (
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-900 flex items-center justify-center">
-                          <Plus className="w-4 h-4 text-white" />
-                        </div>
-                      ) : (() => { const cfg = TYPE_CONFIG[form.type]; return (
-                        <div className={`w-8 h-8 rounded-lg ${cfg.bg} border ${cfg.border} flex items-center justify-center`}>
-                          <cfg.icon className={`w-4 h-4 ${cfg.color}`} />
-                        </div>
-                      )})()}
+                      {(() => {
+                        const cfg = TYPE_CONFIG[form.type]
+                        return (
+                          <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${cfg.gradient} flex items-center justify-center shadow`}>
+                            <cfg.icon className="w-4 h-4 text-white" />
+                          </div>
+                        )
+                      })()}
                       <h3 className="text-base font-bold text-slate-800">
                         {modal.mode === 'add' ? 'Nuovo dispositivo' : `Modifica — ${modal.item.name}`}
                       </h3>
                     </div>
-                    <button onClick={() => setModal(null)} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all">
-                      <X className="w-4 h-4 text-slate-400" />
+                    <button
+                      onClick={() => setModal(null)}
+                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-4 h-4 text-slate-500" />
                     </button>
                   </div>
 
                   {/* Modal body */}
-                  <div className="p-6 overflow-y-auto space-y-4">
+                  <div className="p-5 overflow-y-auto space-y-4">
                     {/* Tipo */}
                     <div>
-                      <label className={lbl}>Tipo dispositivo *</label>
-                      <div className="flex flex-wrap gap-2">
+                      <label className={lbl}>Tipo *</label>
+                      <div className="flex flex-wrap gap-1.5">
                         {ALL_TYPES.map(t => {
                           const cfg = TYPE_CONFIG[t]
                           const active = form.type === t
@@ -588,11 +489,13 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                               key={t}
                               type="button"
                               onClick={() => f('type', t)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                                active ? `${cfg.bg} ${cfg.color} ${cfg.border}` : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                               }`}
                             >
-                              <cfg.icon size={12} />
+                              <div className={`w-3 h-3 rounded bg-gradient-to-br ${cfg.gradient} flex items-center justify-center`}>
+                                <cfg.icon className="w-2 h-2 text-white" />
+                              </div>
                               {cfg.label}
                             </button>
                           )
@@ -607,12 +510,12 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                         <input value={form.name} onChange={e => f('name', e.target.value)} placeholder="es. PC-MARIO, SRV-001" className={inp} />
                       </div>
                       <div>
-                        <label className={lbl}>Posizione / Stanza</label>
+                        <label className={lbl}>Posizione</label>
                         <input value={form.location} onChange={e => f('location', e.target.value)} placeholder="es. Ufficio, Sala server" className={inp} />
                       </div>
                     </div>
 
-                    {/* Rete */}
+                    {/* Network */}
                     {showNetwork && (
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -634,7 +537,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                       </div>
                     )}
 
-                    {/* Email specifici */}
+                    {/* Email */}
                     {showEmail && (
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -646,13 +549,13 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                           <input value={form.port} onChange={e => f('port', e.target.value)} placeholder="465, 587, 993…" className={inp} />
                         </div>
                         <div>
-                          <label className={lbl}>Dominio / Indirizzo email</label>
+                          <label className={lbl}>Indirizzo email</label>
                           <input value={form.domain} onChange={e => f('domain', e.target.value)} placeholder="info@azienda.it" className={inp} />
                         </div>
                       </div>
                     )}
 
-                    {/* Dominio Windows / AD */}
+                    {/* OS */}
                     {showOS && (
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -672,12 +575,12 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                       <input value={form.serial_number} onChange={e => f('serial_number', e.target.value)} placeholder="S/N del dispositivo" className={inp} />
                     </div>
 
-                    {/* Credenziali primarie */}
-                    <div className="pt-1">
-                      <p className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Credenziali principali</p>
+                    {/* Credenziali */}
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Credenziali principali</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className={lbl}>Username / Utente</label>
+                          <label className={lbl}>Username</label>
                           <input value={form.username} onChange={e => f('username', e.target.value)} placeholder="admin, Administrator…" className={inp} />
                         </div>
                         <div>
@@ -690,17 +593,16 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                               className={`${inp} pr-9`}
                             />
                             <button type="button" onClick={() => setShowFormPwd(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
-                              {showFormPwd ? <EyeOff size={14} /> : <Eye size={14} />}
+                              {showFormPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                             </button>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Credenziali secondarie */}
                     {showDual && (
                       <div>
-                        <p className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Credenziali secondarie (opzionale)</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Credenziali secondarie</p>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className={lbl}>Username 2</label>
@@ -716,7 +618,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                                 className={`${inp} pr-9`}
                               />
                               <button type="button" onClick={() => setShowFormPwd2(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
-                                {showFormPwd2 ? <EyeOff size={14} /> : <Eye size={14} />}
+                                {showFormPwd2 ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                               </button>
                             </div>
                           </div>
@@ -738,15 +640,17 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                   </div>
 
                   {/* Modal footer */}
-                  <div className="px-6 py-4 border-t border-slate-200/60 bg-white/60 flex justify-end gap-2 shrink-0">
-                    <button onClick={() => setModal(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors">Annulla</button>
+                  <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2 shrink-0">
+                    <button onClick={() => setModal(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                      Annulla
+                    </button>
                     <button
                       onClick={save}
                       disabled={saving || !form.name.trim()}
-                      className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 text-white text-sm font-semibold disabled:opacity-50 shadow shadow-slate-900/20 hover:from-slate-600 hover:to-slate-800 transition-all"
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold disabled:opacity-50 hover:bg-slate-700 transition-colors"
                     >
                       {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                      Salva dispositivo
+                      Salva
                     </button>
                   </div>
                 </motion.div>
@@ -754,29 +658,31 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
             )}
           </AnimatePresence>
 
-          {/* ── Delete Confirm ──────────────────────────────────────────────── */}
+          {/* ── Delete Confirm ───────────────────────────────────────────── */}
           <AnimatePresence>
             {deleteConfirm && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[70] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+                className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4"
               >
                 <motion.div
-                  initial={{ scale: 0.95, opacity: 0, y: 8 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.95, opacity: 0, y: 8 }}
-                  transition={{ duration: 0.15, ease: 'easeOut' }}
-                  className="bg-white/95 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 w-full max-w-sm p-6 text-center"
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
+                  <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
                     <Trash2 className="w-5 h-5 text-red-500" />
                   </div>
                   <h3 className="text-base font-bold text-slate-800 mb-1">Elimina dispositivo</h3>
                   <p className="text-sm text-slate-500 mb-5">Questa operazione è irreversibile.</p>
                   <div className="flex gap-2 justify-center">
-                    <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors">Annulla</button>
+                    <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                      Annulla
+                    </button>
                     <button
                       onClick={async () => { await deleteItem(deleteConfirm); setDeleteConfirm(null) }}
                       className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors"
