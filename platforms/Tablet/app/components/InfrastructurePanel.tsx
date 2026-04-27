@@ -266,19 +266,19 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                 style={{ maxHeight: '88vh', background: '#f8fafc', boxShadow: '0 40px 100px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08)' }}
               >
                 {/* Gradient header */}
-                <div className="relative px-5 pt-7 pb-16 shrink-0"
+                <div className="relative px-5 pt-8 pb-16 shrink-0 flex flex-col items-center text-center"
                   style={{ background: `linear-gradient(145deg, ${c.from}, ${c.to})` }}>
                   {/* Shine overlay */}
                   <div className="absolute inset-0 opacity-25 pointer-events-none"
-                    style={{ background: 'radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.6) 0%, transparent 60%)' }} />
+                    style={{ background: 'radial-gradient(ellipse at 50% 10%, rgba(255,255,255,0.6) 0%, transparent 60%)' }} />
                   <button onClick={() => setActiveType(null)} aria-label="Chiudi"
                     className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center backdrop-blur-sm transition-all hover:scale-105"
                     style={{ background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.3)' }}>
                     <X className="w-3.5 h-3.5 text-white" />
                   </button>
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
                     style={{ background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}>
-                    <c.icon className="w-7 h-7 text-white drop-shadow" />
+                    <c.icon className="w-8 h-8 text-white drop-shadow" />
                   </div>
                   <h3 className="text-2xl font-black text-white tracking-tight leading-none">{c.label}</h3>
                   <p className="text-sm font-semibold mt-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
