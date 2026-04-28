@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Plus, Search, Eye, EyeOff, Copy, Trash2, Pencil, Save, Loader2,
   Monitor, Server, HardDrive, Mail, Router, Network, Video, Printer,
-  Shield, Cpu, Star, Lock, Globe, Hash, ChevronRight,
+  Shield, Cpu, Star, Lock, Globe, Hash, ChevronRight, CopyPlus,
 } from 'lucide-react'
 import { useInfrastructure, InfrastructureItem, InfraType } from '../hooks/useInfrastructure'
 
@@ -523,7 +523,7 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                     )}
                   </div>
 
-                  <div className="px-5 pb-5 grid grid-cols-3 gap-2">
+                  <div className="px-5 pb-5 grid grid-cols-4 gap-2">
                     <button
                       onClick={() => updateItem(item.id, { isFavorite: !item.isFavorite }).then(u => { if (u) setDetailItem(u) })}
                       className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all active:scale-95"
@@ -538,6 +538,17 @@ export default function InfrastructurePanel({ isOpen, onClose }: Props) {
                       style={{ background: c.light, border: `1.5px solid ${c.from}30`, color: c.text }}>
                       <Pencil className="w-4 h-4" />
                       <span className="text-[10px] font-bold leading-none">Modifica</span>
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = item as InfrastructureItem & { createdAt?: unknown; updatedAt?: unknown }
+                        await addItem({ ...rest, name: `${item.name} (copia)`, isFavorite: false })
+                        setDetailItem(null)
+                      }}
+                      className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all active:scale-95"
+                      style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', color: '#16a34a' }}>
+                      <CopyPlus className="w-4 h-4" />
+                      <span className="text-[10px] font-bold leading-none">Duplica</span>
                     </button>
                     <button onClick={() => setDeleteConfirm(item.id)}
                       className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl transition-all active:scale-95"
