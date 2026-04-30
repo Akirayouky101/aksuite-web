@@ -1666,6 +1666,8 @@ export default function Home() {
         onDelete={deleteVerifica}
         onCompleta={completaVerifica}
         onRefetch={refetchVerifiche}
+        clients={clients}
+        onAddClient={addClient}
       />}
 
       {isUserManagementOpen && <UserManagementModal

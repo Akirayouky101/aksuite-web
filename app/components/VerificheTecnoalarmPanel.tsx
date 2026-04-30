@@ -2,14 +2,16 @@
 
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useRef } from 'react'
 import {
   X, Plus, Search, ShieldCheck, Calendar, AlertTriangle,
   CheckCircle2, Clock, Pencil, Trash2, Save, ChevronDown,
   User, Phone, MapPin, ClipboardList, FileText, BadgeCheck,
   AlertCircle, XCircle, Loader2, RefreshCw, ChevronLeft,
-  Building2, Wrench, ToggleLeft, ToggleRight,
+  Building2, Wrench, ToggleLeft, ToggleRight, UserPlus, Users,
 } from 'lucide-react'
 import type { VerificaTecnoalarm, NuovaVerifica, VerificaCampoDefinizione } from '../hooks/useVerificheTecnoalarm'
+import type { Client } from '../hooks/useClients'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -78,6 +80,8 @@ interface VerificheTecnoalarmPanelProps {
   completate: number
   currentUserName: string
   isAdmin: boolean
+  clients: Client[]
+  onAddClient: (data: Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<Client | null>
   onAdd: (data: NuovaVerifica) => Promise<VerificaTecnoalarm | null>
   onUpdate: (id: string, data: Partial<VerificaTecnoalarm>) => Promise<VerificaTecnoalarm | null>
   onDelete: (id: string) => Promise<void>
@@ -98,6 +102,7 @@ export default function VerificheTecnoalarmPanel({
   verifiche, campiDefinizioni, loading,
   scadute, inScadenza, programmate, completate,
   currentUserName, isAdmin,
+  clients, onAddClient,
   onAdd, onUpdate, onDelete, onCompleta, onRefetch,
 }: VerificheTecnoalarmPanelProps) {
 
@@ -110,6 +115,14 @@ export default function VerificheTecnoalarmPanel({
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+
+  // ─── Client dropdown state ────────────────────────────────────────────
+  const [clientSearch, setClientSearch] = useState('')
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
+  const clientRef = useRef<HTMLDivElement>(null)
+  // Prompt "aggiungi a rubrica"
+  const [showAddToRubrica, setShowAddToRubrica] = useState(false)
+  const [addingToRubrica, setAddingToRubrica] = useState(false)
 
   const [form, setForm] = useState<typeof EMPTY_FORM>({ ...EMPTY_FORM })
   const [completaForm, setCompletaForm] = useState({
@@ -141,9 +154,13 @@ export default function VerificheTecnoalarmPanel({
     setSelected(null)
     setShowForm(true)
     setShowCompleta(false)
+    setClientSearch('')
+    setClientDropdownOpen(false)
   }
 
   const openEdit = (v: VerificaTecnoalarm) => {
+    setClientSearch('')
+    setClientDropdownOpen(false)
     setForm({
       cliente: v.cliente, indirizzo: v.indirizzo, telefono: v.telefono,
       riferimento: v.riferimento, codice_impianto: v.codice_impianto,
@@ -186,11 +203,56 @@ export default function VerificheTecnoalarmPanel({
       } else {
         await onAdd(payload)
       }
+      // Check if typed client name matches rubrica
+      if (!editing) {
+        const nameToCheck = form.cliente.trim().toLowerCase()
+        const alreadyInRubrica = clients.some(c =>
+          c.name?.toLowerCase() === nameToCheck ||
+          (form.telefono && c.phone && c.phone === form.telefono.trim())
+        )
+        if (!alreadyInRubrica && nameToCheck) {
+          setShowAddToRubrica(true)
+          return // delay close until decision
+        }
+      }
       setShowForm(false)
       setSelected(null)
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleAddToRubrica = async () => {
+    setAddingToRubrica(true)
+    try {
+      await onAddClient({
+        name: form.cliente.trim(),
+        company: '',
+        phone: form.telefono.trim(),
+        phone2: '',
+        email: '',
+        address: form.indirizzo.trim(),
+        city: '',
+        zip_code: '',
+        province: '',
+        fiscal_code: '',
+        vat_number: '',
+        category: 'privato',
+        notes: '',
+        is_favorite: false,
+      })
+    } finally {
+      setAddingToRubrica(false)
+      setShowAddToRubrica(false)
+      setShowForm(false)
+      setSelected(null)
+    }
+  }
+
+  const handleSkipRubrica = () => {
+    setShowAddToRubrica(false)
+    setShowForm(false)
+    setSelected(null)
   }
 
   const handleDelete = async (id: string) => {
@@ -218,6 +280,7 @@ export default function VerificheTecnoalarmPanel({
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -436,8 +499,79 @@ export default function VerificheTecnoalarmPanel({
                       <Section title="Anagrafica Impianto" icon={<Building2 size={13}/>}>
                         <div className="grid grid-cols-2 gap-3">
                           <Field label="Cliente *">
-                            <input value={form.cliente} onChange={e => setForm(f => ({...f, cliente: e.target.value}))}
-                              placeholder="Ragione sociale / Nome" className={inputCls} />
+                            <div ref={clientRef} className="relative">
+                              <button
+                                type="button"
+                                onClick={() => { setClientDropdownOpen(o => !o); setClientSearch('') }}
+                                className={`${inputCls} text-left flex items-center justify-between`}
+                              >
+                                <span className={form.cliente ? 'text-white' : 'text-slate-500'}>
+                                  {form.cliente || 'Seleziona o digita…'}
+                                </span>
+                                <Search size={13} className="text-slate-500 shrink-0" />
+                              </button>
+                              {clientDropdownOpen && (
+                                <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: '#1e293b' }}>
+                                  <div className="p-2 border-b border-white/10">
+                                    <input
+                                      autoFocus
+                                      type="text"
+                                      value={clientSearch}
+                                      onChange={e => setClientSearch(e.target.value)}
+                                      placeholder="Cerca cliente…"
+                                      className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                                    />
+                                  </div>
+                                  <div className="overflow-y-auto max-h-52">
+                                    <button
+                                      type="button"
+                                      onClick={() => { setForm(f => ({...f, cliente: ''})); setClientDropdownOpen(false) }}
+                                      className="w-full px-3 py-2 text-left text-xs text-slate-500 hover:bg-white/5"
+                                    >— Nessun cliente —</button>
+                                    {(() => {
+                                      const q = clientSearch.toLowerCase()
+                                      const filtered = clients
+                                        .filter(c => !q || c.name?.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q) || c.city?.toLowerCase().includes(q))
+                                      return <>
+                                        {filtered.map(c => (
+                                          <button
+                                            key={c.id}
+                                            type="button"
+                                            onClick={() => {
+                                              setForm(f => ({
+                                                ...f,
+                                                cliente: c.name,
+                                                telefono: f.telefono || c.phone || '',
+                                                indirizzo: f.indirizzo || `${c.address || ''}${c.city ? ', ' + c.city : ''}`.trim().replace(/^,\s*/, ''),
+                                              }))
+                                              setClientDropdownOpen(false)
+                                              setClientSearch('')
+                                            }}
+                                            className={`w-full px-3 py-2 text-left text-xs hover:bg-white/8 transition-colors ${form.cliente === c.name ? 'text-indigo-300 bg-indigo-500/10' : 'text-slate-300'}`}
+                                          >
+                                            {c.name}{c.company ? <span className="text-slate-500 ml-1">({c.company})</span> : null}{c.city ? <span className="text-slate-500 ml-1">– {c.city}</span> : null}
+                                          </button>
+                                        ))}
+                                        {/* Crea nuovo se non trovato */}
+                                        {clientSearch.trim() && !clients.some(c => c.name?.toLowerCase() === clientSearch.toLowerCase()) && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setForm(f => ({...f, cliente: clientSearch.trim()}))
+                                              setClientDropdownOpen(false)
+                                              setClientSearch('')
+                                            }}
+                                            className="w-full px-3 py-2 text-left text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors flex items-center gap-2 border-t border-white/5"
+                                          >
+                                            <UserPlus size={12} /> Usa «{clientSearch.trim()}» (nuovo cliente)
+                                          </button>
+                                        )}
+                                      </>
+                                    })()}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </Field>
                           <Field label="Codice Impianto">
                             <input value={form.codice_impianto} onChange={e => setForm(f => ({...f, codice_impianto: e.target.value}))}
@@ -901,6 +1035,55 @@ export default function VerificheTecnoalarmPanel({
         </motion.div>
       )}
     </AnimatePresence>
+
+    {/* Add to Rubrica Prompt */}
+    <AnimatePresence>
+      {showAddToRubrica && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+          onClick={handleSkipRubrica}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/60 w-full max-w-sm p-6 text-center"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/25">
+              <Users className="w-7 h-7 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">Aggiungere alla Rubrica?</h3>
+            <p className="text-sm text-slate-500 mb-1">
+              <span className="font-semibold text-slate-700">{form.cliente}</span>
+            </p>
+            <p className="text-xs text-slate-400 mb-6">
+              Questo contatto non è presente nella rubrica clienti. Vuoi aggiungerlo?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSkipRubrica}
+                className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium transition-all"
+              >
+                No, grazie
+              </button>
+              <button
+                onClick={handleAddToRubrica}
+                disabled={addingToRubrica}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg shadow-teal-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                {addingToRubrica ? 'Salvataggio...' : 'Sì, aggiungi'}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   )
 }
 
