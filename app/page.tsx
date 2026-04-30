@@ -6,7 +6,7 @@ import {
   Lock, LogIn, LogOut, User, Phone, UserCheck, Users,
   DollarSign, CheckSquare, StickyNote, ChevronRight, ChevronLeft, Plus,
   TrendingUp, TrendingDown, Clock, Calendar, Menu, X, Shield, Star, ArrowUpRight,
-  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus, Layers, Ticket, DoorOpen
+  Search, Bell, Settings, MapPin, FileText, Wrench, Truck, ShoppingCart, Package, Upload, PanelLeftClose, PanelLeft, Monitor, PackageMinus, Layers, Ticket, DoorOpen, ShieldCheck
 } from 'lucide-react'
 
 // ═══ LAZY LOADED MODALS (next/dynamic, ssr: false) ═══
@@ -63,6 +63,7 @@ const InstallationListModal = dynamic(() => import('./components/InstallationLis
 const InstallationModal = dynamic(() => import('./components/InstallationModal'), { ssr: false })
 const InstallationSchemaModal = dynamic(() => import('./components/InstallationSchemaModal'), { ssr: false })
 const GatesPanel = dynamic(() => import('./components/GatesPanel'), { ssr: false })
+const VerificheTecnoalarmPanel = dynamic(() => import('./components/VerificheTecnoalarmPanel'), { ssr: false })
 const KitModal = dynamic(() => import('./components/KitModal'), { ssr: false })
 const KitsListModal = dynamic(() => import('./components/KitsListModal'), { ssr: false })
 const StockDashboardModal = dynamic(() => import('./components/StockDashboardModal'), { ssr: false })
@@ -104,6 +105,7 @@ import { useWarehouseRequests } from './hooks/useWarehouseRequests'
 import { useKits, Kit } from './hooks/useKits'
 import { useTickets, Ticket as TicketType } from './hooks/useTickets'
 import { useHR } from './hooks/useHR'
+import { useVerificheTecnoalarm } from './hooks/useVerificheTecnoalarm'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -157,6 +159,7 @@ export default function Home() {
   const [isInstallationSchemaOpen, setIsInstallationSchemaOpen] = useState(false)
   const [schemaInstallation, setSchemaInstallation] = useState<any>(null)
   const [isGatesPanelOpen, setIsGatesPanelOpen] = useState(false)
+  const [isVerifichePanelOpen, setIsVerifichePanelOpen] = useState(false)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -251,6 +254,7 @@ export default function Home() {
   const { kits, addKit, updateKit, deleteKit, getKitAvailability, findByQrCode: findKitByQrCode } = useKits()
   const { tickets, teamProfiles: ticketTeamProfiles, adminProfiles: ticketAdminProfiles, addTicket, updateTicket, updateStatus: updateTicketStatus, deleteTicket, uploadAttachment, deleteAttachment } = useTickets()
   const { hrUsers, documents: hrDocuments, leaveRequests: hrLeaveRequests, workRecords: hrWorkRecords, upsertHRProfile, addDocument: addHRDocument, deleteDocument: deleteHRDocument, addLeaveRequest, updateLeaveStatus, deleteLeaveRequest, addWorkRecord, deleteWorkRecord, updateWorkRecord } = useHR()
+  const { verifiche, campiDefinizioni, loading: verificheLoading, scadute: verificheScadute, inScadenza: verificheInScadenza, programmate: verificheProgrammate, completate: verificheCompletate, addVerifica, updateVerifica, deleteVerifica, updateStato: updateVerificaStato, completaVerifica, refetch: refetchVerifiche } = useVerificheTecnoalarm()
   const isWarehouseCreator = user?.email === 'diegomarruchi@outlook.it'
   // Utente kiosk: ha SOLO can_prelievo, nessun altro modulo → schermata prelievi bloccata
   const isKioskOnly = !isAdmin && !!myPermissions && !!myPermissions.can_prelievo &&
@@ -410,7 +414,7 @@ export default function Home() {
       { id: 'sopralluoghi', perm: 'can_sopralluoghi' as const, label: 'Sopralluoghi', icon: MapPin, onClick: () => setIsSopralluoghiListModalOpen(true), count: sopralluoghi.length, section: 'operativo' },
       { id: 'installations', perm: 'can_installations' as const, label: 'Impianti', icon: Monitor, onClick: () => setIsInstallationListModalOpen(true), count: installations.length, section: 'operativo' },
       { id: 'cancelli', perm: 'can_cancelli' as const, label: 'Cancelli', icon: DoorOpen, onClick: () => setIsGatesPanelOpen(true), section: 'operativo' },
-      // --- Magazzino & Commerciale ---
+      { id: 'verifiche', perm: 'can_verifiche' as const, label: 'Verifiche Tecnoalarm', icon: ShieldCheck, onClick: () => setIsVerifichePanelOpen(true), section: 'operativo' },
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Listini', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.filter(p => (p.warehouse || 'listino') === 'listino').length, section: 'commerciale' },
       { id: 'warehouse_astzg', perm: 'can_warehouse' as const, label: 'Magazzino AST/ZG', icon: Package, onClick: () => setIsAstZgModalOpen(true), count: products.filter(p => p.warehouse === 'magazzino_astzg').length, section: 'commerciale' },
@@ -1647,6 +1651,25 @@ export default function Home() {
         onClose={() => setIsGatesPanelOpen(false)}
         clients={clients}
         isAdmin={isAdmin}
+      />}
+
+      {isVerifichePanelOpen && <VerificheTecnoalarmPanel
+        isOpen={isVerifichePanelOpen}
+        onClose={() => setIsVerifichePanelOpen(false)}
+        verifiche={verifiche}
+        campiDefinizioni={campiDefinizioni}
+        loading={verificheLoading}
+        scadute={verificheScadute}
+        inScadenza={verificheInScadenza}
+        programmate={verificheProgrammate}
+        completate={verificheCompletate}
+        currentUserName={userProfile?.full_name || user?.email || ''}
+        isAdmin={isAdmin}
+        onAdd={addVerifica}
+        onUpdate={updateVerifica}
+        onDelete={deleteVerifica}
+        onCompleta={completaVerifica}
+        onRefetch={refetchVerifiche}
       />}
 
       {isUserManagementOpen && <UserManagementModal
