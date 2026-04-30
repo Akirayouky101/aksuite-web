@@ -224,16 +224,18 @@ export default function VerificheTecnoalarmPanel({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={onClose}
         >
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="ml-auto w-full max-w-5xl h-full flex flex-col"
+            className="w-full max-w-5xl max-h-[92vh] flex flex-col rounded-2xl overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}
+            onClick={e => e.stopPropagation()}
           >
             {/* ── Header ── */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
@@ -320,7 +322,7 @@ export default function VerificheTecnoalarmPanel({
             <div className="flex flex-1 overflow-hidden">
 
               {/* Lista */}
-              <div className={`flex flex-col overflow-hidden transition-all duration-300 ${selected ? 'w-2/5 border-r border-white/10' : 'w-full'}`}>
+              <div className={`flex flex-col overflow-hidden transition-all duration-300 ${selected || showForm ? 'w-2/5 border-r border-white/10' : 'w-full'}`}>
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
                   {loading ? (
                     <div className="flex items-center justify-center py-16 text-slate-500">
