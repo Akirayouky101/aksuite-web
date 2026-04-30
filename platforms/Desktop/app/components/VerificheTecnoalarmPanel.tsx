@@ -519,7 +519,7 @@ export default function VerificheTecnoalarmPanel({
                                       if (allOn) {
                                         setForm(f => ({ ...f, campi_abilitati: f.campi_abilitati.filter(n => !names.includes(n)) }))
                                       } else {
-                                        setForm(f => ({ ...f, campi_abilitati: [...new Set([...f.campi_abilitati, ...names])] }))
+                                        setForm(f => ({ ...f, campi_abilitati: Array.from(new Set([...f.campi_abilitati, ...names])) }))
                                       }
                                     }}
                                     className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
