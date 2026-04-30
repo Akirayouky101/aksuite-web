@@ -123,6 +123,8 @@ export default function VerificheTecnoalarmPanel({
   // Prompt "aggiungi a rubrica"
   const [showAddToRubrica, setShowAddToRubrica] = useState(false)
   const [addingToRubrica, setAddingToRubrica] = useState(false)
+  // Modale selezione campi
+  const [showCampiModal, setShowCampiModal] = useState(false)
 
   const [form, setForm] = useState<typeof EMPTY_FORM>({ ...EMPTY_FORM })
   const [completaForm, setCompletaForm] = useState({
@@ -623,74 +625,29 @@ export default function VerificheTecnoalarmPanel({
                         </div>
                       </Section>
 
-                      {/* Campi Flessibili — raggruppati per categoria */}
-                      {campiDefinizioni.length > 0 && (() => {
-                        const CAT_LABEL: Record<string, string> = {
-                          attivita:     'Attività',
-                          controlli:    'Controlli',
-                          misurazioni:  'Misurazioni Tensioni',
-                          dati_tecnici: 'Dati Tecnici',
-                        }
-                        const gruppi = campiDefinizioni.reduce<Record<string, VerificaCampoDefinizione[]>>((acc, c) => {
-                          const cat = c.categoria || 'altro'
-                          if (!acc[cat]) acc[cat] = []
-                          acc[cat].push(c)
-                          return acc
-                        }, {})
-                        const catOrder = ['attivita', 'controlli', 'misurazioni', 'dati_tecnici']
-                        const cats = [...catOrder.filter(k => gruppi[k]), ...Object.keys(gruppi).filter(k => !catOrder.includes(k))]
-                        return (
-                          <Section title="Campi Verifica" icon={<ClipboardList size={13}/>}>
-                            <p className="text-slate-500 text-xs mb-3">Seleziona i campi da includere in questa verifica:</p>
-                            {cats.map(cat => (
-                              <div key={cat} className="mb-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{CAT_LABEL[cat] || cat}</span>
-                                  <div className="flex-1 border-t border-white/8"/>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const names = (gruppi[cat] || []).map(c => c.nome)
-                                      const allOn = names.every(n => form.campi_abilitati.includes(n))
-                                      if (allOn) {
-                                        setForm(f => ({ ...f, campi_abilitati: f.campi_abilitati.filter(n => !names.includes(n)) }))
-                                      } else {
-                                        setForm(f => ({ ...f, campi_abilitati: Array.from(new Set([...f.campi_abilitati, ...names])) }))
-                                      }
-                                    }}
-                                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                                  >
-                                    {(gruppi[cat] || []).every(c => form.campi_abilitati.includes(c.nome)) ? 'Deseleziona tutti' : 'Seleziona tutti'}
-                                  </button>
-                                </div>
-                                <div className={`grid gap-2 ${cat === 'controlli' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                                  {(gruppi[cat] || []).map(campo => {
-                                    const abilitato = form.campi_abilitati.includes(campo.nome)
-                                    return (
-                                      <button
-                                        key={campo.nome}
-                                        type="button"
-                                        onClick={() => toggleCampo(campo.nome)}
-                                        className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
-                                          abilitato
-                                            ? 'border-indigo-500/60 bg-indigo-500/15 text-indigo-300'
-                                            : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20'
-                                        }`}
-                                      >
-                                        <span>{campo.etichetta}</span>
-                                        {abilitato
-                                          ? <ToggleRight size={14} className="text-indigo-400"/>
-                                          : <ToggleLeft size={14} className="text-slate-600"/>
-                                        }
-                                      </button>
-                                    )
-                                  })}
+                      {/* Campi Flessibili — pulsante che apre modale */}
+                      {campiDefinizioni.length > 0 && (
+                        <Section title="Campi Verifica" icon={<ClipboardList size={13}/>}>
+                          <button
+                            type="button"
+                            onClick={() => setShowCampiModal(true)}
+                            className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/8 hover:border-indigo-500/40 transition-all group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <ClipboardList size={15} className="text-indigo-400" />
+                              <div className="text-left">
+                                <div className="text-sm text-white font-medium">Seleziona Campi da Compilare</div>
+                                <div className="text-xs text-slate-500 mt-0.5">
+                                  {form.campi_abilitati.length === 0
+                                    ? 'Nessun campo selezionato'
+                                    : `${form.campi_abilitati.length} campo${form.campi_abilitati.length !== 1 ? 'i' : ''} selezionat${form.campi_abilitati.length !== 1 ? 'i' : 'o'}`}
                                 </div>
                               </div>
-                            ))}
-                          </Section>
-                        )
-                      })()}
+                            </div>
+                            <ChevronDown size={14} className="text-slate-500 group-hover:text-indigo-400 transition-colors" />
+                          </button>
+                        </Section>
+                      )}
 
                       {/* Note */}
                       <Section title="Note" icon={<FileText size={13}/>}>
@@ -1032,6 +989,132 @@ export default function VerificheTecnoalarmPanel({
               </motion.div>
             )}
           </AnimatePresence>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* Campi Verifica Modal */}
+    <AnimatePresence>
+      {showCampiModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+          onClick={() => setShowCampiModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.96, opacity: 0, y: 16 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.96, opacity: 0, y: 16 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden border border-white/10"
+            style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-indigo-500/20">
+                  <ClipboardList size={16} className="text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold">Campi Verifica</h3>
+                  <p className="text-slate-400 text-xs">Seleziona i campi da includere in questa verifica</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-500">{form.campi_abilitati.length} selezionati</span>
+                <button onClick={() => setShowCampiModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {(() => {
+                const CAT_LABEL: Record<string, string> = {
+                  attivita:     'Attività',
+                  controlli:    'Controlli',
+                  misurazioni:  'Misurazioni Tensioni',
+                  dati_tecnici: 'Dati Tecnici',
+                }
+                const gruppi = campiDefinizioni.reduce<Record<string, VerificaCampoDefinizione[]>>((acc, c) => {
+                  const cat = c.categoria || 'altro'
+                  if (!acc[cat]) acc[cat] = []
+                  acc[cat].push(c)
+                  return acc
+                }, {})
+                const catOrder = ['attivita', 'controlli', 'misurazioni', 'dati_tecnici']
+                const cats = [...catOrder.filter(k => gruppi[k]), ...Object.keys(gruppi).filter(k => !catOrder.includes(k))]
+                return cats.map(cat => (
+                  <div key={cat}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{CAT_LABEL[cat] || cat}</span>
+                      <div className="flex-1 h-px bg-white/8" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const names = (gruppi[cat] || []).map(c => c.nome)
+                          const allOn = names.every(n => form.campi_abilitati.includes(n))
+                          if (allOn) {
+                            setForm(f => ({ ...f, campi_abilitati: f.campi_abilitati.filter(n => !names.includes(n)) }))
+                          } else {
+                            setForm(f => ({ ...f, campi_abilitati: Array.from(new Set([...f.campi_abilitati, ...names])) }))
+                          }
+                        }}
+                        className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                      >
+                        {(gruppi[cat] || []).every(c => form.campi_abilitati.includes(c.nome)) ? 'Deseleziona tutti' : 'Seleziona tutti'}
+                      </button>
+                    </div>
+                    <div className={`grid gap-2 ${cat === 'controlli' ? 'grid-cols-2' : cat === 'misurazioni' ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                      {(gruppi[cat] || []).map(campo => {
+                        const abilitato = form.campi_abilitati.includes(campo.nome)
+                        return (
+                          <button
+                            key={campo.nome}
+                            type="button"
+                            onClick={() => toggleCampo(campo.nome)}
+                            className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                              abilitato
+                                ? 'border-indigo-500/60 bg-indigo-500/15 text-indigo-300'
+                                : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-slate-300'
+                            }`}
+                          >
+                            <span className="text-left leading-tight">{campo.etichetta}</span>
+                            {abilitato
+                              ? <ToggleRight size={18} className="text-indigo-400 shrink-0 ml-2" />
+                              : <ToggleLeft size={18} className="text-slate-600 shrink-0 ml-2" />
+                            }
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, campi_abilitati: [] }))}
+                className="text-xs text-slate-500 hover:text-red-400 transition-colors"
+              >
+                Deseleziona tutto
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCampiModal(false)}
+                className="px-5 py-2 rounded-xl bg-indigo-500/80 hover:bg-indigo-500 text-white text-sm font-medium transition-all"
+              >
+                Conferma
+              </button>
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
