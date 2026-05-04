@@ -616,15 +616,9 @@ export default function CalendarioScreen({ navigation }: any) {
 
             {/* ── STEP: note ── */}
             {wizardStep === 'note' && (
-              <ScrollView
-                style={{ flex: 1 }}
-                contentContainerStyle={[s.wizardStep, { paddingBottom: 32 }]}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
+              <View style={{ paddingTop: 8 }}>
                 <Text style={s.wizardStepNum}>Passo 3 di 3</Text>
                 <Text style={s.wizardTitle}>📝  Note finali</Text>
-                <Text style={s.wizardSub}>Opzionale — descrivi brevemente il lavoro svolto</Text>
 
                 {/* Riepilogo */}
                 <View style={s.riepilogoBox}>
@@ -634,20 +628,19 @@ export default function CalendarioScreen({ navigation }: any) {
                 </View>
 
                 <TextInput
-                  style={s.noteInput}
+                  style={[s.noteInput, { minHeight: 60, maxHeight: 80 }]}
                   multiline
-                  numberOfLines={4}
-                  placeholder="Es: sostituito quadro elettrico, verificato impianto..."
+                  placeholder="Note opzionali sul lavoro svolto..."
                   placeholderTextColor="#9CA3AF"
                   value={noteFinali}
                   onChangeText={setNoteFinali}
                 />
 
-                {/* Bottone principale: registra sessione senza completare */}
+                {/* Bottone: registra sessione senza completare */}
                 <TouchableOpacity
                   onPress={() => handleSalvaOre(false)}
                   disabled={completaLoading}
-                  style={{ marginTop: 16, borderRadius: 14, overflow: 'hidden' }}
+                  style={{ marginTop: 14, borderRadius: 14, overflow: 'hidden' }}
                 >
                   <LinearGradient colors={['#6366F1', '#7C3AED']} style={[s.wizardBtnGrad, { paddingVertical: 14 }]}>
                     {completaLoading
@@ -657,11 +650,11 @@ export default function CalendarioScreen({ navigation }: any) {
                   </LinearGradient>
                 </TouchableOpacity>
 
-                {/* Bottone secondario: segna come completata (verde) */}
+                {/* Bottone: segna come completata */}
                 <TouchableOpacity
                   onPress={() => handleSalvaOre(true)}
                   disabled={completaLoading}
-                  style={{ marginTop: 10, borderRadius: 14, overflow: 'hidden' }}
+                  style={{ marginTop: 8, borderRadius: 14, overflow: 'hidden' }}
                 >
                   <LinearGradient colors={['#10B981', '#059669']} style={[s.wizardBtnGrad, { paddingVertical: 14 }]}>
                     <Text style={s.wizardBtnPrimaryTxt}>✅  Segna come completata</Text>
@@ -671,7 +664,7 @@ export default function CalendarioScreen({ navigation }: any) {
                 <TouchableOpacity onPress={() => setWizardStep('ora_fine')} style={[s.wizardBtnSecondary, { marginTop: 8 }]}>
                   <Text style={s.wizardBtnSecondaryTxt}>‹ Indietro</Text>
                 </TouchableOpacity>
-              </ScrollView>
+              </View>
             )}
 
             {/* ── STEP: done ── */}
