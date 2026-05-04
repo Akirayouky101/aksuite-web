@@ -83,9 +83,18 @@ export default function CalendarView({
 
   const filteredEvents = useMemo(() => {
     if (!isAdmin || filterUserId === 'all') return events
-    if (filterUserId === 'mine') return events.filter(e => e.user_id === currentUserId && !e.assigned_to)
-    return events.filter(e => e.user_id === filterUserId || e.assigned_to === filterUserId)
-  }, [events, filterUserId, isAdmin, currentUserId])
+    if (filterUserId === 'mine') return events.filter(e =>
+      e.user_id === currentUserId || e.assigned_to === currentUserId
+    )
+    // Trova il nome dell'utente selezionato per matching anche su assigned_to_name
+    // (retrocompatibilità: eventi vecchi con assigned_to=null ma assigned_to_name impostato)
+    const selectedUser = managedUsers.find(u => u.id === filterUserId)
+    return events.filter(e =>
+      e.user_id === filterUserId ||
+      e.assigned_to === filterUserId ||
+      (selectedUser && e.assigned_to_name?.trim() === selectedUser.full_name?.trim())
+    )
+  }, [events, filterUserId, isAdmin, currentUserId, managedUsers])
 
   const calendarDays = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1)
