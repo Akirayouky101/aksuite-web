@@ -53,6 +53,7 @@ const EV_CARD: Record<string, ColorSet> = {
   gray:   { bg: 'bg-slate-50',   border: 'border-slate-300',  text: 'text-slate-600',  badge: 'bg-slate-400' },
 }
 const FB = EV_CARD.blue
+const USER_COLORS = ['blue', 'green', 'red', 'purple', 'orange', 'pink', 'yellow', 'gray']
 
 export default function CalendarView({
   isOpen, onClose, events, tasks = [], onDelete, onEdit, onAdd,
@@ -95,6 +96,19 @@ export default function CalendarView({
     while (days.length < 42) days.push(null)
     return days
   }, [currentYear, currentMonth])
+
+  const userColorMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    managedUsers.forEach((u, i) => { map[u.id] = USER_COLORS[i % USER_COLORS.length] })
+    return map
+  }, [managedUsers])
+
+  const getEvColor = (ev: Event): string => {
+    if (filterUserId === 'all' && managedUsers.length > 0 && ev.user_id) {
+      return userColorMap[ev.user_id] || ev.color || 'blue'
+    }
+    return ev.color || 'blue'
+  }
 
   const getEventsForDate = (date: Date) => filteredEvents.filter(ev => {
     const s = new Date(ev.start_date)
@@ -234,7 +248,7 @@ export default function CalendarView({
                 ))}
               </div>
 
-              <div className="flex-1 grid grid-cols-7 overflow-y-auto" style={{ gridTemplateRows: 'repeat(6, minmax(0, 1fr))' }}>
+              <div className="flex-1 grid grid-cols-7 overflow-y-auto" style={{ gridTemplateRows: 'repeat(6, minmax(90px, 1fr))' }}>
                 {calendarDays.map((date, i) => {
                   if (!date) return (
                     <div key={`e-${i}`} className={`border-r border-b border-slate-100/80 bg-slate-50/20 ${i % 7 === 6 ? 'border-r-0' : ''}`} />
@@ -272,7 +286,7 @@ export default function CalendarView({
                         {dayEvents.slice(0, 3).map(ev => (
                           <button key={ev.id}
                             onClick={e => openPopup(ev, e)}
-                            className={`w-full text-left text-[10px] leading-[1.35] font-semibold truncate rounded-md px-1.5 py-[2px] text-white hover:opacity-90 active:scale-[0.97] transition-all ${EV_PILL[ev.color] || EV_PILL.blue}`}
+                            className={`w-full text-left text-xs leading-snug font-semibold truncate rounded-lg px-2 py-1 text-white hover:opacity-90 active:scale-[0.97] transition-all ${EV_PILL[getEvColor(ev)]}`}
                           >
                             {!ev.all_day && <span className="opacity-80 mr-0.5">{fmt(ev.start_date)}</span>}
                             {ev.title}
@@ -294,7 +308,7 @@ export default function CalendarView({
             </div>
 
             {/* PANNELLO DESTRA */}
-            <div className="w-72 xl:w-80 flex-shrink-0 border-l border-slate-100 flex flex-col overflow-hidden bg-slate-50/50">
+            <div className="w-80 xl:w-96 flex-shrink-0 border-l border-slate-100 flex flex-col overflow-hidden bg-slate-50/50">
               <div className="flex-shrink-0 px-4 py-4 border-b border-slate-100 bg-white">
                 <div className="flex items-start justify-between">
                   <div>
@@ -314,6 +328,16 @@ export default function CalendarView({
                     <span className="w-2 h-2 rounded bg-violet-400" />{selectedDateTasks.length} task
                   </span>
                 </div>
+                {isAdmin && managedUsers.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {managedUsers.map(u => (
+                      <span key={u.id} className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full text-white ${EV_PILL[userColorMap[u.id] || 'gray']}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                        {(u.full_name || u.email || '').split(' ')[0]}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -331,12 +355,12 @@ export default function CalendarView({
                 )}
 
                 {selectedDateEvents.map((ev, idx) => {
-                  const c = EV_CARD[ev.color] || FB
+                  const c = EV_CARD[getEvColor(ev)] || FB
                   return (
                     <motion.div key={ev.id}
                       initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.04 }}
                       onClick={e => openPopup(ev, e)}
-                      className={`rounded-2xl border-l-4 p-3 cursor-pointer hover:shadow-md transition-all ${c.bg} ${c.border}`}
+                      className={`rounded-2xl border-l-4 p-4 cursor-pointer hover:shadow-md transition-all ${c.bg} ${c.border}`}
                     >
                       <div className="flex items-start justify-between gap-1 mb-1">
                         <p className={`text-sm font-bold leading-tight ${c.text}`}>{ev.title}</p>
