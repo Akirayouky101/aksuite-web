@@ -408,7 +408,6 @@ export default function Home() {
       { id: 'visits', perm: 'can_visits' as const, label: 'Visite', icon: MapPin, onClick: () => setIsVisitsListModalOpen(true), count: visits.length, section: 'agenda' },
       // --- Operativo ---
       { id: 'notes', perm: 'can_notes' as const, label: 'Note', icon: StickyNote, onClick: () => setIsNotesListModalOpen(true), count: notes.length, section: 'operativo' },
-      { id: 'tasks', perm: 'can_tasks' as const, label: 'Task', icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, count: tasks.length, badge: badgeTasks, section: 'operativo' },
       { id: 'clients', perm: 'can_clients' as const, label: 'Clienti', icon: Users, onClick: () => setIsClientsListModalOpen(true), count: clients.length, section: 'operativo' },
       { id: 'lavorazioni', perm: 'can_lavorazioni' as const, label: 'Lavorazioni', icon: Wrench, onClick: () => { setSeenLavorazioni(activeLavorazioni); setIsLavorazioniListModalOpen(true) }, count: lavorazioni.length, badge: badgeLavorazioni, section: 'operativo' },
       { id: 'sopralluoghi', perm: 'can_sopralluoghi' as const, label: 'Sopralluoghi', icon: MapPin, onClick: () => setIsSopralluoghiListModalOpen(true), count: sopralluoghi.length, section: 'operativo' },
@@ -432,12 +431,11 @@ export default function Home() {
       { id: 'budget', perm: 'can_budget' as const, label: 'Bilancio', icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), count: transactions.length, section: 'strumenti' },
     ]
     return allItems.filter(item => hasPermission(item.perm))
-  }, [calls.length, lavorazioni.length, sopralluoghi.length, tasks.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, kits.length, tickets.length, hrUsers.length, badgeCalls, badgeLavorazioni, badgeTasks, badgeEvents, pendingCalls, activeLavorazioni, activeTasks, todayEvents, hasPermission, user?.id])
+  }, [calls.length, lavorazioni.length, sopralluoghi.length, events.length, transactions.length, passwords.length, notes.length, clients.length, visits.length, suppliers.length, orders.length, products.length, kits.length, tickets.length, hrUsers.length, badgeCalls, badgeLavorazioni, badgeEvents, pendingCalls, activeLavorazioni, todayEvents, hasPermission, user?.id])
 
   const quickActions = useMemo(() => [
     { label: 'Chiamata', icon: Phone, onClick: () => setIsCallModalOpen(true) },
     { label: 'Lavorazione', icon: Wrench, onClick: () => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) } },
-    { label: 'Task', icon: CheckSquare, onClick: () => setIsTaskModalOpen(true) },
     { label: 'Nota', icon: StickyNote, onClick: () => { setEditingNote(null); setIsNoteModalOpen(true) } },
     { label: 'Evento', icon: Calendar, onClick: () => { setEditingEvent(null); setIsEventModalOpen(true) } },
     { label: 'Visita', icon: UserCheck, onClick: () => { setEditingVisit(null); setIsVisitModalOpen(true) } },
@@ -449,10 +447,9 @@ export default function Home() {
   // Stat cards config
   const statCards = useMemo(() => [
     { label: 'Chiamate', value: calls.length, icon: Phone, onClick: () => { setSeenCalls(pendingCalls); setIsCallMenuModalOpen(true) }, gradient: 'from-blue-500 to-indigo-600', badgeText: badgeCalls > 0 ? `${badgeCalls} nuove` : null, badgeStyle: 'text-amber-600 bg-amber-50' },
-    { label: 'Task', value: tasks.length, icon: CheckSquare, onClick: () => { setSeenTasks(activeTasks); setIsTasksListModalOpen(true) }, gradient: 'from-amber-500 to-orange-600', badgeText: badgeTasks > 0 ? `${badgeTasks} nuovi` : null, badgeStyle: 'text-blue-600 bg-blue-50' },
     { label: 'Eventi', value: events.length, icon: Calendar, onClick: () => { setSeenEvents(todayEvents); setIsCalendarViewOpen(true) }, gradient: 'from-rose-500 to-pink-600', badgeText: badgeEvents > 0 ? `${badgeEvents} oggi` : null, badgeStyle: 'text-rose-600 bg-rose-50' },
     { label: 'Bilancio', value: `${stats.balance >= 0 ? '+' : ''}${stats.balance.toFixed(0)}\u20AC`, icon: DollarSign, onClick: () => setIsBudgetMenuModalOpen(true), gradient: 'from-emerald-500 to-teal-600', isBalance: true, balancePositive: stats.balance >= 0 },
-  ], [calls.length, tasks.length, events.length, stats.balance, badgeCalls, badgeTasks, badgeEvents, pendingCalls, activeTasks, todayEvents])
+  ], [calls.length, events.length, stats.balance, badgeCalls, badgeEvents, pendingCalls, todayEvents])
 
   // ═══════════════════════════════════════════
   // LOGIN SCREEN — Glassmorphism Chiaro
@@ -712,9 +709,8 @@ export default function Home() {
           <div className="p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
             {/* ═══ NOTIFICATION BAR ═══ */}
             <NotificationBar
-              calls={calls} tasks={tasks} events={events} lavorazioni={lavorazioni}
+              calls={calls} events={events} lavorazioni={lavorazioni}
               onOpenCalls={() => setIsCallsListModalOpen(true)}
-              onOpenTasks={() => setIsTasksListModalOpen(true)}
               onOpenCalendar={() => setIsCalendarViewOpen(true)}
               onOpenLavorazioni={() => setIsLavorazioniListModalOpen(true)}
             />
@@ -724,13 +720,11 @@ export default function Home() {
 
             {/* ═══ TODAY DASHBOARD ═══ */}
             <TodayDashboard
-              calls={calls} lavorazioni={lavorazioni} tasks={tasks} events={events} visits={visits}
+              calls={calls} lavorazioni={lavorazioni} events={events} visits={visits}
               onOpenCall={(call) => { setEditingCall(call); setIsCallModalOpen(true) }}
               onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true) }}
-              onOpenTasksList={() => setIsTasksListModalOpen(true)}
               onOpenCalendar={() => setIsCalendarViewOpen(true)}
               onOpenVisitsList={() => setIsVisitsListModalOpen(true)}
-              onToggleTask={(id) => toggleComplete(id, true)}
               onToggleLavorazioneStatus={handleToggleLavorazioneStatus}
             />
 
@@ -822,55 +816,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ═══ DATA PANELS: Tasks + Notes ═══ */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              {/* Tasks */}
-              <div className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
-                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
-                  <h3 className="text-slate-800 font-semibold flex items-center gap-2 text-sm sm:text-base">
-                    <CheckSquare className="w-4 h-4 text-indigo-500" />
-                    Task Attivi
-                  </h3>
-                  <button onClick={() => setIsTasksListModalOpen(true)} className="text-indigo-500 text-sm hover:text-indigo-700 font-medium transition-colors flex items-center gap-0.5">
-                    Tutti <ArrowUpRight className="w-3 h-3" />
-                  </button>
-                </div>
-                <div className="divide-y divide-slate-100/80">
-                  {tasks.filter(t => !t.is_completed).slice(0, 4).map(task => (
-                    <div key={task.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-white/60 transition-colors cursor-pointer active:bg-white/80">
-                      <div className="w-9 h-9 rounded-lg bg-slate-100/80 flex items-center justify-center shrink-0">
-                        <CheckSquare className="w-4 h-4 text-slate-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-slate-700 text-sm font-medium truncate">{task.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {task.due_date && (
-                            <span className="text-[11px] text-slate-400 flex items-center gap-0.5">
-                              <Clock className="w-3 h-3" />
-                              {new Date(task.due_date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
-                            </span>
-                          )}
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                            task.priority === 'urgent' ? 'text-red-600 bg-red-50' :
-                            task.priority === 'high' ? 'text-orange-600 bg-orange-50' :
-                            task.priority === 'medium' ? 'text-yellow-600 bg-yellow-50' :
-                            'text-slate-500 bg-slate-100'
-                          }`}>
-                            {task.priority === 'urgent' ? 'Urgente' : task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Media' : 'Bassa'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {tasks.filter(t => !t.is_completed).length === 0 && (
-                    <div className="px-6 py-12 text-center">
-                      <CheckSquare className="w-8 h-8 mx-auto mb-2 text-slate-200" />
-                      <p className="text-sm text-slate-400">Nessun task attivo</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
+            {/* ═══ DATA PANELS: Note ═══ */}
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
               {/* Notes */}
               <div className="bg-white/70 backdrop-blur-lg border border-slate-200/50 rounded-2xl overflow-hidden">
                 <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100/80 flex items-center justify-between">
@@ -1026,15 +973,6 @@ export default function Home() {
           let callId: string | undefined
           if (editingCall) { await updateCall(editingCall.id, cleanCallData); callId = editingCall.id }
           else { const newCall = await addCall(cleanCallData); callId = newCall?.id }
-          if (!editingCall && cleanCallData.follow_up && cleanCallData.follow_up_date && callId) {
-            const newTask = await addTask({
-              title: `Follow-up: ${cleanCallData.caller_name || 'Chiamata'}`,
-              description: `Follow-up chiamata da ${cleanCallData.caller_name || 'contatto'}${cleanCallData.company ? ` (${cleanCallData.company})` : ''}`,
-              due_date: cleanCallData.follow_up_date, priority: cleanCallData.priority || 'medium',
-              status: 'todo', category: 'follow_up', is_recurring: false, recurring_type: null, tags: [], subtasks: []
-            })
-            if (newTask?.id) await addRelation('call', callId, 'task', newTask.id, 'related', 'Auto follow-up')
-          }
           if (has_lavorazione && callId) {
             const newLav = await addLavorazione({
               call_id: callId,
@@ -1168,15 +1106,6 @@ export default function Home() {
           let visitId: string | undefined
           if (editingVisit) { await updateVisit(editingVisit.id, cleanVisitData); visitId = editingVisit.id }
           else { const newVisit = await addVisit(cleanVisitData); visitId = newVisit?.id }
-          if (!editingVisit && cleanVisitData.follow_up && cleanVisitData.follow_up_date && visitId) {
-            const newTask = await addTask({
-              title: `Follow-up: ${cleanVisitData.visitor_name || 'Visita'}`,
-              description: `Follow-up visita di ${cleanVisitData.visitor_name || 'visitatore'}${cleanVisitData.company ? ` (${cleanVisitData.company})` : ''}`,
-              due_date: cleanVisitData.follow_up_date, priority: cleanVisitData.priority || 'medium',
-              status: 'todo', category: 'follow_up', is_recurring: false, recurring_type: null, tags: [], subtasks: []
-            })
-            if (newTask?.id) await addRelation('visit', visitId, 'task', newTask.id, 'related', 'Auto follow-up')
-          }
           if (has_lavorazione && visitId) {
             const newLav = await addLavorazione({
               call_id: null,
@@ -1218,13 +1147,7 @@ export default function Home() {
         onEdit={(visit) => { setEditingVisit(visit); setIsVisitModalOpen(true); setIsVisitsListModalOpen(false) }}
         onNew={() => { setEditingVisit(null); setIsVisitModalOpen(true) }} />}
 
-      {isTaskModalOpen && <TaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)}
-        onSave={async (task) => { await addTask(task) }} editTask={null}
-        availableItems={availableRelationItems} onAddRelation={addRelation}
-        onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />}
-      {isTasksListModalOpen && <TasksListModal isOpen={isTasksListModalOpen} onClose={() => setIsTasksListModalOpen(false)}
-        tasks={tasks} onDelete={deleteTask} onToggleComplete={toggleComplete}
-        onUpdate={updateTask} onAdd={async (task) => { await addTask(task) }} />}
+
 
       {isNoteModalOpen && <NoteModal isOpen={isNoteModalOpen}
         onClose={() => { setIsNoteModalOpen(false); setEditingNote(null) }}
@@ -1276,10 +1199,9 @@ export default function Home() {
       />}
 
       {isSearchModalOpen && <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}
-        calls={calls} lavorazioni={lavorazioni} tasks={tasks} notes={notes} events={events} clients={clients} visits={visits}
+        calls={calls} lavorazioni={lavorazioni} notes={notes} events={events} clients={clients} visits={visits}
         onOpenCall={(call) => { setEditingCall(call); setIsCallModalOpen(true) }}
         onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true) }}
-        onOpenTask={() => setIsTasksListModalOpen(true)}
         onOpenNote={(note) => { setEditingNote(note); setIsNoteModalOpen(true) }}
         onOpenEvent={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
         onOpenClient={(client) => { setEditingClient(client); setIsClientModalOpen(true) }}

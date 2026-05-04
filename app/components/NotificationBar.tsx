@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, Phone, CheckSquare, Calendar, AlertTriangle, ChevronRight, Clock, Wrench } from 'lucide-react'
+import { Bell, X, Phone, Calendar, AlertTriangle, ChevronRight, Clock, Wrench } from 'lucide-react'
 
 interface NotificationBarProps {
   calls: any[]
-  tasks: any[]
   events: any[]
   lavorazioni?: any[]
   onOpenCalls?: () => void
-  onOpenTasks?: () => void
   onOpenCalendar?: () => void
   onOpenLavorazioni?: () => void
 }
@@ -25,7 +23,7 @@ interface Notification {
   onClick?: () => void
 }
 
-export default function NotificationBar({ calls, tasks, events, lavorazioni, onOpenCalls, onOpenTasks, onOpenCalendar, onOpenLavorazioni }: NotificationBarProps) {
+export default function NotificationBar({ calls, events, lavorazioni, onOpenCalls, onOpenCalendar, onOpenLavorazioni }: NotificationBarProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
 
@@ -52,25 +50,6 @@ export default function NotificationBar({ calls, tasks, events, lavorazioni, onO
       icon: Phone,
       gradient: 'from-blue-500 to-indigo-600',
       onClick: onOpenCalls
-    })
-  }
-
-  // Overdue tasks
-  const overdueTasks = tasks.filter(t => {
-    if (t.is_completed) return false
-    if (!t.due_date) return false
-    const d = new Date(t.due_date)
-    return d < today && d.toDateString() !== todayStr
-  })
-  if (overdueTasks.length > 0) {
-    notifications.push({
-      id: 'overdue-tasks',
-      type: 'task',
-      title: `${overdueTasks.length} task scadut${overdueTasks.length === 1 ? 'o' : 'i'}`,
-      subtitle: overdueTasks.slice(0, 2).map(t => t.title).join(', '),
-      icon: CheckSquare,
-      gradient: 'from-amber-500 to-orange-600',
-      onClick: onOpenTasks
     })
   }
 
