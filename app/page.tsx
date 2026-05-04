@@ -1077,8 +1077,38 @@ export default function Home() {
         isOpen={isLavorazioneModalOpen}
         onClose={() => { setIsLavorazioneModalOpen(false); setEditingLavorazione(null) }}
         onSave={async (data) => {
-          if (editingLavorazione) { await handleUpdateLavorazione(editingLavorazione.id, data) }
-          else { await addLavorazione(data) }
+          if (editingLavorazione) {
+            await handleUpdateLavorazione(editingLavorazione.id, data)
+          } else {
+            const newLav = await addLavorazione(data)
+            // Crea evento nel calendario per ogni tecnico assegnato
+            if (newLav && data.assigned_to) {
+              const names = data.assigned_to.split(',').map((n: string) => n.trim()).filter(Boolean)
+              const dateStr = newLav.scheduled_date
+                ? `${newLav.scheduled_date}T${newLav.scheduled_time || '09:00'}:00`
+                : new Date().toISOString()
+              names.forEach(async (name: string) => {
+                const matchedUser = managedUsers.find(u => u.full_name === name || u.email === name)
+                await addEvent({
+                  title: `Lavorazione: ${newLav.title}`,
+                  description: newLav.description || '',
+                  start_date: dateStr,
+                  end_date: null,
+                  all_day: false,
+                  location: [newLav.address, newLav.city].filter(Boolean).join(', '),
+                  color: 'indigo',
+                  is_recurring: false,
+                  recurring_type: null,
+                  reminder_minutes: 30,
+                  assigned_to: matchedUser?.id || null,
+                  assigned_to_name: name,
+                  is_shared: true,
+                  created_by: user?.id || null,
+                  created_by_name: null,
+                })
+              })
+            }
+          }
         }}
         editLavorazione={editingLavorazione}
         teamMembers={teamMembers}
