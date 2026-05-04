@@ -104,8 +104,12 @@ export default function CalendarView({
   }, [managedUsers])
 
   const getEvColor = (ev: Event): string => {
-    if (filterUserId === 'all' && managedUsers.length > 0 && ev.user_id) {
-      return userColorMap[ev.user_id] || ev.color || 'blue'
+    if (filterUserId === 'all' && managedUsers.length > 0) {
+      // Prima priorità: colore del tecnico assegnato (assigned_to)
+      if (ev.assigned_to && userColorMap[ev.assigned_to]) return userColorMap[ev.assigned_to]
+      // Seconda priorità: colore del creatore (user_id)
+      if (ev.user_id && userColorMap[ev.user_id]) return userColorMap[ev.user_id]
+      return ev.color || 'blue'
     }
     return ev.color || 'blue'
   }
