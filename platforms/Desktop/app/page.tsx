@@ -36,6 +36,8 @@ const LavorazioniListModal = dynamic(() => import('./components/LavorazioniListM
 const LavorazioneModal = dynamic(() => import('./components/LavorazioneModal'), { ssr: false })
 const LavorazioneTimelineModal = dynamic(() => import('./components/LavorazioneTimelineModal'), { ssr: false })
 const LavorazioneReportModal = dynamic(() => import('./components/LavorazioneReportModal'), { ssr: false })
+const ListeLavorazioniListModal = dynamic(() => import('./components/ListeLavorazioniListModal'), { ssr: false })
+const ListaLavorazioneModal = dynamic(() => import('./components/ListaLavorazioneModal'), { ssr: false })
 const CallTimelineModal = dynamic(() => import('./components/CallTimelineModal'), { ssr: false })
 const ClientModal = dynamic(() => import('./components/ClientModal'), { ssr: false })
 const ClientsListModal = dynamic(() => import('./components/ClientsListModal'), { ssr: false })
@@ -106,6 +108,7 @@ import { useKits, Kit } from './hooks/useKits'
 import { useTickets, Ticket as TicketType } from './hooks/useTickets'
 import { useHR } from './hooks/useHR'
 import { useVerificheTecnoalarm } from './hooks/useVerificheTecnoalarm'
+import { useListeLavorazioni } from './hooks/useListeLavorazioni'
 import { supabase } from '@/lib/supabase'
 import { initConsoleGuard } from '@/lib/console-guard'
 
@@ -147,6 +150,9 @@ export default function Home() {
   const [editingClient, setEditingClient] = useState<any>(null)
   const [isClientDetailOpen, setIsClientDetailOpen] = useState(false)
   const [detailClient, setDetailClient] = useState<any>(null)
+  const [isListeLavorazioniListModalOpen, setIsListeLavorazioniListModalOpen] = useState(false)
+  const [isListaLavorazioneModalOpen, setIsListaLavorazioneModalOpen] = useState(false)
+  const [editingLista, setEditingLista] = useState<any>(null)
   const [isPreventivoModalOpen, setIsPreventivoModalOpen] = useState(false)
   const [isPreventiviListModalOpen, setIsPreventiviListModalOpen] = useState(false)
   const [editingPreventivo, setEditingPreventivo] = useState<any>(null)
@@ -246,6 +252,7 @@ export default function Home() {
   const { products, addProduct, updateProduct, deleteProduct, updateStock, loadMovements, findByBarcode, moveToWarehouse } = useWarehouse()
   const { orders, addOrder, updateOrder, deleteOrder, addOrderItem, deleteOrderItem, getOrderItems, receiveOrder } = useOrders()
   const { preventivi, addPreventivo, updatePreventivo, deletePreventivo, updateStato: updatePreventivoStato } = usePreventivi()
+  const { liste: listeLavorazioni, addLista, updateLista, deleteLista, linkLavorazione } = useListeLavorazioni()
   const { sopralluoghi, addSopralluogo, updateSopralluogo, deleteSopralluogo, updateStato: updateSopralluogoStato } = useSopralluoghi()
   const { installations, loadFull: loadInstallationFull, addInstallation, updateInstallation, deleteInstallation, addDevice, updateDevice, deleteDevice, addHdd, deleteHdd, addCredential, updateCredential, deleteCredential, addCamera, updateCamera, deleteCamera } = useInstallations()
   const { users: managedUsers, isAdmin, myPermissions, loading: permissionsLoading, loadAllUsers, createUser, togglePermission, setAllPermissions, deleteUserPermissions, hasPermission } = useUserManagement()
@@ -423,6 +430,7 @@ export default function Home() {
       { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true), section: 'commerciale' },
       { id: 'prelievo', perm: 'can_prelievo' as const, label: 'Prelievi', icon: PackageMinus, onClick: () => { refetchWarehouseProfiles(); setIsMaterialRequestOpen(true) }, section: 'commerciale' },
       { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventiviListModalOpen(true), count: preventivi.length, section: 'commerciale' },
+      { id: 'liste_lavorazioni', perm: 'can_lavorazioni' as const, label: 'Liste Lavorazioni', icon: ClipboardList, onClick: () => setIsListeLavorazioniListModalOpen(true), count: listeLavorazioni.length, section: 'commerciale' },
       // --- Strumenti ---
       { id: 'hr', perm: 'can_hr' as const, label: 'HR', icon: UserCheck, onClick: () => setIsHRPanelOpen(true), count: hrUsers.filter(u => u.hr && (u.hr.status === 'attivo' || u.hr.status === 'in_prova')).length, section: 'operativo' },
       { id: 'timbrature', perm: 'can_hr' as const, label: 'Timbrature', icon: Clock, onClick: () => setIsTimbraturePanelOpen(true), section: 'operativo' },
@@ -1268,6 +1276,85 @@ export default function Home() {
           setProductPrefill(prefill)
           setEditingProduct(null)
           setIsProductModalOpen(true)
+        }}
+      />}
+
+
+      {isListeLavorazioniListModalOpen && <ListeLavorazioniListModal
+        isOpen={isListeLavorazioniListModalOpen}
+        onClose={() => setIsListeLavorazioniListModalOpen(false)}
+        liste={listeLavorazioni}
+        clients={clients}
+        lavorazioni={lavorazioni}
+        onNew={() => { setEditingLista(null); setIsListaLavorazioneModalOpen(true) }}
+        onEdit={(lista) => { setEditingLista(lista); setIsListaLavorazioneModalOpen(true) }}
+        onDelete={async (id, alsoDeleteLavorazione) => { await deleteLista(id, alsoDeleteLavorazione) }}
+        onCreateLavorazione={(lista) => {
+          const prefill = {
+            call_id: null,
+            client_id: lista.client_id,
+            title: lista.title,
+            description: lista.description || '',
+            assigned_to: lista.assigned_users?.map(u => u.user_name).join(', ') || '',
+            scheduled_date: null,
+            scheduled_time: null,
+            status: 'da_fare' as const,
+            priority: 'media',
+            address: '',
+            city: '',
+            zip_code: '',
+            province: '',
+            notes: lista.notes || '',
+            completed_at: null,
+          }
+          setEditingLavorazione(prefill as any)
+          setIsLavorazioneModalOpen(true)
+        }}
+        onCreateEvent={(lista) => {
+          const lav = lista.lavorazione_id ? lavorazioni.find(l => l.id === lista.lavorazione_id) : null
+          const dateStr = lav?.scheduled_date
+            ? new Date(lav.scheduled_date).toISOString()
+            : new Date().toISOString()
+          const users = lista.assigned_users || []
+          users.forEach(u => {
+            addEvent({
+              title: `Lavorazione: ${lista.title}`,
+              description: lista.description || '',
+              start_date: dateStr,
+              end_date: null,
+              all_day: false,
+              location: '',
+              color: 'blue',
+              is_recurring: false,
+              recurring_type: null,
+              reminder_minutes: 0,
+              assigned_to: u.user_id,
+              assigned_to_name: u.user_name,
+              is_shared: false,
+              created_by: user?.id || null,
+              created_by_name: null,
+            })
+          })
+        }}
+      />}
+
+      {isListaLavorazioneModalOpen && <ListaLavorazioneModal
+        isOpen={isListaLavorazioneModalOpen}
+        onClose={() => { setIsListaLavorazioneModalOpen(false); setEditingLista(null) }}
+        editLista={editingLista}
+        clients={clients}
+        lavorazioni={lavorazioni}
+        products={products}
+        managedUsers={managedUsers.map(u => ({ id: u.id, full_name: u.full_name || '', email: u.email || '' }))}
+        onSave={async (data) => {
+          if (editingLista) {
+            await updateLista(editingLista.id, data)
+          } else {
+            const newLista = await addLista(data)
+            if (newLista && data.lavorazione_id) {
+              await linkLavorazione(newLista.id, data.lavorazione_id)
+            }
+          }
         }}
       />}
 
