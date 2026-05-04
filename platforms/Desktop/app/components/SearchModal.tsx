@@ -2,21 +2,19 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Phone, Wrench, CheckSquare, StickyNote, Calendar, Users, MapPin, Clock, ArrowRight, Command } from 'lucide-react'
+import { Search, X, Phone, Wrench, StickyNote, Calendar, Users, MapPin, Clock, ArrowRight, Command } from 'lucide-react'
 
 interface SearchModalProps {
   isOpen: boolean
   onClose: () => void
   calls: any[]
   lavorazioni: any[]
-  tasks: any[]
   notes: any[]
   events: any[]
   clients: any[]
   visits: any[]
   onOpenCall?: (call: any) => void
   onOpenLavorazione?: (lav: any) => void
-  onOpenTask?: () => void
   onOpenNote?: (note: any) => void
   onOpenEvent?: (event: any) => void
   onOpenClient?: (client: any) => void
@@ -25,7 +23,7 @@ interface SearchModalProps {
 
 interface SearchResult {
   id: string
-  type: 'call' | 'lavorazione' | 'task' | 'note' | 'event' | 'client' | 'visit'
+  type: 'call' | 'lavorazione' | 'note' | 'event' | 'client' | 'visit'
   title: string
   subtitle: string
   icon: any
@@ -36,14 +34,13 @@ interface SearchResult {
 const typeConfig = {
   call: { label: 'Chiamata', icon: Phone, bg: 'bg-blue-50', text: 'text-blue-600', iconBg: 'from-blue-500 to-indigo-600' },
   lavorazione: { label: 'Lavorazione', icon: Wrench, bg: 'bg-violet-50', text: 'text-violet-600', iconBg: 'from-violet-500 to-purple-600' },
-  task: { label: 'Task', icon: CheckSquare, bg: 'bg-amber-50', text: 'text-amber-600', iconBg: 'from-amber-500 to-orange-600' },
   note: { label: 'Nota', icon: StickyNote, bg: 'bg-emerald-50', text: 'text-emerald-600', iconBg: 'from-emerald-500 to-teal-600' },
   event: { label: 'Evento', icon: Calendar, bg: 'bg-rose-50', text: 'text-rose-600', iconBg: 'from-rose-500 to-pink-600' },
   client: { label: 'Cliente', icon: Users, bg: 'bg-teal-50', text: 'text-teal-600', iconBg: 'from-teal-500 to-emerald-600' },
   visit: { label: 'Visita', icon: MapPin, bg: 'bg-indigo-50', text: 'text-indigo-600', iconBg: 'from-indigo-500 to-blue-600' },
 }
 
-export default function SearchModal({ isOpen, onClose, calls, lavorazioni, tasks, notes, events, clients, visits, onOpenCall, onOpenLavorazione, onOpenTask, onOpenNote, onOpenEvent, onOpenClient, onOpenVisit }: SearchModalProps) {
+export default function SearchModal({ isOpen, onClose, calls, lavorazioni, notes, events, clients, visits, onOpenCall, onOpenLavorazione, onOpenNote, onOpenEvent, onOpenClient, onOpenVisit }: SearchModalProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -75,13 +72,6 @@ export default function SearchModal({ isOpen, onClose, calls, lavorazioni, tasks
       if (l.title?.toLowerCase().includes(term) || l.description?.toLowerCase().includes(term) ||
           l.assigned_to?.toLowerCase().includes(term) || l.address?.toLowerCase().includes(term)) {
         results.push({ id: l.id, type: 'lavorazione', title: l.title, subtitle: `${l.assigned_to || ''} - ${l.status}`.trim().replace(/^- /, ''), icon: Wrench, iconBg: typeConfig.lavorazione.iconBg, item: l })
-      }
-    })
-
-    // Search tasks
-    tasks.forEach(t => {
-      if (t.title?.toLowerCase().includes(term) || t.description?.toLowerCase().includes(term)) {
-        results.push({ id: t.id, type: 'task', title: t.title, subtitle: t.description || t.category || '', icon: CheckSquare, iconBg: typeConfig.task.iconBg, item: t })
       }
     })
 
@@ -117,7 +107,7 @@ export default function SearchModal({ isOpen, onClose, calls, lavorazioni, tasks
     })
 
     return results.slice(0, 20)
-  }, [query, calls, lavorazioni, tasks, notes, events, clients, visits])
+  }, [query, calls, lavorazioni, notes, events, clients, visits])
 
   const results = searchResults()
 
@@ -133,7 +123,6 @@ export default function SearchModal({ isOpen, onClose, calls, lavorazioni, tasks
     switch (result.type) {
       case 'call': onOpenCall?.(result.item); break
       case 'lavorazione': onOpenLavorazione?.(result.item); break
-      case 'task': onOpenTask?.(); break
       case 'note': onOpenNote?.(result.item); break
       case 'event': onOpenEvent?.(result.item); break
       case 'client': onOpenClient?.(result.item); break
