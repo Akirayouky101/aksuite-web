@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, UserCheck, Building2, Phone, Mail, Calendar, FileText, AlertTriangle, Clock, Wrench, ChevronDown, Users, UserPlus } from 'lucide-react'
+import { X, UserCheck, Building2, Phone, Mail, Calendar, FileText, AlertTriangle, Wrench, ChevronDown, Users, UserPlus } from 'lucide-react'
 // import RelationsIntegration from './RelationsIntegration' // TODO: Fix prop types
 import type { Visit } from '../hooks/useVisits'
 
@@ -47,8 +47,7 @@ export default function VisitModal({
   const [priority, setPriority] = useState('media')
   const [visitDate, setVisitDate] = useState('')
   const [notes, setNotes] = useState('')
-  const [followUp, setFollowUp] = useState(false)
-  const [followUpDate, setFollowUpDate] = useState('')
+
   const [status, setStatus] = useState<'scheduled' | 'in_progress' | 'completed' | 'cancelled'>('scheduled')
   const [hasLavorazione, setHasLavorazione] = useState(false)
   const [lavorazioneDate, setLavorazioneDate] = useState('')
@@ -70,8 +69,6 @@ export default function VisitModal({
       setPriority(editVisit.priority)
       setVisitDate(editVisit.visit_date.slice(0, 16))
       setNotes(editVisit.notes || '')
-      setFollowUp(editVisit.follow_up)
-      setFollowUpDate(editVisit.follow_up_date ? editVisit.follow_up_date.slice(0, 16) : '')
       setStatus(editVisit.status)
     } else {
       resetForm()
@@ -87,8 +84,6 @@ export default function VisitModal({
     setPriority('media')
     setVisitDate('')
     setNotes('')
-    setFollowUp(false)
-    setFollowUpDate('')
     setStatus('scheduled')
     setHasLavorazione(false)
     setLavorazioneDate('')
@@ -115,8 +110,6 @@ export default function VisitModal({
         priority,
         visit_date: new Date(visitDate).toISOString(),
         notes,
-        follow_up: followUp,
-        follow_up_date: followUpDate ? new Date(followUpDate).toISOString() : null,
         status,
         // Lavorazione
         has_lavorazione: hasLavorazione,
@@ -369,30 +362,6 @@ export default function VisitModal({
                 rows={3}
                 placeholder="Motivo della visita, argomenti da discutere..."
               />
-            </div>
-
-            {/* Follow-up */}
-            <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-xl border border-orange-200/60">
-              <input
-                type="checkbox"
-                checked={followUp}
-                onChange={(e) => setFollowUp(e.target.checked)}
-                className="w-5 h-5 rounded bg-slate-50 border-slate-200 text-orange-500 focus:ring-orange-500"
-                id="followUp"
-              />
-              <label htmlFor="followUp" className="text-sm font-semibold text-orange-600 cursor-pointer flex-1">
-                <Clock className="w-4 h-4 inline mr-2" />
-                Richiede Follow-up
-              </label>
-              {followUp && (
-                <input
-                  type="datetime-local"
-                  value={followUpDate}
-                  onChange={(e) => setFollowUpDate(e.target.value)}
-                  className="px-3 py-2 bg-slate-50 text-slate-800 rounded-lg border border-orange-200/60 focus:border-orange-500 focus:outline-none text-sm"
-                  title="Data follow-up"
-                />
-              )}
             </div>
 
             {/* Lavorazione / Intervento */}

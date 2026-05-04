@@ -336,6 +336,7 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
   const brandLogos: Record<string, string> = {
     'dahua': '/brands/dahua.png',
     'tecnoalarm': '/brands/tecnoalarm.png',
+    'hykon': '/brands/hykon.png',
   }
 
   // Brand colors (cycle through)
