@@ -153,7 +153,7 @@ export default function CalendarView({
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-start justify-center pt-4 pb-4 px-2 sm:px-4 bg-slate-950/40 backdrop-blur-md"
+        className="fixed inset-0 z-50 flex bg-slate-950/40 backdrop-blur-md"
         onClick={onClose}
       >
         <motion.div
@@ -161,7 +161,7 @@ export default function CalendarView({
           initial={{ scale: 0.96, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.96, opacity: 0, y: 16 }} transition={{ type: 'spring', damping: 24, stiffness: 280 }}
           onClick={e => e.stopPropagation()}
-          className="relative bg-white rounded-3xl shadow-2xl w-full max-w-[1280px] max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden border border-slate-200/80"
+          className="relative bg-white flex flex-col overflow-hidden w-full h-full"
         >
 
           {/* HEADER */}
