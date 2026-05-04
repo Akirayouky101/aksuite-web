@@ -35,6 +35,7 @@ const CalendarView = dynamic(() => import('./components/CalendarView'), { ssr: f
 const LavorazioniListModal = dynamic(() => import('./components/LavorazioniListModal'), { ssr: false })
 const LavorazioneModal = dynamic(() => import('./components/LavorazioneModal'), { ssr: false })
 const LavorazioneTimelineModal = dynamic(() => import('./components/LavorazioneTimelineModal'), { ssr: false })
+const LavorazioneSchedaModal = dynamic(() => import('./components/LavorazioneSchedaModal'), { ssr: false })
 const LavorazioneReportModal = dynamic(() => import('./components/LavorazioneReportModal'), { ssr: false })
 const ListeLavorazioniListModal = dynamic(() => import('./components/ListeLavorazioniListModal'), { ssr: false })
 const ListaLavorazioneModal = dynamic(() => import('./components/ListaLavorazioneModal'), { ssr: false })
@@ -93,6 +94,7 @@ import { useRelations } from './hooks/useRelations'
 import { useTeamMembers } from './hooks/useTeamMembers'
 import { useLavorazioni } from './hooks/useLavorazioni'
 import { useLavorazioneTimeline } from './hooks/useLavorazioneTimeline'
+import { useLavorazioneOre } from './hooks/useLavorazioneOre'
 import { useCallTimeline } from './hooks/useCallTimeline'
 import { useClients } from './hooks/useClients'
 import { useSuppliers } from './hooks/useSuppliers'
@@ -140,6 +142,8 @@ export default function Home() {
   const [isLavorazioniListModalOpen, setIsLavorazioniListModalOpen] = useState(false)
   const [isLavorazioneModalOpen, setIsLavorazioneModalOpen] = useState(false)
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false)
+  const [isSchedaModalOpen, setIsSchedaModalOpen] = useState(false)
+  const [schedaLavorazione, setSchedaLavorazione] = useState<any>(null)
   const [timelineLavorazione, setTimelineLavorazione] = useState<any>(null)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [reportLavorazione, setReportLavorazione] = useState<any>(null)
@@ -245,6 +249,7 @@ export default function Home() {
   const { addRelation, removeRelation, getRelatedItems } = useRelations()
   const { members: teamMembers, addMember: addTeamMember, deleteMember: deleteTeamMember } = useTeamMembers()
   const { lavorazioni, addLavorazione, updateLavorazione, deleteLavorazione, toggleStatus: toggleLavorazioneStatus } = useLavorazioni()
+  const { oreEntries, materialiEntries, loading: schedaLoading, loadData: loadSchedaData, clearData: clearSchedaData, addOreEntry, deleteOreEntry, addMaterialeEntry, deleteMaterialeEntry, totalMinutes, minutesByPerson } = useLavorazioneOre()
   const { entries: timelineEntries, loading: timelineLoading, loadTimeline, addEntry: addTimelineEntry, deleteEntry: deleteTimelineEntry, updateEntry: updateTimelineEntry, uploadPhoto: uploadTimelinePhoto, clearTimeline } = useLavorazioneTimeline()
   const { entries: callTimelineEntries, loading: callTimelineLoading, loadTimeline: loadCallTimeline, addEntry: addCallTimelineEntry, deleteEntry: deleteCallTimelineEntry, updateEntry: updateCallTimelineEntry, uploadPhoto: uploadCallTimelinePhoto, clearTimeline: clearCallTimeline } = useCallTimeline()
   const { clients, addClient, updateClient, deleteClient, toggleFavorite: toggleClientFavorite } = useClients()
@@ -1043,6 +1048,7 @@ export default function Home() {
         onNew={() => { setEditingLavorazione(null); setIsLavorazioneModalOpen(true) }}
         onEdit={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true); setIsLavorazioniListModalOpen(false) }}
         onViewTimeline={(lav) => { setTimelineLavorazione(lav); loadTimeline(lav.id); setIsTimelineModalOpen(true) }}
+        onViewScheda={(lav) => { setSchedaLavorazione(lav); loadSchedaData(lav.id); setIsSchedaModalOpen(true) }}
         onReport={(lav) => { setReportLavorazione(lav); loadTimeline(lav.id); setIsReportModalOpen(true) }}
         onDuplicate={async (lav) => {
           const duplicated = await addLavorazione({
@@ -1163,6 +1169,23 @@ export default function Home() {
         onUpdateEntry={updateTimelineEntry}
         onUploadPhoto={uploadTimelinePhoto}
         teamMembers={teamMembers}
+      />}
+
+      {isSchedaModalOpen && <LavorazioneSchedaModal
+        isOpen={isSchedaModalOpen}
+        onClose={() => { setIsSchedaModalOpen(false); setSchedaLavorazione(null); clearSchedaData() }}
+        lavorazione={schedaLavorazione}
+        oreEntries={oreEntries}
+        materialiEntries={materialiEntries}
+        loading={schedaLoading}
+        onAddOre={addOreEntry}
+        onDeleteOre={deleteOreEntry}
+        onAddMateriale={addMaterialeEntry}
+        onDeleteMateriale={deleteMaterialeEntry}
+        totalMinutes={totalMinutes}
+        minutesByPerson={minutesByPerson}
+        teamMembers={managedUsers.map(u => ({ id: u.id, full_name: u.full_name }))}
+        currentUser={user ? { id: user.id, full_name: managedUsers.find(u => u.id === user.id)?.full_name, email: user.email } : null}
       />}
 
       {isCallTimelineOpen && <CallTimelineModal

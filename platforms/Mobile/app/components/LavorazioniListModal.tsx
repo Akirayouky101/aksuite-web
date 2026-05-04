@@ -21,6 +21,7 @@ interface LavorazioniListModalProps {
   onNew?: () => void
   onEdit?: (lavorazione: Lavorazione) => void
   onViewTimeline?: (lavorazione: Lavorazione) => void
+  onViewScheda?: (lavorazione: Lavorazione) => void
   onReport?: (lavorazione: Lavorazione) => void
   onDuplicate?: (lavorazione: Lavorazione) => void
   teamMembers?: Array<{ id: string; name: string; role: string }>
@@ -43,7 +44,7 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
 }
 
 export default function LavorazioniListModal({
-  isOpen, onClose, lavorazioni, onToggleStatus, onDelete, onNew, onEdit, onViewTimeline, onReport, onDuplicate, teamMembers = [], clients = [], listeLavorazioni = []
+  isOpen, onClose, lavorazioni, onToggleStatus, onDelete, onNew, onEdit, onViewTimeline, onViewScheda, onReport, onDuplicate, teamMembers = [], clients = [], listeLavorazioni = []
 }: LavorazioniListModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -375,6 +376,14 @@ export default function LavorazioniListModal({
                               <button onClick={() => onEdit(lav)} title="Modifica"
                                 className="p-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 rounded-lg transition-colors">
                                 <Pencil className="w-5 h-5 text-indigo-400" />
+                              </button>
+                            )}
+                            {/* Scheda ore & materiali */}
+                            {onViewScheda && (
+                              <button onClick={() => onViewScheda(lav)} title="Scheda ore e materiali"
+                                className="px-3 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-200/60 rounded-lg transition-colors flex items-center gap-1.5">
+                                <Clock className="w-4 h-4 text-purple-500" />
+                                <span className="text-xs font-bold text-purple-600 hidden md:inline">Scheda</span>
                               </button>
                             )}
                             {/* Timeline */}
