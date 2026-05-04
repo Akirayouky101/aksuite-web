@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wrench, User, Calendar, Clock, MapPin, FileText, AlertTriangle, Building2, StickyNote, Hash, Users, Copy, Search, Check } from 'lucide-react'
+import { X, Wrench, User, Calendar, Clock, MapPin, FileText, AlertTriangle, Building2, StickyNote, Hash, Users, Copy, Search, Check, Plus } from 'lucide-react'
 import type { Lavorazione } from '../hooks/useLavorazioni'
 import type { Client } from '../hooks/useClients'
 
@@ -272,7 +272,7 @@ export default function LavorazioneModal({
               />
             </div>
 
-            {/* Assegnatario e Priorità */}
+            {/* Tecnici Assegnati + Priorità */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
@@ -280,21 +280,45 @@ export default function LavorazioneModal({
                   Tecnici Assegnati
                 </label>
                 {teamMembers.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 p-3 bg-slate-50/80 border border-slate-200/60 rounded-xl min-h-[44px]">
-                    {teamMembers.map(m => {
-                      const sel = selectedTecnici.includes(m.name)
-                      return (
-                        <button key={m.id} type="button"
-                          onClick={() => setSelectedTecnici(prev => sel ? prev.filter(n => n !== m.name) : [...prev, m.name])}
-                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
-                            sel ? 'bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
-                          }`}>
-                          {sel && <Check className="w-3 h-3" />}
-                          {m.name}
-                          {m.role && <span className={`text-[10px] ${sel ? 'text-indigo-200' : 'text-slate-400'}`}>· {m.role}</span>}
+                  <div className="space-y-2">
+                    {/* Lista tecnici aggiunti */}
+                    {selectedTecnici.map((name, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
+                        <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                          <Users className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="flex-1 text-sm font-semibold text-indigo-800">{name}</span>
+                        <button type="button" onClick={() => setSelectedTecnici(prev => prev.filter((_, i) => i !== idx))}
+                          className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-100 text-indigo-400 hover:text-red-500 transition-all">
+                          <X className="w-3 h-3" />
                         </button>
+                      </div>
+                    ))}
+                    {/* Dropdown + pulsante aggiungi */}
+                    {(() => {
+                      const available = teamMembers.filter(m => !selectedTecnici.includes(m.name))
+                      if (available.length === 0) return null
+                      return (
+                        <div className="flex gap-2">
+                          <select id="tecnico-picker"
+                            className="flex-1 px-3 py-2 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-700 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all">
+                            <option value="">Seleziona tecnico...</option>
+                            {available.map(m => <option key={m.id} value={m.name}>{m.name}{m.role ? ` — ${m.role}` : ''}</option>)}
+                          </select>
+                          <button type="button"
+                            onClick={() => {
+                              const sel = document.getElementById('tecnico-picker') as HTMLSelectElement
+                              if (sel && sel.value) {
+                                setSelectedTecnici(prev => [...prev, sel.value])
+                                sel.value = ''
+                              }
+                            }}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white shadow-md shadow-indigo-500/20 active:scale-95 transition-all flex-shrink-0">
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
                       )
-                    })}
+                    })()}
                   </div>
                 ) : (
                   <input
