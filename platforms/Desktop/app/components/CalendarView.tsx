@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  X, ChevronLeft, ChevronRight, Plus, Edit, Trash2, 
-  Calendar as CalendarIcon, MapPin, Clock, Repeat, CheckCircle2, Users, User
+import {
+  X, ChevronLeft, ChevronRight, Plus, Edit, Trash2,
+  Calendar as CalendarIcon, MapPin, Clock, Repeat,
+  CheckCircle2, Users, User
 } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
 import { Task } from '../hooks/useTasks'
@@ -22,41 +23,63 @@ interface CalendarViewProps {
   managedUsers?: { id: string; full_name: string; email: string }[]
 }
 
-const DAYS = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 const MONTHS = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ]
+const MONTHS_SHORT = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
 
-const COLOR_DOTS: Record<string, string> = {
-  blue: 'bg-blue-400', green: 'bg-green-400', red: 'bg-red-400',
-  purple: 'bg-purple-400', orange: 'bg-orange-400', pink: 'bg-pink-400',
-  yellow: 'bg-yellow-400', gray: 'bg-slate-400'
+const EV_PILL: Record<string, string> = {
+  blue:   'bg-blue-500',
+  green:  'bg-emerald-500',
+  red:    'bg-red-500',
+  purple: 'bg-violet-500',
+  orange: 'bg-orange-500',
+  pink:   'bg-pink-500',
+  yellow: 'bg-amber-400',
+  gray:   'bg-slate-400',
 }
 
-const COLOR_BORDER: Record<string, string> = {
-  blue: 'border-blue-400 bg-blue-50 text-blue-700',
-  green: 'border-green-400 bg-green-50 text-green-700',
-  red: 'border-red-400 bg-red-50 text-red-700',
-  purple: 'border-purple-400 bg-violet-50 text-violet-700',
-  orange: 'border-orange-400 bg-orange-50 text-orange-700',
-  pink: 'border-pink-400 bg-pink-50 text-pink-700',
-  yellow: 'border-yellow-400 bg-amber-50 text-amber-700',
-  gray: 'border-slate-300 bg-slate-50 text-slate-600'
+interface ColorSet { bg: string; border: string; text: string; badge: string }
+const EV_CARD: Record<string, ColorSet> = {
+  blue:   { bg: 'bg-blue-50',    border: 'border-blue-400',   text: 'text-blue-700',   badge: 'bg-blue-500' },
+  green:  { bg: 'bg-emerald-50', border: 'border-emerald-400',text: 'text-emerald-700',badge: 'bg-emerald-500' },
+  red:    { bg: 'bg-red-50',     border: 'border-red-400',    text: 'text-red-700',    badge: 'bg-red-500' },
+  purple: { bg: 'bg-violet-50',  border: 'border-violet-400', text: 'text-violet-700', badge: 'bg-violet-500' },
+  orange: { bg: 'bg-orange-50',  border: 'border-orange-400', text: 'text-orange-700', badge: 'bg-orange-500' },
+  pink:   { bg: 'bg-pink-50',    border: 'border-pink-400',   text: 'text-pink-700',   badge: 'bg-pink-500' },
+  yellow: { bg: 'bg-amber-50',   border: 'border-amber-400',  text: 'text-amber-700',  badge: 'bg-amber-400' },
+  gray:   { bg: 'bg-slate-50',   border: 'border-slate-300',  text: 'text-slate-600',  badge: 'bg-slate-400' },
 }
+const FB = EV_CARD.blue
 
 export default function CalendarView({
   isOpen, onClose, events, tasks = [], onDelete, onEdit, onAdd,
   isAdmin = false, currentUserId, managedUsers = []
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [filterUserId, setFilterUserId] = useState<string>('all')
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const currentYear = currentDate.getFullYear()
   const currentMonth = currentDate.getMonth()
 
-  // Filter events by selected user (admin only)
+  useEffect(() => {
+    if (!selectedEvent) return
+    const handler = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setSelectedEvent(null); setPopupPos(null)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [selectedEvent])
+
   const filteredEvents = useMemo(() => {
     if (!isAdmin || filterUserId === 'all') return events
     if (filterUserId === 'mine') return events.filter(e => e.user_id === currentUserId && !e.assigned_to)
@@ -66,57 +89,62 @@ export default function CalendarView({
   const calendarDays = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1)
     const lastDay = new Date(currentYear, currentMonth + 1, 0)
-    const startDayOfWeek = firstDay.getDay()
     const days: (Date | null)[] = []
-    for (let i = 0; i < startDayOfWeek; i++) days.push(null)
+    for (let i = 0; i < firstDay.getDay(); i++) days.push(null)
     for (let i = 1; i <= lastDay.getDate(); i++) days.push(new Date(currentYear, currentMonth, i))
+    while (days.length < 42) days.push(null)
     return days
   }, [currentYear, currentMonth])
 
-  const getEventsForDate = (date: Date) => {
-    return filteredEvents.filter(event => {
-      const eventStart = new Date(event.start_date)
-      const eventEnd = event.end_date ? new Date(event.end_date) : eventStart
-      const dateStart = new Date(date); dateStart.setHours(0,0,0,0)
-      const dateEnd = new Date(date); dateEnd.setHours(23,59,59,999)
-      return (eventStart >= dateStart && eventStart <= dateEnd) ||
-             (eventEnd >= dateStart && eventEnd <= dateEnd) ||
-             (eventStart <= dateStart && eventEnd >= dateEnd)
-    })
-  }
+  const getEventsForDate = (date: Date) => filteredEvents.filter(ev => {
+    const s = new Date(ev.start_date)
+    const e = ev.end_date ? new Date(ev.end_date) : s
+    const ds = new Date(date); ds.setHours(0,0,0,0)
+    const de = new Date(date); de.setHours(23,59,59,999)
+    return (s >= ds && s <= de) || (e >= ds && e <= de) || (s <= ds && e >= de)
+  })
 
-  const getTasksForDate = (date: Date) => {
-    return tasks.filter(task => {
-      if (!task.due_date) return false
-      const taskDate = new Date(task.due_date)
-      const ds = new Date(date); ds.setHours(0,0,0,0)
-      const de = new Date(date); de.setHours(23,59,59,999)
-      return taskDate >= ds && taskDate <= de
-    })
-  }
+  const getTasksForDate = (date: Date) => tasks.filter(t => {
+    if (!t.due_date) return false
+    const td = new Date(t.due_date)
+    const ds = new Date(date); ds.setHours(0,0,0,0)
+    const de = new Date(date); de.setHours(23,59,59,999)
+    return td >= ds && td <= de
+  })
 
-  const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : []
-  const selectedDateTasks = selectedDate ? getTasksForDate(selectedDate) : []
+  const selectedDateEvents = getEventsForDate(selectedDate)
+  const selectedDateTasks = getTasksForDate(selectedDate)
 
-  const isToday = (date: Date | null) => {
-    if (!date) return false
+  const isToday = (d: Date | null) => {
+    if (!d) return false
     const t = new Date()
-    return date.getDate() === t.getDate() && date.getMonth() === t.getMonth() && date.getFullYear() === t.getFullYear()
+    return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear()
   }
+  const isSameDay = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()
 
-  const formatTime = (s: string) => new Date(s).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-
-  const formatEventDate = (event: Event) => {
-    if (event.all_day) return 'Tutto il giorno'
-    return event.end_date
-      ? `${formatTime(event.start_date)} - ${formatTime(event.end_date)}`
-      : formatTime(event.start_date)
+  const fmt = (s: string) => new Date(s).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+  const fmtEvDate = (ev: Event) => {
+    if (ev.all_day) return 'Tutto il giorno'
+    return ev.end_date ? `${fmt(ev.start_date)} \u2192 ${fmt(ev.end_date)}` : fmt(ev.start_date)
   }
-
-  const getUserName = (uid: string | null | undefined) => {
+  const fmtFullDate = (s: string) => {
+    const d = new Date(s)
+    return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+  }
+  const getUserName = (uid?: string | null) => {
     if (!uid) return null
     const u = managedUsers.find(u => u.id === uid)
     return u ? (u.full_name || u.email) : null
+  }
+
+  const openPopup = (ev: Event, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const cont = containerRef.current?.getBoundingClientRect()
+    if (!cont) return
+    setSelectedEvent(ev)
+    setPopupPos({ x: rect.left - cont.left + rect.width / 2, y: rect.top - cont.top + rect.height + 8 })
   }
 
   if (!isOpen) return null
@@ -125,229 +153,347 @@ export default function CalendarView({
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/30 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-start justify-center pt-4 pb-4 px-2 sm:px-4 bg-slate-950/40 backdrop-blur-md"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          ref={containerRef}
+          initial={{ scale: 0.96, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.96, opacity: 0, y: 16 }} transition={{ type: 'spring', damping: 24, stiffness: 280 }}
           onClick={e => e.stopPropagation()}
-          className="bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-7xl max-h-[92vh] flex flex-col border border-white/60 overflow-hidden"
+          className="relative bg-white rounded-3xl shadow-2xl w-full max-w-[1280px] max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden border border-slate-200/80"
         >
-          {/* Header */}
-          <div className="px-6 py-5 border-b border-slate-100 flex-shrink-0">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
+
+          {/* HEADER */}
+          <div className="flex-shrink-0 px-6 pt-5 pb-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/60 to-white">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 flex-shrink-0">
                   <CalendarIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800">Calendario</h2>
-                  <p className="text-xs text-slate-400">{filteredEvents.length} eventi</p>
+                  <h2 className="text-lg font-bold text-slate-900 leading-tight">Calendario</h2>
+                  <p className="text-xs text-slate-400">{filteredEvents.length} eventi · {tasks.length} task</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Admin: filtro utente */}
                 {isAdmin && managedUsers.length > 0 && (
-                  <select
-                    value={filterUserId}
-                    onChange={e => setFilterUserId(e.target.value)}
-                    className="text-sm px-3 py-2 bg-slate-50 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
-                  >
-                    <option value="all">👥 Tutti gli utenti</option>
-                    <option value="mine">🙋 Solo miei</option>
-                    {managedUsers.map(u => (
-                      <option key={u.id} value={u.id}>👤 {u.full_name || u.email}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5">
+                    <Users className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <select value={filterUserId} onChange={e => setFilterUserId(e.target.value)}
+                      className="text-xs bg-transparent text-slate-700 font-medium focus:outline-none cursor-pointer">
+                      <option value="all">Tutti gli utenti</option>
+                      <option value="mine">Solo miei</option>
+                      {managedUsers.map(u => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}
+                    </select>
+                  </div>
                 )}
 
-                {/* Navigazione mese */}
-                <div className="flex items-center gap-1 bg-slate-50 rounded-xl p-1 border border-slate-200/60">
-                  <button onClick={() => setCurrentDate(new Date(currentYear, currentMonth - 1, 1))} className="p-1.5 hover:bg-white rounded-lg transition-all">
-                    <ChevronLeft className="w-4 h-4 text-slate-600" />
+                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/80 rounded-xl p-1">
+                  <button onClick={() => setCurrentDate(new Date(currentYear, currentMonth - 1, 1))}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm transition-all text-slate-500 hover:text-slate-800">
+                    <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-sm font-semibold text-slate-700 px-2 min-w-[120px] text-center">
+                  <span className="text-sm font-bold text-slate-800 px-3 min-w-[130px] text-center select-none">
                     {MONTHS[currentMonth]} {currentYear}
                   </span>
-                  <button onClick={() => setCurrentDate(new Date(currentYear, currentMonth + 1, 1))} className="p-1.5 hover:bg-white rounded-lg transition-all">
-                    <ChevronRight className="w-4 h-4 text-slate-600" />
+                  <button onClick={() => setCurrentDate(new Date(currentYear, currentMonth + 1, 1))}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm transition-all text-slate-500 hover:text-slate-800">
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
 
                 <button onClick={() => { setCurrentDate(new Date()); setSelectedDate(new Date()) }}
-                  className="text-sm px-3 py-2 bg-indigo-50 text-indigo-600 border border-indigo-200/60 rounded-xl font-medium hover:bg-indigo-100 transition-all">
+                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all border border-slate-200/80">
                   Oggi
                 </button>
 
                 <button onClick={onAdd}
-                  className="text-sm px-4 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 active:scale-95 transition-all flex items-center gap-1.5">
+                  className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-600 hover:to-violet-700 active:scale-95 transition-all">
                   <Plus className="w-4 h-4" /> Nuovo Evento
                 </button>
 
-                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-all">
+                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all">
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Body */}
-          <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
-            {/* Griglia calendario */}
-            <div className="flex-1 p-4 sm:p-6 overflow-auto">
-              {/* Day headers */}
-              <div className="grid grid-cols-7 mb-2">
-                {DAYS.map(d => (
-                  <div key={d} className="text-center text-xs font-bold text-slate-400 py-2">{d}</div>
+          {/* BODY */}
+          <div className="flex-1 overflow-hidden flex min-h-0">
+
+            {/* GRIGLIA */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="grid grid-cols-7 border-b border-slate-100 flex-shrink-0">
+                {DAYS_SHORT.map((d, i) => (
+                  <div key={d} className={`py-3 text-center text-xs font-bold tracking-wider ${i === 0 || i === 6 ? 'text-rose-300' : 'text-slate-400'}`}>
+                    {d}
+                  </div>
                 ))}
               </div>
 
-              {/* Days grid */}
-              <div className="grid grid-cols-7 gap-1">
+              <div className="flex-1 grid grid-cols-7 overflow-y-auto" style={{ gridTemplateRows: 'repeat(6, minmax(0, 1fr))' }}>
                 {calendarDays.map((date, i) => {
-                  if (!date) return <div key={`e-${i}`} />
+                  if (!date) return (
+                    <div key={`e-${i}`} className={`border-r border-b border-slate-100/80 bg-slate-50/20 ${i % 7 === 6 ? 'border-r-0' : ''}`} />
+                  )
                   const dayEvents = getEventsForDate(date)
                   const dayTasks = getTasksForDate(date)
-                  const isSelected = selectedDate &&
-                    date.getDate() === selectedDate.getDate() &&
-                    date.getMonth() === selectedDate.getMonth() &&
-                    date.getFullYear() === selectedDate.getFullYear()
+                  const isSelected = isSameDay(date, selectedDate)
                   const today = isToday(date)
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6
 
                   return (
-                    <button key={date.toISOString()}
+                    <div key={date.toISOString()}
                       onClick={() => setSelectedDate(date)}
-                      className={`min-h-[60px] sm:min-h-[72px] rounded-xl p-1.5 text-left transition-all border ${
-                        today
-                          ? 'bg-gradient-to-br from-indigo-500 to-violet-600 border-transparent text-white shadow-lg shadow-indigo-500/30'
-                          : isSelected
-                          ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                          : 'bg-white/60 border-slate-200/60 text-slate-700 hover:bg-white hover:shadow-sm'
-                      }`}
+                      className={`relative border-r border-b border-slate-100/80 p-1.5 cursor-pointer transition-colors group overflow-hidden
+                        ${i % 7 === 6 ? 'border-r-0' : ''}
+                        ${isWeekend ? 'bg-slate-50/40' : 'bg-white'}
+                        ${isSelected && !today ? 'ring-2 ring-inset ring-indigo-400' : ''}
+                        ${!today && !isSelected ? 'hover:bg-indigo-50/30' : ''}
+                      `}
                     >
-                      <span className={`text-xs font-bold block mb-1 ${today ? 'text-white' : ''}`}>{date.getDate()}</span>
-                      <div className="space-y-0.5">
-                        {dayEvents.slice(0, 2).map(ev => (
-                          <div key={ev.id} className={`text-[9px] truncate rounded px-1 font-medium ${
-                            today ? 'bg-white/20 text-white' : (COLOR_DOTS[ev.color] || '').replace('bg-', 'bg-').replace('-400', '-100') + ' text-slate-600'
-                          }`}>
-                            {ev.assigned_to && !today && <span className="inline-block w-1 h-1 rounded-full bg-amber-500 mr-0.5 mb-0.5 align-middle" title={`Assegnato a ${ev.assigned_to_name}`} />}
-                            {ev.is_shared && !today && <span className="inline-block w-1 h-1 rounded-full bg-teal-500 mr-0.5 mb-0.5 align-middle" title="Condiviso" />}
-                            {ev.title}
-                          </div>
-                        ))}
-                        {dayEvents.length > 2 && (
-                          <div className={`text-[9px] font-medium ${today ? 'text-white/70' : 'text-slate-400'}`}>+{dayEvents.length - 2}</div>
-                        )}
-                        {dayTasks.length > 0 && (
-                          <div className={`text-[9px] ${today ? 'text-white/70' : 'text-violet-500'}`}>✓ {dayTasks.length} task</div>
+                      <div className="flex items-start justify-between mb-0.5">
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all
+                          ${today ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-400/40' :
+                            isSelected ? 'bg-indigo-100 text-indigo-700' :
+                            isWeekend ? 'text-rose-400' : 'text-slate-700 group-hover:text-indigo-700'}
+                        `}>
+                          {date.getDate()}
+                        </span>
+                        {(dayEvents.length + dayTasks.length) > 0 && (
+                          <span className="text-[9px] text-slate-300 font-medium mt-1.5 mr-0.5">{dayEvents.length + dayTasks.length}</span>
                         )}
                       </div>
-                    </button>
+
+                      <div className="space-y-[2px]">
+                        {dayEvents.slice(0, 3).map(ev => (
+                          <button key={ev.id}
+                            onClick={e => openPopup(ev, e)}
+                            className={`w-full text-left text-[10px] leading-[1.35] font-semibold truncate rounded-md px-1.5 py-[2px] text-white hover:opacity-90 active:scale-[0.97] transition-all ${EV_PILL[ev.color] || EV_PILL.blue}`}
+                          >
+                            {!ev.all_day && <span className="opacity-80 mr-0.5">{fmt(ev.start_date)}</span>}
+                            {ev.title}
+                          </button>
+                        ))}
+                        {dayEvents.length > 3 && (
+                          <div className="text-[9px] text-slate-400 font-medium px-1">+{dayEvents.length - 3}</div>
+                        )}
+                        {dayTasks.length > 0 && (
+                          <div className="text-[9px] text-violet-500 font-semibold px-1 flex items-center gap-0.5">
+                            <CheckCircle2 className="w-2.5 h-2.5" />{dayTasks.length}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )
                 })}
               </div>
-
-              {/* Legenda */}
-              <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> Assegnato</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-500 inline-block" /> Condiviso</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-violet-400 inline-block" /> Task</span>
-              </div>
             </div>
 
-            {/* Pannello dettaglio giorno */}
-            <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-slate-100 flex flex-col flex-shrink-0 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex-shrink-0">
-                <h3 className="text-sm font-bold text-slate-800">
-                  {selectedDate
-                    ? `${selectedDate.getDate()} ${MONTHS[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`
-                    : 'Seleziona una data'}
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {selectedDateEvents.length} eventi · {selectedDateTasks.length} task
-                </p>
+            {/* PANNELLO DESTRA */}
+            <div className="w-72 xl:w-80 flex-shrink-0 border-l border-slate-100 flex flex-col overflow-hidden bg-slate-50/50">
+              <div className="flex-shrink-0 px-4 py-4 border-b border-slate-100 bg-white">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{DAYS_SHORT[selectedDate.getDay()]} · {MONTHS_SHORT[selectedDate.getMonth()]} {selectedDate.getFullYear()}</p>
+                    <h3 className="text-3xl font-black text-slate-900 leading-none mt-0.5">{selectedDate.getDate()}</h3>
+                  </div>
+                  <button onClick={onAdd} title="Aggiungi evento"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200/60 transition-all">
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex gap-3 mt-2.5">
+                  <span className="flex items-center gap-1 text-xs text-slate-400">
+                    <span className="w-2 h-2 rounded-full bg-indigo-400" />{selectedDateEvents.length} eventi
+                  </span>
+                  <span className="flex items-center gap-1 text-xs text-slate-400">
+                    <span className="w-2 h-2 rounded bg-violet-400" />{selectedDateTasks.length} task
+                  </span>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {selectedDate && selectedDateEvents.length === 0 && selectedDateTasks.length === 0 && (
-                  <div className="text-center py-10">
-                    <CalendarIcon className="w-8 h-8 text-slate-200 mx-auto mb-3" />
-                    <p className="text-sm text-slate-400">Nessun evento</p>
-                    <button onClick={onAdd} className="mt-4 text-xs px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {selectedDateEvents.length === 0 && selectedDateTasks.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-14 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-3 shadow-sm">
+                      <CalendarIcon className="w-6 h-6 text-slate-200" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-400 mb-0.5">Nessun evento</p>
+                    <p className="text-xs text-slate-300 mb-4">Giornata libera</p>
+                    <button onClick={onAdd} className="text-xs font-semibold px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 border border-indigo-200/60 transition-all">
                       + Aggiungi evento
                     </button>
                   </div>
                 )}
 
-                {/* Events */}
-                {selectedDateEvents.map(event => (
-                  <div key={event.id} className={`border-l-4 rounded-xl p-3 ${COLOR_BORDER[event.color] || COLOR_BORDER.blue}`}>
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <p className="text-sm font-semibold leading-tight">{event.title}</p>
-                      <div className="flex gap-0.5 flex-shrink-0">
-                        <button onClick={() => onEdit(event)} className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/5 transition-all">
-                          <Edit className="w-3 h-3" />
-                        </button>
-                        <button onClick={() => { if (confirm('Eliminare questo evento?')) onDelete(event.id) }}
-                          className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/5 transition-all">
-                          <Trash2 className="w-3 h-3" />
-                        </button>
+                {selectedDateEvents.map((ev, idx) => {
+                  const c = EV_CARD[ev.color] || FB
+                  return (
+                    <motion.div key={ev.id}
+                      initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.04 }}
+                      onClick={e => openPopup(ev, e)}
+                      className={`rounded-2xl border-l-4 p-3 cursor-pointer hover:shadow-md transition-all ${c.bg} ${c.border}`}
+                    >
+                      <div className="flex items-start justify-between gap-1 mb-1">
+                        <p className={`text-sm font-bold leading-tight ${c.text}`}>{ev.title}</p>
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${c.badge}`} />
                       </div>
-                    </div>
+                      <div className={`flex items-center gap-1.5 text-xs ${c.text} opacity-70 mb-1`}>
+                        <Clock className="w-3 h-3 flex-shrink-0" />{fmtEvDate(ev)}
+                      </div>
+                      {ev.location && (
+                        <div className={`flex items-center gap-1.5 text-xs ${c.text} opacity-60`}>
+                          <MapPin className="w-3 h-3 flex-shrink-0" /><span className="truncate">{ev.location}</span>
+                        </div>
+                      )}
+                      {(ev.assigned_to || ev.is_shared) && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {ev.assigned_to && (
+                            <span className="inline-flex items-center gap-1 text-[10px] bg-white/70 text-amber-700 px-2 py-0.5 rounded-full font-semibold border border-amber-200">
+                              <User className="w-2.5 h-2.5" />{ev.assigned_to_name || getUserName(ev.assigned_to) || 'Utente'}
+                            </span>
+                          )}
+                          {ev.is_shared && (
+                            <span className="inline-flex items-center gap-1 text-[10px] bg-white/70 text-teal-700 px-2 py-0.5 rounded-full font-semibold border border-teal-200">
+                              <Users className="w-2.5 h-2.5" />Condiviso
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  )
+                })}
 
-                    {event.description && <p className="text-xs opacity-70 mb-1.5 leading-relaxed">{event.description}</p>}
-
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs opacity-70">
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatEventDate(event)}</span>
-                      {event.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{event.location}</span>}
-                      {event.is_recurring && <span className="flex items-center gap-1"><Repeat className="w-3 h-3" />Ricorrente</span>}
-                    </div>
-
-                    {/* Assegnazione */}
-                    {(event.assigned_to || event.is_shared) && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {event.assigned_to && (
-                          <span className="inline-flex items-center gap-1 text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                            <User className="w-2.5 h-2.5" />
-                            {event.assigned_to_name || getUserName(event.assigned_to) || 'Utente'}
+                {selectedDateTasks.length > 0 && (
+                  <>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 pt-1">Task</p>
+                    {selectedDateTasks.map(task => (
+                      <div key={task.id} className={`rounded-2xl p-3 flex items-start gap-2.5 ${
+                        task.is_completed ? 'bg-emerald-50 border-l-4 border-emerald-400' :
+                        task.priority === 'urgent' ? 'bg-red-50 border-l-4 border-red-400' :
+                        task.priority === 'high' ? 'bg-orange-50 border-l-4 border-orange-400' :
+                        'bg-violet-50 border-l-4 border-violet-400'
+                      }`}>
+                        <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${task.is_completed ? 'text-emerald-500' : 'text-slate-300'}`} />
+                        <div className="min-w-0">
+                          <p className={`text-sm font-semibold leading-tight ${task.is_completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>{task.title}</p>
+                          <span className="text-[10px] text-slate-400 mt-0.5 block">
+                            {task.priority === 'urgent' ? '🔴 Urgente' : task.priority === 'high' ? '🟠 Alta' : task.priority === 'medium' ? '🟡 Media' : '🔵 Bassa'}
                           </span>
-                        )}
-                        {event.is_shared && (
-                          <span className="inline-flex items-center gap-1 text-[10px] bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">
-                            <Users className="w-2.5 h-2.5" />
-                            Condiviso
-                          </span>
-                        )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-
-                {/* Tasks */}
-                {selectedDateTasks.map(task => (
-                  <div key={task.id} className={`border-l-4 rounded-xl p-3 ${
-                    task.is_completed ? 'border-emerald-400 bg-emerald-50 text-emerald-700' :
-                    task.priority === 'urgent' || task.priority === 'high' ? 'border-red-400 bg-red-50 text-red-700' :
-                    'border-violet-400 bg-violet-50 text-violet-700'
-                  }`}>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${task.is_completed ? 'text-emerald-500' : 'text-slate-300'}`} />
-                      <div className="min-w-0">
-                        <p className={`text-sm font-semibold leading-tight ${task.is_completed ? 'line-through opacity-60' : ''}`}>{task.title}</p>
-                        {task.description && <p className="text-xs opacity-70 mt-0.5">{task.description}</p>}
-                        <span className="inline-block text-[10px] mt-1 opacity-60 capitalize">{task.priority === 'urgent' ? '🔴' : task.priority === 'high' ? '🟠' : task.priority === 'medium' ? '🟡' : '🔵'} {task.priority}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>
+
+          {/* POPUP DETTAGLIO EVENTO */}
+          <AnimatePresence>
+            {selectedEvent && popupPos && (
+              <motion.div
+                ref={popupRef}
+                initial={{ opacity: 0, scale: 0.88, y: -8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.88, y: -8 }}
+                transition={{ type: 'spring', damping: 22, stiffness: 360 }}
+                style={{
+                  position: 'absolute',
+                  left: Math.max(8, Math.min(popupPos.x - 160, (containerRef.current?.offsetWidth ?? 900) - 336)),
+                  top: Math.max(8, Math.min(popupPos.y, (containerRef.current?.offsetHeight ?? 650) - 400)),
+                  zIndex: 200,
+                  width: 320,
+                }}
+                className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 border border-slate-200/80 overflow-hidden"
+              >
+                <div className={`h-1.5 ${EV_PILL[selectedEvent.color] || EV_PILL.blue}`} />
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${EV_PILL[selectedEvent.color] || EV_PILL.blue}`} />
+                      <h4 className="text-base font-bold text-slate-900 leading-tight">{selectedEvent.title}</h4>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button onClick={() => { const ev = selectedEvent; setSelectedEvent(null); setPopupPos(null); onEdit(ev) }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all">
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => { if (confirm(`Eliminare "${selectedEvent.title}"?`)) { onDelete(selectedEvent.id); setSelectedEvent(null); setPopupPos(null) } }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-all">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => { setSelectedEvent(null); setPopupPos(null) }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-all">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {selectedEvent.description && (
+                    <p className="text-sm text-slate-600 mb-3 leading-relaxed bg-slate-50 rounded-xl px-3 py-2">
+                      {selectedEvent.description}
+                    </p>
+                  )}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                      <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{fmtEvDate(selectedEvent)}</p>
+                        <p className="text-xs text-slate-400">{fmtFullDate(selectedEvent.start_date)}</p>
+                      </div>
+                    </div>
+
+                    {selectedEvent.location && (
+                      <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                        <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        </div>
+                        <span className="font-medium">{selectedEvent.location}</span>
+                      </div>
+                    )}
+
+                    {selectedEvent.is_recurring && (
+                      <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                        <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                          <Repeat className="w-3.5 h-3.5 text-slate-400" />
+                        </div>
+                        <span className="font-medium">Evento ricorrente</span>
+                      </div>
+                    )}
+
+
+                  </div>
+
+                  {(selectedEvent.assigned_to || selectedEvent.is_shared) && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-1.5">
+                      {selectedEvent.assigned_to && (
+                        <span className="inline-flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-full font-semibold border border-amber-200">
+                          <User className="w-3 h-3" />
+                          {selectedEvent.assigned_to_name || getUserName(selectedEvent.assigned_to) || 'Utente'}
+                        </span>
+                      )}
+                      {selectedEvent.is_shared && (
+                        <span className="inline-flex items-center gap-1.5 text-xs bg-teal-50 text-teal-700 px-3 py-1 rounded-full font-semibold border border-teal-200">
+                          <Users className="w-3 h-3" />Visibile a tutti
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
         </motion.div>
       </motion.div>
     </AnimatePresence>
   )
 }
-
