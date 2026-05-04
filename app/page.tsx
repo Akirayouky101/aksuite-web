@@ -1077,37 +1077,74 @@ export default function Home() {
         isOpen={isLavorazioneModalOpen}
         onClose={() => { setIsLavorazioneModalOpen(false); setEditingLavorazione(null) }}
         onSave={async (data) => {
-          if (editingLavorazione) {
-            await handleUpdateLavorazione(editingLavorazione.id, data)
-          } else {
-            const newLav = await addLavorazione(data)
-            // Crea evento nel calendario per ogni tecnico assegnato
-            if (newLav && data.assigned_to) {
-              const names = data.assigned_to.split(',').map((n: string) => n.trim()).filter(Boolean)
-              const dateStr = newLav.scheduled_date
-                ? `${newLav.scheduled_date}T${newLav.scheduled_time || '09:00'}:00`
-                : new Date().toISOString()
-              names.forEach(async (name: string) => {
-                const matchedUser = managedUsers.find(u => u.full_name === name || u.email === name)
-                await addEvent({
-                  title: `Lavorazione: ${newLav.title}`,
-                  description: newLav.description || '',
-                  start_date: dateStr,
-                  end_date: null,
-                  all_day: false,
-                  location: [newLav.address, newLav.city].filter(Boolean).join(', '),
-                  color: 'indigo',
-                  is_recurring: false,
-                  recurring_type: null,
-                  reminder_minutes: 30,
-                  assigned_to: matchedUser?.id || null,
-                  assigned_to_name: name,
-                  is_shared: true,
-                  created_by: user?.id || null,
-                  created_by_name: null,
-                })
+          const syncLavorazioneEvents = async (lav: any) => {
+            if (!lav) return
+            const newNames: string[] = lav.assigned_to
+              ? lav.assigned_to.split(',').map((n: string) => n.trim()).filter(Boolean)
+              : []
+            const dateStr = lav.scheduled_date
+              ? `${lav.scheduled_date}T${lav.scheduled_time || '09:00'}:00`
+              : new Date().toISOString()
+            const location = [lav.address, lav.city].filter(Boolean).join(', ')
+            const lavTitle = `Lavorazione: ${lav.title}`
+
+            // Trova eventi esistenti legati a questa lavorazione (per nome e assegnatario)
+            const existingEvents = events.filter(e =>
+              e.title === lavTitle && e.assigned_to_name && e.assigned_to_name.trim() !== ''
+            )
+
+            const oldNames = existingEvents.map(e => e.assigned_to_name!.trim())
+
+            // Aggiunti: presenti nel nuovo set ma non negli eventi esistenti
+            const added = newNames.filter(n => !oldNames.includes(n))
+            // Rimossi: presenti negli eventi ma non più nell'assegnazione
+            const removed = oldNames.filter(n => !newNames.includes(n))
+            // Invariati: presenti in entrambi → aggiorna data/luogo se cambiati
+            const kept = newNames.filter(n => oldNames.includes(n))
+
+            // Crea nuovi eventi
+            for (const name of added) {
+              const mu = managedUsers.find(u => u.full_name === name || u.email === name)
+              await addEvent({
+                title: lavTitle,
+                description: lav.description || '',
+                start_date: dateStr,
+                end_date: null,
+                all_day: false,
+                location,
+                color: 'indigo',
+                is_recurring: false,
+                recurring_type: null,
+                reminder_minutes: 30,
+                assigned_to: mu?.id || null,
+                assigned_to_name: name,
+                is_shared: true,
+                created_by: user?.id || null,
+                created_by_name: null,
               })
             }
+
+            // Elimina eventi dei tecnici rimossi
+            for (const name of removed) {
+              const ev = existingEvents.find(e => e.assigned_to_name?.trim() === name)
+              if (ev) await deleteEvent(ev.id)
+            }
+
+            // Aggiorna data/luogo per tecnici invariati
+            for (const name of kept) {
+              const ev = existingEvents.find(e => e.assigned_to_name?.trim() === name)
+              if (ev && (ev.start_date !== dateStr || ev.location !== location)) {
+                await updateEvent(ev.id, { start_date: dateStr, location })
+              }
+            }
+          }
+
+          if (editingLavorazione) {
+            await handleUpdateLavorazione(editingLavorazione.id, data)
+            await syncLavorazioneEvents({ ...editingLavorazione, ...data })
+          } else {
+            const newLav = await addLavorazione(data)
+            await syncLavorazioneEvents(newLav)
           }
         }}
         editLavorazione={editingLavorazione}
