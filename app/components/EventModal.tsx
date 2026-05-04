@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Save, Calendar, Clock, MapPin, Palette, Repeat, Bell } from 'lucide-react'
+import { X, Save, Calendar, Clock, MapPin, Palette, Repeat, Bell, Users } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
 import RelationsIntegration from './RelationsIntegration'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
@@ -12,6 +12,8 @@ interface EventModalProps {
   onClose: () => void
   onSave: (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
   editEvent?: Event | null
+  isAdmin?: boolean
+  managedUsers?: { id: string; full_name: string; email: string }[]
   // Relazioni
   availableItems?: {
     passwords?: any[]
@@ -60,6 +62,8 @@ export default function EventModal({
   onClose, 
   onSave, 
   editEvent,
+  isAdmin = false,
+  managedUsers = [],
   availableItems,
   onAddRelation,
   onRemoveRelation,
@@ -76,7 +80,10 @@ export default function EventModal({
     color: 'blue',
     is_recurring: false,
     recurring_type: null as string | null,
-    reminder_minutes: 30
+    reminder_minutes: 30,
+    assigned_to: null as string | null,
+    assigned_to_name: null as string | null,
+    is_shared: false,
   })
 
   useEffect(() => {
@@ -95,7 +102,10 @@ export default function EventModal({
         color: editEvent.color,
         is_recurring: editEvent.is_recurring,
         recurring_type: editEvent.recurring_type,
-        reminder_minutes: editEvent.reminder_minutes
+        reminder_minutes: editEvent.reminder_minutes,
+        assigned_to: editEvent.assigned_to ?? null,
+        assigned_to_name: editEvent.assigned_to_name ?? null,
+        is_shared: editEvent.is_shared ?? false,
       })
     } else {
       // Default to now
@@ -111,7 +121,10 @@ export default function EventModal({
         color: 'blue',
         is_recurring: false,
         recurring_type: null,
-        reminder_minutes: 30
+        reminder_minutes: 30,
+        assigned_to: null,
+        assigned_to_name: null,
+        is_shared: false,
       })
     }
   }, [editEvent, isOpen])
@@ -335,6 +348,50 @@ export default function EventModal({
                   ))}
                 </select>
               </div>
+
+              {/* Assegna a (solo admin) */}
+              {isAdmin && managedUsers.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                    <Users size={16} /> Assegna a
+                  </label>
+                  <select
+                    value={formData.assigned_to || ''}
+                    onChange={(e) => {
+                      const uid = e.target.value || null
+                      const user = managedUsers.find(u => u.id === uid)
+                      setFormData(prev => ({
+                        ...prev,
+                        assigned_to: uid,
+                        assigned_to_name: user ? (user.full_name || user.email) : null
+                      }))
+                    }}
+                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                  >
+                    <option value="">Nessuno (solo tu)</option>
+                    {managedUsers.map(u => (
+                      <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Evento condiviso (solo admin) */}
+              {isAdmin && (
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="is_shared"
+                    checked={formData.is_shared}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_shared: e.target.checked }))}
+                    className="w-5 h-5 text-indigo-600 bg-slate-50/80 border-slate-200 rounded focus:ring-indigo-200"
+                  />
+                  <label htmlFor="is_shared" className="text-slate-500 font-medium flex items-center gap-2">
+                    <Users size={16} /> Visibile a tutti gli utenti
+                  </label>
+                </div>
+              )}
+
               </form>
 
               {/* Collegamenti Multi-Entità */}

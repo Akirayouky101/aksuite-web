@@ -17,6 +17,11 @@ export interface Event {
   is_recurring: boolean
   recurring_type: string | null
   reminder_minutes: number
+  assigned_to?: string | null
+  assigned_to_name?: string | null
+  is_shared?: boolean
+  created_by?: string | null
+  created_by_name?: string | null
   created_at: string
   updated_at: string
 }
@@ -78,7 +83,8 @@ export function useEvents() {
           .from('events')
           .insert([{
             ...eventData,
-            user_id: user.id
+            user_id: user.id,
+            created_by: user.id
           }])
           .select()
           .single()

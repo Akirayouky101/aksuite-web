@@ -1170,12 +1170,17 @@ export default function Home() {
         onClose={() => { setIsEventModalOpen(false); setEditingEvent(null) }}
         onSave={(eventData) => { if (editingEvent) { updateEvent(editingEvent.id, eventData) } else { addEvent(eventData) } }}
         editEvent={editingEvent} availableItems={availableRelationItems}
+        isAdmin={isAdmin}
+        managedUsers={managedUsers.map(u => ({ id: u.id, full_name: u.full_name, email: u.email }))}
         onAddRelation={addRelation} onRemoveRelation={removeRelation} getRelatedItems={getRelatedItems} />}
 
       {isCalendarViewOpen && <CalendarView isOpen={isCalendarViewOpen} onClose={() => setIsCalendarViewOpen(false)}
         events={events} tasks={tasks} onDelete={deleteEvent}
         onEdit={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
-        onAdd={() => { setEditingEvent(null); setIsEventModalOpen(true) }} />}
+        onAdd={() => { setEditingEvent(null); setIsEventModalOpen(true) }}
+        isAdmin={isAdmin}
+        currentUserId={user?.id}
+        managedUsers={managedUsers.map(u => ({ id: u.id, full_name: u.full_name, email: u.email }))} />}
 
       {isClientModalOpen && <ClientModal isOpen={isClientModalOpen}
         onClose={() => { setIsClientModalOpen(false); setEditingClient(null) }}
