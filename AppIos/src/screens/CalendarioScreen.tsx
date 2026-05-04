@@ -616,7 +616,12 @@ export default function CalendarioScreen({ navigation }: any) {
 
             {/* ── STEP: note ── */}
             {wizardStep === 'note' && (
-              <View style={s.wizardStep}>
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={[s.wizardStep, { paddingBottom: 32 }]}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
                 <Text style={s.wizardStepNum}>Passo 3 di 3</Text>
                 <Text style={s.wizardTitle}>📝  Note finali</Text>
                 <Text style={s.wizardSub}>Opzionale — descrivi brevemente il lavoro svolto</Text>
@@ -666,7 +671,7 @@ export default function CalendarioScreen({ navigation }: any) {
                 <TouchableOpacity onPress={() => setWizardStep('ora_fine')} style={[s.wizardBtnSecondary, { marginTop: 8 }]}>
                   <Text style={s.wizardBtnSecondaryTxt}>‹ Indietro</Text>
                 </TouchableOpacity>
-              </View>
+              </ScrollView>
             )}
 
             {/* ── STEP: done ── */}
