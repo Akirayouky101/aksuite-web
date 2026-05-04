@@ -689,9 +689,6 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
                 <EventsPanel onOpenHR={() => setIsHRPanelOpen(true)} />
-                <button onClick={() => setIsSearchModalOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm active:scale-95 transition-all" title="Cerca (⌘K)">
-                  <Search className="w-[18px] h-[18px]" />
-                </button>
                 <button onClick={() => setIsCalendarViewOpen(true)} className="w-10 h-10 rounded-xl bg-white/70 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-sm active:scale-95 transition-all" title="Calendario">
                   <Calendar className="w-[18px] h-[18px]" />
                 </button>
@@ -707,6 +704,16 @@ export default function Home() {
 
           {/* Content */}
           <div className="p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
+            {/* ═══ GLOBAL SEARCH BAR ═══ */}
+            <button
+              onClick={() => setIsSearchModalOpen(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-2xl text-left hover:bg-white hover:shadow-md hover:border-slate-300/60 active:scale-[0.995] transition-all group"
+            >
+              <Search className="w-4 h-4 text-slate-400 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
+              <span className="text-sm text-slate-400 flex-1">Cerca clienti, lavorazioni, prodotti, listini, magazzino...</span>
+              <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 text-[10px] text-slate-400 font-mono border border-slate-200/60 flex-shrink-0">⌘K</kbd>
+            </button>
+
             {/* ═══ NOTIFICATION BAR ═══ */}
             <NotificationBar
               calls={calls} events={events} lavorazioni={lavorazioni}
@@ -1199,13 +1206,15 @@ export default function Home() {
       />}
 
       {isSearchModalOpen && <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)}
-        calls={calls} lavorazioni={lavorazioni} notes={notes} events={events} clients={clients} visits={visits}
+        calls={calls} lavorazioni={lavorazioni} notes={notes} events={events} clients={clients} visits={visits} products={products}
         onOpenCall={(call) => { setEditingCall(call); setIsCallModalOpen(true) }}
         onOpenLavorazione={(lav) => { setEditingLavorazione(lav); setIsLavorazioneModalOpen(true) }}
         onOpenNote={(note) => { setEditingNote(note); setIsNoteModalOpen(true) }}
         onOpenEvent={(event) => { setEditingEvent(event); setIsEventModalOpen(true) }}
         onOpenClient={(client) => { setEditingClient(client); setIsClientModalOpen(true) }}
-        onOpenVisit={() => setIsVisitsListModalOpen(true)} />}
+        onOpenVisit={() => setIsVisitsListModalOpen(true)}
+        onOpenListino={() => setIsWarehouseListModalOpen(true)}
+        onOpenMagazzino={() => setIsAstZgModalOpen(true)} />}
 
       {isAuthModalOpen && <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => setIsAuthModalOpen(false)} />}

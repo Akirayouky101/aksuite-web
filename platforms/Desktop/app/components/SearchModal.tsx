@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Phone, Wrench, StickyNote, Calendar, Users, MapPin, Clock, ArrowRight, Command } from 'lucide-react'
+import { Search, X, Phone, Wrench, StickyNote, Calendar, Users, MapPin, Clock, ArrowRight, Command, Package, Warehouse } from 'lucide-react'
 
 interface SearchModalProps {
   isOpen: boolean
@@ -13,17 +13,20 @@ interface SearchModalProps {
   events: any[]
   clients: any[]
   visits: any[]
+  products?: any[]
   onOpenCall?: (call: any) => void
   onOpenLavorazione?: (lav: any) => void
   onOpenNote?: (note: any) => void
   onOpenEvent?: (event: any) => void
   onOpenClient?: (client: any) => void
   onOpenVisit?: () => void
+  onOpenListino?: () => void
+  onOpenMagazzino?: () => void
 }
 
 interface SearchResult {
   id: string
-  type: 'call' | 'lavorazione' | 'note' | 'event' | 'client' | 'visit'
+  type: 'call' | 'lavorazione' | 'note' | 'event' | 'client' | 'visit' | 'product_listino' | 'product_magazzino'
   title: string
   subtitle: string
   icon: any
@@ -32,15 +35,17 @@ interface SearchResult {
 }
 
 const typeConfig = {
-  call: { label: 'Chiamata', icon: Phone, bg: 'bg-blue-50', text: 'text-blue-600', iconBg: 'from-blue-500 to-indigo-600' },
-  lavorazione: { label: 'Lavorazione', icon: Wrench, bg: 'bg-violet-50', text: 'text-violet-600', iconBg: 'from-violet-500 to-purple-600' },
-  note: { label: 'Nota', icon: StickyNote, bg: 'bg-emerald-50', text: 'text-emerald-600', iconBg: 'from-emerald-500 to-teal-600' },
-  event: { label: 'Evento', icon: Calendar, bg: 'bg-rose-50', text: 'text-rose-600', iconBg: 'from-rose-500 to-pink-600' },
-  client: { label: 'Cliente', icon: Users, bg: 'bg-teal-50', text: 'text-teal-600', iconBg: 'from-teal-500 to-emerald-600' },
-  visit: { label: 'Visita', icon: MapPin, bg: 'bg-indigo-50', text: 'text-indigo-600', iconBg: 'from-indigo-500 to-blue-600' },
+  call: { label: 'Chiamate', icon: Phone, bg: 'bg-blue-50', text: 'text-blue-600', iconBg: 'from-blue-500 to-indigo-600' },
+  lavorazione: { label: 'Lavorazioni', icon: Wrench, bg: 'bg-violet-50', text: 'text-violet-600', iconBg: 'from-violet-500 to-purple-600' },
+  note: { label: 'Note', icon: StickyNote, bg: 'bg-emerald-50', text: 'text-emerald-600', iconBg: 'from-emerald-500 to-teal-600' },
+  event: { label: 'Eventi', icon: Calendar, bg: 'bg-rose-50', text: 'text-rose-600', iconBg: 'from-rose-500 to-pink-600' },
+  client: { label: 'Clienti', icon: Users, bg: 'bg-teal-50', text: 'text-teal-600', iconBg: 'from-teal-500 to-emerald-600' },
+  visit: { label: 'Visite', icon: MapPin, bg: 'bg-indigo-50', text: 'text-indigo-600', iconBg: 'from-indigo-500 to-blue-600' },
+  product_listino: { label: 'Listini', icon: Package, bg: 'bg-amber-50', text: 'text-amber-600', iconBg: 'from-amber-500 to-orange-500' },
+  product_magazzino: { label: 'Magazzino', icon: Warehouse, bg: 'bg-slate-50', text: 'text-slate-600', iconBg: 'from-slate-500 to-slate-700' },
 }
 
-export default function SearchModal({ isOpen, onClose, calls, lavorazioni, notes, events, clients, visits, onOpenCall, onOpenLavorazione, onOpenNote, onOpenEvent, onOpenClient, onOpenVisit }: SearchModalProps) {
+export default function SearchModal({ isOpen, onClose, calls, lavorazioni, notes, events, clients, visits, products = [], onOpenCall, onOpenLavorazione, onOpenNote, onOpenEvent, onOpenClient, onOpenVisit, onOpenListino, onOpenMagazzino }: SearchModalProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -106,8 +111,28 @@ export default function SearchModal({ isOpen, onClose, calls, lavorazioni, notes
       }
     })
 
-    return results.slice(0, 20)
-  }, [query, calls, lavorazioni, notes, events, clients, visits])
+    // Search products (listino)
+    products.filter(p => (p.warehouse || 'listino') === 'listino').forEach(p => {
+      if (p.sku?.toLowerCase().includes(term) || p.name?.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term) ||
+          p.category?.toLowerCase().includes(term) || p.subcategory?.toLowerCase().includes(term)) {
+        const price = p.sell_price ? ` — €${p.sell_price}` : ''
+        results.push({ id: p.id, type: 'product_listino', title: p.name || p.sku, subtitle: `${p.brand || ''} ${p.sku || ''}${price}`.trim(), icon: Package, iconBg: typeConfig.product_listino.iconBg, item: p })
+      }
+    })
+
+    // Search products (magazzino)
+    products.filter(p => p.warehouse && p.warehouse !== 'listino').forEach(p => {
+      if (p.sku?.toLowerCase().includes(term) || p.name?.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term) ||
+          p.category?.toLowerCase().includes(term)) {
+        const qty = p.quantity != null ? ` — qtà ${p.quantity}` : ''
+        results.push({ id: p.id, type: 'product_magazzino', title: p.name || p.sku, subtitle: `${p.brand || ''} ${p.sku || ''}${qty}`.trim(), icon: Warehouse, iconBg: typeConfig.product_magazzino.iconBg, item: p })
+      }
+    })
+
+    return results.slice(0, 40)
+  }, [query, calls, lavorazioni, notes, events, clients, visits, products])
 
   const results = searchResults()
 
@@ -127,6 +152,8 @@ export default function SearchModal({ isOpen, onClose, calls, lavorazioni, notes
       case 'event': onOpenEvent?.(result.item); break
       case 'client': onOpenClient?.(result.item); break
       case 'visit': onOpenVisit?.(); break
+      case 'product_listino': onOpenListino?.(); break
+      case 'product_magazzino': onOpenMagazzino?.(); break
     }
   }
 
@@ -214,6 +241,12 @@ export default function SearchModal({ isOpen, onClose, calls, lavorazioni, notes
                           <p className="text-sm font-medium text-slate-700 truncate">{result.title}</p>
                           {result.subtitle && <p className="text-xs text-slate-400 truncate">{result.subtitle}</p>}
                         </div>
+                        {(result.type === 'product_listino' && result.item.sell_price) && (
+                          <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex-shrink-0">€{result.item.sell_price}</span>
+                        )}
+                        {(result.type === 'product_magazzino' && result.item.quantity != null) && (
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${result.item.quantity <= 0 ? 'text-red-600 bg-red-50' : 'text-slate-600 bg-slate-100'}`}>qtà {result.item.quantity}</span>
+                        )}
                         <ArrowRight className={`w-3.5 h-3.5 flex-shrink-0 transition-all ${
                           globalIdx === selectedIndex ? 'text-indigo-400' : 'text-slate-200'
                         }`} />
