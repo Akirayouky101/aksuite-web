@@ -86,14 +86,24 @@ export default function CalendarView({
     if (filterUserId === 'mine') return events.filter(e =>
       e.user_id === currentUserId || e.assigned_to === currentUserId
     )
-    // Trova il nome dell'utente selezionato per matching anche su assigned_to_name
-    // (retrocompatibilità: eventi vecchi con assigned_to=null ma assigned_to_name impostato)
     const selectedUser = managedUsers.find(u => u.id === filterUserId)
-    return events.filter(e =>
-      e.user_id === filterUserId ||
-      e.assigned_to === filterUserId ||
-      (selectedUser && e.assigned_to_name?.trim() === selectedUser.full_name?.trim())
-    )
+    const normalize = (s: string) => s.toLowerCase().trim()
+    return events.filter(e => {
+      if (e.user_id === filterUserId) return true
+      if (e.assigned_to === filterUserId) return true
+      if (selectedUser && e.assigned_to_name) {
+        const evName = normalize(e.assigned_to_name)
+        const uName = normalize(selectedUser.full_name || selectedUser.email || '')
+        // match esatto case-insensitive
+        if (evName === uName) return true
+        // match parziale: il nome nel DB è un sottoinsieme (es. "Giuliano" vs "Giuliano Mottironi")
+        if (uName.includes(evName) || evName.includes(uName)) return true
+        // match su ogni token del nome (es. "Giuliano" matcha "Giuliano Mottironi")
+        const tokens = uName.split(' ').filter(Boolean)
+        if (tokens.some(t => evName.includes(t) && t.length > 2)) return true
+      }
+      return false
+    })
   }, [events, filterUserId, isAdmin, currentUserId, managedUsers])
 
   const calendarDays = useMemo(() => {
@@ -113,12 +123,21 @@ export default function CalendarView({
   }, [managedUsers])
 
   const getEvColor = (ev: Event): string => {
-    if (filterUserId === 'all' && managedUsers.length > 0) {
-      // Prima priorità: colore del tecnico assegnato (assigned_to)
+    if (managedUsers.length > 0) {
+      // Prima priorità: colore del tecnico assegnato (assigned_to UUID)
       if (ev.assigned_to && userColorMap[ev.assigned_to]) return userColorMap[ev.assigned_to]
-      // Seconda priorità: colore del creatore (user_id)
+      // Fallback: cerca per nome (assigned_to_name) quando UUID non è settato
+      if (ev.assigned_to_name) {
+        const normalize = (s: string) => s.toLowerCase().trim()
+        const evName = normalize(ev.assigned_to_name)
+        const matched = managedUsers.find(u => {
+          const uName = normalize(u.full_name || u.email || '')
+          return uName === evName || uName.includes(evName) || evName.includes(uName)
+        })
+        if (matched && userColorMap[matched.id]) return userColorMap[matched.id]
+      }
+      // Ultima risorsa: colore del creatore
       if (ev.user_id && userColorMap[ev.user_id]) return userColorMap[ev.user_id]
-      return ev.color || 'blue'
     }
     return ev.color || 'blue'
   }
@@ -302,6 +321,9 @@ export default function CalendarView({
                             className={`w-full text-left text-xs leading-snug font-semibold truncate rounded-lg px-2 py-1 text-white hover:opacity-90 active:scale-[0.97] transition-all ${EV_PILL[getEvColor(ev)]}`}
                           >
                             {!ev.all_day && <span className="opacity-80 mr-0.5">{fmt(ev.start_date)}</span>}
+                            {filterUserId === 'all' && managedUsers.length > 0 && ev.assigned_to_name && (
+                              <span className="opacity-70 mr-0.5">[{ev.assigned_to_name.split(' ')[0]}]</span>
+                            )}
                             {ev.title}
                           </button>
                         ))}
