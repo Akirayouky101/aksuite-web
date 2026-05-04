@@ -11,6 +11,7 @@ import KitsScreen from '../screens/KitsScreen'
 import TicketScreen from '../screens/TicketScreen'
 import TimbratureScreen from '../screens/TimbratureScreen'
 import LavorazioniScreen from '../screens/LavorazioniScreen'
+import CalendarioScreen from '../screens/CalendarioScreen'
 import LavorazioneNotificationModal, { LavorazioneNotif } from '../components/LavorazioneNotificationModal'
 import HRCodeNotificationModal, { HRCodeNotif } from '../components/HRCodeNotificationModal'
 import HRTimbratureModifiedModal from '../components/HRTimbratureModifiedModal'
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   Ticket: undefined
   Timbrature: undefined
   Lavorazioni: undefined
+  Calendario: undefined
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -148,6 +150,7 @@ export default function AppNavigator() {
               <Stack.Screen name="Ticket" component={TicketScreen} />
               <Stack.Screen name="Timbrature" component={TimbratureScreen} />
               <Stack.Screen name="Lavorazioni" component={LavorazioniScreen} />
+              <Stack.Screen name="Calendario" component={CalendarioScreen} />
             </>
           )}
         </Stack.Navigator>

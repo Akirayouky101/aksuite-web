@@ -45,6 +45,13 @@ export default function UserManagementModal({
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [editingUser, setEditingUser] = useState<string | null>(null)
+  const [editEmail, setEditEmail] = useState('')
+  const [editFullName, setEditFullName] = useState('')
+  const [editPassword, setEditPassword] = useState('')
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [editSuccess, setEditSuccess] = useState(false)
 
   // Create user form
   const [newEmail, setNewEmail] = useState('')
@@ -111,6 +118,42 @@ export default function UserManagementModal({
   const handleDelete = async (userId: string) => {
     await onDeleteUser(userId)
     setConfirmDelete(null)
+  }
+
+  const startEdit = (u: ManagedUser) => {
+    setEditingUser(u.id)
+    setEditEmail(u.email)
+    setEditFullName(u.full_name)
+    setEditPassword('')
+    setEditError('')
+    setEditSuccess(false)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingUser) return
+    setEditLoading(true)
+    setEditError('')
+    try {
+      const { data: { user: currentUser } } = await (await import('@/lib/supabase')).supabase.auth.getUser()
+      const res = await fetch('/api/admin/update-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: editingUser,
+          email: editEmail || undefined,
+          fullName: editFullName || undefined,
+          password: editPassword || undefined,
+          adminUserId: currentUser?.id,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Errore aggiornamento')
+      setEditSuccess(true)
+      setTimeout(() => { setEditingUser(null); setEditSuccess(false); onLoadUsers() }, 1200)
+    } catch (err: any) {
+      setEditError(err.message)
+    }
+    setEditLoading(false)
   }
 
   const getPermissionCount = (user: ManagedUser): number => {
@@ -410,6 +453,49 @@ export default function UserManagementModal({
                                   className="overflow-hidden"
                                 >
                                   <div className="px-4 pb-4 border-t border-slate-100/80 pt-3">
+                                    {/* Edit user form */}
+                                    {editingUser === managedUser.id ? (
+                                      <div className="mb-4 p-3 bg-slate-50 border border-slate-200/60 rounded-xl space-y-3">
+                                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Modifica credenziali</p>
+                                        {editError && <p className="text-rose-600 text-xs font-medium">{editError}</p>}
+                                        {editSuccess && <p className="text-emerald-600 text-xs font-medium flex items-center gap-1"><Check className="w-3.5 h-3.5" />Salvato!</p>}
+                                        <div className="relative">
+                                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                          <input value={editFullName} onChange={e => setEditFullName(e.target.value)}
+                                            className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:border-indigo-400 focus:outline-none"
+                                            placeholder="Nome completo" />
+                                        </div>
+                                        <div className="relative">
+                                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                          <input value={editEmail} onChange={e => setEditEmail(e.target.value)} type="email"
+                                            className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:border-indigo-400 focus:outline-none"
+                                            placeholder="Email (login)" />
+                                        </div>
+                                        <div className="relative">
+                                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                          <input value={editPassword} onChange={e => setEditPassword(e.target.value)} type="password"
+                                            className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:border-indigo-400 focus:outline-none"
+                                            placeholder="Nuova password (lascia vuoto per non cambiare)" />
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <button onClick={handleSaveEdit} disabled={editLoading}
+                                            className="flex-1 py-2 rounded-lg bg-indigo-500 text-white text-xs font-semibold hover:bg-indigo-600 disabled:opacity-50 transition-all">
+                                            {editLoading ? 'Salvo...' : 'Salva'}
+                                          </button>
+                                          <button onClick={() => setEditingUser(null)}
+                                            className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-500 text-xs font-medium hover:bg-slate-50 transition-all">
+                                            Annulla
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <button onClick={() => startEdit(managedUser)}
+                                        className="mb-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-all">
+                                        <Mail className="w-3.5 h-3.5" />
+                                        Modifica email / password
+                                      </button>
+                                    )}
+
                                     {/* Quick Actions */}
                                     <div className="flex items-center gap-2 mb-3">
                                       <button

@@ -1118,7 +1118,7 @@ export default function Home() {
                 reminder_minutes: 30,
                 assigned_to: mu?.id || null,
                 assigned_to_name: name,
-                is_shared: true,
+                is_shared: false,
                 created_by: user?.id || null,
                 created_by_name: null,
               })

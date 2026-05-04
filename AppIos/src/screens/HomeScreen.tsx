@@ -57,6 +57,7 @@ const MENU = [
   { icon: '🎫', label: 'Ticket',      sub: 'Comunicazioni',      grad: ['#9B1C1C','#F87171'] as [string,string], glow: '#DC2626', screen: 'Ticket' },
   { icon: '⏱',  label: 'Timbrature', sub: 'Entrata / Uscita',   grad: ['#92400E','#FCD34D'] as [string,string], glow: '#D97706', screen: 'Timbrature' },
   { icon: '🔧', label: 'Lavorazioni', sub: 'Le mie attività',    grad: ['#134E4A','#5EEAD4'] as [string,string], glow: '#0D9488', screen: 'Lavorazioni' },
+  { icon: '📅', label: 'Calendario',  sub: 'I miei appuntamenti', grad: ['#312E81','#6366F1'] as [string,string], glow: '#4F46E5', screen: 'Calendario' },
 ]
 
 function useClock() {
