@@ -80,14 +80,15 @@ export default function ListeLavorazioniListModal({
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex"
+        className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
-          initial={{ x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }}
+          initial={{ scale: 0.96, opacity: 0, y: 12 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.96, opacity: 0, y: 12 }}
           transition={{ type: 'spring', damping: 26, stiffness: 300 }}
           onClick={e => e.stopPropagation()}
-          className="w-full h-full bg-white flex flex-col overflow-hidden"
+          className="w-full max-w-6xl h-[90vh] bg-white rounded-2xl flex flex-col overflow-hidden border border-slate-200/80 shadow-2xl"
         >
           {/* HEADER */}
           <div className="flex-shrink-0 px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-50/60 to-white flex items-center justify-between gap-4">

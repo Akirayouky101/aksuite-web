@@ -379,6 +379,11 @@ export default function Home() {
     loadProfile()
   }, [user?.id])
 
+  // ═══ Auto-load all users when admin (needed for tecnici chips, calendar filter, etc.) ═══
+  useEffect(() => {
+    if (isAdmin) loadAllUsers()
+  }, [isAdmin])
+
   // ═══ Kiosk mode: auto-apre il modal prelievo per utenti con solo can_prelievo ═══
   useEffect(() => {
     if (isKioskOnly && !permissionsLoading) {
@@ -1065,6 +1070,7 @@ export default function Home() {
         }}
         teamMembers={teamMembers}
         clients={clients}
+        listeLavorazioni={listeLavorazioni.map(l => ({ id: l.id, title: l.title, lavorazione_id: l.lavorazione_id }))}
       />}
 
       {isLavorazioneModalOpen && <LavorazioneModal

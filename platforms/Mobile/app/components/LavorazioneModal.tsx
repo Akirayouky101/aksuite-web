@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wrench, User, Calendar, Clock, MapPin, FileText, AlertTriangle, Building2, StickyNote, Hash, Users, Copy, Search } from 'lucide-react'
+import { X, Wrench, User, Calendar, Clock, MapPin, FileText, AlertTriangle, Building2, StickyNote, Hash, Users, Copy, Search, Check } from 'lucide-react'
 import type { Lavorazione } from '../hooks/useLavorazioni'
 import type { Client } from '../hooks/useClients'
 
@@ -32,6 +32,7 @@ export default function LavorazioneModal({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
+  const [selectedTecnici, setSelectedTecnici] = useState<string[]>([])
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('')
   const [priority, setPriority] = useState('media')
@@ -61,7 +62,15 @@ export default function LavorazioneModal({
     if (editLavorazione) {
       setTitle(editLavorazione.title || '')
       setDescription(editLavorazione.description || '')
-      setAssignedTo(editLavorazione.assigned_to || '')
+      const currentAssigned = editLavorazione.assigned_to || ''
+      setAssignedTo(currentAssigned)
+      // Parse comma-separated names into selectedTecnici
+      if (teamMembers.length > 0 && currentAssigned) {
+        const names = currentAssigned.split(',').map(n => n.trim()).filter(Boolean)
+        setSelectedTecnici(names)
+      } else {
+        setSelectedTecnici([])
+      }
       setScheduledDate(editLavorazione.scheduled_date || '')
       setScheduledTime(editLavorazione.scheduled_time ? editLavorazione.scheduled_time.substring(0, 5) : '')
       setPriority(editLavorazione.priority || 'media')
@@ -81,6 +90,7 @@ export default function LavorazioneModal({
     setTitle('')
     setDescription('')
     setAssignedTo('')
+    setSelectedTecnici([])
     setScheduledDate('')
     setScheduledTime('')
     setPriority('media')
@@ -101,7 +111,7 @@ export default function LavorazioneModal({
       const data = {
         title,
         description,
-        assigned_to: assignedTo,
+        assigned_to: teamMembers.length > 0 ? selectedTecnici.join(', ') : assignedTo,
         scheduled_date: scheduledDate || null,
         scheduled_time: scheduledTime || null,
         priority,
@@ -266,20 +276,26 @@ export default function LavorazioneModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
-                  <User className="w-4 h-4 inline mr-2" />
-                  Assegnatario
+                  <Users className="w-4 h-4 inline mr-2" />
+                  Tecnici Assegnati
                 </label>
                 {teamMembers.length > 0 ? (
-                  <select
-                    value={assignedTo}
-                    onChange={(e) => setAssignedTo(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-sm text-slate-800 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
-                  >
-                    <option value="">Nessun assegnatario</option>
-                    {teamMembers.map(m => (
-                      <option key={m.id} value={m.name}>{m.name} — {m.role}</option>
-                    ))}
-                  </select>
+                  <div className="flex flex-wrap gap-2 p-3 bg-slate-50/80 border border-slate-200/60 rounded-xl min-h-[44px]">
+                    {teamMembers.map(m => {
+                      const sel = selectedTecnici.includes(m.name)
+                      return (
+                        <button key={m.id} type="button"
+                          onClick={() => setSelectedTecnici(prev => sel ? prev.filter(n => n !== m.name) : [...prev, m.name])}
+                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                            sel ? 'bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                          }`}>
+                          {sel && <Check className="w-3 h-3" />}
+                          {m.name}
+                          {m.role && <span className={`text-[10px] ${sel ? 'text-indigo-200' : 'text-slate-400'}`}>· {m.role}</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
                 ) : (
                   <input
                     type="text"

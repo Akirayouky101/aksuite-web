@@ -2,9 +2,15 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wrench, Search, Download, Plus, Calendar, Clock, MapPin, User, Trash2, Pencil, CheckCircle2, Circle, AlertCircle, ArrowUpDown, History, FileText, Copy, Users } from 'lucide-react'
+import { X, Wrench, Search, Download, Plus, Calendar, Clock, MapPin, User, Trash2, Pencil, CheckCircle2, Circle, AlertCircle, ArrowUpDown, History, FileText, Copy, Users, ClipboardList } from 'lucide-react'
 import { Lavorazione } from '../hooks/useLavorazioni'
 import { Client } from '../hooks/useClients'
+
+interface ListaRef {
+  id: string
+  title: string
+  lavorazione_id: string | null
+}
 
 interface LavorazioniListModalProps {
   isOpen: boolean
@@ -19,6 +25,7 @@ interface LavorazioniListModalProps {
   onDuplicate?: (lavorazione: Lavorazione) => void
   teamMembers?: Array<{ id: string; name: string; role: string }>
   clients?: Client[]
+  listeLavorazioni?: ListaRef[]
 }
 
 const statusConfig = {
@@ -36,7 +43,7 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
 }
 
 export default function LavorazioniListModal({
-  isOpen, onClose, lavorazioni, onToggleStatus, onDelete, onNew, onEdit, onViewTimeline, onReport, onDuplicate, teamMembers = [], clients = []
+  isOpen, onClose, lavorazioni, onToggleStatus, onDelete, onNew, onEdit, onViewTimeline, onReport, onDuplicate, teamMembers = [], clients = [], listeLavorazioni = []
 }: LavorazioniListModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -44,6 +51,8 @@ export default function LavorazioniListModal({
   const [sortBy, setSortBy] = useState<'date' | 'priority' | 'scheduled'>('date')
   const [showCompleted, setShowCompleted] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const getListaForLav = (lavId: string) => listeLavorazioni.find(l => l.lavorazione_id === lavId) || null
 
   if (!isOpen) return null
 
@@ -322,6 +331,14 @@ export default function LavorazioniListModal({
                                   </span>
                                 )}
                               </div>
+
+                              {/* Lista associata badge */}
+                              {(() => { const lista = getListaForLav(lav.id); return lista ? (
+                                <div className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1 w-fit">
+                                  <ClipboardList className="w-3 h-3 flex-shrink-0" />
+                                  Lista: {lista.title}
+                                </div>
+                              ) : null })()}
 
                               {/* Meta */}
                               <div className="flex items-center gap-4 text-xs text-slate-400">
