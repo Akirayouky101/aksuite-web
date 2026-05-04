@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView, Dimensions,
-  Modal, TextInput, Platform, KeyboardAvoidingView, Alert, Switch,
+  Modal, TextInput, Platform, KeyboardAvoidingView, Alert,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -132,7 +132,7 @@ export default function CalendarioScreen({ navigation }: any) {
   const [oraInizio, setOraInizio]       = useState<Date>(new Date())
   const [oraFine, setOraFine]           = useState<Date>(new Date())
   const [noteFinali, setNoteFinali]     = useState('')
-  const [segnaCompletata, setSegnaCompletata] = useState(false)
+  const [sessioneCompletata, setSessioneCompletata] = useState(false) // used only to show correct done screen
   const [completaLoading, setCompletaLoading] = useState(false)
 
   // Android time picker visibility
@@ -190,10 +190,10 @@ export default function CalendarioScreen({ navigation }: any) {
     setSelectedEvent(null)
     setLavorazione(null)
     setWizardStep('detail')
-    setSegnaCompletata(false)
+    setSessioneCompletata(false)
   }
 
-  const handleSalvaOre = async () => {
+  const handleSalvaOre = async (completa: boolean) => {
     if (!lavorazione) return
     setCompletaLoading(true)
     try {
@@ -204,7 +204,7 @@ export default function CalendarioScreen({ navigation }: any) {
       const workDate = (selectedEvent?.start_date ?? new Date().toISOString()).slice(0, 10)
 
       // 1. Salva sessione ore in lavorazione_ore
-      await supabase.from('lavorazione_ore').insert({
+      const { error: oreError } = await supabase.from('lavorazione_ore').insert({
         lavorazione_id: lavorazione.id,
         user_id: user!.id,
         user_name: lavorazione.assigned_to || '',
@@ -215,7 +215,13 @@ export default function CalendarioScreen({ navigation }: any) {
         notes: noteFinali.trim(),
       })
 
-      if (segnaCompletata) {
+      if (oreError) {
+        Alert.alert('Errore salvataggio ore', oreError.message || 'Impossibile salvare le ore. Assicurati che le tabelle siano state create in Supabase.')
+        setCompletaLoading(false)
+        return
+      }
+
+      if (completa) {
         // 2a. Aggiorna stato lavorazione a completata
         await supabase
           .from('lavorazioni')
@@ -244,6 +250,7 @@ export default function CalendarioScreen({ navigation }: any) {
         setLavorazione({ ...lavorazione, status: 'completata' })
       }
 
+      setSessioneCompletata(completa)
       setWizardStep('done')
       await fetchEvents(currentYear, currentMonth)
     } catch (err: any) {
@@ -631,42 +638,43 @@ export default function CalendarioScreen({ navigation }: any) {
                   onChangeText={setNoteFinali}
                 />
 
-                {/* Toggle: segna come completata */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F0FDF4', borderRadius: 12, padding: 14, marginTop: 12, borderWidth: 1, borderColor: '#BBF7D0' }}>
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#166534' }}>Segna come completata?</Text>
-                    <Text style={{ fontSize: 12, color: '#4ADE80', marginTop: 2 }}>Se la lavorazione è ancora in corso, lascia disattivato</Text>
-                  </View>
-                  <Switch
-                    value={segnaCompletata}
-                    onValueChange={setSegnaCompletata}
-                    trackColor={{ false: '#D1D5DB', true: '#34D399' }}
-                    thumbColor={segnaCompletata ? '#10B981' : '#9CA3AF'}
-                  />
-                </View>
+                {/* Bottone principale: registra sessione senza completare */}
+                <TouchableOpacity
+                  onPress={() => handleSalvaOre(false)}
+                  disabled={completaLoading}
+                  style={{ marginTop: 16, borderRadius: 14, overflow: 'hidden' }}
+                >
+                  <LinearGradient colors={['#6366F1', '#7C3AED']} style={[s.wizardBtnGrad, { paddingVertical: 14 }]}>
+                    {completaLoading
+                      ? <ActivityIndicator color="#fff" size="small" />
+                      : <Text style={s.wizardBtnPrimaryTxt}>💾  Registra sessione</Text>
+                    }
+                  </LinearGradient>
+                </TouchableOpacity>
 
-                <View style={s.wizardActions}>
-                  <TouchableOpacity onPress={() => setWizardStep('ora_fine')} style={s.wizardBtnSecondary}>
-                    <Text style={s.wizardBtnSecondaryTxt}>‹ Indietro</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleSalvaOre} disabled={completaLoading} style={s.wizardBtnPrimary}>
-                    <LinearGradient colors={['#6366F1','#7C3AED']} style={s.wizardBtnGrad}>
-                      {completaLoading
-                        ? <ActivityIndicator color="#fff" size="small" />
-                        : <Text style={s.wizardBtnPrimaryTxt}>💾  Salva ore</Text>
-                      }
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
+                {/* Bottone secondario: segna come completata (verde) */}
+                <TouchableOpacity
+                  onPress={() => handleSalvaOre(true)}
+                  disabled={completaLoading}
+                  style={{ marginTop: 10, borderRadius: 14, overflow: 'hidden' }}
+                >
+                  <LinearGradient colors={['#10B981', '#059669']} style={[s.wizardBtnGrad, { paddingVertical: 14 }]}>
+                    <Text style={s.wizardBtnPrimaryTxt}>✅  Segna come completata</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => setWizardStep('ora_fine')} style={[s.wizardBtnSecondary, { marginTop: 8 }]}>
+                  <Text style={s.wizardBtnSecondaryTxt}>‹ Indietro</Text>
+                </TouchableOpacity>
               </View>
             )}
 
             {/* ── STEP: done ── */}
             {wizardStep === 'done' && (
               <View style={[s.wizardStep, { alignItems: 'center', paddingTop: 24 }]}>
-                <Text style={{ fontSize: 56, marginBottom: 16 }}>{segnaCompletata ? '🎉' : '💾'}</Text>
+                <Text style={{ fontSize: 56, marginBottom: 16 }}>{sessioneCompletata ? '🎉' : '💾'}</Text>
                 <Text style={[s.wizardTitle, { textAlign: 'center' }]}>
-                  {segnaCompletata ? 'Lavorazione completata!' : 'Ore salvate!'}
+                  {sessioneCompletata ? 'Lavorazione completata!' : 'Sessione salvata!'}
                 </Text>
                 <Text style={[s.wizardSub, { textAlign: 'center', marginBottom: 8 }]}>
                   Ore lavorate: <Text style={{ fontWeight: '700', color: '#10B981' }}>{calcDurata(dateToHHMM(oraInizio), dateToHHMM(oraFine))}</Text>
@@ -674,7 +682,7 @@ export default function CalendarioScreen({ navigation }: any) {
                 <Text style={[s.wizardSub, { textAlign: 'center' }]}>
                   {dateToHHMM(oraInizio)} → {dateToHHMM(oraFine)}
                 </Text>
-                {!segnaCompletata && (
+                {!sessioneCompletata && (
                   <Text style={[s.wizardSub, { textAlign: 'center', color: '#6366F1', marginTop: 8 }]}>
                     La lavorazione è ancora in corso — potrai registrare altre sessioni in futuro.
                   </Text>
