@@ -33,6 +33,7 @@ export default function LavorazioneModal({
   const [description, setDescription] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
   const [selectedTecnici, setSelectedTecnici] = useState<string[]>([])
+  const [confirmRemoveTecnico, setConfirmRemoveTecnico] = useState<string | null>(null)
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('')
   const [priority, setPriority] = useState('media')
@@ -283,15 +284,30 @@ export default function LavorazioneModal({
                   <div className="space-y-2">
                     {/* Lista tecnici aggiunti */}
                     {selectedTecnici.map((name, idx) => (
-                      <div key={idx} className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
-                        <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
-                          <Users className="w-3 h-3 text-white" />
+                      <div key={idx}>
+                        <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
+                          <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                            <Users className="w-3 h-3 text-white" />
+                          </div>
+                          <span className="flex-1 text-sm font-semibold text-indigo-800">{name}</span>
+                          <button type="button" onClick={() => setConfirmRemoveTecnico(name)}
+                            className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-100 text-indigo-400 hover:text-red-500 transition-all">
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
-                        <span className="flex-1 text-sm font-semibold text-indigo-800">{name}</span>
-                        <button type="button" onClick={() => setSelectedTecnici(prev => prev.filter((_, i) => i !== idx))}
-                          className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-100 text-indigo-400 hover:text-red-500 transition-all">
-                          <X className="w-3 h-3" />
-                        </button>
+                        {confirmRemoveTecnico === name && (
+                          <div className="mt-1 flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                            <span className="flex-1 text-xs text-red-600 font-medium">Rimuovere <strong>{name}</strong>?</span>
+                            <button type="button" onClick={() => { setSelectedTecnici(prev => prev.filter(n => n !== name)); setConfirmRemoveTecnico(null) }}
+                              className="text-xs font-bold px-2.5 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+                              Rimuovi
+                            </button>
+                            <button type="button" onClick={() => setConfirmRemoveTecnico(null)}
+                              className="text-xs font-semibold px-2.5 py-1 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-all">
+                              Annulla
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                     {/* Dropdown + pulsante aggiungi */}
