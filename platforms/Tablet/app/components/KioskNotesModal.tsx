@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, StickyNote, Send, Trash2, Loader2 } from 'lucide-react'
-import { useKioskNotes } from '../hooks/useKioskNotes'
+import { X, StickyNote, Send, Trash2, Loader2, Pencil, ChevronLeft, Save } from 'lucide-react'
+import { useKioskNotes, KioskNote } from '../hooks/useKioskNotes'
 
 interface KioskNotesModalProps {
   isOpen: boolean
@@ -12,10 +12,15 @@ interface KioskNotesModalProps {
 }
 
 export default function KioskNotesModal({ isOpen, onClose, currentUser }: KioskNotesModalProps) {
-  const { notes, loading, loadNotes, addNote, deleteNote } = useKioskNotes()
+  const { notes, loading, loadNotes, addNote, deleteNote, updateNote } = useKioskNotes()
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
+  const [detailNote, setDetailNote] = useState<KioskNote | null>(null)
+  const [editText, setEditText] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+  const [editSaving, setEditSaving] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const editRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (isOpen) loadNotes()
@@ -30,6 +35,28 @@ export default function KioskNotesModal({ isOpen, onClose, currentUser }: KioskN
     textareaRef.current?.focus()
   }
 
+  const openDetail = (note: KioskNote) => {
+    setDetailNote(note)
+    setEditText(note.content)
+    setIsEditing(false)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!detailNote || !editText.trim()) return
+    setEditSaving(true)
+    const ok = await updateNote(detailNote.id, editText.trim())
+    setEditSaving(false)
+    if (ok) {
+      setDetailNote(prev => prev ? { ...prev, content: editText.trim() } : null)
+      setIsEditing(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    await deleteNote(id)
+    setDetailNote(null)
+  }
+
   if (!isOpen) return null
 
   return (
@@ -41,7 +68,7 @@ export default function KioskNotesModal({ isOpen, onClose, currentUser }: KioskN
         className="fixed inset-0 z-[200] flex items-end justify-center sm:items-center p-4"
       >
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={onClose} />
+        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => detailNote ? setDetailNote(null) : onClose()} />
 
         {/* Panel */}
         <motion.div
@@ -54,12 +81,25 @@ export default function KioskNotesModal({ isOpen, onClose, currentUser }: KioskN
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-amber-50 to-yellow-50 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-400/30">
-                <StickyNote className="w-5 h-5 text-white" />
-              </div>
+              {detailNote ? (
+                <button
+                  onClick={() => { setDetailNote(null); setIsEditing(false) }}
+                  className="w-9 h-9 rounded-xl bg-amber-100 hover:bg-amber-200 flex items-center justify-center transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5 text-amber-700" />
+                </button>
+              ) : (
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-400/30">
+                  <StickyNote className="w-5 h-5 text-white" />
+                </div>
+              )}
               <div>
-                <h2 className="text-lg font-black text-slate-800">Note Magazzino</h2>
-                <p className="text-xs text-slate-500">Condivise · visibili solo dal magazzino</p>
+                <h2 className="text-lg font-black text-slate-800">
+                  {detailNote ? 'Dettaglio Nota' : 'Note Magazzino'}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {detailNote ? `di ${detailNote.author}` : 'Condivise · visibili solo dal magazzino'}
+                </p>
               </div>
             </div>
             <button
@@ -70,80 +110,161 @@ export default function KioskNotesModal({ isOpen, onClose, currentUser }: KioskN
             </button>
           </div>
 
-          {/* Notes list */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-              </div>
-            ) : notes.length === 0 ? (
-              <div className="text-center py-12">
-                <StickyNote className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                <p className="text-slate-400 text-sm font-medium">Nessuna nota ancora</p>
-                <p className="text-slate-300 text-xs mt-1">Aggiungi la prima nota qui sotto</p>
-              </div>
+          {/* Content */}
+          <AnimatePresence mode="wait">
+            {detailNote ? (
+              /* ── DETAIL / EDIT VIEW ── */
+              <motion.div
+                key="detail"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                className="flex-1 overflow-y-auto flex flex-col"
+              >
+                <div className="p-5 flex-1">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+                      {detailNote.author.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm font-bold text-amber-700">{detailNote.author}</span>
+                    <span className="text-xs text-slate-400 ml-auto">
+                      {new Date(detailNote.created_at).toLocaleDateString('it-IT', {
+                        day: '2-digit', month: '2-digit', year: '2-digit',
+                        hour: '2-digit', minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+
+                  {isEditing ? (
+                    <textarea
+                      ref={editRef}
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      rows={8}
+                      className="w-full px-4 py-3 bg-amber-50 rounded-2xl border border-amber-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-300 resize-none"
+                      autoFocus
+                    />
+                  ) : (
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap bg-amber-50 rounded-2xl border border-amber-200/60 p-4">
+                      {detailNote.content}
+                    </p>
+                  )}
+                </div>
+
+                <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/80 flex gap-3 flex-shrink-0">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={() => { setIsEditing(false); setEditText(detailNote.content) }}
+                        className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-100 transition-all"
+                      >
+                        Annulla
+                      </button>
+                      <button
+                        onClick={handleSaveEdit}
+                        disabled={!editText.trim() || editSaving}
+                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-400/30 disabled:opacity-40 transition-all"
+                      >
+                        {editSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        Salva
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleDelete(detailNote.id)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200/60 text-red-500 text-sm font-semibold transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" /> Elimina
+                      </button>
+                      <button
+                        onClick={() => { setIsEditing(true); setTimeout(() => editRef.current?.focus(), 100) }}
+                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-400/30 transition-all"
+                      >
+                        <Pencil className="w-4 h-4" /> Modifica
+                      </button>
+                    </>
+                  )}
+                </div>
+              </motion.div>
             ) : (
-              notes.map(note => (
-                <motion.div
-                  key={note.id}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-amber-50 border border-amber-200/60 rounded-2xl p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
-                          {note.author.charAt(0).toUpperCase()}
+              /* ── LIST VIEW ── */
+              <motion.div
+                key="list"
+                initial={{ opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                className="flex-1 overflow-y-auto flex flex-col"
+              >
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                    </div>
+                  ) : notes.length === 0 ? (
+                    <div className="text-center py-12">
+                      <StickyNote className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                      <p className="text-slate-400 text-sm font-medium">Nessuna nota ancora</p>
+                      <p className="text-slate-300 text-xs mt-1">Aggiungi la prima nota qui sotto</p>
+                    </div>
+                  ) : (
+                    notes.map(note => (
+                      <motion.button
+                        key={note.id}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={() => openDetail(note)}
+                        className="w-full text-left bg-amber-50 hover:bg-amber-100 border border-amber-200/60 hover:border-amber-300 rounded-2xl p-4 transition-all active:scale-[0.98]"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+                            {note.author.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-xs font-bold text-amber-700">{note.author}</span>
+                          <span className="text-xs text-slate-400 ml-auto">
+                            {new Date(note.created_at).toLocaleDateString('it-IT', {
+                              day: '2-digit', month: '2-digit', year: '2-digit',
+                              hour: '2-digit', minute: '2-digit'
+                            })}
+                          </span>
                         </div>
-                        <span className="text-xs font-bold text-amber-700">{note.author}</span>
-                        <span className="text-xs text-slate-400 ml-auto">
-                          {new Date(note.created_at).toLocaleDateString('it-IT', {
-                            day: '2-digit', month: '2-digit', year: '2-digit',
-                            hour: '2-digit', minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{note.content}</p>
+                        <p className="text-sm text-slate-700 line-clamp-3 whitespace-pre-wrap">{note.content}</p>
+                      </motion.button>
+                    ))
+                  )}
+                </div>
+
+                {/* Input area */}
+                <div className="px-4 py-4 border-t border-slate-100 bg-slate-50/80 flex-shrink-0">
+                  <div className="flex gap-3 items-start">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-600 flex items-center justify-center text-white text-sm font-black flex-shrink-0 mt-1">
+                      {(currentUser || 'M').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <textarea
+                        ref={textareaRef}
+                        value={text}
+                        onChange={e => setText(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAdd() }}
+                        placeholder="Scrivi una nota per il magazzino..."
+                        rows={2}
+                        className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-slate-800 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-300 resize-none"
+                      />
                     </div>
                     <button
-                      onClick={() => deleteNote(note.id)}
-                      className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200/60 flex items-center justify-center transition-all flex-shrink-0 mt-0.5"
+                      onClick={handleAdd}
+                      disabled={!text.trim() || saving}
+                      className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white flex items-center justify-center shadow-lg shadow-amber-400/30 transition-all disabled:opacity-40 flex-shrink-0 mt-1"
                     >
-                      <Trash2 className="w-4 h-4 text-red-400" />
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </button>
                   </div>
-                </motion.div>
-              ))
+                </div>
+              </motion.div>
             )}
-          </div>
-
-          {/* Input area */}
-          <div className="px-4 py-4 border-t border-slate-100 bg-slate-50/80 flex-shrink-0">
-            <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-600 flex items-center justify-center text-white text-sm font-black flex-shrink-0 mt-1">
-                {(currentUser || 'M').charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1">
-                <textarea
-                  ref={textareaRef}
-                  value={text}
-                  onChange={e => setText(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAdd() }}
-                  placeholder="Scrivi una nota per il magazzino..."
-                  rows={2}
-                  className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-slate-800 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-300 resize-none"
-                />
-              </div>
-              <button
-                onClick={handleAdd}
-                disabled={!text.trim() || saving}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white flex items-center justify-center shadow-lg shadow-amber-400/30 transition-all disabled:opacity-40 flex-shrink-0 mt-1"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
+          </AnimatePresence>
         </motion.div>
       </motion.div>
     </AnimatePresence>

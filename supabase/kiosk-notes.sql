@@ -15,5 +15,8 @@ create policy "kiosk_notes_select" on kiosk_notes
 create policy "kiosk_notes_insert" on kiosk_notes
   for insert with check (auth.role() = 'authenticated');
 
+create policy "kiosk_notes_update" on kiosk_notes
+  for update using (auth.role() = 'authenticated');
+
 create policy "kiosk_notes_delete" on kiosk_notes
   for delete using (auth.role() = 'authenticated');

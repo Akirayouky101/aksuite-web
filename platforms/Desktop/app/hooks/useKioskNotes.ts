@@ -43,5 +43,15 @@ export function useKioskNotes() {
     return true
   }, [loadNotes])
 
-  return { notes, loading, loadNotes, addNote, deleteNote }
+  const updateNote = useCallback(async (id: string, content: string): Promise<boolean> => {
+    const { error } = await supabase
+      .from('kiosk_notes')
+      .update({ content })
+      .eq('id', id)
+    if (error) return false
+    await loadNotes()
+    return true
+  }, [loadNotes])
+
+  return { notes, loading, loadNotes, addNote, deleteNote, updateNote }
 }
