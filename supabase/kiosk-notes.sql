@@ -1,10 +1,14 @@
 -- Note condivise del magazzino (kiosk Giuliano & Lorenzo)
 create table if not exists kiosk_notes (
   id         uuid        primary key default gen_random_uuid(),
+  title      text        not null default '',
   content    text        not null,
   author     text        not null default '',
   created_at timestamptz default now()
 );
+
+-- Se la tabella esiste già, aggiungi la colonna title
+alter table kiosk_notes add column if not exists title text not null default '';
 
 alter table kiosk_notes enable row level security;
 

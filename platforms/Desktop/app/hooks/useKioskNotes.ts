@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 
 export interface KioskNote {
   id: string
+  title: string
   content: string
   author: string
   created_at: string
@@ -24,10 +25,10 @@ export function useKioskNotes() {
     setLoading(false)
   }, [])
 
-  const addNote = useCallback(async (content: string, author: string): Promise<boolean> => {
+  const addNote = useCallback(async (title: string, content: string, author: string): Promise<boolean> => {
     const { error } = await supabase
       .from('kiosk_notes')
-      .insert({ content, author })
+      .insert({ title, content, author })
     if (error) return false
     await loadNotes()
     return true
@@ -43,10 +44,10 @@ export function useKioskNotes() {
     return true
   }, [loadNotes])
 
-  const updateNote = useCallback(async (id: string, content: string): Promise<boolean> => {
+  const updateNote = useCallback(async (id: string, title: string, content: string): Promise<boolean> => {
     const { error } = await supabase
       .from('kiosk_notes')
-      .update({ content })
+      .update({ title, content })
       .eq('id', id)
     if (error) return false
     await loadNotes()
