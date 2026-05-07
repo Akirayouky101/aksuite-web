@@ -59,8 +59,11 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
 
   if (!isOpen) return null
 
-  // Tutti i profili caricati dall'hook (già filtrati con full_name o email)
-  const enabledUsers = users
+  // Solo Giuliano e Lorenzo nella schermata "Chi sei?"
+  const enabledUsers = users.filter(u => {
+    const name = (u.full_name || u.email || '').toLowerCase()
+    return name.includes('giuliano') || name.includes('lorenzo')
+  })
 
   const searchResults = search.trim().length > 1
     ? products.filter(p =>
