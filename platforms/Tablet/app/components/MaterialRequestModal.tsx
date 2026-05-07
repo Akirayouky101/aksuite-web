@@ -4,10 +4,11 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Search, Plus, Minus, Trash2, PackageCheck, ArrowRight, CheckCircle2,
-  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket, Users
+  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket, Users, StickyNote
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
 import { RequestItem, WarehouseRequest, UserProfile } from '../hooks/useWarehouseRequests'
+import KioskNotesModal from './KioskNotesModal'
 
 interface MaterialRequestModalProps {
   isOpen: boolean
@@ -39,6 +40,7 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
   const [expectedDate, setExpectedDate] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [qtyPicker, setQtyPicker] = useState<{ product: Product; qty: number } | null>(null)
+  const [isNotesOpen, setIsNotesOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const scanRef = useRef<HTMLInputElement>(null)
 
@@ -298,6 +300,22 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
                   <p className="text-2xl font-black tracking-tight">APRI</p>
                   <p className="text-2xl font-black tracking-tight">TICKET</p>
                   <p className="text-xs font-medium text-violet-100/70 mt-2">Segnalazione o richiesta</p>
+                </motion.button>
+              )}
+
+              {/* Note Magazzino */}
+              {kioskMode && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={() => setIsNotesOpen(true)}
+                  className="w-[280px] py-7 px-8 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/60 transition-all border border-amber-300/30"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <StickyNote className="w-10 h-10" />
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">NOTE</p>
+                  <p className="text-2xl font-black tracking-tight">MAGAZZINO</p>
+                  <p className="text-xs font-medium text-amber-100/70 mt-2">Memo condivisi</p>
                 </motion.button>
               )}
             </div>
@@ -753,6 +771,14 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
         )}
 
       </AnimatePresence>
+
+      {isNotesOpen && (
+        <KioskNotesModal
+          isOpen={isNotesOpen}
+          onClose={() => setIsNotesOpen(false)}
+          currentUser={selectedUser || 'Magazzino'}
+        />
+      )}
     </div>
   )
 }
