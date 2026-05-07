@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Search, Plus, Minus, Trash2, PackageCheck, ArrowRight, CheckCircle2,
-  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket
+  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket, Users
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
 import { RequestItem, WarehouseRequest, UserProfile } from '../hooks/useWarehouseRequests'
@@ -26,10 +26,10 @@ interface MaterialRequestModalProps {
   ) => Promise<WarehouseRequest | null>
 }
 
-type Step = 'welcome' | 'form' | 'review' | 'done'
+type Step = 'user_select' | 'welcome' | 'form' | 'review' | 'done'
 
 export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onOpenKits, onOpenTickets, onSubmit }: MaterialRequestModalProps) {
-  const [step, setStep] = useState<Step>('welcome')
+  const [step, setStep] = useState<Step>(kioskMode ? 'user_select' : 'welcome')
   const [requestType, setRequestType] = useState<'prelievo' | 'ordine'>('prelievo')
   const [selectedUser, setSelectedUser] = useState('')
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
@@ -42,13 +42,12 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
   const searchRef = useRef<HTMLInputElement>(null)
   const scanRef = useRef<HTMLInputElement>(null)
 
-  // Kiosk mode: auto-torna al welcome dopo 5s dalla schermata done
+  // Kiosk mode: auto-torna al welcome dopo 5s dalla schermata done (mantieni utente)
   useEffect(() => {
     if (step !== 'done' || !kioskMode) return
     const t = setTimeout(() => {
       setStep('welcome')
       setRequestType('prelievo')
-      setSelectedUser('')
       setSearch('')
       setItems([])
       setNotes('')
@@ -131,7 +130,7 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
   const handleNewRequest = () => {
     setStep('welcome')
     setRequestType('prelievo')
-    setSelectedUser('')
+    if (!kioskMode) setSelectedUser('')
     setSearch('')
     setItems([])
     setNotes('')
@@ -153,6 +152,51 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
       <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={step === 'welcome' && !kioskMode ? handleClose : undefined} />
 
       <AnimatePresence mode="wait">
+
+        {/* ══════ STEP 0: USER SELECT (Kiosk only) ══════ */}
+        {step === 'user_select' && (
+          <motion.div
+            key="user_select"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.85 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="relative z-10 flex flex-col items-center justify-center text-center px-6"
+          >
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-24 h-24 rounded-3xl bg-gradient-to-br from-indigo-400 to-violet-600 shadow-2xl shadow-violet-500/40 flex items-center justify-center mb-8"
+            >
+              <Users className="w-14 h-14 text-white" />
+            </motion.div>
+
+            <h1 className="text-4xl font-black text-white mb-2 tracking-tight">CHI SEI?</h1>
+            <p className="text-white/50 text-base mb-10">Seleziona il tuo nome per iniziare</p>
+
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
+              {enabledUsers.map(u => (
+                <motion.button
+                  key={u.id}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => { setSelectedUser(u.full_name || u.email); setStep('welcome') }}
+                  className="w-[220px] py-8 px-8 rounded-3xl bg-white/10 hover:bg-white/20 border border-white/20 text-white shadow-xl transition-all"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-600 flex items-center justify-center text-white text-2xl font-black mx-auto mb-4">
+                    {(u.full_name || u.email).charAt(0).toUpperCase()}
+                  </div>
+                  <p className="text-xl font-black tracking-tight">{u.full_name || u.email}</p>
+                </motion.button>
+              ))}
+              {enabledUsers.length === 0 && (
+                <p className="text-white/50 text-sm">Nessun utente configurato</p>
+              )}
+            </div>
+
+            <p className="text-white/40 text-sm mt-8">Magazzino AK Suite</p>
+          </motion.div>
+        )}
 
         {/* ══════ STEP 1: WELCOME ══════ */}
         {step === 'welcome' && (
@@ -177,6 +221,21 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
             >
               <PackageCheck className="w-14 h-14 text-white" />
             </motion.div>
+
+            {kioskMode && selectedUser && (
+              <div className="flex items-center gap-3 mb-8 bg-white/10 border border-white/20 rounded-2xl px-5 py-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-600 flex items-center justify-center text-white text-lg font-black flex-shrink-0">
+                  {selectedUser.charAt(0).toUpperCase()}
+                </div>
+                <p className="text-white font-bold text-lg">{selectedUser}</p>
+                <button
+                  onClick={() => { setSelectedUser(''); setStep('user_select') }}
+                  className="ml-4 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white/70 hover:text-white text-xs font-semibold transition-all"
+                >
+                  Cambia utente
+                </button>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
               {/* Prelievo immediato */}
@@ -278,7 +337,19 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
 
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
 
-                {/* Chi sei — dropdown utenti */}
+                {/* Chi sei — in kiosk mostra chip con nome + bottone cambia; altrimenti dropdown */}
+                {kioskMode ? (
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-50 border border-indigo-100">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-lg font-black flex-shrink-0">
+                      {selectedUser.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Operatore</p>
+                      <p className="text-base font-bold text-slate-800">{selectedUser}</p>
+                    </div>
+                    <button onClick={() => { setStep('user_select'); setSelectedUser('') }} className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold underline">Cambia</button>
+                  </div>
+                ) : (
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Chi sei? *</label>
                   <div className="relative">
@@ -321,6 +392,7 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
                     </AnimatePresence>
                   </div>
                 </div>
+                )}
 
                 {/* Data (solo per ordini) */}
                 {requestType === 'ordine' && (
