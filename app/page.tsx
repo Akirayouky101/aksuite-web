@@ -54,6 +54,8 @@ const OrderModal = dynamic(() => import('./components/OrderModal'), { ssr: false
 const OrdersListModal = dynamic(() => import('./components/OrdersListModal'), { ssr: false })
 const WarehouseListModal = dynamic(() => import('./components/WarehouseListModal'), { ssr: false })
 const ExternalSitesModal = dynamic(() => import('./components/ExternalSitesModal'), { ssr: false })
+const QuickScanModal = dynamic(() => import('./components/QuickScanModal'), { ssr: false })
+const ImpegnoMagazzinoModal = dynamic(() => import('./components/ImpegnoMagazzinoModal'), { ssr: false })
 const LabelPrinterModal = dynamic(() => import('./components/LabelPrinterModal'), { ssr: false })
 const UserManagementModal = dynamic(() => import('./components/UserManagementModal'), { ssr: false })
 const ActivityLogModal = dynamic(() => import('./components/ActivityLogModal'), { ssr: false })
@@ -186,6 +188,8 @@ export default function Home() {
   const [isAstZgModalOpen, setIsAstZgModalOpen] = useState(false)
   const [isElettricoModalOpen, setIsElettricoModalOpen] = useState(false)
   const [isExternalSitesOpen, setIsExternalSitesOpen] = useState(false)
+  const [isQuickScanOpen, setIsQuickScanOpen] = useState(false)
+  const [isImpegniOpen, setIsImpegniOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
   const [isOrdersListModalOpen, setIsOrdersListModalOpen] = useState(false)
@@ -444,6 +448,8 @@ export default function Home() {
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
       { id: 'lista_carico', perm: 'can_warehouse' as const, label: 'Lista Carico', icon: Upload, onClick: () => setIsLoadingListOpen(true), section: 'commerciale' },
       { id: 'prelievo', perm: 'can_prelievo' as const, label: 'Prelievi', icon: PackageMinus, onClick: () => { refetchWarehouseProfiles(); setIsMaterialRequestOpen(true) }, section: 'commerciale' },
+      { id: 'scansione_veloce', perm: 'can_scansione_veloce' as const, label: 'Scansione Veloce', icon: PackageMinus, onClick: () => setIsQuickScanOpen(true), section: 'commerciale' },
+      { id: 'impegni', perm: 'can_impegni' as const, label: 'Impegni Magazzino', icon: PackageMinus, onClick: () => setIsImpegniOpen(true), section: 'commerciale' },
       { id: 'preventivi', perm: 'can_preventivi' as const, label: 'Preventivi', icon: FileText, onClick: () => setIsPreventiviListModalOpen(true), count: preventivi.length, section: 'commerciale' },
       { id: 'liste_lavorazioni', perm: 'can_lavorazioni' as const, label: 'Liste Lavorazioni', icon: ClipboardList, onClick: () => setIsListeLavorazioniListModalOpen(true), count: listeLavorazioni.length, section: 'commerciale' },
       // --- Strumenti ---
@@ -1569,6 +1575,23 @@ export default function Home() {
         onClose={() => { setIsExternalSitesOpen(false); if (isKioskOnly) setIsMaterialRequestOpen(true) }}
       />}
 
+      {/* ═══ SCANSIONE VELOCE ═══ */}
+      {isQuickScanOpen && <QuickScanModal
+        isOpen={isQuickScanOpen}
+        onClose={() => { setIsQuickScanOpen(false); if (isKioskOnly) setIsMaterialRequestOpen(true) }}
+        products={products}
+        onUpdateStock={async (productId, type, qty, notes) => { await updateStock(productId, type, qty, notes) }}
+        findByBarcode={findByBarcode}
+      />}
+
+      {/* ═══ IMPEGNI MAGAZZINO ═══ */}
+      {isImpegniOpen && <ImpegnoMagazzinoModal
+        isOpen={isImpegniOpen}
+        onClose={() => setIsImpegniOpen(false)}
+        products={products}
+        findByBarcode={findByBarcode}
+      />}
+
       {isCsvImportOpen && <CsvImportModal
         isOpen={isCsvImportOpen}
         onClose={() => setIsCsvImportOpen(false)}
@@ -1855,6 +1878,8 @@ export default function Home() {
         onOpenTickets={isAdmin || myPermissions?.can_tickets ? () => { setIsMaterialRequestOpen(false); setTicketFromWarehouse(true); setIsTicketsListModalOpen(true) } : undefined}
         onOpenElettrico={myPermissions?.can_magazzino_elettrico ? () => { setIsMaterialRequestOpen(false); setIsElettricoModalOpen(true) } : undefined}
         onOpenPortali={myPermissions?.can_portali_fornitori ? () => { setIsMaterialRequestOpen(false); setIsExternalSitesOpen(true) } : undefined}
+        onOpenQuickScan={myPermissions?.can_scansione_veloce ? () => { setIsMaterialRequestOpen(false); setIsQuickScanOpen(true) } : undefined}
+        onOpenImpegni={myPermissions?.can_impegni ? () => { setIsMaterialRequestOpen(false); setIsImpegniOpen(true) } : undefined}
         onSubmit={submitWarehouseRequest}
       />}
 

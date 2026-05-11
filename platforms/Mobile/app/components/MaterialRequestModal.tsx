@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Search, Plus, Minus, Trash2, PackageCheck, ArrowRight, CheckCircle2,
-  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket, Users, StickyNote, Zap, Globe
+  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket, Users, StickyNote, Zap, Globe, Scan, BookMarked
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
 import { RequestItem, WarehouseRequest, UserProfile } from '../hooks/useWarehouseRequests'
@@ -20,6 +20,8 @@ interface MaterialRequestModalProps {
   onOpenTickets?: () => void
   onOpenElettrico?: () => void
   onOpenPortali?: () => void
+  onOpenQuickScan?: () => void
+  onOpenImpegni?: () => void
   onSubmit: (
     requestedBy: string,
     items: RequestItem[],
@@ -31,7 +33,7 @@ interface MaterialRequestModalProps {
 
 type Step = 'user_select' | 'welcome' | 'form' | 'review' | 'done'
 
-export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onOpenKits, onOpenTickets, onOpenElettrico, onOpenPortali, onSubmit }: MaterialRequestModalProps) {
+export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onOpenKits, onOpenTickets, onOpenElettrico, onOpenPortali, onOpenQuickScan, onOpenImpegni, onSubmit }: MaterialRequestModalProps) {
   const [step, setStep] = useState<Step>(kioskMode ? 'user_select' : 'welcome')
   const [requestType, setRequestType] = useState<'prelievo' | 'ordine'>('prelievo')
   const [selectedUser, setSelectedUser] = useState('')
@@ -350,6 +352,38 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
                   <p className="text-2xl font-black tracking-tight">PORTALI</p>
                   <p className="text-2xl font-black tracking-tight">FORNITORI</p>
                   <p className="text-xs font-medium text-sky-100/70 mt-2">Siti e cataloghi</p>
+                </motion.button>
+              )}
+
+              {/* Scansione Veloce */}
+              {onOpenQuickScan && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={onOpenQuickScan}
+                  className="w-[280px] py-7 px-8 rounded-3xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-2xl shadow-cyan-500/40 hover:shadow-cyan-500/60 transition-all border border-cyan-300/30"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <Scan className="w-10 h-10" />
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">SCANSIONE</p>
+                  <p className="text-2xl font-black tracking-tight">VELOCE</p>
+                  <p className="text-xs font-medium text-cyan-100/70 mt-2">Carico / scarico rapido</p>
+                </motion.button>
+              )}
+
+              {/* Impegni Magazzino */}
+              {onOpenImpegni && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={onOpenImpegni}
+                  className="w-[280px] py-7 px-8 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-700 text-white shadow-2xl shadow-violet-500/40 hover:shadow-violet-500/60 transition-all border border-violet-300/30"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <BookMarked className="w-10 h-10" />
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">IMPEGNI</p>
+                  <p className="text-2xl font-black tracking-tight">MAGAZZINO</p>
+                  <p className="text-xs font-medium text-violet-100/70 mt-2">Prodotti prenotati</p>
                 </motion.button>
               )}
             </div>

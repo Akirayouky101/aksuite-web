@@ -31,6 +31,8 @@ export interface UserPermissions {
   can_verifiche: boolean
   can_magazzino_elettrico: boolean
   can_portali_fornitori: boolean
+  can_scansione_veloce: boolean
+  can_impegni: boolean
   created_at: string
   updated_at: string
 }
@@ -67,6 +69,8 @@ export const PERMISSION_MODULES = [
   { key: 'can_verifiche', label: 'Verifiche Tecnoalarm', icon: 'ShieldCheck' },
   { key: 'can_magazzino_elettrico', label: 'Magazzino Elettrico', icon: 'Zap' },
   { key: 'can_portali_fornitori', label: 'Portali Fornitori', icon: 'Globe' },
+  { key: 'can_scansione_veloce', label: 'Scansione Veloce', icon: 'Scan' },
+  { key: 'can_impegni', label: 'Impegni Magazzino', icon: 'BookMarked' },
 ] as const
 
 export type PermissionKey = typeof PERMISSION_MODULES[number]['key']
@@ -96,6 +100,8 @@ const DEFAULT_PERMISSIONS: Omit<UserPermissions, 'id' | 'user_id' | 'created_at'
   can_verifiche: false,
   can_magazzino_elettrico: false,
   can_portali_fornitori: false,
+  can_scansione_veloce: false,
+  can_impegni: false,
 }
 
 export function useUserManagement() {
@@ -138,6 +144,7 @@ export function useUserManagement() {
             can_preventivi: true, can_sopralluoghi: true, can_installations: true, can_cancelli: true,
             can_prelievo: true, can_kits: true, can_tickets: true, can_hr: true,
             can_verifiche: true, can_magazzino_elettrico: true, can_portali_fornitori: true,
+            can_scansione_veloce: true, can_impegni: true,
           } as UserPermissions)
         }
       }
