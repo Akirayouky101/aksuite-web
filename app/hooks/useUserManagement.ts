@@ -29,6 +29,8 @@ export interface UserPermissions {
   can_hr: boolean
   can_cancelli: boolean
   can_verifiche: boolean
+  can_magazzino_elettrico: boolean
+  can_portali_fornitori: boolean
   created_at: string
   updated_at: string
 }
@@ -63,6 +65,8 @@ export const PERMISSION_MODULES = [
   { key: 'can_hr', label: 'HR / Dipendenti', icon: 'UserCheck' },
   { key: 'can_cancelli', label: 'Cancelli / Automazioni', icon: 'DoorOpen' },
   { key: 'can_verifiche', label: 'Verifiche Tecnoalarm', icon: 'ShieldCheck' },
+  { key: 'can_magazzino_elettrico', label: 'Magazzino Elettrico', icon: 'Zap' },
+  { key: 'can_portali_fornitori', label: 'Portali Fornitori', icon: 'Globe' },
 ] as const
 
 export type PermissionKey = typeof PERMISSION_MODULES[number]['key']
@@ -90,6 +94,8 @@ const DEFAULT_PERMISSIONS: Omit<UserPermissions, 'id' | 'user_id' | 'created_at'
   can_hr: false,
   can_cancelli: false,
   can_verifiche: false,
+  can_magazzino_elettrico: false,
+  can_portali_fornitori: false,
 }
 
 export function useUserManagement() {
@@ -131,7 +137,7 @@ export function useUserManagement() {
             can_visits: true, can_suppliers: true, can_orders: true, can_warehouse: true,
             can_preventivi: true, can_sopralluoghi: true, can_installations: true, can_cancelli: true,
             can_prelievo: true, can_kits: true, can_tickets: true, can_hr: true,
-            can_verifiche: true,
+            can_verifiche: true, can_magazzino_elettrico: true, can_portali_fornitori: true,
           } as UserPermissions)
         }
       }

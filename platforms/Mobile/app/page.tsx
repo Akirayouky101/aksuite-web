@@ -437,8 +437,8 @@ export default function Home() {
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Listini', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.filter(p => (p.warehouse || 'listino') === 'listino').length, section: 'commerciale' },
       { id: 'warehouse_astzg', perm: 'can_warehouse' as const, label: 'Magazzino AST/ZG', icon: Package, onClick: () => setIsAstZgModalOpen(true), count: products.filter(p => p.warehouse === 'magazzino_astzg').length, section: 'commerciale' },
-      { id: 'warehouse_elettrico', perm: 'can_warehouse' as const, label: 'Magazzino Elettrico', icon: Package, onClick: () => setIsElettricoModalOpen(true), count: products.filter(p => p.warehouse === 'magazzino_elettrico').length, section: 'commerciale' },
-      { id: 'portali_esterni', perm: 'can_warehouse' as const, label: 'Portali Fornitori', icon: Package, onClick: () => setIsExternalSitesOpen(true), section: 'commerciale' },
+      { id: 'warehouse_elettrico', perm: 'can_magazzino_elettrico' as const, label: 'Magazzino Elettrico', icon: Package, onClick: () => setIsElettricoModalOpen(true), count: products.filter(p => p.warehouse === 'magazzino_elettrico').length, section: 'commerciale' },
+      { id: 'portali_esterni', perm: 'can_portali_fornitori' as const, label: 'Portali Fornitori', icon: Package, onClick: () => setIsExternalSitesOpen(true), section: 'commerciale' },
       { id: 'kits', perm: 'can_kits' as const, label: 'KIT', icon: Layers, onClick: () => setIsKitsListModalOpen(true), count: kits.length, section: 'commerciale' },
       { id: 'stock_dashboard', perm: 'can_kits' as const, label: 'Stock Critico', icon: TrendingDown, onClick: () => setIsStockDashboardOpen(true), section: 'commerciale' },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
@@ -1842,6 +1842,8 @@ export default function Home() {
         kioskMode={isKioskOnly}
         onOpenKits={myPermissions?.can_kits ? () => setIsKitsListModalOpen(true) : undefined}
         onOpenTickets={isAdmin || myPermissions?.can_tickets ? () => { setIsMaterialRequestOpen(false); setTicketFromWarehouse(true); setIsTicketsListModalOpen(true) } : undefined}
+        onOpenElettrico={myPermissions?.can_magazzino_elettrico ? () => { setIsMaterialRequestOpen(false); setIsElettricoModalOpen(true) } : undefined}
+        onOpenPortali={myPermissions?.can_portali_fornitori ? () => { setIsMaterialRequestOpen(false); setIsExternalSitesOpen(true) } : undefined}
         onSubmit={submitWarehouseRequest}
       />}
 

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Search, Plus, Minus, Trash2, PackageCheck, ArrowRight, CheckCircle2,
-  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket, Users, StickyNote
+  Package, ChevronLeft, ChevronDown, Calendar, Truck, ClipboardList, AlertCircle, Layers, Ticket, Users, StickyNote, Zap, Globe
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
 import { RequestItem, WarehouseRequest, UserProfile } from '../hooks/useWarehouseRequests'
@@ -18,6 +18,8 @@ interface MaterialRequestModalProps {
   kioskMode?: boolean
   onOpenKits?: () => void
   onOpenTickets?: () => void
+  onOpenElettrico?: () => void
+  onOpenPortali?: () => void
   onSubmit: (
     requestedBy: string,
     items: RequestItem[],
@@ -29,7 +31,7 @@ interface MaterialRequestModalProps {
 
 type Step = 'user_select' | 'welcome' | 'form' | 'review' | 'done'
 
-export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onOpenKits, onOpenTickets, onSubmit }: MaterialRequestModalProps) {
+export default function MaterialRequestModal({ isOpen, onClose, products, users, kioskMode = false, onOpenKits, onOpenTickets, onOpenElettrico, onOpenPortali, onSubmit }: MaterialRequestModalProps) {
   const [step, setStep] = useState<Step>(kioskMode ? 'user_select' : 'welcome')
   const [requestType, setRequestType] = useState<'prelievo' | 'ordine'>('prelievo')
   const [selectedUser, setSelectedUser] = useState('')
@@ -316,6 +318,38 @@ export default function MaterialRequestModal({ isOpen, onClose, products, users,
                   <p className="text-2xl font-black tracking-tight">NOTE</p>
                   <p className="text-2xl font-black tracking-tight">MAGAZZINO</p>
                   <p className="text-xs font-medium text-amber-100/70 mt-2">Memo condivisi</p>
+                </motion.button>
+              )}
+
+              {/* Magazzino Elettrico */}
+              {onOpenElettrico && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={onOpenElettrico}
+                  className="w-[280px] py-7 px-8 rounded-3xl bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-2xl shadow-yellow-500/40 hover:shadow-yellow-500/60 transition-all border border-yellow-300/30"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <Zap className="w-10 h-10" />
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">MAGAZZINO</p>
+                  <p className="text-2xl font-black tracking-tight">ELETTRICO</p>
+                  <p className="text-xs font-medium text-yellow-100/70 mt-2">Prodotti elettrici</p>
+                </motion.button>
+              )}
+
+              {/* Portali Fornitori */}
+              {onOpenPortali && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                  onClick={onOpenPortali}
+                  className="w-[280px] py-7 px-8 rounded-3xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-2xl shadow-sky-500/40 hover:shadow-sky-500/60 transition-all border border-sky-300/30"
+                >
+                  <div className="flex items-center justify-center mb-3">
+                    <Globe className="w-10 h-10" />
+                  </div>
+                  <p className="text-2xl font-black tracking-tight">PORTALI</p>
+                  <p className="text-2xl font-black tracking-tight">FORNITORI</p>
+                  <p className="text-xs font-medium text-sky-100/70 mt-2">Siti e cataloghi</p>
                 </motion.button>
               )}
             </div>
