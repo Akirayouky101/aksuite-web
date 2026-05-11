@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Package, ArrowUp, ArrowDown, Check, AlertCircle,
-  Scan, RotateCcw, ChevronUp, ChevronDown, BookMarked
+  Scan, RotateCcw, ChevronUp, ChevronDown, BookMarked, PlusCircle
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
 import { useImpegniMagazzino } from '../hooks/useImpegniMagazzino'
@@ -15,6 +15,9 @@ interface QuickScanModalProps {
   products: Product[]
   onUpdateStock: (productId: string, movementType: 'carico' | 'scarico', qty: number, notes?: string) => Promise<void>
   findByBarcode: (barcode: string) => Product | undefined
+  onAddProduct?: (data: Partial<Product>) => Promise<Product | null>
+  canElettrico?: boolean
+  canWarehouse?: boolean
 }
 
 type ScanMode = 'carico' | 'scarico' | 'impegno'
@@ -27,7 +30,7 @@ interface RecentScan {
   userName?: string
 }
 
-export default function QuickScanModal({ isOpen, onClose, products, onUpdateStock, findByBarcode }: QuickScanModalProps) {
+export default function QuickScanModal({ isOpen, onClose, products, onUpdateStock, findByBarcode, onAddProduct, canElettrico, canWarehouse }: QuickScanModalProps) {
   const [mode, setMode] = useState<ScanMode | null>(null)
   const [scanInput, setScanInput] = useState('')
   const [foundProduct, setFoundProduct] = useState<Product | null>(null)
@@ -37,8 +40,16 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
   const [processing, setProcessing] = useState(false)
   const [showModeChoice, setShowModeChoice] = useState(false)
   const [impegnoUser, setImpegnoUser] = useState('')
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [notFoundBarcode, setNotFoundBarcode] = useState('')
+  const [addForm, setAddForm] = useState({ name: '', category: '', unit: 'pz', warehouse: '' })
   const inputRef = useRef<HTMLInputElement>(null)
   const { addImpegno } = useImpegniMagazzino()
+
+  const availableWarehouses = [
+    ...(canElettrico ? [{ value: 'magazzino_elettrico', label: 'Magazzino Elettrico' }] : []),
+    ...(canWarehouse ? [{ value: 'magazzino_astzg', label: 'Magazzino AST/ZG' }] : []),
+  ]
 
   useEffect(() => {
     if (isOpen) {
@@ -48,6 +59,9 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
       setQty(1)
       setFlash(null)
       setShowModeChoice(false)
+      setShowAddForm(false)
+      setNotFoundBarcode('')
+      setAddForm({ name: '', category: '', unit: 'pz', warehouse: availableWarehouses[0]?.value || '' })
       setRecentScans([])
       setTimeout(() => inputRef.current?.focus(), 200)
     }
@@ -58,6 +72,8 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
     setFoundProduct(null)
     setQty(1)
     setShowModeChoice(false)
+    setShowAddForm(false)
+    setNotFoundBarcode('')
     setTimeout(() => inputRef.current?.focus(), 100)
   }
 
@@ -70,8 +86,15 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
     )
 
     if (!product) {
-      setFlash('notfound')
-      setTimeout(() => { setFlash(null); setScanInput(''); inputRef.current?.focus() }, 1500)
+      if (onAddProduct && availableWarehouses.length > 0) {
+        setNotFoundBarcode(trimmed)
+        setAddForm({ name: '', category: '', unit: 'pz', warehouse: availableWarehouses[0].value })
+        setShowAddForm(true)
+        setScanInput('')
+      } else {
+        setFlash('notfound')
+        setTimeout(() => { setFlash(null); setScanInput(''); inputRef.current?.focus() }, 1500)
+      }
       return
     }
 
@@ -80,6 +103,37 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
 
     if (!mode) {
       setShowModeChoice(true)
+    }
+  }
+
+  const handleAddProduct = async () => {
+    if (!addForm.name.trim() || !addForm.warehouse || !onAddProduct || processing) return
+    setProcessing(true)
+    try {
+      const newProduct = await onAddProduct({
+        name: addForm.name.trim(),
+        barcode: notFoundBarcode,
+        category: addForm.category.trim() || 'Generale',
+        unit: addForm.unit || 'pz',
+        quantity: 0,
+        warehouse: addForm.warehouse,
+        is_active: true,
+      })
+      if (newProduct) {
+        setShowAddForm(false)
+        setNotFoundBarcode('')
+        setFoundProduct(newProduct)
+        setQty(1)
+        if (!mode) setShowModeChoice(true)
+      } else {
+        setFlash('error')
+        setTimeout(() => setFlash(null), 1500)
+      }
+    } catch {
+      setFlash('error')
+      setTimeout(() => setFlash(null), 1500)
+    } finally {
+      setProcessing(false)
     }
   }
 
@@ -179,16 +233,117 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
             value={scanInput}
             onChange={e => setScanInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleScan(scanInput) }}
-            disabled={!!foundProduct}
+            disabled={!!foundProduct || showAddForm}
             className="w-full bg-white/8 border-2 border-white/15 rounded-2xl px-5 py-5 text-white text-xl font-mono placeholder-white/25 focus:outline-none focus:border-cyan-500/50 focus:bg-white/12 disabled:opacity-40 transition-all"
             placeholder="Scansiona o digita codice..."
             autoComplete="off"
             autoFocus
           />
-          {!foundProduct && !showModeChoice && (
+          {!foundProduct && !showModeChoice && !showAddForm && (
             <p className="text-white/30 text-xs text-center mt-2">Barcode · SKU · QR code — premi Enter per confermare</p>
           )}
         </div>
+
+        {/* Add product form (barcode not found) */}
+        <AnimatePresence>
+          {showAddForm && (
+            <motion.div
+              key="add-form"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: -20 }}
+              className="w-full max-w-lg"
+            >
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 mb-4 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                <div>
+                  <p className="text-amber-300 font-bold text-sm">Prodotto non trovato</p>
+                  <p className="text-amber-400/60 text-xs font-mono">{notFoundBarcode}</p>
+                </div>
+              </div>
+
+              <div className="bg-white/8 border border-white/15 rounded-2xl p-5 flex flex-col gap-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <PlusCircle className="w-4 h-4 text-cyan-400" />
+                  <p className="text-white font-bold text-sm">Aggiungi al magazzino</p>
+                </div>
+
+                {/* Nome */}
+                <div>
+                  <label className="text-white/50 text-xs uppercase tracking-wide block mb-1">Nome prodotto *</label>
+                  <input
+                    value={addForm.name}
+                    onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Es. Interruttore magnetotermico 16A"
+                    autoFocus
+                    className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-cyan-500/50 transition-all"
+                  />
+                </div>
+
+                {/* Categoria + Unità */}
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="text-white/50 text-xs uppercase tracking-wide block mb-1">Categoria</label>
+                    <input
+                      value={addForm.category}
+                      onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))}
+                      placeholder="Es. Elettrico"
+                      className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-cyan-500/50 transition-all"
+                    />
+                  </div>
+                  <div className="w-24">
+                    <label className="text-white/50 text-xs uppercase tracking-wide block mb-1">Unità</label>
+                    <input
+                      value={addForm.unit}
+                      onChange={e => setAddForm(f => ({ ...f, unit: e.target.value }))}
+                      placeholder="pz"
+                      className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-cyan-500/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Magazzino selector (only if both available) */}
+                {availableWarehouses.length > 1 && (
+                  <div>
+                    <label className="text-white/50 text-xs uppercase tracking-wide block mb-2">Magazzino</label>
+                    <div className="flex gap-2">
+                      {availableWarehouses.map(w => (
+                        <button
+                          key={w.value}
+                          onClick={() => setAddForm(f => ({ ...f, warehouse: w.value }))}
+                          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                            addForm.warehouse === w.value
+                              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
+                              : 'bg-white/5 text-white/50 border-white/15 hover:bg-white/10'
+                          }`}
+                        >
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {availableWarehouses.length === 1 && (
+                  <p className="text-white/30 text-xs">Magazzino: <span className="text-white/60 font-semibold">{availableWarehouses[0].label}</span></p>
+                )}
+
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleAddProduct}
+                  disabled={processing || !addForm.name.trim()}
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 disabled:opacity-50 transition-all"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  AGGIUNGI E CONTINUA
+                </motion.button>
+              </div>
+
+              <button onClick={resetToScan} className="w-full mt-3 py-2 text-white/40 hover:text-white/60 text-sm transition-all">
+                ← Annulla
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Mode choice (first scan) */}
         <AnimatePresence>

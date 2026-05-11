@@ -1577,6 +1577,9 @@ export default function Home() {
         products={products}
         onUpdateStock={async (productId, type, qty, notes) => { await updateStock(productId, type, qty, notes) }}
         findByBarcode={findByBarcode}
+        onAddProduct={async (data) => addProduct(data)}
+        canElettrico={isAdmin || !!myPermissions?.can_magazzino_elettrico}
+        canWarehouse={isAdmin || !!myPermissions?.can_warehouse}
       />}
 
       {/* ═══ IMPEGNI MAGAZZINO ═══ */}
