@@ -262,7 +262,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                 </div>
               </div>
 
-              <div className="bg-white/8 border border-white/15 rounded-2xl p-5 flex flex-col gap-4">
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 flex flex-col gap-4">
                 <div className="flex items-center gap-2 mb-1">
                   <PlusCircle className="w-4 h-4 text-cyan-400" />
                   <p className="text-white font-bold text-sm">Aggiungi al magazzino</p>
@@ -276,7 +276,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                     onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Es. Interruttore magnetotermico 16A"
                     autoFocus
-                    className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-cyan-500/50 transition-all"
+                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
                   />
                 </div>
 
@@ -288,7 +288,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                       value={addForm.category}
                       onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))}
                       placeholder="Es. Elettrico"
-                      className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-cyan-500/50 transition-all"
+                      className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
                     />
                   </div>
                   <div className="w-24">
@@ -297,7 +297,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                       value={addForm.unit}
                       onChange={e => setAddForm(f => ({ ...f, unit: e.target.value }))}
                       placeholder="pz"
-                      className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-cyan-500/50 transition-all"
+                      className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
                     />
                   </div>
                 </div>
