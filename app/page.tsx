@@ -1547,7 +1547,7 @@ export default function Home() {
       {/* ═══ MAGAZZINO ELETTRICO ═══ */}
       {isElettricoModalOpen && <WarehouseListModal
         isOpen={isElettricoModalOpen}
-        onClose={() => setIsElettricoModalOpen(false)}
+        onClose={() => { setIsElettricoModalOpen(false); if (isKioskOnly) setIsMaterialRequestOpen(true) }}
         products={products}
         suppliers={suppliers}
         onAdd={() => { setEditingProduct(null); setPendingWarehouse('magazzino_elettrico'); setIsProductModalOpen(true) }}
@@ -1566,7 +1566,7 @@ export default function Home() {
       {/* ═══ PORTALI FORNITORI ESTERNI ═══ */}
       {isExternalSitesOpen && <ExternalSitesModal
         isOpen={isExternalSitesOpen}
-        onClose={() => setIsExternalSitesOpen(false)}
+        onClose={() => { setIsExternalSitesOpen(false); if (isKioskOnly) setIsMaterialRequestOpen(true) }}
       />}
 
       {isCsvImportOpen && <CsvImportModal
