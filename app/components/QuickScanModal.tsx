@@ -98,11 +98,39 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
       return
     }
 
-    setFoundProduct(product)
-    setQty(1)
-
     if (!mode) {
+      // Prima scansione: mostra scelta modalità
+      setFoundProduct(product)
+      setQty(1)
       setShowModeChoice(true)
+      return
+    }
+
+    if (mode === 'impegno') {
+      // Impegno: mostra card con campo nome (non auto-esegue)
+      setFoundProduct(product)
+      setQty(1)
+      return
+    }
+
+    // Modalità carico/scarico già impostata: esegui subito +1
+    setScanInput('')
+    setProcessing(true)
+    try {
+      await onUpdateStock(product.id, mode, 1, 'Scansione veloce')
+      setRecentScans(prev => [{
+        id: Date.now().toString(),
+        product,
+        mode,
+        qty: 1,
+      }, ...prev].slice(0, 8))
+      setFlash('success')
+      setTimeout(() => { setFlash(null); inputRef.current?.focus() }, 800)
+    } catch {
+      setFlash('error')
+      setTimeout(() => { setFlash(null); inputRef.current?.focus() }, 1500)
+    } finally {
+      setProcessing(false)
     }
   }
 
@@ -411,9 +439,9 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
           )}
         </AnimatePresence>
 
-        {/* Product card (mode already set) */}
+        {/* Product card — only for IMPEGNO mode (needs username + confirm) */}
         <AnimatePresence>
-          {foundProduct && !showModeChoice && mode && (
+          {foundProduct && !showModeChoice && mode === 'impegno' && (
             <motion.div
               key="product-card"
               initial={{ opacity: 0, y: 20 }}
@@ -423,8 +451,8 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
             >
               {/* Product info */}
               <div className="bg-white/8 border border-white/15 rounded-2xl p-4 mb-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
-                  <Package className="w-4 h-4 text-cyan-400" />
+                <div className="w-9 h-9 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center flex-shrink-0">
+                  <Package className="w-4 h-4 text-violet-400" />
                 </div>
                 <div className="flex-1">
                   <p className="text-white font-bold text-sm leading-tight">{foundProduct.name}</p>
@@ -457,45 +485,37 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                 </div>
               </div>
 
-              {/* Username field for impegno */}
-              {mode === 'impegno' && (
-                <div className="bg-white/8 border border-white/15 rounded-2xl p-4 mb-3">
-                  <p className="text-white/50 text-xs uppercase tracking-wide mb-2">Nome operatore</p>
-                  <input
-                    value={impegnoUser}
-                    onChange={e => setImpegnoUser(e.target.value)}
-                    placeholder="Inserisci il tuo nome..."
-                    className="w-full bg-transparent text-white placeholder-white/25 text-sm outline-none border-b border-white/20 pb-1 focus:border-violet-400 transition-colors"
-                  />
-                </div>
-              )}
+              {/* Username field */}
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-3">
+                <p className="text-white/50 text-xs uppercase tracking-wide mb-2">Nome operatore</p>
+                <input
+                  value={impegnoUser}
+                  onChange={e => setImpegnoUser(e.target.value)}
+                  placeholder="Inserisci il tuo nome..."
+                  className="w-full bg-transparent text-white placeholder-slate-500 text-sm outline-none border-b border-slate-600 pb-1 focus:border-violet-400 transition-colors"
+                />
+              </div>
 
               {/* Confirm button */}
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => handleConfirm()}
-                disabled={processing || (mode === 'impegno' && !impegnoUser.trim())}
-                className={`w-full py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2 text-white shadow-xl transition-all disabled:opacity-50 ${
-                  mode === 'carico'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 shadow-emerald-500/30'
-                    : mode === 'scarico'
-                    ? 'bg-gradient-to-r from-red-500 to-rose-600 shadow-red-500/30'
-                    : 'bg-gradient-to-r from-violet-500 to-purple-700 shadow-violet-500/30'
-                }`}
+                disabled={processing || !impegnoUser.trim()}
+                className="w-full py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2 text-white shadow-xl transition-all disabled:opacity-50 bg-gradient-to-r from-violet-500 to-purple-700 shadow-violet-500/30"
               >
-                {mode === 'carico' && <ArrowUp className="w-5 h-5" />}
-                {mode === 'scarico' && <ArrowDown className="w-5 h-5" />}
-                {mode === 'impegno' && <BookMarked className="w-5 h-5" />}
-                CONFERMA {mode?.toUpperCase()} × {qty}
+                <BookMarked className="w-5 h-5" />
+                CONFERMA IMPEGNO × {qty}
               </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* No product, mode set — hint */}
-        {!foundProduct && mode && (
+        {!foundProduct && !showAddForm && mode && (
           <p className="text-white/30 text-sm">
-            Modalità: <span className={mode === 'carico' ? 'text-emerald-400 font-bold' : mode === 'scarico' ? 'text-red-400 font-bold' : 'text-violet-400 font-bold'}>{mode.toUpperCase()}</span> — scansiona il prossimo prodotto
+            Modalità: <span className={mode === 'carico' ? 'text-emerald-400 font-bold' : mode === 'scarico' ? 'text-red-400 font-bold' : 'text-violet-400 font-bold'}>{mode.toUpperCase()}</span>
+            {mode !== 'impegno' && <span> — scansiona per eseguire subito</span>}
+            {mode === 'impegno' && <span> — scansiona il prodotto da prenotare</span>}
           </p>
         )}
       </div>
