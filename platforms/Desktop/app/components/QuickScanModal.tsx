@@ -40,7 +40,12 @@ export default function QuickScanModal({
   const [impegnoUser, setImpegnoUser] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
   const [notFoundBarcode, setNotFoundBarcode] = useState('')
-  const [addForm, setAddForm] = useState({ name: '', category: '', unit: 'pz', warehouse: '' })
+  const [addForm, setAddForm] = useState({
+    name: '', description: '', sku: '', brand: '', model: '',
+    category: '', subcategory: '', unit: 'pz', warehouse: '',
+    min_quantity: '0', location: '', shelf: '',
+    purchase_price: '', sell_price: '', notes: ''
+  })
   const inputRef = useRef<HTMLInputElement>(null)
   const { addImpegno } = useImpegniMagazzino()
 
@@ -57,7 +62,7 @@ export default function QuickScanModal({
       setFlash(null)
       setShowAddForm(false)
       setNotFoundBarcode('')
-      setAddForm({ name: '', category: '', unit: 'pz', warehouse: availableWarehouses[0]?.value || '' })
+      setAddForm({ name: '', description: '', sku: '', brand: '', model: '', category: '', subcategory: '', unit: 'pz', warehouse: availableWarehouses[0]?.value || '', min_quantity: '0', location: '', shelf: '', purchase_price: '', sell_price: '', notes: '' })
       setImpegnoUser('')
       setProcessing(false)
     }
@@ -89,7 +94,7 @@ export default function QuickScanModal({
     if (!product) {
       if (onAddProduct && availableWarehouses.length > 0) {
         setNotFoundBarcode(trimmed)
-        setAddForm({ name: '', category: '', unit: 'pz', warehouse: availableWarehouses[0].value })
+        setAddForm({ name: '', description: '', sku: '', brand: '', model: '', category: '', subcategory: '', unit: 'pz', warehouse: availableWarehouses[0].value, min_quantity: '0', location: '', shelf: '', purchase_price: '', sell_price: '', notes: '' })
         setShowAddForm(true)
       } else {
         triggerFlash('notfound')
@@ -113,10 +118,21 @@ export default function QuickScanModal({
     try {
       const newProduct = await onAddProduct({
         name: addForm.name.trim(),
-        barcode: notFoundBarcode,
+        description: addForm.description.trim() || null,
+        sku: addForm.sku.trim() || null,
+        barcode: notFoundBarcode || null,
+        brand: addForm.brand.trim() || null,
+        model: addForm.model.trim() || null,
         category: addForm.category.trim() || 'Generale',
+        subcategory: addForm.subcategory.trim() || null,
         unit: addForm.unit || 'pz',
         quantity: 0,
+        min_quantity: parseInt(addForm.min_quantity) || 0,
+        location: addForm.location.trim() || null,
+        shelf: addForm.shelf.trim() || null,
+        purchase_price: parseFloat(addForm.purchase_price) || 0,
+        sell_price: parseFloat(addForm.sell_price) || 0,
+        notes: addForm.notes.trim() || null,
         warehouse: addForm.warehouse,
         is_active: true,
       })
@@ -319,49 +335,165 @@ export default function QuickScanModal({
                 </button>
               </div>
 
-              <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex flex-col gap-3">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex flex-col gap-4 max-h-[65vh] overflow-y-auto">
+                <div className="flex items-center gap-2">
                   <PlusCircle className="w-4 h-4 text-cyan-400" />
                   <p className="text-white font-bold text-sm">Aggiungi al magazzino</p>
                 </div>
 
-                <input
-                  value={addForm.name}
-                  onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Nome prodotto *"
-                  autoFocus
-                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
-                />
-                <div className="flex gap-2">
+                {/* Identificazione */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">Identificazione</p>
                   <input
-                    value={addForm.category}
-                    onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))}
-                    placeholder="Categoria"
-                    className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    value={addForm.name}
+                    onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Nome prodotto *"
+                    autoFocus
+                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
                   />
+                  <textarea
+                    value={addForm.description}
+                    onChange={e => setAddForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="Descrizione"
+                    rows={2}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      value={addForm.sku}
+                      onChange={e => setAddForm(f => ({ ...f, sku: e.target.value }))}
+                      placeholder="SKU / Cod. articolo"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    />
+                    <input
+                      value={addForm.unit}
+                      onChange={e => setAddForm(f => ({ ...f, unit: e.target.value }))}
+                      placeholder="Unità"
+                      className="w-20 bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={addForm.brand}
+                      onChange={e => setAddForm(f => ({ ...f, brand: e.target.value }))}
+                      placeholder="Marca / Brand"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    />
+                    <input
+                      value={addForm.model}
+                      onChange={e => setAddForm(f => ({ ...f, model: e.target.value }))}
+                      placeholder="Modello"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Classificazione */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">Classificazione</p>
+                  <div className="flex gap-2">
+                    <input
+                      value={addForm.category}
+                      onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))}
+                      placeholder="Categoria"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    />
+                    <input
+                      value={addForm.subcategory}
+                      onChange={e => setAddForm(f => ({ ...f, subcategory: e.target.value }))}
+                      placeholder="Sottocategoria"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Posizione */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">Posizione magazzino</p>
+                  <div className="flex gap-2">
+                    <input
+                      value={addForm.location}
+                      onChange={e => setAddForm(f => ({ ...f, location: e.target.value }))}
+                      placeholder="Zona / Locale"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    />
+                    <input
+                      value={addForm.shelf}
+                      onChange={e => setAddForm(f => ({ ...f, shelf: e.target.value }))}
+                      placeholder="Scaffale"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    />
+                  </div>
                   <input
-                    value={addForm.unit}
-                    onChange={e => setAddForm(f => ({ ...f, unit: e.target.value }))}
-                    placeholder="Unità"
-                    className="w-20 bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                    value={addForm.min_quantity}
+                    type="number"
+                    min="0"
+                    onChange={e => setAddForm(f => ({ ...f, min_quantity: e.target.value }))}
+                    placeholder="Quantità minima scorta"
+                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
                   />
                 </div>
 
-                {availableWarehouses.length > 1 && (
+                {/* Prezzi */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">Prezzi (€)</p>
                   <div className="flex gap-2">
-                    {availableWarehouses.map(w => (
-                      <button
-                        key={w.value}
-                        onClick={() => setAddForm(f => ({ ...f, warehouse: w.value }))}
-                        className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-all ${
-                          addForm.warehouse === w.value
-                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
-                            : 'bg-slate-800 text-slate-400 border-slate-600 hover:bg-slate-700'
-                        }`}
-                      >
-                        {w.label}
-                      </button>
-                    ))}
+                    <div className="flex-1">
+                      <input
+                        value={addForm.purchase_price}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        onChange={e => setAddForm(f => ({ ...f, purchase_price: e.target.value }))}
+                        placeholder="Prezzo acquisto"
+                        className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        value={addForm.sell_price}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        onChange={e => setAddForm(f => ({ ...f, sell_price: e.target.value }))}
+                        placeholder="Prezzo vendita"
+                        className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Note */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">Note</p>
+                  <textarea
+                    value={addForm.notes}
+                    onChange={e => setAddForm(f => ({ ...f, notes: e.target.value }))}
+                    placeholder="Note aggiuntive..."
+                    rows={2}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-500 transition-all resize-none"
+                  />
+                </div>
+
+                {/* Magazzino */}
+                {availableWarehouses.length > 1 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">Magazzino *</p>
+                    <div className="flex gap-2">
+                      {availableWarehouses.map(w => (
+                        <button
+                          key={w.value}
+                          onClick={() => setAddForm(f => ({ ...f, warehouse: w.value }))}
+                          className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                            addForm.warehouse === w.value
+                              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
+                              : 'bg-slate-800 text-slate-400 border-slate-600 hover:bg-slate-700'
+                          }`}
+                        >
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {availableWarehouses.length === 1 && (
