@@ -107,30 +107,24 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
     }
 
     if (mode === 'impegno') {
-      // Impegno: mostra card con campo nome (non auto-esegue)
-      setFoundProduct(product)
-      setQty(1)
+      // Impegno: mostra card con campo nome
+      if (foundProduct?.id === product.id) {
+        setQty(q => q + 1)
+      } else {
+        setFoundProduct(product)
+        setQty(1)
+      }
+      setScanInput('')
       return
     }
 
-    // Modalità carico/scarico già impostata: esegui subito +1
+    // Carico/scarico: mostra card con qty, ri-scansione dello stesso prodotto += 1
     setScanInput('')
-    setProcessing(true)
-    try {
-      await onUpdateStock(product.id, mode, 1, 'Scansione veloce')
-      setRecentScans(prev => [{
-        id: Date.now().toString(),
-        product,
-        mode,
-        qty: 1,
-      }, ...prev].slice(0, 8))
-      setFlash('success')
-      setTimeout(() => { setFlash(null); inputRef.current?.focus() }, 800)
-    } catch {
-      setFlash('error')
-      setTimeout(() => { setFlash(null); inputRef.current?.focus() }, 1500)
-    } finally {
-      setProcessing(false)
+    if (foundProduct?.id === product.id) {
+      setQty(q => q + 1)
+    } else {
+      setFoundProduct(product)
+      setQty(1)
     }
   }
 
@@ -262,7 +256,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
             onChange={e => setScanInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleScan(scanInput) }}
             disabled={!!foundProduct || showAddForm}
-            className="w-full bg-white/8 border-2 border-white/15 rounded-2xl px-5 py-5 text-white text-xl font-mono placeholder-white/25 focus:outline-none focus:border-cyan-500/50 focus:bg-white/12 disabled:opacity-40 transition-all"
+            className="w-full bg-slate-900 border-2 border-slate-700 rounded-2xl px-5 py-5 text-white text-xl font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500 disabled:opacity-40 transition-all"
             placeholder="Scansiona o digita codice..."
             autoComplete="off"
             autoFocus
@@ -342,7 +336,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                           className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                             addForm.warehouse === w.value
                               ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
-                              : 'bg-white/5 text-white/50 border-white/15 hover:bg-white/10'
+                              : 'bg-slate-800 text-slate-400 border-slate-600 hover:bg-slate-700'
                           }`}
                         >
                           {w.label}
@@ -383,7 +377,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
               exit={{ opacity: 0, scale: 0.9, y: -20 }}
               className="w-full max-w-lg"
             >
-              <div className="bg-white/8 border border-white/15 rounded-2xl p-5 mb-3">
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
                     <Package className="w-4 h-4 text-cyan-400" />
@@ -439,9 +433,9 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
           )}
         </AnimatePresence>
 
-        {/* Product card — only for IMPEGNO mode (needs username + confirm) */}
+        {/* Product card — carico/scarico/impegno */}
         <AnimatePresence>
-          {foundProduct && !showModeChoice && mode === 'impegno' && (
+          {foundProduct && !showModeChoice && mode && (
             <motion.div
               key="product-card"
               initial={{ opacity: 0, y: 20 }}
@@ -450,9 +444,13 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
               className="w-full max-w-lg"
             >
               {/* Product info */}
-              <div className="bg-white/8 border border-white/15 rounded-2xl p-4 mb-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center flex-shrink-0">
-                  <Package className="w-4 h-4 text-violet-400" />
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-3 flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  mode === 'carico' ? 'bg-emerald-500/20 border border-emerald-500/30' :
+                  mode === 'scarico' ? 'bg-red-500/20 border border-red-500/30' :
+                  'bg-violet-500/20 border border-violet-500/30'
+                }`}>
+                  <Package className={`w-4 h-4 ${mode === 'carico' ? 'text-emerald-400' : mode === 'scarico' ? 'text-red-400' : 'text-violet-400'}`} />
                 </div>
                 <div className="flex-1">
                   <p className="text-white font-bold text-sm leading-tight">{foundProduct.name}</p>
@@ -463,14 +461,14 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                 </button>
               </div>
 
-              {/* Qty picker */}
-              <div className="bg-white/8 border border-white/15 rounded-2xl p-4 mb-3">
-                <p className="text-white/50 text-xs text-center mb-3 uppercase tracking-wide">Quantità</p>
+              {/* Qty — large display, +/- manual, auto-increments on re-scan */}
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-3">
+                <p className="text-white/50 text-xs text-center mb-1 uppercase tracking-wide">Quantità — riscannerizza per aumentare</p>
                 <div className="flex items-center justify-center gap-5">
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setQty(q => Math.max(1, q - 1))}
-                    className="w-14 h-14 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white font-bold text-2xl transition-all"
+                    className="w-14 h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-600 flex items-center justify-center text-white font-bold text-2xl transition-all"
                   >
                     <ChevronDown className="w-6 h-6" />
                   </motion.button>
@@ -478,33 +476,41 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setQty(q => q + 1)}
-                    className="w-14 h-14 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white font-bold text-2xl transition-all"
+                    className="w-14 h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-600 flex items-center justify-center text-white font-bold text-2xl transition-all"
                   >
                     <ChevronUp className="w-6 h-6" />
                   </motion.button>
                 </div>
               </div>
 
-              {/* Username field */}
-              <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-3">
-                <p className="text-white/50 text-xs uppercase tracking-wide mb-2">Nome operatore</p>
-                <input
-                  value={impegnoUser}
-                  onChange={e => setImpegnoUser(e.target.value)}
-                  placeholder="Inserisci il tuo nome..."
-                  className="w-full bg-transparent text-white placeholder-slate-500 text-sm outline-none border-b border-slate-600 pb-1 focus:border-violet-400 transition-colors"
-                />
-              </div>
+              {/* Username field — only for impegno */}
+              {mode === 'impegno' && (
+                <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-3">
+                  <p className="text-white/50 text-xs uppercase tracking-wide mb-2">Nome operatore</p>
+                  <input
+                    value={impegnoUser}
+                    onChange={e => setImpegnoUser(e.target.value)}
+                    placeholder="Inserisci il tuo nome..."
+                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                  />
+                </div>
+              )}
 
               {/* Confirm button */}
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => handleConfirm()}
-                disabled={processing || !impegnoUser.trim()}
-                className="w-full py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2 text-white shadow-xl transition-all disabled:opacity-50 bg-gradient-to-r from-violet-500 to-purple-700 shadow-violet-500/30"
+                disabled={processing || (mode === 'impegno' && !impegnoUser.trim())}
+                className={`w-full py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2 text-white shadow-xl transition-all disabled:opacity-50 ${
+                  mode === 'carico' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 shadow-emerald-500/30' :
+                  mode === 'scarico' ? 'bg-gradient-to-r from-red-500 to-rose-600 shadow-red-500/30' :
+                  'bg-gradient-to-r from-violet-500 to-purple-700 shadow-violet-500/30'
+                }`}
               >
-                <BookMarked className="w-5 h-5" />
-                CONFERMA IMPEGNO × {qty}
+                {mode === 'carico' && <ArrowUp className="w-5 h-5" />}
+                {mode === 'scarico' && <ArrowDown className="w-5 h-5" />}
+                {mode === 'impegno' && <BookMarked className="w-5 h-5" />}
+                CONFERMA {mode?.toUpperCase()} × {qty}
               </motion.button>
             </motion.div>
           )}
