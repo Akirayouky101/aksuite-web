@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Package, ArrowUp, ArrowDown, Check, AlertCircle,
-  Scan, RotateCcw, ChevronUp, ChevronDown
+  Scan, RotateCcw, ChevronUp, ChevronDown, BookMarked
 } from 'lucide-react'
 import { Product } from '../hooks/useWarehouse'
+import { useImpegniMagazzino } from '../hooks/useImpegniMagazzino'
 
 interface QuickScanModalProps {
   isOpen: boolean
@@ -16,13 +17,14 @@ interface QuickScanModalProps {
   findByBarcode: (barcode: string) => Product | undefined
 }
 
-type ScanMode = 'carico' | 'scarico'
+type ScanMode = 'carico' | 'scarico' | 'impegno'
 
 interface RecentScan {
   id: string
   product: Product
   mode: ScanMode
   qty: number
+  userName?: string
 }
 
 export default function QuickScanModal({ isOpen, onClose, products, onUpdateStock, findByBarcode }: QuickScanModalProps) {
@@ -34,7 +36,9 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
   const [flash, setFlash] = useState<'success' | 'error' | 'notfound' | null>(null)
   const [processing, setProcessing] = useState(false)
   const [showModeChoice, setShowModeChoice] = useState(false)
+  const [impegnoUser, setImpegnoUser] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const { addImpegno } = useImpegniMagazzino()
 
   useEffect(() => {
     if (isOpen) {
@@ -82,10 +86,15 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
   const handleConfirm = async (selectedMode?: ScanMode) => {
     const activeMode = selectedMode || mode
     if (!foundProduct || !activeMode || processing) return
+    if (activeMode === 'impegno' && !impegnoUser.trim()) return
 
     setProcessing(true)
     try {
-      await onUpdateStock(foundProduct.id, activeMode, qty, 'Scansione veloce')
+      if (activeMode === 'impegno') {
+        await addImpegno(impegnoUser.trim(), foundProduct.id, qty, 'Scansione veloce', '')
+      } else {
+        await onUpdateStock(foundProduct.id, activeMode, qty, 'Scansione veloce')
+      }
       if (selectedMode) setMode(selectedMode)
 
       setRecentScans(prev => [{
@@ -93,6 +102,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
         product: foundProduct,
         mode: activeMode,
         qty,
+        userName: activeMode === 'impegno' ? impegnoUser.trim() : undefined,
       }, ...prev].slice(0, 8))
 
       setFlash('success')
@@ -129,14 +139,22 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
           {/* Mode indicator + toggle */}
           {mode && (
             <button
-              onClick={() => { setMode(mode === 'carico' ? 'scarico' : 'carico'); resetToScan() }}
+              onClick={() => {
+                const next: ScanMode = mode === 'carico' ? 'scarico' : mode === 'scarico' ? 'impegno' : 'carico'
+                setMode(next)
+                resetToScan()
+              }}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm border transition-all ${
                 mode === 'carico'
                   ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
-                  : 'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25'
+                  : mode === 'scarico'
+                  ? 'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25'
+                  : 'bg-violet-500/15 text-violet-400 border-violet-500/30 hover:bg-violet-500/25'
               }`}
             >
-              {mode === 'carico' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+              {mode === 'carico' && <ArrowUp className="w-4 h-4" />}
+              {mode === 'scarico' && <ArrowDown className="w-4 h-4" />}
+              {mode === 'impegno' && <BookMarked className="w-4 h-4" />}
               {mode.toUpperCase()}
               <RotateCcw className="w-3 h-3 opacity-60" />
             </button>
@@ -218,6 +236,17 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                   SCARICO
                   <span className="text-xs font-normal opacity-70">Togli dal magazzino</span>
                 </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => { setMode('impegno'); setShowModeChoice(false) }}
+                  disabled={processing}
+                  className="flex-1 py-6 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 text-white flex flex-col items-center justify-center gap-2 font-black text-xl shadow-xl shadow-violet-500/30 disabled:opacity-50"
+                >
+                  <BookMarked className="w-9 h-9" />
+                  IMPEGNO
+                  <span className="text-xs font-normal opacity-70">Prenota prodotto</span>
+                </motion.button>
               </div>
 
               <button onClick={resetToScan} className="w-full mt-3 py-2 text-white/40 hover:text-white/60 text-sm transition-all">
@@ -273,19 +302,36 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
                 </div>
               </div>
 
+              {/* Username field for impegno */}
+              {mode === 'impegno' && (
+                <div className="bg-white/8 border border-white/15 rounded-2xl p-4 mb-3">
+                  <p className="text-white/50 text-xs uppercase tracking-wide mb-2">Nome operatore</p>
+                  <input
+                    value={impegnoUser}
+                    onChange={e => setImpegnoUser(e.target.value)}
+                    placeholder="Inserisci il tuo nome..."
+                    className="w-full bg-transparent text-white placeholder-white/25 text-sm outline-none border-b border-white/20 pb-1 focus:border-violet-400 transition-colors"
+                  />
+                </div>
+              )}
+
               {/* Confirm button */}
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => handleConfirm()}
-                disabled={processing}
+                disabled={processing || (mode === 'impegno' && !impegnoUser.trim())}
                 className={`w-full py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2 text-white shadow-xl transition-all disabled:opacity-50 ${
                   mode === 'carico'
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-600 shadow-emerald-500/30'
-                    : 'bg-gradient-to-r from-red-500 to-rose-600 shadow-red-500/30'
+                    : mode === 'scarico'
+                    ? 'bg-gradient-to-r from-red-500 to-rose-600 shadow-red-500/30'
+                    : 'bg-gradient-to-r from-violet-500 to-purple-700 shadow-violet-500/30'
                 }`}
               >
-                {mode === 'carico' ? <ArrowUp className="w-5 h-5" /> : <ArrowDown className="w-5 h-5" />}
-                CONFERMA {mode.toUpperCase()} × {qty}
+                {mode === 'carico' && <ArrowUp className="w-5 h-5" />}
+                {mode === 'scarico' && <ArrowDown className="w-5 h-5" />}
+                {mode === 'impegno' && <BookMarked className="w-5 h-5" />}
+                CONFERMA {mode?.toUpperCase()} × {qty}
               </motion.button>
             </motion.div>
           )}
@@ -294,7 +340,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
         {/* No product, mode set — hint */}
         {!foundProduct && mode && (
           <p className="text-white/30 text-sm">
-            Modalità: <span className={mode === 'carico' ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>{mode.toUpperCase()}</span> — scansiona il prossimo prodotto
+            Modalità: <span className={mode === 'carico' ? 'text-emerald-400 font-bold' : mode === 'scarico' ? 'text-red-400 font-bold' : 'text-violet-400 font-bold'}>{mode.toUpperCase()}</span> — scansiona il prossimo prodotto
           </p>
         )}
       </div>
@@ -308,11 +354,17 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
               <div key={s.id} className="flex items-center gap-2 rounded-xl px-3 py-2 bg-white/5">
                 {s.mode === 'carico'
                   ? <ArrowUp className="w-3 h-3 text-emerald-400 flex-shrink-0" />
-                  : <ArrowDown className="w-3 h-3 text-red-400 flex-shrink-0" />
+                  : s.mode === 'scarico'
+                  ? <ArrowDown className="w-3 h-3 text-red-400 flex-shrink-0" />
+                  : <BookMarked className="w-3 h-3 text-violet-400 flex-shrink-0" />
                 }
-                <span className="text-white/60 text-sm flex-1 truncate">{s.product.name}</span>
-                <span className={`text-sm font-bold tabular-nums ${s.mode === 'carico' ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {s.mode === 'carico' ? '+' : '-'}{s.qty}
+                <span className="text-white/60 text-sm flex-1 truncate">
+                  {s.product.name}{s.userName ? <span className="text-white/30"> · {s.userName}</span> : null}
+                </span>
+                <span className={`text-sm font-bold tabular-nums ${
+                  s.mode === 'carico' ? 'text-emerald-400' : s.mode === 'scarico' ? 'text-red-400' : 'text-violet-400'
+                }`}>
+                  {s.mode === 'carico' ? '+' : s.mode === 'impegno' ? '⊕' : '-'}{s.qty}
                 </span>
               </div>
             ))}
