@@ -53,6 +53,7 @@ const ProductModal = dynamic(() => import('./components/ProductModal'), { ssr: f
 const OrderModal = dynamic(() => import('./components/OrderModal'), { ssr: false })
 const OrdersListModal = dynamic(() => import('./components/OrdersListModal'), { ssr: false })
 const WarehouseListModal = dynamic(() => import('./components/WarehouseListModal'), { ssr: false })
+const ExternalSitesModal = dynamic(() => import('../../app/components/ExternalSitesModal'), { ssr: false })
 const LabelPrinterModal = dynamic(() => import('./components/LabelPrinterModal'), { ssr: false })
 const UserManagementModal = dynamic(() => import('./components/UserManagementModal'), { ssr: false })
 const ActivityLogModal = dynamic(() => import('./components/ActivityLogModal'), { ssr: false })
@@ -183,6 +184,8 @@ export default function Home() {
   const [pendingWarehouse, setPendingWarehouse] = useState<string>('listino')
   const [isWarehouseListModalOpen, setIsWarehouseListModalOpen] = useState(false)
   const [isAstZgModalOpen, setIsAstZgModalOpen] = useState(false)
+  const [isElettricoModalOpen, setIsElettricoModalOpen] = useState(false)
+  const [isExternalSitesOpen, setIsExternalSitesOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
   const [isOrdersListModalOpen, setIsOrdersListModalOpen] = useState(false)
@@ -434,6 +437,8 @@ export default function Home() {
       { id: 'suppliers', perm: 'can_suppliers' as const, label: 'Fornitori', icon: Truck, onClick: () => setIsSuppliersListModalOpen(true), count: suppliers.length, section: 'commerciale' },
       { id: 'warehouse', perm: 'can_warehouse' as const, label: 'Listini', icon: Package, onClick: () => setIsWarehouseListModalOpen(true), count: products.filter(p => (p.warehouse || 'listino') === 'listino').length, section: 'commerciale' },
       { id: 'warehouse_astzg', perm: 'can_warehouse' as const, label: 'Magazzino AST/ZG', icon: Package, onClick: () => setIsAstZgModalOpen(true), count: products.filter(p => p.warehouse === 'magazzino_astzg').length, section: 'commerciale' },
+      { id: 'warehouse_elettrico', perm: 'can_warehouse' as const, label: 'Magazzino Elettrico', icon: Package, onClick: () => setIsElettricoModalOpen(true), count: products.filter(p => p.warehouse === 'magazzino_elettrico').length, section: 'commerciale' },
+      { id: 'portali_esterni', perm: 'can_warehouse' as const, label: 'Portali Fornitori', icon: Package, onClick: () => setIsExternalSitesOpen(true), section: 'commerciale' },
       { id: 'kits', perm: 'can_kits' as const, label: 'KIT', icon: Layers, onClick: () => setIsKitsListModalOpen(true), count: kits.length, section: 'commerciale' },
       { id: 'stock_dashboard', perm: 'can_kits' as const, label: 'Stock Critico', icon: TrendingDown, onClick: () => setIsStockDashboardOpen(true), section: 'commerciale' },
       { id: 'orders', perm: 'can_orders' as const, label: 'Ordini', icon: ShoppingCart, onClick: () => setIsOrdersListModalOpen(true), count: orders.length, section: 'commerciale' },
@@ -1538,6 +1543,29 @@ export default function Home() {
             await moveToWarehouse(product.id, 'listino')
           }
         }}
+      />}
+
+      {isElettricoModalOpen && <WarehouseListModal
+        isOpen={isElettricoModalOpen}
+        onClose={() => setIsElettricoModalOpen(false)}
+        products={products}
+        suppliers={suppliers}
+        onAdd={() => { setEditingProduct(null); setPendingWarehouse('magazzino_elettrico'); setIsProductModalOpen(true) }}
+        onEdit={(product) => { setEditingProduct(product); setIsProductModalOpen(true); setIsElettricoModalOpen(false) }}
+        onDelete={deleteProduct}
+        onUpdateStock={async (productId, type, quantity, notes) => { await updateStock(productId, type as any, quantity, notes) }}
+        onUpdateProduct={async (id, data) => { await updateProduct(id, data) }}
+        onFindByBarcode={findByBarcode}
+        onLoadMovements={loadMovements}
+        kits={kits}
+        onOpenKitsModal={() => { setIsElettricoModalOpen(false); setIsKitsListModalOpen(true) }}
+        warehouseFilter="magazzino_elettrico"
+        warehouseTitle="Magazzino Elettrico"
+      />}
+
+      {isExternalSitesOpen && <ExternalSitesModal
+        isOpen={isExternalSitesOpen}
+        onClose={() => setIsExternalSitesOpen(false)}
       />}
 
       {isCsvImportOpen && <CsvImportModal

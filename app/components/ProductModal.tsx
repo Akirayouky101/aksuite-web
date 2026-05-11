@@ -20,7 +20,7 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
   const [form, setForm] = useState({
     name: '', sku: '', barcode: '', qr_code: '', category: '', brand: '', model: '',
     description: '', unit: 'pz', quantity: 0, min_quantity: 0, max_quantity: 0,
-    purchase_price: 0, sell_price: 0, location: '', shelf: '', supplier_id: '', image_url: '', notes: ''
+    purchase_price: 0, sell_price: 0, location: '', shelf: '', campata: '', ripiano: '', supplier_id: '', image_url: '', notes: ''
   })
   const [showScanner, setShowScanner] = useState(false)
   const [scanTarget, setScanTarget] = useState<'barcode' | 'qr_code'>('barcode')
@@ -46,12 +46,14 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
         sell_price: editingProduct.sell_price || 0,
         location: editingProduct.location || '',
         shelf: editingProduct.shelf || '',
+        campata: editingProduct.campata || '',
+        ripiano: editingProduct.ripiano || '',
         supplier_id: editingProduct.supplier_id || '',
         image_url: editingProduct.image_url || '',
         notes: editingProduct.notes || ''
       })
     } else {
-      setForm({ name: '', sku: '', barcode: '', qr_code: '', category: '', brand: '', model: '', description: '', unit: 'pz', quantity: 0, min_quantity: 0, max_quantity: 0, purchase_price: 0, sell_price: 0, location: '', shelf: '', supplier_id: '', image_url: '', notes: '' })
+      setForm({ name: '', sku: '', barcode: '', qr_code: '', category: '', brand: '', model: '', description: '', unit: 'pz', quantity: 0, min_quantity: 0, max_quantity: 0, purchase_price: 0, sell_price: 0, location: '', shelf: '', campata: '', ripiano: '', supplier_id: '', image_url: '', notes: '' })
     }
   }, [editingProduct, isOpen])
 
@@ -265,15 +267,25 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
 
               {/* Location + Supplier */}
               <div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Posizione e Fornitore</h3>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Ubicazione Magazzino</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className={labelCls}>Posizione</label>
-                    <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="Magazzino A..." className={inputCls} />
+                    <label className={labelCls}>Scaffale</label>
+                    <input value={form.shelf} onChange={e => setForm({...form, shelf: e.target.value})} placeholder="es. A, B, 1..." className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>Scaffale</label>
-                    <input value={form.shelf} onChange={e => setForm({...form, shelf: e.target.value})} placeholder="A1-03..." className={inputCls} />
+                    <label className={labelCls}>Campata</label>
+                    <input value={form.campata} onChange={e => setForm({...form, campata: e.target.value})} placeholder="es. C1, C2..." className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Ripiano</label>
+                    <input value={form.ripiano} onChange={e => setForm({...form, ripiano: e.target.value})} placeholder="es. R1, Alto..." className={inputCls} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <label className={labelCls}>Zona / Note Posizione</label>
+                    <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="es. Piano Terra, Esterno..." className={inputCls} />
                   </div>
                   <div>
                     <label className={labelCls}>Fornitore</label>
@@ -303,6 +315,8 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct, 
                       ref={imageInputRef}
                       type="file"
                       accept="image/*"
+                      title="Carica foto prodotto"
+                      aria-label="Carica foto prodotto"
                       className="hidden"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f) }}
                     />

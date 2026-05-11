@@ -23,6 +23,8 @@ export interface Product {
   max_quantity: number | null
   location: string | null
   shelf: string | null
+  campata: string | null
+  ripiano: string | null
   purchase_price: number
   sell_price: number
   supplier_id: string | null

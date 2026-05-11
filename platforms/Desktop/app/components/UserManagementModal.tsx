@@ -456,7 +456,7 @@ export default function UserManagementModal({
                                     {/* Edit user form */}
                                     {editingUser === managedUser.id ? (
                                       <div className="mb-4 p-3 bg-slate-50 border border-slate-200/60 rounded-xl space-y-3">
-                                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Modifica credenziali</p>
+                                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Modifica nome / credenziali</p>
                                         {editError && <p className="text-rose-600 text-xs font-medium">{editError}</p>}
                                         {editSuccess && <p className="text-emerald-600 text-xs font-medium flex items-center gap-1"><Check className="w-3.5 h-3.5" />Salvato!</p>}
                                         <div className="relative">
@@ -492,7 +492,7 @@ export default function UserManagementModal({
                                       <button onClick={() => startEdit(managedUser)}
                                         className="mb-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-all">
                                         <Mail className="w-3.5 h-3.5" />
-                                        Modifica email / password
+                                        Modifica nome / email / password
                                       </button>
                                     )}
 

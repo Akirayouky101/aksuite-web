@@ -35,12 +35,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Aggiorna profiles
-    const profileUpdate: any = {}
+    // Aggiorna profiles (upsert per gestire utenti senza riga in profiles)
+    const profileUpdate: any = { id: userId }
     if (email) profileUpdate.email = email
     if (fullName) profileUpdate.full_name = fullName
-    if (Object.keys(profileUpdate).length > 0) {
-      await supabaseAdmin.from('profiles').update(profileUpdate).eq('id', userId)
+    if (Object.keys(profileUpdate).length > 1) {
+      await supabaseAdmin.from('profiles').upsert(profileUpdate, { onConflict: 'id' })
     }
 
     return NextResponse.json({ success: true })

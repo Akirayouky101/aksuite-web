@@ -273,7 +273,8 @@ export default function WarehouseListModal({ isOpen, onClose, products: allProdu
                   <div className="flex items-center gap-1"><Tag className="w-3 h-3" />Vendita: {'\u20AC'}{p.sell_price.toFixed(2)}</div>
                   {!hideStock && p.min_quantity > 0 && <div>Scorta min: {p.min_quantity}</div>}
                   {!hideStock && (p.max_quantity ?? 0) > 0 && <div>Scorta max: {p.max_quantity}</div>}
-                  {p.location && <div className="flex items-center gap-1"><MapPin className="w-3 h-3" />{p.location}{p.shelf ? `/${p.shelf}` : ''}</div>}
+                  {(p.shelf || p.campata || p.ripiano) && <div className="flex items-center gap-1"><MapPin className="w-3 h-3" />{[p.shelf && `Sc.${p.shelf}`, p.campata && `Ca.${p.campata}`, p.ripiano && `Ri.${p.ripiano}`].filter(Boolean).join(' — ')}</div>}
+                  {p.location && !p.shelf && <div className="flex items-center gap-1"><MapPin className="w-3 h-3" />{p.location}</div>}
                 </div>
                 {p.description && <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-2">{p.description}</p>}
                 {p.notes && <p className="text-xs text-slate-400 bg-slate-50/50 rounded-lg p-2 italic">{p.notes}</p>}
