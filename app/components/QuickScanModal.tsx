@@ -77,7 +77,7 @@ export default function QuickScanModal({ isOpen, onClose, products, onUpdateStoc
     setTimeout(() => inputRef.current?.focus(), 100)
   }
 
-  const handleScan = (value: string) => {
+  const handleScan = async (value: string) => {
     const trimmed = value.trim()
     if (!trimmed) return
 
