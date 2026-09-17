@@ -54,8 +54,7 @@ const statusConfig = {
 export default function CallDetailModal({ isOpen, onClose, call }: CallDetailModalProps) {
   if (!isOpen || !call) return null
 
-  const priority = priorityConfig[call.priority] || priorityConfig.media
-  const status = statusConfig[call.status]
+  const status = statusConfig[call.status] || statusConfig.pending
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('it-IT', {
@@ -91,8 +90,8 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-lg font-bold text-slate-800 truncate">{call.caller_name}</h2>
-                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${priority.bg} ${priority.text}`}>
-                      {call.priority.toUpperCase()}
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${status.bg} ${status.text}`}>
+                      {status.icon} {status.label}
                     </span>
                   </div>
                   {call.company && (
@@ -114,22 +113,18 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
             {/* Content */}
             <div className="p-6 space-y-4 overflow-y-auto">
               
-              {/* Tipo + Stato */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Motivo */}
+              {call.notes && (
                 <div className="bg-white/70 rounded-xl p-4 border border-slate-200/40">
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1.5">Tipo Chiamata</div>
-                  <div className="text-sm font-semibold text-slate-700">
-                    {callTypeLabels[call.call_type] || call.call_type}
-                  </div>
+                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Motivo della chiamata
+                  </h3>
+                  <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                    {call.notes}
+                  </p>
                 </div>
-                <div className={`${status.bg} rounded-xl p-4 border ${status.border}`}>
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1.5">Stato</div>
-                  <div className={`text-sm font-semibold ${status.text} flex items-center gap-1.5`}>
-                    <span>{status.icon}</span>
-                    {status.label}
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Contatto */}
               <div className="bg-white/70 rounded-xl p-4 border border-slate-200/40">
@@ -179,51 +174,6 @@ export default function CallDetailModal({ isOpen, onClose, call }: CallDetailMod
                     <p className="text-sm text-slate-500">
                       {[call.city, call.province && `(${call.province})`, call.zip_code].filter(Boolean).join(' ')}
                     </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Assegnata A */}
-              {call.assigned_to && (
-                <div className="bg-indigo-50/60 rounded-xl p-4 border border-indigo-200/40">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center border border-indigo-200/60">
-                      <User className="w-4 h-4 text-indigo-500" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-indigo-400 uppercase tracking-wider font-medium">Assegnata A</div>
-                      <div className="text-sm font-bold text-indigo-700">{call.assigned_to}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Note */}
-              {call.notes && (
-                <div className="bg-white/70 rounded-xl p-4 border border-slate-200/40">
-                  <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Note e Richiesta
-                  </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                    {call.notes}
-                  </p>
-                </div>
-              )}
-
-              {/* Follow-up */}
-              {call.follow_up && call.follow_up_date && (
-                <div className="bg-amber-50/80 rounded-xl p-4 border border-amber-200/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center border border-amber-200/60">
-                      <Calendar className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-amber-500 uppercase tracking-wider font-medium">Follow-up Programmato</div>
-                      <div className="text-base font-bold text-slate-800">
-                        {formatFollowUpDate(call.follow_up_date)}
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
