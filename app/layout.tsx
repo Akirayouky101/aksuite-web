@@ -3,8 +3,8 @@ import './globals.css'
 import { Providers } from './providers'
 
 export const metadata: Metadata = {
-  title: 'AK Suite - Your Digital Vault',
-  description: 'Secure password manager and productivity suite',
+  title: 'AK Vault',
+  description: 'Gestione password semplice e sicura',
 }
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="it">
       <body><Providers>{children}</Providers></body>
     </html>
   )

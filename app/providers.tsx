@@ -1,6 +1,6 @@
 'use client'
 
-import { AuthProvider } from './hooks/useAuth'
+import { AuthProvider } from '../platforms/Desktop/app/hooks/useAuth'
 import { ChunkErrorBoundary } from './components/ChunkErrorBoundary'
 
 export function Providers({ children }: { children: React.ReactNode }) {

@@ -8,13 +8,20 @@ import {
   CheckCircle2, Users, User
 } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
-import { Task } from '../hooks/useTasks'
+
+interface CalendarTask {
+  id: string
+  title: string
+  is_completed: boolean
+  priority: string
+  due_date: string
+}
 
 interface CalendarViewProps {
   isOpen: boolean
   onClose: () => void
   events: Event[]
-  tasks?: Task[]
+  tasks?: CalendarTask[]
   onDelete: (id: string) => void
   onEdit: (event: Event) => void
   onAdd: () => void

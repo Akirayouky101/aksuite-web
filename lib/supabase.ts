@@ -3,7 +3,24 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const authLockQueues = new Map<string, Promise<void>>()
+
+const authLock = async <T>(_name: string, _acquireTimeout: number, fn: () => Promise<T>): Promise<T> => {
+  const previous = authLockQueues.get(_name) ?? Promise.resolve()
+  let release!: () => void
+  const current = new Promise<void>((resolve) => { release = resolve })
+  authLockQueues.set(_name, previous.then(() => current))
+  await previous
+  try {
+    return await fn()
+  } finally {
+    release()
+  }
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { lock: authLock },
+})
 
 // Encryption/Decryption utilities
 const ENCRYPTION_KEY = 'your-secret-key-change-this' // TODO: Use env variable
