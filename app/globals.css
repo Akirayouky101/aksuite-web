@@ -70,7 +70,7 @@ button, input, textarea, select { font-family: ui-sans-serif, system-ui, sans-se
 .ak-call-actions, .ak-password-card button, .ak-client-card button { display: flex; align-items: center; gap: .3rem; color: #897e9d; font-size: .7rem; font-weight: 800; }
 .ak-call-actions button, .ak-password-card button, .ak-client-card button { border-radius: .6rem; padding: .4rem; }.ak-call-actions button:hover, .ak-password-card button:hover, .ak-client-card button:hover { background: #f5dfca; color: #e45f4e; }.ak-danger:hover { color: #b43c44 !important; }
 .ak-password-grid, .ak-client-grid { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); }
-.ak-password-card, .ak-client-card { border: 1px solid #ead8bf; border-radius: 1.2rem; background: #fff8ed; padding: 1rem; transition: transform .18s ease, box-shadow .18s ease; }
+.ak-password-card, .ak-client-card { border: 1px solid #ead8bf; border-radius: 1.2rem; background: #fff8ed; padding: 1rem; cursor: pointer; transition: transform .18s ease, box-shadow .18s ease; }
 .ak-password-card:hover, .ak-client-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(94,73,49,.12); }
 .ak-password-icon { display: flex; height: 2.7rem; width: 2.7rem; align-items: center; justify-content: center; border-radius: .9rem; background: #ddd7ff; font-size: 1.2rem; }
 .ak-password-category { margin-top: .2rem; color: #8a7f9f; font-size: .68rem; font-weight: 700; }

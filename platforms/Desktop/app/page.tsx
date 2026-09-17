@@ -24,6 +24,7 @@ import CallsWorkspace from './components/CallsWorkspace'
 import PasswordsWorkspace from './components/PasswordsWorkspace'
 import ClientsWorkspace from './components/ClientsWorkspace'
 import CallDetailModal from './components/CallDetailModal'
+import PasswordDetailModal from './components/PasswordDetailModal'
 import UserManagementModal from './components/UserManagementModal'
 import AuthModal from './components/AuthModal'
 
@@ -41,6 +42,7 @@ export default function Home() {
   const [modal, setModal] = useState<string | null>(null)
   const [editing, setEditing] = useState<any>(null)
   const [selectedCall, setSelectedCall] = useState<any>(null)
+  const [selectedPassword, setSelectedPassword] = useState<any>(null)
 
   const open = (name: string, item: any = null) => { setEditing(item); setModal(name) }
   const close = () => { setEditing(null); setModal(null) }
@@ -86,7 +88,7 @@ export default function Home() {
         <header className="ak-topbar mb-5 flex flex-col gap-4 rounded-[1.75rem] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7"><div className="flex items-center gap-3"><span className="flex h-11 w-11 -rotate-3 items-center justify-center rounded-2xl bg-[#ff765f] text-[#2d2754]"><KeyRound className="h-5 w-5" /></span><div><p className="text-lg font-black tracking-tight">AK SUITE</p><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8a7f9f]">personal edition</p></div></div><nav className="flex flex-wrap gap-2">{items.map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { setSection(id); setModal(null) }} className={`ak-nav-item ${section === id ? `${tint} ${ink}` : ''}`}><Icon className="h-4 w-4" />{label}<span className="opacity-60">{count}</span></button>)}</nav><button onClick={() => supabase.auth.signOut()} title="Esci" className="ak-logout"><LogOut className="h-4 w-4" />Esci</button></header>
         <section className="ak-hero mb-5 grid gap-6 overflow-hidden rounded-[2rem] p-6 sm:p-9 lg:grid-cols-[1.4fr_0.6fr] lg:p-12"><div className="relative z-10"><p className="text-sm font-bold capitalize text-[#716a91]">{todayLabel}</p><h1 className="mt-3 max-w-2xl text-5xl font-black leading-[0.95] tracking-[-0.04em] text-[#2d2754] sm:text-7xl">Buongiorno,<br /><span className="text-[#e45f4e]">facciamo ordine.</span></h1><p className="mt-6 max-w-lg text-base leading-7 text-[#514b70]">Il tuo centro operativo per le cose che contano davvero oggi.</p><button onClick={() => open(openNew)} className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-[#2d2754] px-5 py-3.5 font-bold text-[#fff6df] shadow-lg shadow-[#2d2754]/20 transition hover:-translate-y-1"><Plus className="h-4 w-4" />Aggiungi qualcosa</button></div><div className="ak-hero-sticker flex min-h-48 flex-col justify-between rounded-[1.75rem] p-6"><Sparkles className="h-7 w-7 text-[#e45f4e]" /><div><p className="text-sm font-bold text-[#716a91]">Sei aree, una vista</p><p className="mt-1 text-2xl font-black text-[#2d2754]">{calls.length + events.length + notes.length + passwords.length + clients.length}</p><p className="text-sm text-[#716a91]">elementi nel tuo spazio</p></div></div></section>
         {section === 'calls' && <CallsWorkspace calls={calls} onNew={() => open('call')} onEdit={(call) => open('call', call)} onDetail={setSelectedCall} onDelete={deleteCall} onStatusChange={updateCallStatus} />}
-        {section === 'passwords' && <PasswordsWorkspace passwords={passwords} onNew={() => open('password')} onEdit={(password) => open('password', password)} onDelete={deletePassword} />}
+        {section === 'passwords' && <PasswordsWorkspace passwords={passwords} onNew={() => open('password')} onEdit={(password) => open('password', password)} onDetail={setSelectedPassword} onDelete={deletePassword} />}
         {section === 'clients' && <ClientsWorkspace clients={clients} onNew={() => open('client')} onEdit={(client) => open('client', client)} onDelete={deleteClient} onToggleFavorite={toggleFavorite} />}
         {!['calls', 'passwords', 'clients'].includes(section) && <section className="grid gap-5 lg:grid-cols-[1.5fr_0.8fr]">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { setSection(id); open(id === 'calls' ? 'calls' : id === 'calendar' ? 'calendar' : id === 'notes' ? 'notes' : id === 'passwords' ? 'passwords' : id === 'clients' ? 'clients' : 'users') }} className="ak-bento group text-left"><div className={`mb-7 flex h-12 w-12 items-center justify-center rounded-2xl ${tint} ${ink}`}><Icon className="h-5 w-5" /></div><div className="flex items-end justify-between"><div><p className="text-4xl font-black text-[#2d2754]">{count}</p><p className="mt-1 font-bold text-[#716a91]">{label}</p></div><ArrowUpRight className="h-5 w-5 text-[#a99dbb] transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#e45f4e]" /></div></button>)}</div>
@@ -106,6 +108,7 @@ export default function Home() {
       {modal === 'client' && <ClientModal isOpen onClose={close} onSave={async (data) => { if (editing) await updateClient(editing.id, data); else await addClient(data); close() }} editingClient={editing} />}
       {modal === 'users' && <UserManagementModal isOpen onClose={close} users={users} onCreateUser={createUser} onTogglePermission={togglePermission} onSetAllPermissions={setAllPermissions} onDeleteUser={deleteUserPermissions} onLoadUsers={loadAllUsers} />}
       <CallDetailModal isOpen={Boolean(selectedCall)} onClose={() => setSelectedCall(null)} call={selectedCall} />
+      <PasswordDetailModal password={selectedPassword} onClose={() => setSelectedPassword(null)} onEdit={(password) => open('password', password)} onDelete={deletePassword} />
     </main>
   )
 }
