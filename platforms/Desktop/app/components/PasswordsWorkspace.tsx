@@ -29,8 +29,7 @@ export default function PasswordsWorkspace({ passwords, onNew, onEdit, onDetail,
     }
     return path.join(' / ')
   })
-  const passwordPaths = passwords.flatMap(item => String(item.category || '').split(' / ').reduce<string[]>((paths, part, index, all) => { paths.push(all.slice(0, index + 1).join(' / ')); return paths }, []))
-  const allPaths = Array.from(new Set([...explicitPaths, ...passwordPaths].filter(Boolean)))
+  const allPaths = Array.from(new Set(explicitPaths.filter(Boolean)))
   const prefix = selectedPath.join(' / ')
   const folders = allPaths.filter(path => {
     const parts = path.split(' / ')
