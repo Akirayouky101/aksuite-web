@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Lock, User, Globe, Tag, Eye, EyeOff, Dices, Star, MessageSquare, Hash } from 'lucide-react'
 import PasswordGenerator from './PasswordGenerator'
 import { PasswordCategory } from '../hooks/usePasswords'
-import PasswordCategoryModal from './PasswordCategoryModal'
 
 interface PasswordData {
   id?: string
@@ -26,16 +25,15 @@ interface PasswordModalProps {
   onSave: (data: PasswordData) => void
   editPassword?: PasswordData | null
   categories?: PasswordCategory[]
-  onCreateCategory?: (name: string, parentId: string | null) => Promise<PasswordCategory | null>
 }
 
-export default function PasswordModal({ isOpen, onClose, onSave, editPassword, categories = [], onCreateCategory }: PasswordModalProps) {
+export default function PasswordModal({ isOpen, onClose, onSave, editPassword, categories = [] }: PasswordModalProps) {
   const [formData, setFormData] = useState<PasswordData>({
     title: '',
     username: '',
     password: '',
     website: '',
-    category: 'Personale',
+    category: '',
     emoji: '🔑',
     notes: '',
     isFavorite: false,
@@ -45,18 +43,6 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
   const [showPin, setShowPin] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showGenerator, setShowGenerator] = useState(false)
-  const [categoryParentId, setCategoryParentId] = useState<string | null | undefined>(undefined)
-
-  const getPath = (categoryId: string | null) => {
-    const path: PasswordCategory[] = []
-    let current = categories.find(category => category.id === categoryId)
-    while (current) {
-      path.unshift(current)
-      current = current.parent_id ? categories.find(category => category.id === current?.parent_id) : undefined
-    }
-    return path
-  }
-
   const selectCategory = (level: number, value: string) => {
     const currentPath = formData.category ? formData.category.split(' / ') : []
     const nextPath = [...currentPath.slice(0, level), value].filter(Boolean)
@@ -69,21 +55,6 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
     return categories.filter(category => category.parent_id === (parent?.id || null))
   }
 
-  const prepareCategory = (level: number) => {
-    const selectedNames = formData.category ? formData.category.split(' / ') : []
-    const parent = level === 0 ? null : categories.find(category => category.name === selectedNames[level - 1])
-    setCategoryParentId(parent?.id || null)
-  }
-
-  const saveCategory = async (name: string) => {
-    if (!onCreateCategory) return
-    const created = await onCreateCategory(name, categoryParentId ?? null)
-    if (created) {
-      const parentPath = getPath(created.parent_id)
-      setFormData(prev => ({ ...prev, category: [...parentPath.map(item => item.name), created.name].join(' / ') }))
-    }
-  }
-
   useEffect(() => {
     if (editPassword) {
       setFormData({
@@ -92,7 +63,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
         username: editPassword.username || '',
         password: editPassword.password || '',
         website: editPassword.website || '',
-        category: editPassword.category || 'Personale',
+        category: editPassword.category || '',
         emoji: editPassword.emoji || '🔑',
         notes: editPassword.notes || '',
         isFavorite: editPassword.isFavorite || false,
@@ -104,7 +75,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
         username: '',
         password: '',
         website: '',
-        category: 'Personale',
+        category: '',
         emoji: '🔑',
         notes: '',
         isFavorite: false,
@@ -117,6 +88,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.category) return
     setIsSaving(true)
     await new Promise(resolve => setTimeout(resolve, 600))
     onSave(formData)
@@ -126,7 +98,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
         username: '',
         password: '',
         website: '',
-        category: 'Personale',
+        category: '',
         emoji: '🔑',
         notes: '',
         isFavorite: false,
@@ -226,14 +198,14 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                           if (level > 0 && !formData.category.split(' / ')[level - 1]) return null
                           return (
                             <div key={level} className="flex gap-2">
-                              <select title={`Categoria livello ${level + 1}`} value={selected} onChange={(event) => selectCategory(level, event.target.value)} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10">
+                              <select required={level === 0} title={`Categoria livello ${level + 1}`} value={selected} onChange={(event) => selectCategory(level, event.target.value)} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10">
                                 <option value="">{level === 0 ? 'Seleziona categoria' : 'Seleziona sottocategoria'}</option>
                                 {options.map(category => <option key={category.id} value={category.name}>{category.name}</option>)}
                               </select>
-                              <button type="button" onClick={() => prepareCategory(level)} title="Crea categoria" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-lg font-medium text-indigo-600 transition hover:bg-indigo-100">+</button>
                             </div>
                           )
                         })}
+                        {!categories.length && <p className="text-xs text-slate-400">Crea prima una categoria dalla sezione Password.</p>}
                       </div>
                     </div>
                   </div>
@@ -361,12 +333,6 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
           </motion.div>
         </motion.div>
       )}
-      <PasswordCategoryModal
-        isOpen={categoryParentId !== undefined}
-        parentName={categoryParentId ? getPath(categoryParentId).map(item => item.name).join(' / ') : undefined}
-        onClose={() => setCategoryParentId(undefined)}
-        onSave={async (name) => { await saveCategory(name); setCategoryParentId(undefined) }}
-      />
     </AnimatePresence>
   )
 }
