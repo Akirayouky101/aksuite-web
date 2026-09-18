@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, Calendar, Clock, MapPin, Palette, Repeat, Bell, Users } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
 import RelationsIntegration from './RelationsIntegration'
+import DateTimePicker from './DateTimePicker'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
 
 interface EventModalProps {
@@ -240,12 +241,11 @@ export default function EventModal({
                   <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
                     <Calendar size={16} /> Data Inizio *
                   </label>
-                  <input
-                    type={formData.all_day ? 'date' : 'datetime-local'}
+                  <DateTimePicker
+                    mode={formData.all_day ? 'date' : 'datetime'}
                     value={formData.all_day ? formData.start_date.split('T')[0] : formData.start_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
-                    required
+                    onChange={(val) => setFormData(prev => ({ ...prev, start_date: val }))}
+                    placeholder="Seleziona data e ora"
                   />
                 </div>
 
@@ -253,11 +253,12 @@ export default function EventModal({
                   <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
                     <Clock size={16} /> Data Fine
                   </label>
-                  <input
-                    type={formData.all_day ? 'date' : 'datetime-local'}
+                  <DateTimePicker
+                    mode={formData.all_day ? 'date' : 'datetime'}
                     value={formData.all_day && formData.end_date ? formData.end_date.split('T')[0] : formData.end_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                    onChange={(val) => setFormData(prev => ({ ...prev, end_date: val }))}
+                    placeholder="Nessuna data di fine"
+                    clearable
                   />
                 </div>
               </div>
