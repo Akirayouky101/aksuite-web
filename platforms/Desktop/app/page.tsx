@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowUpRight, Calendar, CheckCircle2, KeyRound, LogIn, LogOut, Phone, Plus, Shield, Sparkles, StickyNote, Users } from 'lucide-react'
+import { ArrowUpRight, Calendar, CheckCircle2, KeyRound, LayoutGrid, LogIn, LogOut, Phone, Plus, Shield, Sparkles, StickyNote, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { usePasswords } from './hooks/usePasswords'
 import { useCalls } from './hooks/useCalls'
@@ -38,7 +38,7 @@ export default function Home() {
   const { clients, addClient, updateClient, deleteClient, toggleFavorite } = useClients()
   const { users, isAdmin, createUser, togglePermission, setAllPermissions, deleteUserPermissions, loadAllUsers } = useUserManagement()
   const [authOpen, setAuthOpen] = useState(false)
-  const [section, setSection] = useState('calls')
+  const [section, setSection] = useState('dashboard')
   const [modal, setModal] = useState<string | null>(null)
   const [editing, setEditing] = useState<any>(null)
   const [selectedCall, setSelectedCall] = useState<any>(null)
@@ -53,7 +53,9 @@ export default function Home() {
     close()
   }
 
+  const totalItems = calls.length + events.length + notes.length + passwords.length + clients.length
   const items = [
+    ['dashboard', 'Dashboard', LayoutGrid, totalItems, 'bg-[#c9c2ff]', 'text-[#2d2754]'],
     ['calls', 'Chiamate', Phone, calls.length, 'bg-[#ff765f]', 'text-[#a9322b]'],
     ['calendar', 'Calendario', Calendar, events.length, 'bg-[#f7c948]', 'text-[#785b00]'],
     ['notes', 'Note', StickyNote, notes.length, 'bg-[#8ed8c3]', 'text-[#176653]'],
@@ -64,8 +66,8 @@ export default function Home() {
   const activeItem = items.find(([id]) => id === section) || items[0]
   const todayLabel = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())
   const recentItems = [...calls.slice(0, 2).map((item) => ({ label: item.caller_name, type: 'Chiamata', date: item.call_date })), ...notes.slice(0, 2).map((item) => ({ label: item.title, type: 'Nota', date: item.updated_at })), ...clients.slice(0, 2).map((item) => ({ label: item.name, type: 'Cliente', date: item.created_at }))].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 4)
-  const openList = section === 'calls' ? 'calls' : section === 'calendar' ? 'calendar' : section === 'notes' ? 'notes' : section === 'passwords' ? 'passwords' : section === 'clients' ? 'clients' : 'users'
-  const openNew = section === 'calls' ? 'call' : section === 'calendar' ? 'event' : section === 'notes' ? 'note' : section === 'passwords' ? 'password' : section === 'clients' ? 'client' : 'users'
+  const openList = section === 'dashboard' ? 'calls' : section === 'calls' ? 'calls' : section === 'calendar' ? 'calendar' : section === 'notes' ? 'notes' : section === 'passwords' ? 'passwords' : section === 'clients' ? 'clients' : 'users'
+  const openNew = section === 'dashboard' ? 'call' : section === 'calls' ? 'call' : section === 'calendar' ? 'event' : section === 'notes' ? 'note' : section === 'passwords' ? 'password' : section === 'clients' ? 'client' : 'users'
 
   if (!user) return (
     <main className="ak-login relative flex min-h-screen items-center overflow-hidden p-5 sm:p-10">
@@ -91,7 +93,7 @@ export default function Home() {
         {section === 'passwords' && <PasswordsWorkspace passwords={passwords} onNew={() => open('password')} onEdit={(password) => open('password', password)} onDetail={setSelectedPassword} onDelete={deletePassword} />}
         {section === 'clients' && <ClientsWorkspace clients={clients} onNew={() => open('client')} onEdit={(client) => open('client', client)} onDelete={deleteClient} onToggleFavorite={toggleFavorite} />}
         {!['calls', 'passwords', 'clients'].includes(section) && <section className="grid gap-5 lg:grid-cols-[1.5fr_0.8fr]">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { setSection(id); open(id === 'calls' ? 'calls' : id === 'calendar' ? 'calendar' : id === 'notes' ? 'notes' : id === 'passwords' ? 'passwords' : id === 'clients' ? 'clients' : 'users') }} className="ak-bento group text-left"><div className={`mb-7 flex h-12 w-12 items-center justify-center rounded-2xl ${tint} ${ink}`}><Icon className="h-5 w-5" /></div><div className="flex items-end justify-between"><div><p className="text-4xl font-black text-[#2d2754]">{count}</p><p className="mt-1 font-bold text-[#716a91]">{label}</p></div><ArrowUpRight className="h-5 w-5 text-[#a99dbb] transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#e45f4e]" /></div></button>)}</div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.filter(([id]) => id !== 'dashboard').map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { setSection(id); open(id === 'calls' ? 'calls' : id === 'calendar' ? 'calendar' : id === 'notes' ? 'notes' : id === 'passwords' ? 'passwords' : id === 'clients' ? 'clients' : 'users') }} className="ak-bento group text-left"><div className={`mb-7 flex h-12 w-12 items-center justify-center rounded-2xl ${tint} ${ink}`}><Icon className="h-5 w-5" /></div><div className="flex items-end justify-between"><div><p className="text-4xl font-black text-[#2d2754]">{count}</p><p className="mt-1 font-bold text-[#716a91]">{label}</p></div><ArrowUpRight className="h-5 w-5 text-[#a99dbb] transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#e45f4e]" /></div></button>)}</div>
           <div className="ak-activity rounded-[1.75rem] p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-[#e45f4e]">live desk</p><h2 className="mt-2 text-2xl font-black text-[#2d2754]">Ultimi movimenti</h2></div><CheckCircle2 className="h-6 w-6 text-[#5f9e8e]" /></div><div className="mt-7 space-y-4">{recentItems.length ? recentItems.map((item) => <div key={`${item.type}-${item.label}`} className="ak-activity-row"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f4e6d2] text-xs font-black text-[#e45f4e]">{item.type[0]}</span><div className="min-w-0"><p className="truncate font-bold text-[#3e3860]">{item.label}</p><p className="text-xs text-[#8a7f9f]">{item.type} · {new Date(item.date).toLocaleDateString('it-IT')}</p></div></div>) : <p className="text-sm text-[#8a7f9f]">Nessuna attività recente.</p>}</div></div>
         </section>}
       </div>
