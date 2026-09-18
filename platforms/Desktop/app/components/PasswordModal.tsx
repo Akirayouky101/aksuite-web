@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Lock, User, Globe, Tag, Eye, EyeOff, Dices, Star, MessageSquare, Hash } from 'lucide-react'
 import PasswordGenerator from './PasswordGenerator'
+import { PasswordCategory } from '../hooks/usePasswords'
+import PasswordCategoryModal from './PasswordCategoryModal'
 
 interface PasswordData {
   id?: string
@@ -23,11 +25,11 @@ interface PasswordModalProps {
   onClose: () => void
   onSave: (data: PasswordData) => void
   editPassword?: PasswordData | null
+  categories?: PasswordCategory[]
+  onCreateCategory?: (name: string, parentId: string | null) => Promise<PasswordCategory | null>
 }
 
-const categories = ['Lavoro', 'Personale', 'Social', 'Finanza', 'Gaming', 'Altro']
-
-export default function PasswordModal({ isOpen, onClose, onSave, editPassword }: PasswordModalProps) {
+export default function PasswordModal({ isOpen, onClose, onSave, editPassword, categories = [], onCreateCategory }: PasswordModalProps) {
   const [formData, setFormData] = useState<PasswordData>({
     title: '',
     username: '',
@@ -43,6 +45,44 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword }:
   const [showPin, setShowPin] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showGenerator, setShowGenerator] = useState(false)
+  const [categoryParentId, setCategoryParentId] = useState<string | null | undefined>(undefined)
+
+  const getPath = (categoryId: string | null) => {
+    const path: PasswordCategory[] = []
+    let current = categories.find(category => category.id === categoryId)
+    while (current) {
+      path.unshift(current)
+      current = current.parent_id ? categories.find(category => category.id === current?.parent_id) : undefined
+    }
+    return path
+  }
+
+  const selectCategory = (level: number, value: string) => {
+    const currentPath = formData.category ? formData.category.split(' / ') : []
+    const nextPath = [...currentPath.slice(0, level), value].filter(Boolean)
+    setFormData(prev => ({ ...prev, category: nextPath.join(' / ') }))
+  }
+
+  const getLevelOptions = (level: number) => {
+    const selectedNames = formData.category ? formData.category.split(' / ') : []
+    const parent = level === 0 ? null : categories.find(category => category.name === selectedNames[level - 1] && (level === 1 || category.parent_id === categories.find(parentCategory => parentCategory.name === selectedNames[level - 2])?.id))
+    return categories.filter(category => category.parent_id === (parent?.id || null))
+  }
+
+  const prepareCategory = (level: number) => {
+    const selectedNames = formData.category ? formData.category.split(' / ') : []
+    const parent = level === 0 ? null : categories.find(category => category.name === selectedNames[level - 1])
+    setCategoryParentId(parent?.id || null)
+  }
+
+  const saveCategory = async (name: string) => {
+    if (!onCreateCategory) return
+    const created = await onCreateCategory(name, categoryParentId ?? null)
+    if (created) {
+      const parentPath = getPath(created.parent_id)
+      setFormData(prev => ({ ...prev, category: [...parentPath.map(item => item.name), created.name].join(' / ') }))
+    }
+  }
 
   useEffect(() => {
     if (editPassword) {
@@ -174,21 +214,27 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword }:
                       />
                     </div>
 
-                    {/* Categoria */}
+                    {/* Categoria gerarchica */}
                     <div>
                       <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                         <Tag className="w-3.5 h-3.5" /> Categoria
                       </label>
-                      <select
-                        title="Categoria"
-                        value={formData.category}
-                        onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all text-sm"
-                      >
-                        {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                      <div className="space-y-2">
+                        {[0, 1, 2].map(level => {
+                          const options = getLevelOptions(level)
+                          const selected = formData.category.split(' / ')[level] || ''
+                          if (level > 0 && !formData.category.split(' / ')[level - 1]) return null
+                          return (
+                            <div key={level} className="flex gap-2">
+                              <select title={`Categoria livello ${level + 1}`} value={selected} onChange={(event) => selectCategory(level, event.target.value)} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10">
+                                <option value="">{level === 0 ? 'Seleziona categoria' : 'Seleziona sottocategoria'}</option>
+                                {options.map(category => <option key={category.id} value={category.name}>{category.name}</option>)}
+                              </select>
+                              <button type="button" onClick={() => prepareCategory(level)} title="Crea categoria" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-lg font-medium text-indigo-600 transition hover:bg-indigo-100">+</button>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
 
@@ -315,6 +361,12 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword }:
           </motion.div>
         </motion.div>
       )}
+      <PasswordCategoryModal
+        isOpen={categoryParentId !== undefined}
+        parentName={categoryParentId ? getPath(categoryParentId).map(item => item.name).join(' / ') : undefined}
+        onClose={() => setCategoryParentId(undefined)}
+        onSave={async (name) => { await saveCategory(name); setCategoryParentId(undefined) }}
+      />
     </AnimatePresence>
   )
 }

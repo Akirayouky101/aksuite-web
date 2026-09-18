@@ -16,8 +16,15 @@ export interface Password {
   pin_code?: string
 }
 
+export interface PasswordCategory {
+  id: string
+  name: string
+  parent_id: string | null
+}
+
 export function usePasswords() {
   const [passwords, setPasswords] = useState<Password[]>([])
+  const [categories, setCategories] = useState<PasswordCategory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { user } = useAuth()
 
@@ -51,6 +58,13 @@ export function usePasswords() {
           )
           setPasswords(decryptedPasswords)
         }
+
+        const { data: categoryData, error: categoryError } = await supabase
+          .from('password_categories')
+          .select('id, name, parent_id')
+          .order('name')
+        if (categoryError && categoryError.code !== '42P01') console.error('Error loading password categories:', categoryError)
+        if (categoryData) setCategories(categoryData)
       } else {
         // Fallback to localStorage if not authenticated
         const stored = localStorage.getItem('ak-passwords')
@@ -182,13 +196,36 @@ export function usePasswords() {
     return passwords.filter(p => p.category === category)
   }
 
+  const addCategory = async (name: string, parentId: string | null = null) => {
+    const cleanName = name.trim()
+    if (!cleanName) return null
+    if (user) {
+      const { data, error } = await supabase
+        .from('password_categories')
+        .insert({ user_id: user.id, name: cleanName, parent_id: parentId })
+        .select('id, name, parent_id')
+        .single()
+      if (error) {
+        console.error('Error saving password category:', error)
+        return null
+      }
+      setCategories(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+      return data
+    }
+    const category = { id: crypto.randomUUID(), name: cleanName, parent_id: parentId }
+    setCategories(prev => [...prev, category].sort((a, b) => a.name.localeCompare(b.name)))
+    return category
+  }
+
   return {
     passwords,
+    categories,
     isLoading,
     user,
     addPassword,
     updatePassword,
     deletePassword,
     getPasswordsByCategory,
+    addCategory,
   }
 }
