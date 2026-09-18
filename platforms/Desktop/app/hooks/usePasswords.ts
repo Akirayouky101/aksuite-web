@@ -217,6 +217,81 @@ export function usePasswords() {
     return category
   }
 
+  const updateCategory = async (id: string, name: string) => {
+    const cleanName = name.trim()
+    if (!cleanName) return false
+    const category = categories.find(item => item.id === id)
+    if (!category) return false
+    const oldPath = (() => {
+      const path: string[] = []
+      let current: PasswordCategory | undefined = category
+      while (current) {
+        path.unshift(current.name)
+        current = current.parent_id ? categories.find(item => item.id === current?.parent_id) : undefined
+      }
+      return path.join(' / ')
+    })()
+    const newPath = (() => {
+      const parent = category.parent_id ? categories.find(item => item.id === category.parent_id) : null
+      const parentPath = parent ? categories.reduce<string[]>((path, item) => {
+        let current: PasswordCategory | undefined = item
+        const names: string[] = []
+        while (current) {
+          names.unshift(current.name)
+          current = current.parent_id ? categories.find(parentItem => parentItem.id === current?.parent_id) : undefined
+        }
+        return item.id === parent.id ? names : path
+      }, []).join(' / ') : ''
+      return parentPath ? `${parentPath} / ${cleanName}` : cleanName
+    })()
+
+    if (user) {
+      const { error } = await supabase.from('password_categories').update({ name: cleanName }).eq('id', id)
+      if (error) {
+        console.error('Error updating password category:', error)
+        return false
+      }
+      const affected = passwords.filter(password => password.category === oldPath || password.category.startsWith(`${oldPath} / `))
+      await Promise.all(affected.map(password => supabase.from('passwords').update({ category: password.category.replace(oldPath, newPath), updated_at: new Date().toISOString() }).eq('id', password.id)))
+    }
+    setCategories(prev => prev.map(item => item.id === id ? { ...item, name: cleanName } : item))
+    setPasswords(prev => prev.map(password => password.category === oldPath || password.category.startsWith(`${oldPath} / `) ? { ...password, category: password.category.replace(oldPath, newPath) } : password))
+    return true
+  }
+
+  const deleteCategory = async (id: string) => {
+    const category = categories.find(item => item.id === id)
+    if (!category) return false
+    const descendantIds: string[] = [id]
+    for (let index = 0; index < descendantIds.length; index++) {
+      const parentId = descendantIds[index]
+      categories.filter(item => item.parent_id === parentId).forEach(item => {
+        if (!descendantIds.includes(item.id)) descendantIds.push(item.id)
+      })
+    }
+    const paths = categories.filter(item => descendantIds.includes(item.id)).map(item => {
+      const path: string[] = []
+      let current: PasswordCategory | undefined = item
+      while (current) {
+        path.unshift(current.name)
+        current = current.parent_id ? categories.find(parent => parent.id === current?.parent_id) : undefined
+      }
+      return path.join(' / ')
+    })
+    const affected = passwords.filter(password => paths.some(path => password.category === path || password.category.startsWith(`${path} / `)))
+    if (user) {
+      await Promise.all(affected.map(password => supabase.from('passwords').update({ category: '', updated_at: new Date().toISOString() }).eq('id', password.id)))
+      const { error } = await supabase.from('password_categories').delete().eq('id', id)
+      if (error) {
+        console.error('Error deleting password category:', error)
+        return false
+      }
+    }
+    setPasswords(prev => prev.map(password => affected.some(item => item.id === password.id) ? { ...password, category: '' } : password))
+    setCategories(prev => prev.filter(item => !descendantIds.includes(item.id)))
+    return true
+  }
+
   return {
     passwords,
     categories,
@@ -227,5 +302,7 @@ export function usePasswords() {
     deletePassword,
     getPasswordsByCategory,
     addCategory,
+    updateCategory,
+    deleteCategory,
   }
 }
