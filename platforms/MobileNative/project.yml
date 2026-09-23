@@ -1,0 +1,58 @@
+name: AKSuite
+options:
+  bundleIdPrefix: com.aksuite
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+configFiles:
+  Debug: Config/Secrets.xcconfig
+  Release: Config/Secrets.xcconfig
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: 2.5.1
+
+targets:
+  AKSuite:
+    type: application
+    platform: iOS
+    sources:
+      - path: AKSuite
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aksuite.app
+        TARGETED_DEVICE_FAMILY: "1,2"
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: "AK Suite"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: AKSuite/Info.plist
+      properties:
+        UILaunchScreen: {}
+        CFBundleDisplayName: "AK Suite"
+        NSFaceIDUsageDescription: "AK Suite usa Face ID per sbloccare in modo sicuro le tue password."
+        SUPABASE_URL: $(SUPABASE_URL)
+        SUPABASE_ANON_KEY: $(SUPABASE_ANON_KEY)
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+    dependencies:
+      - package: Supabase
+        product: Supabase
+
+schemes:
+  AKSuite:
+    build:
+      targets:
+        AKSuite: all
+    run:
+      config: Debug
+    archive:
+      config: Release
