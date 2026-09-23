@@ -46,6 +46,7 @@ export default function DateTimePicker({
   clearable = false
 }: DateTimePickerProps) {
   const [open, setOpen] = useState(false)
+  const [manualDate, setManualDate] = useState('')
   const [pos, setPos] = useState<{ top: number; left: number; width: number; placement: 'top' | 'bottom' } | null>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -53,6 +54,19 @@ export default function DateTimePicker({
   const parsed = useMemo(() => parseValue(value), [value])
   const [viewYear, setViewYear] = useState(() => (parsed.date ?? new Date()).getFullYear())
   const [viewMonth, setViewMonth] = useState(() => (parsed.date ?? new Date()).getMonth())
+
+  useEffect(() => {
+    setManualDate(parsed.date ? `${pad(parsed.date.getDate())}/${pad(parsed.date.getMonth() + 1)}/${parsed.date.getFullYear()}` : '')
+  }, [parsed.date])
+
+  const commitManualDate = () => {
+    const match = manualDate.trim().match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/)
+    if (!match) return
+    const day = Number(match[1]), month = Number(match[2]), year = Number(match[3])
+    const date = new Date(year, month - 1, day)
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return
+    commitDate(date)
+  }
 
   const updatePosition = () => {
     const rect = buttonRef.current?.getBoundingClientRect()
@@ -141,28 +155,28 @@ export default function DateTimePicker({
 
   return (
     <>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-left flex items-center justify-between gap-2 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none hover:bg-slate-100/80 transition-colors"
-      >
-        <span className={parsed.date ? 'text-slate-700' : 'text-slate-400'}>{displayLabel()}</span>
-        <span className="flex items-center gap-2 text-slate-400 flex-shrink-0">
-          {clearable && value && (
-            <span
-              role="button"
-              onClick={(e) => { e.stopPropagation(); onChange('') }}
-              className="hover:text-red-500 transition-colors"
-              title="Cancella"
-            >
-              <X size={14} />
-            </span>
-          )}
+      <div className="flex w-full items-center gap-2 rounded-xl border border-slate-200/60 bg-slate-50/80 px-3 py-1.5 focus-within:ring-2 focus-within:ring-indigo-100">
+        <input
+          value={manualDate}
+          onChange={event => setManualDate(event.target.value)}
+          onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); commitManualDate() } }}
+          onBlur={commitManualDate}
+          placeholder="gg/mm/aaaa"
+          aria-label="Inserisci data"
+          className="min-w-0 flex-1 bg-transparent py-1.5 text-sm text-slate-700 outline-none placeholder:text-slate-400"
+        />
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          title={displayLabel()}
+          className="flex shrink-0 items-center gap-2 py-1 text-slate-400 hover:text-indigo-500"
+        >
+          {clearable && value && <span role="button" onClick={(e) => { e.stopPropagation(); onChange(''); setManualDate('') }} title="Cancella"><X size={14} /></span>}
           {mode === 'datetime' && <Clock size={15} />}
           <CalendarIcon size={15} />
-        </span>
-      </button>
+        </button>
+      </div>
 
       {open && pos && createPortal(
         <div

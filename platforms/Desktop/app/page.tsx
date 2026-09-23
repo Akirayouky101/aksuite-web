@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { ArrowUpRight, Calendar, CheckCircle2, KeyRound, LayoutGrid, LogIn, LogOut, Phone, Plus, Shield, Sparkles, StickyNote, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowUpRight, Calendar, CheckCircle2, CreditCard, KeyRound, LayoutGrid, LogIn, LogOut, Phone, Plus, Shield, Sparkles, StickyNote, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { usePasswords } from './hooks/usePasswords'
 import { useCalls } from './hooks/useCalls'
@@ -27,6 +27,12 @@ import CallDetailModal from './components/CallDetailModal'
 import PasswordDetailModal from './components/PasswordDetailModal'
 import UserManagementModal from './components/UserManagementModal'
 import AuthModal from './components/AuthModal'
+import PaymentsWorkspace from './components/PaymentsWorkspace'
+import PaymentModal from './components/PaymentModal'
+import PaymentsOverview from './components/PaymentsOverview'
+import DashboardDesk from './components/DashboardDesk'
+import NotesStickyWidget from './components/NotesStickyWidget'
+import { usePayments } from './hooks/usePayments'
 
 const emptyRelations = { passwords: [], calls: [], notes: [], events: [] }
 
@@ -36,6 +42,7 @@ export default function Home() {
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
   const { events, addEvent, updateEvent, deleteEvent } = useEvents()
   const { clients, addClient, updateClient, deleteClient, toggleFavorite } = useClients()
+  const { payments, addPayment, updatePayment, deletePayment } = usePayments()
   const { users, isAdmin, createUser, togglePermission, setAllPermissions, deleteUserPermissions, loadAllUsers } = useUserManagement()
   const [authOpen, setAuthOpen] = useState(false)
   const [section, setSection] = useState('dashboard')
@@ -43,6 +50,9 @@ export default function Home() {
   const [editing, setEditing] = useState<any>(null)
   const [selectedCall, setSelectedCall] = useState<any>(null)
   const [selectedPassword, setSelectedPassword] = useState<any>(null)
+  const [paymentView, setPaymentView] = useState<'overview' | 'practice'>('overview')
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
+  useEffect(() => { if (section === 'payments') { setPaymentView('overview'); setSelectedPaymentId(null) } }, [section])
 
   const open = (name: string, item: any = null) => { setEditing(item); setModal(name) }
   const close = () => { setEditing(null); setModal(null) }
@@ -53,7 +63,7 @@ export default function Home() {
     close()
   }
 
-  const totalItems = calls.length + events.length + notes.length + passwords.length + clients.length
+  const totalItems = calls.length + events.length + notes.length + passwords.length + clients.length + payments.length
   const items = [
     ['dashboard', 'Dashboard', LayoutGrid, totalItems, 'bg-[#c9c2ff]', 'text-[#2d2754]'],
     ['calls', 'Chiamate', Phone, calls.length, 'bg-[#ff765f]', 'text-[#a9322b]'],
@@ -61,13 +71,14 @@ export default function Home() {
     ['notes', 'Note', StickyNote, notes.length, 'bg-[#8ed8c3]', 'text-[#176653]'],
     ['passwords', 'Password', KeyRound, passwords.length, 'bg-[#9d8cff]', 'text-[#4b3ba5]'],
     ['clients', 'Rubrica', Users, clients.length, 'bg-[#76a9f7]', 'text-[#174a9b]'],
+    ['payments', 'Pagamenti', CreditCard, payments.length, 'bg-[#cfe4ff]', 'text-[#376db5]'],
     ...(isAdmin ? [['users', 'Utenti', Shield, users.length, 'bg-[#f2a7cf]', 'text-[#9a3268]'] as const] : []),
   ] as const
   const activeItem = items.find(([id]) => id === section) || items[0]
   const todayLabel = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())
   const recentItems = [...calls.slice(0, 2).map((item) => ({ label: item.caller_name, type: 'Chiamata', date: item.call_date })), ...notes.slice(0, 2).map((item) => ({ label: item.title, type: 'Nota', date: item.updated_at })), ...clients.slice(0, 2).map((item) => ({ label: item.name, type: 'Cliente', date: item.created_at }))].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 4)
   const openList = section === 'dashboard' ? 'calls' : section === 'calls' ? 'calls' : section === 'calendar' ? 'calendar' : section === 'notes' ? 'notes' : section === 'passwords' ? 'passwords' : section === 'clients' ? 'clients' : 'users'
-  const openNew = section === 'dashboard' ? 'call' : section === 'calls' ? 'call' : section === 'calendar' ? 'event' : section === 'notes' ? 'note' : section === 'passwords' ? 'password' : section === 'clients' ? 'client' : 'users'
+  const openNew = section === 'dashboard' ? 'call' : section === 'calls' ? 'call' : section === 'calendar' ? 'event' : section === 'notes' ? 'note' : section === 'passwords' ? 'password' : section === 'clients' ? 'client' : section === 'payments' ? 'payment' : 'users'
 
   if (!user) return (
     <main className="ak-login relative flex min-h-screen items-center overflow-hidden p-5 sm:p-10">
@@ -88,13 +99,14 @@ export default function Home() {
     <main className="ak-app min-h-screen p-4 text-[#2d2754] sm:p-7">
       <div className="mx-auto max-w-7xl">
         <header className="ak-topbar mb-5 flex flex-col gap-4 rounded-[1.75rem] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7"><div className="flex items-center gap-3"><span className="flex h-11 w-11 -rotate-3 items-center justify-center rounded-2xl bg-[#ff765f] text-[#2d2754]"><KeyRound className="h-5 w-5" /></span><div><p className="text-lg font-black tracking-tight">AK SUITE</p><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8a7f9f]">personal edition</p></div></div><nav className="flex flex-wrap gap-2">{items.map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { setSection(id); setModal(null) }} className={`ak-nav-item ${section === id ? `${tint} ${ink}` : ''}`}><Icon className="h-4 w-4" />{label}<span className="opacity-60">{count}</span></button>)}</nav><button onClick={() => supabase.auth.signOut()} title="Esci" className="ak-logout"><LogOut className="h-4 w-4" />Esci</button></header>
-        <section className="ak-hero mb-5 grid gap-6 overflow-hidden rounded-[2rem] p-6 sm:p-9 lg:grid-cols-[1.4fr_0.6fr] lg:p-12"><div className="relative z-10"><p className="text-sm font-bold capitalize text-[#716a91]">{todayLabel}</p><h1 className="mt-3 max-w-2xl text-5xl font-black leading-[0.95] tracking-[-0.04em] text-[#2d2754] sm:text-7xl">Buongiorno,<br /><span className="text-[#e45f4e]">facciamo ordine.</span></h1><p className="mt-6 max-w-lg text-base leading-7 text-[#514b70]">Il tuo centro operativo per le cose che contano davvero oggi.</p><button onClick={() => open(openNew)} className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-[#2d2754] px-5 py-3.5 font-bold text-[#fff6df] shadow-lg shadow-[#2d2754]/20 transition hover:-translate-y-1"><Plus className="h-4 w-4" />Aggiungi qualcosa</button></div><div className="ak-hero-sticker flex min-h-48 flex-col justify-between rounded-[1.75rem] p-6"><Sparkles className="h-7 w-7 text-[#e45f4e]" /><div><p className="text-sm font-bold text-[#716a91]">Sei aree, una vista</p><p className="mt-1 text-2xl font-black text-[#2d2754]">{calls.length + events.length + notes.length + passwords.length + clients.length}</p><p className="text-sm text-[#716a91]">elementi nel tuo spazio</p></div></div></section>
+        <section className="ak-hero mb-5 grid gap-6 overflow-hidden rounded-[2rem] p-6 sm:p-9 lg:grid-cols-[1.4fr_0.6fr] lg:p-12"><div className="relative z-10"><p className="text-sm font-bold capitalize text-[#716a91]">{todayLabel}</p><h1 className="mt-3 max-w-2xl text-5xl font-black leading-[0.95] tracking-[-0.04em] text-[#2d2754] sm:text-7xl">Buongiorno,<br /><span className="text-[#e45f4e]">facciamo ordine.</span></h1><p className="mt-6 max-w-lg text-base leading-7 text-[#514b70]">Il tuo centro operativo per le cose che contano davvero oggi.</p><button onClick={() => open(openNew)} className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-[#2d2754] px-5 py-3.5 font-bold text-[#fff6df] shadow-lg shadow-[#2d2754]/20 transition hover:-translate-y-1"><Plus className="h-4 w-4" />Aggiungi qualcosa</button></div><NotesStickyWidget notes={notes} onOpenNote={(note) => open('note', note)} onAddNote={() => open('note')} /></section>
         {section === 'calls' && <CallsWorkspace calls={calls} onNew={() => open('call')} onEdit={(call) => open('call', call)} onDetail={setSelectedCall} onDelete={deleteCall} onStatusChange={updateCallStatus} />}
         {section === 'passwords' && <PasswordsWorkspace passwords={passwords} categories={categories} onCreateCategory={addCategory} onUpdateCategory={updateCategory} onDeleteCategory={deleteCategory} onNew={() => open('password')} onEdit={(password) => open('password', password)} onDetail={setSelectedPassword} onDelete={deletePassword} />}
         {section === 'clients' && <ClientsWorkspace clients={clients} onNew={() => open('client')} onEdit={(client) => open('client', client)} onDelete={deleteClient} onToggleFavorite={toggleFavorite} />}
-        {!['calls', 'passwords', 'clients'].includes(section) && <section className="grid gap-5 lg:grid-cols-[1.5fr_0.8fr]">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.filter(([id]) => id !== 'dashboard').map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { setSection(id); open(id === 'calls' ? 'calls' : id === 'calendar' ? 'calendar' : id === 'notes' ? 'notes' : id === 'passwords' ? 'passwords' : id === 'clients' ? 'clients' : 'users') }} className="ak-bento group text-left"><div className={`mb-7 flex h-12 w-12 items-center justify-center rounded-2xl ${tint} ${ink}`}><Icon className="h-5 w-5" /></div><div className="flex items-end justify-between"><div><p className="text-4xl font-black text-[#2d2754]">{count}</p><p className="mt-1 font-bold text-[#716a91]">{label}</p></div><ArrowUpRight className="h-5 w-5 text-[#a99dbb] transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#e45f4e]" /></div></button>)}</div>
-          <div className="ak-activity rounded-[1.75rem] p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-[#e45f4e]">live desk</p><h2 className="mt-2 text-2xl font-black text-[#2d2754]">Ultimi movimenti</h2></div><CheckCircle2 className="h-6 w-6 text-[#5f9e8e]" /></div><div className="mt-7 space-y-4">{recentItems.length ? recentItems.map((item) => <div key={`${item.type}-${item.label}`} className="ak-activity-row"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f4e6d2] text-xs font-black text-[#e45f4e]">{item.type[0]}</span><div className="min-w-0"><p className="truncate font-bold text-[#3e3860]">{item.label}</p><p className="text-xs text-[#8a7f9f]">{item.type} · {new Date(item.date).toLocaleDateString('it-IT')}</p></div></div>) : <p className="text-sm text-[#8a7f9f]">Nessuna attività recente.</p>}</div></div>
+        {section === 'payments' && (paymentView === 'overview' ? <PaymentsOverview payments={payments} onNew={() => open('payment')} onDelete={deletePayment} onOpenPractice={(payment) => { setSelectedPaymentId(payment.id); setPaymentView('practice') }} /> : <PaymentsWorkspace payments={payments} focusPaymentId={selectedPaymentId} onNew={() => open('payment')} onEdit={(payment) => open('payment', payment)} onDelete={deletePayment} onUpdate={(id, updates) => updatePayment(id, updates)} onBack={() => { setSelectedPaymentId(null); setPaymentView('overview') }} />)}
+        {!['calls', 'passwords', 'clients', 'payments'].includes(section) && <section className="grid gap-5 lg:grid-cols-[1.5fr_0.8fr]">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.filter(([id]) => id !== 'dashboard').map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { setSection(id); if (id === 'payments') close(); else open(id === 'calls' ? 'calls' : id === 'calendar' ? 'calendar' : id === 'notes' ? 'notes' : id === 'passwords' ? 'passwords' : id === 'clients' ? 'clients' : 'users') }} className="ak-bento group text-left"><div className={`mb-7 flex h-12 w-12 items-center justify-center rounded-2xl ${tint} ${ink}`}><Icon className="h-5 w-5" /></div><div className="flex items-end justify-between"><div><p className="text-4xl font-black text-[#2d2754]">{count}</p><p className="mt-1 font-bold text-[#716a91]">{label}</p></div><ArrowUpRight className="h-5 w-5 text-[#a99dbb] transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#e45f4e]" /></div></button>)}</div>
+          <DashboardDesk calls={calls} events={events} payments={payments} notes={notes} />
         </section>}
       </div>
 
@@ -108,6 +120,7 @@ export default function Home() {
       {modal === 'event' && <EventModal isOpen onClose={close} onSave={async (data) => { if (editing) await updateEvent(editing.id, data); else await addEvent(data); close() }} editEvent={editing} isAdmin={isAdmin} managedUsers={users} availableItems={emptyRelations} />}
       {modal === 'clients' && <ClientsListModal isOpen onClose={close} clients={clients} onDelete={deleteClient} onToggleFavorite={toggleFavorite} onAdd={() => open('client')} onEdit={(client) => open('client', client)} onSelectClient={() => undefined} />}
       {modal === 'client' && <ClientModal isOpen onClose={close} onSave={async (data) => { if (editing) await updateClient(editing.id, data); else await addClient(data); close() }} editingClient={editing} />}
+      {modal === 'payment' && <PaymentModal isOpen onClose={close} onSave={async (data) => { if (editing) await updatePayment(editing.id, data); else await addPayment(data) }} editingPayment={editing} />}
       {modal === 'users' && <UserManagementModal isOpen onClose={close} users={users} onCreateUser={createUser} onTogglePermission={togglePermission} onSetAllPermissions={setAllPermissions} onDeleteUser={deleteUserPermissions} onLoadUsers={loadAllUsers} />}
       <CallDetailModal isOpen={Boolean(selectedCall)} onClose={() => setSelectedCall(null)} call={selectedCall} />
       <PasswordDetailModal password={selectedPassword} onClose={() => setSelectedPassword(null)} onEdit={(password) => open('password', password)} onDelete={deletePassword} />
