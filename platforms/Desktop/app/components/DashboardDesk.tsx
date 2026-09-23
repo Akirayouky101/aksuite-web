@@ -1,16 +1,14 @@
 'use client'
 
-import { BellRing, CalendarClock, CheckCircle2, CreditCard, Phone, StickyNote } from 'lucide-react'
+import { BellRing, CalendarClock, CheckCircle2, CreditCard, Phone } from 'lucide-react'
 import { Call } from '../hooks/useCalls'
 import { Event } from '../hooks/useEvents'
-import { Note } from '../hooks/useNotes'
 import { Payment } from '../hooks/usePayments'
 
 interface DashboardDeskProps {
   calls: Call[]
   events: Event[]
   payments: Payment[]
-  notes: Note[]
 }
 
 const WINDOW_DAYS = 14
@@ -56,7 +54,7 @@ function advanceEntries(payment: Payment) {
   return entries
 }
 
-export default function DashboardDesk({ calls, events, payments, notes }: DashboardDeskProps) {
+export default function DashboardDesk({ calls, events, payments }: DashboardDeskProps) {
   const followUps = calls.filter(call => call.follow_up && call.follow_up_date && call.status !== 'completed' && call.status !== 'cancelled' && isNear(call.follow_up_date)).sort((a, b) => new Date(a.follow_up_date || '').getTime() - new Date(b.follow_up_date || '').getTime())
   const upcomingEvents = events.filter(event => isNear(event.start_date)).sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()).slice(0, 5)
   const upcomingPayments = payments.flatMap(payment => {
@@ -71,10 +69,9 @@ export default function DashboardDesk({ calls, events, payments, notes }: Dashbo
     return dates.filter((item): item is { date: string; label: string } => item !== null && Boolean(item.date)).map(item => ({ ...item, payment }))
   }).filter(item => isNear(item.date)).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 5)
   const advances = payments.flatMap(payment => advanceEntries(payment).map(entry => ({ payment, ...entry }))).sort((a, b) => b.amount - a.amount).slice(0, 5)
-  const pinnedNotes = notes.filter(note => note.is_pinned).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 3)
-  const hasItems = followUps.length || upcomingEvents.length || upcomingPayments.length || advances.length || pinnedNotes.length
+  const hasItems = followUps.length || upcomingEvents.length || upcomingPayments.length || advances.length
 
-  return <div className="ak-activity rounded-[1.75rem] p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-[#e45f4e]">Agenda prossima</p><h2 className="mt-2 text-2xl font-black text-[#2d2754]">Parte chiamate</h2></div><BellRing className="h-6 w-6 text-[#5f9e8e]" /></div><div className="mt-6 space-y-5">{followUps.length > 0 && <DeskGroup icon={<Phone className="h-4 w-4" />} title="Richiamare"><div>{followUps.map(call => <DeskRow key={`call-${call.id}`} title={call.caller_name} detail={call.company || 'Richiamo'} date={call.follow_up_date || ''} tone="coral" />)}</div></DeskGroup>}{upcomingPayments.length > 0 && <DeskGroup icon={<CreditCard className="h-4 w-4" />} title="Pagamenti vicini"><div>{upcomingPayments.map(item => <DeskRow key={`payment-${item.payment.id}-${item.label}`} title={item.payment.payment_type} detail={item.label} date={item.date} tone="blue" />)}</div></DeskGroup>}{advances.length > 0 && <DeskGroup icon={<CreditCard className="h-4 w-4" />} title="Anticipi da recuperare"><div>{advances.map(item => <AdvanceRow key={`advance-${item.payment.id}-${item.payer}`} title={item.payment.payment_type} payer={item.payer} amount={item.amount} />)}</div></DeskGroup>}{upcomingEvents.length > 0 && <DeskGroup icon={<CalendarClock className="h-4 w-4" />} title="Calendario"><div>{upcomingEvents.map(event => <DeskRow key={`event-${event.id}`} title={event.title} detail={event.location || 'Appuntamento'} date={event.start_date} tone="yellow" />)}</div></DeskGroup>}{pinnedNotes.length > 0 && <DeskGroup icon={<StickyNote className="h-4 w-4" />} title="Appunti importanti"><div>{pinnedNotes.map(note => <div key={note.id} className="ak-activity-row"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f4e6d2] text-[#e45f4e]"><StickyNote className="h-3.5 w-3.5" /></span><div className="min-w-0"><p className="truncate font-bold text-[#3e3860]">{note.title}</p><p className="truncate text-xs text-[#8a7f9f]">{note.content || 'Appunto fissato'}</p></div></div>)}</div></DeskGroup>}{!hasItems && <div className="flex items-center gap-3 py-3 text-sm text-[#8a7f9f]"><CheckCircle2 className="h-5 w-5 text-[#5f9e8e]" />Nessuna scadenza imminente.</div>}</div></div>
+  return <div className="ak-activity rounded-[1.75rem] p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-[#e45f4e]">Agenda prossima</p><h2 className="mt-2 text-2xl font-black text-[#2d2754]">Parte chiamate</h2></div><BellRing className="h-6 w-6 text-[#5f9e8e]" /></div><div className="mt-6 space-y-5">{followUps.length > 0 && <DeskGroup icon={<Phone className="h-4 w-4" />} title="Richiamare"><div>{followUps.map(call => <DeskRow key={`call-${call.id}`} title={call.caller_name} detail={call.company || 'Richiamo'} date={call.follow_up_date || ''} tone="coral" />)}</div></DeskGroup>}{upcomingPayments.length > 0 && <DeskGroup icon={<CreditCard className="h-4 w-4" />} title="Pagamenti vicini"><div>{upcomingPayments.map(item => <DeskRow key={`payment-${item.payment.id}-${item.label}`} title={item.payment.payment_type} detail={item.label} date={item.date} tone="blue" />)}</div></DeskGroup>}{advances.length > 0 && <DeskGroup icon={<CreditCard className="h-4 w-4" />} title="Anticipi da recuperare"><div>{advances.map(item => <AdvanceRow key={`advance-${item.payment.id}-${item.payer}`} title={item.payment.payment_type} payer={item.payer} amount={item.amount} />)}</div></DeskGroup>}{upcomingEvents.length > 0 && <DeskGroup icon={<CalendarClock className="h-4 w-4" />} title="Calendario"><div>{upcomingEvents.map(event => <DeskRow key={`event-${event.id}`} title={event.title} detail={event.location || 'Appuntamento'} date={event.start_date} tone="yellow" />)}</div></DeskGroup>}{!hasItems && <div className="flex items-center gap-3 py-3 text-sm text-[#8a7f9f]"><CheckCircle2 className="h-5 w-5 text-[#5f9e8e]" />Nessuna scadenza imminente.</div>}</div></div>
 }
 
 function DeskGroup({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) { return <section><div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#716a91]"><span className="text-[#e45f4e]">{icon}</span>{title}</div>{children}</section> }
