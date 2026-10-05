@@ -206,6 +206,25 @@ test('dashboard photo card opens the gallery and does not invent an unloaded pho
   click()
   assert.deepEqual(calls, [['navigate', 'photos']])
 })
+test('calendar and global search use distinct account-scoped React keys', () => {
+  const source = ts.createSourceFile('page.tsx', fs.readFileSync(path.join(root, 'platforms/Desktop/app/page.tsx'), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const expressions = []
+  function visit(node) {
+    if (ts.isJsxSelfClosingElement(node) && ['CalendarView', 'GlobalSearchModal'].includes(node.tagName.getText(source))) {
+      const key = node.attributes.properties.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText(source) === 'key')
+      assert.ok(key?.initializer?.expression)
+      expressions.push(key.initializer.expression.getText(source))
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(source)
+  assert.equal(expressions.length, 2)
+  for (const user of [{ id: 'owner' }, { id: 'other-owner' }, null]) {
+    const keys = expressions.map(expression => vm.runInNewContext(expression, { user }))
+    assert.notEqual(keys[0], keys[1])
+    for (const key of keys) assert.ok(key.includes(user?.id || 'guest'))
+  }
+})
 test('event and work hooks hide previous-account data and reject late writes after an account change', async () => {
   for (const [filename, exportName, addName, field] of [
     ['useEvents', 'useEvents', 'addEvent', 'events'],
