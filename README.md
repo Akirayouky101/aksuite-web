@@ -78,6 +78,9 @@ to build navigation counts. Open-page web reminders retain a separate
 minute-refreshed metadata feed; server Web Push/APNs scheduling is unchanged.
 Native section loading remains scoped to the selected workspace.
 
+Mac Catalyst uses `Optimize Interface for Mac` (device family 6), not the
+scaled iPad interface, so layout points render at native Mac size. iOS
+continues to target device families 1 and 2.
 Mac Catalyst defaults to the larger `Molto grande` text preset and large
 controls. The account menu provides `Dimensione interfaccia` with Standard,
 Grande and Molto grande; the preference persists locally on the Mac.
