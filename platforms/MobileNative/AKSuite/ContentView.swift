@@ -26,9 +26,9 @@ struct ContentView: View {
             } else if auth.session != nil {
                 switch section {
                 case .today:
-                    ZStack(alignment: .topTrailing) { DashboardView(onOpenCalls: { section = .calls }, onOpenCalendar: { section = .calendar }, onOpenNotes: { section = .notes }, onOpenPasswords: { section = .passwords }, onOpenClients: { returnClientID = nil; section = .clients }, onOpenPayments: { section = .payments }, onOpenWorkItems: { section = .workItems }, onOpenTodos: { section = .todos }); Button { showGlobalSearch = true } label: { Image(systemName: "magnifyingglass").padding(12).background(.white.opacity(0.85)).clipShape(Circle()) }.padding(20) }
+                    ZStack(alignment: .topTrailing) { DashboardView(onOpenCalls: { section = .calls }, onOpenCalendar: { section = .calendar }, onOpenNotes: { section = .notes }, onOpenPasswords: { section = .passwords }, onOpenClients: { returnClientID = nil; section = .clients }, onOpenPayments: { section = .payments }, onOpenWorkItems: { section = .workItems }, onOpenTodos: { section = .todos }, onOpenShopping: { section = .shopping }); Button { showGlobalSearch = true } label: { Image(systemName: "magnifyingglass").padding(12).background(.white.opacity(0.85)).clipShape(Circle()) }.padding(20) }
                 case .dashboard:
-                    DashboardView(onOpenCalls: { section = .calls }, onOpenCalendar: { section = .calendar }, onOpenNotes: { section = .notes }, onOpenPasswords: { section = .passwords }, onOpenClients: { returnClientID = nil; section = .clients }, onOpenPayments: { section = .payments }, onOpenWorkItems: { section = .workItems }, onOpenTodos: { section = .todos })
+                    DashboardView(onOpenCalls: { section = .calls }, onOpenCalendar: { section = .calendar }, onOpenNotes: { section = .notes }, onOpenPasswords: { section = .passwords }, onOpenClients: { returnClientID = nil; section = .clients }, onOpenPayments: { section = .payments }, onOpenWorkItems: { section = .workItems }, onOpenTodos: { section = .todos }, onOpenShopping: { section = .shopping })
                 case .calls:
                     CallsView(initialCallID: initialCallID, initialClientID: initialFollowUpClientID, initialFollowUpDate: initialFollowUpDate, initialFollowUpNote: initialFollowUpNote, onBack: {
                         if let clientID = initialFollowUpClientID {
@@ -94,6 +94,8 @@ struct ContentView: View {
                     WorkItemsWorkspaceView(mode: "work", initialClientID: initialWorkClientID, onBack: { returnClientID = initialWorkClientID; section = initialWorkClientID == nil ? .dashboard : .clients; initialWorkClientID = nil })
                 case .todos:
                     WorkItemsWorkspaceView(mode: "todo", initialClientID: initialTodoClientID, onBack: { returnClientID = initialTodoClientID; section = initialTodoClientID == nil ? .dashboard : .clients; initialTodoClientID = nil })
+                case .shopping:
+                    ShoppingWorkspaceView(onBack: { section = .dashboard }).id(auth.session?.user.id)
                 }
             } else {
                 LoginView()
@@ -124,6 +126,7 @@ private enum AppSection {
     case payments
     case workItems
     case todos
+    case shopping
 }
 
 #Preview {

@@ -93,6 +93,7 @@ struct DashboardView: View {
     let onOpenPayments: () -> Void
     let onOpenWorkItems: () -> Void
     let onOpenTodos: () -> Void
+    let onOpenShopping: () -> Void
     @State private var notes: [DashboardNote] = []
     @State private var counts = DashboardCounts()
     @State private var agenda: [AgendaItem] = []
@@ -102,7 +103,7 @@ struct DashboardView: View {
 
     private let columns = [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)]
 
-    init(onOpenCalls: @escaping () -> Void = {}, onOpenCalendar: @escaping () -> Void = {}, onOpenNotes: @escaping () -> Void = {}, onOpenPasswords: @escaping () -> Void = {}, onOpenClients: @escaping () -> Void = {}, onOpenPayments: @escaping () -> Void = {}, onOpenWorkItems: @escaping () -> Void = {}, onOpenTodos: @escaping () -> Void = {}) {
+    init(onOpenCalls: @escaping () -> Void = {}, onOpenCalendar: @escaping () -> Void = {}, onOpenNotes: @escaping () -> Void = {}, onOpenPasswords: @escaping () -> Void = {}, onOpenClients: @escaping () -> Void = {}, onOpenPayments: @escaping () -> Void = {}, onOpenWorkItems: @escaping () -> Void = {}, onOpenTodos: @escaping () -> Void = {}, onOpenShopping: @escaping () -> Void = {}) {
         self.onOpenCalls = onOpenCalls
         self.onOpenCalendar = onOpenCalendar
         self.onOpenNotes = onOpenNotes
@@ -111,6 +112,7 @@ struct DashboardView: View {
         self.onOpenPayments = onOpenPayments
         self.onOpenWorkItems = onOpenWorkItems
         self.onOpenTodos = onOpenTodos
+        self.onOpenShopping = onOpenShopping
     }
 
     var body: some View {
@@ -268,6 +270,16 @@ struct DashboardView: View {
             DashboardShortcut(title: "Pagamenti", count: counts.payments, icon: "creditcard.fill", fill: "#cfe4ff", ink: "#376db5", action: onOpenPayments)
             DashboardShortcut(title: "Lavorazioni", count: counts.workItems, icon: "briefcase.fill", fill: "#d9e8d9", ink: "#257259", action: onOpenWorkItems)
             DashboardShortcut(title: "Cose da fare", count: counts.todos, icon: "checklist", fill: "#f7c948", ink: "#785b00", action: onOpenTodos)
+            Button(action: onOpenShopping) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Image(systemName: "cart.fill").font(.title2)
+                    Text("Spesa").font(.headline.weight(.black))
+                    Text("Liste personali e PDF").font(.caption)
+                }
+                .foregroundStyle(Color(hex: "#257259"))
+                .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "#d9e8d9")).clipShape(RoundedRectangle(cornerRadius: 20))
+            }.buttonStyle(.plain)
         }
     }
 
