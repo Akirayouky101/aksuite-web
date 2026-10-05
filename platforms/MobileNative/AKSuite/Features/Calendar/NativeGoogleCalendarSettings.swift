@@ -72,9 +72,13 @@ struct NativeGoogleCalendarSettings: View {
                             await readNotifications()
                         }
                     }
+                    #if targetEnvironment(macCatalyst)
+                    Text("Per modificare i permessi, apri Impostazioni di Sistema > Notifiche > AK Suite.").font(.caption)
+                    #else
                     Button("Apri impostazioni dispositivo") {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                     }
+                    #endif
                 }
                 Section("Google Calendar") {
                     if let settings {

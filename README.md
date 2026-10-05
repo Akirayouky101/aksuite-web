@@ -45,7 +45,7 @@ the existing application variables are configured for Production only.
 
 The local source tree includes the web app under `platforms/Desktop` and
 native Apple sources under `platforms/MobileNative`. The iOS target supports
-both iPhone and iPad. Keep the native sources and macOS-related files in Git
+both iPhone and iPad, plus macOS through Mac Catalyst. Keep the native sources and macOS-related files in Git
 alongside the web sources; Vercel deploys only the web app.
 
 Native credentials belong in the ignored
@@ -202,9 +202,20 @@ swiftc platforms/MobileNative/AKSuite/Core/Networking/NativeLifecycle.swift \
 /tmp/aksuite-lifecycle-tests
 ```
 
-The Xcode project still targets iOS only. A future Mac Catalyst port can
-reuse much of this app but requires separate compatibility, signing,
-notification and desktop-UX validation; it is not enabled by this release.
+The shared Xcode target enables Mac Catalyst. After regenerating the project,
+choose `My Mac (Mac Catalyst)` with scheme `AKSuite`. It uses the same bundle
+identifier, Supabase backend and source code as iPhone/iPad, not a WebView.
+Mac builds use separate sandbox entitlements for outgoing network requests,
+user-selected files, microphone input and APNs; iOS retains its entitlements.
+Debug uses development APNs and Release uses production APNs. The current
+APNs sender environment must match the installed build.
+
+Automatic signing requires a Mac Catalyst provisioning profile for
+`com.aksuite.app`, with Push Notifications enabled. An iOS profile alone
+does not cover Mac Catalyst. Actual Mac push delivery, microphone, file/photo
+selection and window layouts require interactive validation. Distribution
+outside the Mac App Store additionally requires Developer ID signing and
+notarization. Keyboard/menu/desktop visual refinements remain incremental.
 Reopened/deleted events are removed from the currently displayed history
 without an extra archive query, preserving text/date filters. An explicit
 new search can load an event again if it was subsequently completed again.

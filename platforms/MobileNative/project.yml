@@ -37,7 +37,11 @@ targets:
         DEVELOPMENT_TEAM: JM4L9T8S53
         CODE_SIGN_STYLE: Automatic
         TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: YES
+        DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER: NO
         CODE_SIGN_ENTITLEMENTS: AKSuite/AKSuite.entitlements
+        CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: AKSuite/AKSuiteMac.entitlements
+        ENABLE_HARDENED_RUNTIME[sdk=macosx*]: YES
         INFOPLIST_KEY_UIBackgroundModes: "[remote-notification]"
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: "AK Suite"
@@ -57,7 +61,7 @@ targets:
     entitlements:
       path: AKSuite/AKSuite.entitlements
       properties:
-        aps-environment: development
+        aps-environment: $(APS_ENVIRONMENT)
     dependencies:
       - package: Supabase
         product: Supabase
