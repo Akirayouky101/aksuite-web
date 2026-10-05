@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Check, Download, Loader2, Pencil, Plus, Share2, ShoppingCart, Trash2, X } from 'lucide-react'
-import { ShoppingItem, ShoppingItemInput, shoppingPdfFilename, shoppingProgress } from '@/lib/shopping'
+import { ShoppingItem, ShoppingItemInput, isShoppingUnit, shoppingPdfFilename, shoppingProgress, shoppingQuantity } from '@/lib/shopping'
 import { useShopping } from '../hooks/useShopping'
 import { createShoppingPdf } from './shoppingPdf'
 
@@ -52,7 +52,7 @@ export default function ShoppingWorkspace({ data }: { data: ShoppingData }) {
   const unavailable = busy || data.loading || !!data.errorMessage
   const filtered = [...listItems]
     .filter(item => filter === 'all' || (filter === 'purchased' ? item.purchased : !item.purchased))
-    .filter(item => `${item.name} ${item.quantity} ${item.notes}`.toLocaleLowerCase('it').includes(query.trim().toLocaleLowerCase('it')))
+    .filter(item => `${item.name} ${shoppingQuantity(item)} ${item.notes}`.toLocaleLowerCase('it').includes(query.trim().toLocaleLowerCase('it')))
     .sort((a, b) => Number(a.purchased) - Number(b.purchased))
 
   async function perform(action: () => Promise<void>) {
@@ -87,7 +87,7 @@ export default function ShoppingWorkspace({ data }: { data: ShoppingData }) {
     setProductEditor({
       id: item?.id ?? null,
       listId: selected.id,
-      input: { name: item?.name ?? '', quantity: item?.quantity ?? '', notes: item?.notes ?? '' },
+      input: { name: item?.name ?? '', quantity_value: item ? item.quantity_value : 1, quantity_unit: item?.quantity_unit ?? 'pezzi', notes: item?.notes ?? '' },
     })
     setListEditor(null)
     setError(null)
@@ -208,8 +208,19 @@ export default function ShoppingWorkspace({ data }: { data: ShoppingData }) {
               <div className="mb-3 flex items-center justify-between"><h4 className="font-bold">{productEditor.id ? 'Modifica prodotto' : 'Nuovo prodotto'}</h4><button type="button" disabled={busy} aria-label="Chiudi modulo prodotto" onClick={() => setProductEditor(null)}><X className="h-5 w-5" /></button></div>
               <label className="block text-sm font-bold" htmlFor="shopping-product-name">Prodotto</label>
               <input id="shopping-product-name" autoFocus required maxLength={160} disabled={busy} value={productEditor.input.name} onChange={event => setProductEditor({ ...productEditor, input: { ...productEditor.input, name: event.target.value } })} className={`${inputClass} mt-1`} placeholder="Es. Latte" />
-              <label className="mt-3 block text-sm font-bold" htmlFor="shopping-product-quantity">Quantità (facoltativa)</label>
-              <input id="shopping-product-quantity" maxLength={60} disabled={busy} value={productEditor.input.quantity} onChange={event => setProductEditor({ ...productEditor, input: { ...productEditor.input, quantity: event.target.value } })} className={`${inputClass} mt-1`} placeholder="Es. 2 confezioni, 500 g, 1 litro" />
+              {productEditor.id && listItems.find(item => item.id === productEditor.id)?.quantity_value == null && <p className="mt-3 text-sm text-[#716a91]">Quantità precedente: {listItems.find(item => item.id === productEditor.id)?.quantity || 'non indicata'}. Inserisci il numero e scegli l&apos;unità prima di salvare.</p>}
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-bold" htmlFor="shopping-product-quantity">Quantità</label>
+                  <input id="shopping-product-quantity" type="number" inputMode="decimal" required min="0.001" max="999999999" step="0.001" disabled={busy} value={productEditor.input.quantity_value ?? ''} onChange={event => setProductEditor({ ...productEditor, input: { ...productEditor.input, quantity_value: event.target.value === '' ? null : event.target.valueAsNumber } })} className={`${inputClass} mt-1`} placeholder="Es. 500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold" htmlFor="shopping-product-unit">Unità</label>
+                  <select id="shopping-product-unit" disabled={busy} value={productEditor.input.quantity_unit} onChange={event => { const unit = event.target.value; if (isShoppingUnit(unit)) setProductEditor({ ...productEditor, input: { ...productEditor.input, quantity_unit: unit } }) }} className={`${inputClass} mt-1`}>
+                    <option value="pezzi">Pezzi</option><option value="g">Grammi (g)</option><option value="kg">Chilogrammi (kg)</option><option value="ml">Millilitri (ml)</option><option value="l">Litri (l)</option>
+                  </select>
+                </div>
+              </div>
               <label className="mt-3 block text-sm font-bold" htmlFor="shopping-product-notes">Note (facoltative)</label>
               <textarea id="shopping-product-notes" maxLength={1000} rows={3} disabled={busy} value={productEditor.input.notes} onChange={event => setProductEditor({ ...productEditor, input: { ...productEditor.input, notes: event.target.value } })} className={`${inputClass} mt-1`} placeholder="Marca, alternativa o dettagli" />
               <div className="mt-3 flex gap-2"><button disabled={unavailable} className="ak-primary-action disabled:opacity-50">{busy && <Loader2 className="h-4 w-4 animate-spin" />}Salva prodotto</button><button type="button" disabled={busy} onClick={() => setProductEditor(null)} className={secondaryClass}>Annulla</button></div>
@@ -218,7 +229,7 @@ export default function ShoppingWorkspace({ data }: { data: ShoppingData }) {
             <div className="mt-4 space-y-2">
               {filtered.map(item => <article key={item.id} className={`flex items-start gap-3 rounded-xl border border-[#ead8bf] p-3 ${item.purchased ? 'bg-[#eef3e9]' : 'bg-[#fff8ed]'}`}>
                 <label className="mt-1 flex shrink-0 cursor-pointer items-center"><input type="checkbox" disabled={unavailable} checked={item.purchased} onChange={event => { const purchased = event.target.checked; void perform(() => data.updateItem(item.id, { purchased })) }} aria-label={`${item.purchased ? 'Segna da acquistare' : 'Segna acquistato'}: ${item.name}`} className="h-5 w-5 accent-[#257259]" /></label>
-                <div className="min-w-0 flex-1"><h4 className={`break-words font-bold ${item.purchased ? 'text-[#716a91] line-through' : ''}`}>{item.name}</h4>{item.quantity && <p className="mt-1 break-words text-sm font-semibold text-[#257259]">{item.quantity}</p>}{item.notes && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-[#716a91]">{item.notes}</p>}{item.purchased && <span className="mt-1 inline-flex items-center gap-1 text-xs text-[#257259]"><Check className="h-3 w-3" />Acquistato</span>}</div>
+                <div className="min-w-0 flex-1"><h4 className={`break-words font-bold ${item.purchased ? 'text-[#716a91] line-through' : ''}`}>{item.name}</h4>{shoppingQuantity(item) && <p className="mt-1 break-words text-sm font-semibold text-[#257259]">{shoppingQuantity(item)}</p>}{item.notes && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-[#716a91]">{item.notes}</p>}{item.purchased && <span className="mt-1 inline-flex items-center gap-1 text-xs text-[#257259]"><Check className="h-3 w-3" />Acquistato</span>}</div>
                 <button disabled={unavailable} onClick={() => editProduct(item)} aria-label={`Modifica ${item.name}`} className="rounded-lg p-2 hover:bg-[#f5dfca] disabled:opacity-50"><Pencil className="h-4 w-4" /></button>
                 <button disabled={unavailable} onClick={() => setDeleteTarget({ kind: 'item', id: item.id, title: item.name })} aria-label={`Elimina ${item.name}`} className="rounded-lg p-2 hover:bg-[#ffd8d2] disabled:opacity-50"><Trash2 className="h-4 w-4" /></button>
               </article>)}

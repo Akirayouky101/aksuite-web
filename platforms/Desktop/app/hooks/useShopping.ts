@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ShoppingItem, ShoppingItemInput, ShoppingList, validateShoppingItem, validateShoppingTitle } from '@/lib/shopping'
+import { ShoppingItem, ShoppingItemInput, ShoppingList, shoppingQuantity, validateShoppingItem, validateShoppingTitle } from '@/lib/shopping'
 import { useAuth } from './useAuth'
 
 export function useShopping() {
@@ -95,8 +95,9 @@ export function useShopping() {
   async function addItem(listId: string, input: ShoppingItemInput) {
     requireList(listId)
     const ownerId = userId
+    const value = validateShoppingItem(input)
     const { data, error } = await supabase.from('shopping_items')
-      .insert({ ...validateShoppingItem(input), list_id: listId }).select().single()
+      .insert({ ...value, quantity: shoppingQuantity({ ...value, quantity: '' }), list_id: listId }).select().single()
     if (error) throw error
     if (currentUserId.current === ownerId) setItems(current => [...current, data])
   }
@@ -105,7 +106,12 @@ export function useShopping() {
     requireUser()
     if (!items.some(item => item.id === id)) throw new Error('Il prodotto non è più disponibile. Ricarica la sezione.')
     const ownerId = userId
-    const value = 'name' in updates ? validateShoppingItem(updates) : { purchased: updates.purchased }
+    function buildChanges() {
+      if ('purchased' in updates) return { purchased: updates.purchased }
+      const input = validateShoppingItem(updates)
+      return { ...input, quantity: shoppingQuantity({ ...input, quantity: '' }) }
+    }
+    const value = buildChanges()
     const { data, error } = await supabase.from('shopping_items').update(value).eq('id', id).select().single()
     if (error) throw error
     if (currentUserId.current === ownerId) setItems(current => current.map(item => item.id === id ? data : item))

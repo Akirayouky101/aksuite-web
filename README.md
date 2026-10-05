@@ -69,7 +69,8 @@ only when their source changes.
 ## Shopping Lists (Web)
 
 The `Spesa` section provides multiple personal shopping lists with products,
-optional free-text quantities and notes, purchased checkboxes, search,
+positive numeric quantities with a unit selector (pieces, g, kg, ml, l),
+optional notes, purchased checkboxes, search,
 filters, and progress. Existing to-do checklists are not converted or removed.
 
 Apply `supabase/migrations/20261005000000_shopping_lists.sql` through the
@@ -77,6 +78,14 @@ normal migration workflow before deploying the web feature. It adds
 `shopping_lists` and `shopping_items`; row-level security permits only the
 owner to access a list and its products, and deleting a list cascades to its
 products. This feature does not grant other users access to private lists.
+
+Apply `supabase/migrations/20261005010000_shopping_quantity.sql` before
+deploying the numeric quantity editor. Quantities support up to three decimal
+places, from 0.001 to 999999999. Existing free-text quantities are preserved
+and displayed without guessing conversions; editing those products requires
+entering a numeric quantity and selecting a unit. The original `quantity`
+text column remains available to older clients and is updated alongside the
+new `quantity_value` and `quantity_unit` columns by the web app.
 
 `PDF` exports the complete selected list, with pending products first and
 purchased products marked. `Condividi PDF` uses file sharing on supported

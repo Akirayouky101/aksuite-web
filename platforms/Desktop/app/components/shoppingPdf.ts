@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf'
-import { shoppingProgress } from '../../../../lib/shopping'
+import { shoppingProgress, shoppingQuantity } from '../../../../lib/shopping'
 import type { ShoppingItem, ShoppingList } from '../../../../lib/shopping'
 
 export function createShoppingPdf(list: ShoppingList, items: readonly ShoppingItem[]): Blob {
@@ -61,7 +61,7 @@ export function createShoppingPdf(list: ShoppingList, items: readonly ShoppingIt
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(9)
     const details = [
-      item.quantity ? `Quantità: ${item.quantity}` : '',
+      shoppingQuantity(item) ? `Quantità: ${shoppingQuantity(item)}` : '',
       item.notes ? `Note: ${item.notes}` : '',
       item.purchased ? 'Acquistato' : '',
     ].filter(Boolean)

@@ -23,6 +23,7 @@ const { createShoppingPdf } = loadTypeScript('platforms/Desktop/app/components/s
 const list = { id: 'list', user_id: 'owner', title: 'Spesa settimanale', created_at: '2026-10-05T12:00:00Z' }
 const product = (changes = {}) => ({
   id: 'item', list_id: list.id, name: 'Latte', quantity: '2 confezioni',
+  quantity_value: 2, quantity_unit: 'l',
   notes: 'Senza lattosio', purchased: false, created_at: list.created_at, ...changes,
 })
 
@@ -40,22 +41,32 @@ test('list title trims input and enforces the exact limits', () => {
   for (const invalid of ['', '   ', 'a'.repeat(121)]) assert.throws(() => shopping.validateShoppingTitle(invalid))
 })
 
-test('products accept free-text quantities and optional notes, but not blank names', () => {
-  assert.deepEqual(shopping.validateShoppingItem({ name: ' Pane ', quantity: ' 500 g ', notes: ' Integrale ' }), {
-    name: 'Pane', quantity: '500 g', notes: 'Integrale',
+test('products require a numeric quantity and supported unit', () => {
+  assert.deepEqual(shopping.validateShoppingItem({ name: ' Pane ', quantity_value: 500, quantity_unit: 'g', notes: ' Integrale ' }), {
+    name: 'Pane', quantity_value: 500, quantity_unit: 'g', notes: 'Integrale',
   })
-  assert.deepEqual(shopping.validateShoppingItem({ name: 'Pane', quantity: '', notes: '' }), {
-    name: 'Pane', quantity: '', notes: '',
-  })
-  assert.throws(() => shopping.validateShoppingItem({ name: ' ', quantity: '', notes: '' }))
+  for (const unit of shopping.shoppingUnits) {
+    assert.equal(shopping.validateShoppingItem({ name: 'Pane', quantity_value: 1.25, quantity_unit: unit, notes: '' }).quantity_unit, unit)
+  }
+  for (const value of [null, 0, -1, NaN, Infinity, 0.0001, 1.2345, 1.00000001, 1000000000, '2', '2 confezioni']) {
+    assert.throws(() => shopping.validateShoppingItem({ name: 'Pane', quantity_value: value, quantity_unit: 'g', notes: '' }))
+  }
+  assert.throws(() => shopping.validateShoppingItem({ name: ' ', quantity_value: 1, quantity_unit: 'g', notes: '' }))
+  assert.throws(() => shopping.validateShoppingItem({ name: 'Pane', quantity_value: 1, quantity_unit: 'confezioni', notes: '' }))
 })
 
 test('product field limits are enforced at the boundary', () => {
-  const input = { name: 'a'.repeat(160), quantity: 'b'.repeat(60), notes: 'c'.repeat(1000) }
+  const input = { name: 'a'.repeat(160), quantity_value: 999999999, quantity_unit: 'pezzi', notes: 'c'.repeat(1000) }
   assert.deepEqual(shopping.validateShoppingItem(input), input)
-  for (const field of ['name', 'quantity', 'notes']) {
+  for (const field of ['name', 'notes']) {
     assert.throws(() => shopping.validateShoppingItem({ ...input, [field]: input[field] + 'x' }))
   }
+})
+
+test('numeric quantities display consistently and existing text is preserved', () => {
+  assert.equal(shopping.shoppingQuantity(product({ quantity_value: 1.25, quantity_unit: 'kg' })), '1,25 kg')
+  assert.equal(shopping.shoppingQuantity(product({ quantity_value: 0.001, quantity_unit: 'l' })), '0,001 l')
+  assert.equal(shopping.shoppingQuantity(product({ quantity_value: null, quantity_unit: null })), '2 confezioni')
 })
 
 test('PDF filenames are safe and have a fallback', () => {
@@ -72,7 +83,7 @@ test('PDF contains the full list, quantities, notes and purchased status', async
   assert.equal(blob.type, 'application/pdf')
   const text = Buffer.from(await blob.arrayBuffer()).toString('latin1')
   assert.ok(text.startsWith('%PDF-'))
-  for (const value of ['Spesa settimanale', 'Latte', 'Pane', '2 confezioni', 'Senza lattosio', 'Acquistato']) {
+  for (const value of ['Spesa settimanale', 'Latte', 'Pane', '2 l', 'Senza lattosio', 'Acquistato']) {
     assert.ok(text.includes(value), `Missing PDF content: ${value}`)
   }
   assert.ok(text.indexOf('(Latte)') < text.indexOf('(Pane)'))
@@ -118,7 +129,7 @@ const fixture = {
 
 test('shopping UI renders product states, progress and PDF actions', () => {
   const html = renderToStaticMarkup(React.createElement(ShoppingWorkspace, { data: fixture }))
-  for (const label of ['Spesa settimanale', 'Latte', 'Pane', '2 confezioni', 'Senza lattosio', 'Condividi PDF', 'Nuova lista', 'Aggiungi prodotto']) {
+  for (const label of ['Spesa settimanale', 'Latte', 'Pane', '2 l', 'Senza lattosio', 'Condividi PDF', 'Nuova lista', 'Aggiungi prodotto']) {
     assert.ok(html.includes(label), `Missing UI label: ${label}`)
   }
   assert.ok(html.includes('aria-valuenow="50"'))

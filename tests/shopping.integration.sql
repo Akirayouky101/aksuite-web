@@ -37,6 +37,46 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Owner must be able to create, read and update products';
   END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM public.shopping_items
+    WHERE id = (SELECT item_id FROM shopping_test_context)
+      AND quantity = '2 confezioni' AND quantity_value IS NULL AND quantity_unit IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Legacy quantities must remain intact';
+  END IF;
+  UPDATE public.shopping_items SET quantity_value = 1.25, quantity_unit = 'kg'
+  WHERE id = (SELECT item_id FROM shopping_test_context);
+  IF NOT EXISTS (
+    SELECT 1 FROM public.shopping_items
+    WHERE id = (SELECT item_id FROM shopping_test_context)
+      AND quantity_value = 1.25 AND quantity_unit = 'kg'
+  ) THEN
+    RAISE EXCEPTION 'Decimal quantities and units must persist';
+  END IF;
+  BEGIN
+    UPDATE public.shopping_items SET quantity_value = 0
+    WHERE id = (SELECT item_id FROM shopping_test_context);
+    RAISE EXCEPTION 'Zero quantities must be rejected';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+  BEGIN
+    UPDATE public.shopping_items SET quantity_value = 1.2345
+    WHERE id = (SELECT item_id FROM shopping_test_context);
+    RAISE EXCEPTION 'More than three decimal places must be rejected';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+  BEGIN
+    UPDATE public.shopping_items SET quantity_unit = 'confezioni'
+    WHERE id = (SELECT item_id FROM shopping_test_context);
+    RAISE EXCEPTION 'Unsupported units must be rejected';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+  BEGIN
+    UPDATE public.shopping_items SET quantity_unit = NULL
+    WHERE id = (SELECT item_id FROM shopping_test_context);
+    RAISE EXCEPTION 'A numeric quantity must have a unit';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
   BEGIN
     UPDATE public.shopping_lists SET user_id = (SELECT outsider_id FROM shopping_test_context)
     WHERE id = (SELECT list_id FROM shopping_test_context);
