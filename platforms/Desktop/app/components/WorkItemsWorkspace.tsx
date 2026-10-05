@@ -118,7 +118,7 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
 
       {errorMessage && <p role="alert" className="mt-4 rounded-xl border border-[#f0c7b5] bg-[#fff0e9] p-3 text-sm font-semibold text-[#a83d35]">{errorMessage}</p>}
       {loading ? <div className="py-12 text-center text-sm text-[#716a91]">Caricamento lavorazioni...</div> : filtered.length ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map(item => {
             const overdue = item.due_date && new Date(`${item.due_date}T23:59:59`).getTime() < Date.now() && item.status !== 'completed'
             const progress = checklistProgress(item.checklist)
