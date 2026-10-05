@@ -48,6 +48,8 @@ targets:
         UILaunchScreen: {}
         CFBundleDisplayName: "AK Suite"
         NSFaceIDUsageDescription: "AK Suite usa Face ID per sbloccare in modo sicuro le tue password."
+        NSMicrophoneUsageDescription: "AK Suite usa il microfono solo quando avvii la dettatura."
+        NSSpeechRecognitionUsageDescription: "AK Suite trascrive la voce in italiano quando avvii la dettatura."
         SUPABASE_URL: $(SUPABASE_URL)
         SUPABASE_ANON_KEY: $(SUPABASE_ANON_KEY)
         UIApplicationSceneManifest:

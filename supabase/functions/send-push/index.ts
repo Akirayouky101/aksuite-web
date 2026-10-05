@@ -71,10 +71,14 @@ Deno.serve(async (request) => {
     if (payload.user_id !== user.id) return new Response("Forbidden", { status: 403 });
   }
 
-  const { data: devices, error: devicesError } = await admin
+  let devicesQuery = admin
     .from("push_devices")
     .select("id, device_token")
     .eq("user_id", payload.user_id);
+  if (payload.data?.category === "EVENT_CONFIRMATION") {
+    devicesQuery = devicesQuery.eq("event_confirmations", true);
+  }
+  const { data: devices, error: devicesError } = await devicesQuery;
   if (devicesError) return new Response(devicesError.message, { status: 500 });
   if (!devices?.length) {
     return Response.json({ error: "No registered APNs devices for this user" }, { status: 404 });
@@ -93,7 +97,10 @@ Deno.serve(async (request) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        aps: { alert: { title: payload.title, body: payload.body }, sound: "default", badge: 1 },
+        aps: {
+          alert: { title: payload.title, body: payload.body }, sound: "default", badge: 1,
+          ...(payload.data?.category === "EVENT_CONFIRMATION" ? { category: "EVENT_CONFIRMATION" } : {}),
+        },
         ...(payload.data ?? {}),
       }),
     });

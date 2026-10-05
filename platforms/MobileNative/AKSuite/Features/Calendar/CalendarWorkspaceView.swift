@@ -32,36 +32,6 @@ private struct CalendarWorkItem: Decodable, Identifiable {
     }
 }
 
-private struct CalendarEvent: Codable, Identifiable, Equatable {
-    let id: UUID
-    var clientID: UUID?
-    var workItemID: UUID?
-    var title: String
-    var description: String?
-    var startDate: String
-    var endDate: String?
-    var allDay: Bool
-    var clientConfirmed: Bool
-    var location: String?
-    var color: String
-    var isRecurring: Bool
-    var recurringType: String?
-    var reminderMinutes: Int
-
-    enum CodingKeys: String, CodingKey {
-        case id, title, description, location, color
-        case clientID = "client_id"
-        case workItemID = "work_item_id"
-        case startDate = "start_date"
-        case endDate = "end_date"
-        case allDay = "all_day"
-        case clientConfirmed = "client_confirmed"
-        case isRecurring = "is_recurring"
-        case recurringType = "recurring_type"
-        case reminderMinutes = "reminder_minutes"
-    }
-}
-
 private struct CalendarEventPayload: Encodable {
     let clientID: UUID?
     let workItemID: UUID?
@@ -116,6 +86,7 @@ struct CalendarWorkspaceView: View {
     let initialEventID: UUID?
     let initialClientID: UUID?
     let editInitialEvent: Bool
+    let completeInitialEvent: Bool
     let onBack: () -> Void
     let onReturnToClient: () -> Void
     @State private var events: [CalendarEvent] = []
@@ -130,11 +101,17 @@ struct CalendarWorkspaceView: View {
     @State private var viewingEvent: CalendarEvent?
     @State private var eventToDelete: CalendarEvent?
     @State private var onlyWithoutReminder = false
+    @State private var historyState: NativeHistoryState = .pending
+    @State private var changedHistoryID: NativeHistoryChange?
+    @State private var showSettings = false
+    @State private var changingEvent = false
+    @State private var consumedInitialCompletion = false
 
-    init(initialEventID: UUID? = nil, initialClientID: UUID? = nil, editInitialEvent: Bool = false, onBack: @escaping () -> Void, onReturnToClient: @escaping () -> Void = {}) {
+    init(initialEventID: UUID? = nil, initialClientID: UUID? = nil, editInitialEvent: Bool = false, completeInitialEvent: Bool = false, onBack: @escaping () -> Void, onReturnToClient: @escaping () -> Void = {}) {
         self.initialEventID = initialEventID
         self.initialClientID = initialClientID
         self.editInitialEvent = editInitialEvent
+        self.completeInitialEvent = completeInitialEvent
         self.onBack = onBack
         self.onReturnToClient = onReturnToClient
     }
@@ -148,7 +125,8 @@ struct CalendarWorkspaceView: View {
     }
 
     private var visibleEvents: [CalendarEvent] {
-        onlyWithoutReminder ? events.filter { $0.reminderMinutes == 0 } : events
+        let pending = events.filter { !$0.isCompleted && $0.archivedAt == nil }
+        return onlyWithoutReminder ? pending.filter { ($0.reminderMinutes ?? 0) == 0 } : pending
     }
 
     private var monthDays: [Date?] {
@@ -168,8 +146,19 @@ struct CalendarWorkspaceView: View {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 16) {
                             monthHeader
-                            monthGrid
-                            selectedDayPanel
+                            Button("Impostazioni calendario") { showSettings = true }
+                            Picker("Stato", selection: $historyState) {
+                                ForEach(NativeHistoryState.allCases) { Text($0.title).tag($0) }
+                            }.pickerStyle(.segmented)
+                            if historyState == .pending {
+                                monthGrid
+                                selectedDayPanel
+                            } else {
+                                NativeHistoryView(kind: "event", state: historyState, clientID: initialClientID, changedItem: changedHistoryID) { id in
+                                    Task { await openHistoricalEvent(id) }
+                                }.id(historyState)
+                            }
+                            if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
                         }
                         .padding(16)
                     }
@@ -184,17 +173,20 @@ struct CalendarWorkspaceView: View {
             }
         }
         .task { await loadEvents() }
+        .onChange(of: initialEventID) { _ in Task { await loadEvents() } }
         .sheet(item: $viewingEvent) { event in
             CalendarEventSummarySheet(
                 event: event,
                 clientName: clients.first(where: { $0.id == event.clientID })?.name,
                 workItemName: workItems.first(where: { $0.id == event.workItemID })?.title,
                 onEdit: { viewingEvent = nil; editingEvent = event },
-                onDelete: { viewingEvent = nil; eventToDelete = event }
+                onDelete: { viewingEvent = nil; eventToDelete = event },
+                onCompletion: { try await setCompleted(event, to: !event.isCompleted) }
             )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showSettings, onDismiss: { Task { await loadEvents() } }) { NativeGoogleCalendarSettings() }
         .overlay {
             if showEditor {
                 EventEditorView(event: nil, clients: clients, workItems: workItems, events: events, selectedDate: selectedDate, initialClientID: initialClientID, onClose: closeEditor, onSave: saveEvent)
@@ -308,15 +300,42 @@ struct CalendarWorkspaceView: View {
     private func loadEvents() async {
         isLoading = true; defer { isLoading = false }
         do {
-            events = try await SupabaseService.shared.from("events").select().order("start_date", ascending: true).execute().value
+            events = try await SupabaseService.shared.from("events").select().eq("is_completed", value: false).is("archived_at", value: nil).order("start_date", ascending: true).execute().value
             clients = (try? await SupabaseService.shared.from("clients").select("id,name,address,zip_code,city,province,parent_client_id").order("name", ascending: true).execute().value) ?? []
             workItems = (try? await SupabaseService.shared.from("work_items").select("id,client_id,title,kind").eq("kind", value: "work").execute().value) ?? []
-            if let initialEventID, let event = events.first(where: { $0.id == initialEventID }) {
+            if let initialEventID {
+                let event: CalendarEvent = try await SupabaseService.shared.from("events").select().eq("id", value: initialEventID.uuidString).single().execute().value
                 selectedDate = eventDate(event.startDate)
-                if editInitialEvent { editingEvent = event }
+                visibleMonth = selectedDate.startOfMonth
+                if completeInitialEvent && !consumedInitialCompletion && !event.isCompleted {
+                    try await setCompleted(event, to: true)
+                    consumedInitialCompletion = true
+                    viewingEvent = try await SupabaseService.shared.from("events").select().eq("id", value: event.id.uuidString).single().execute().value
+                } else if editInitialEvent { editingEvent = event }
+                else { viewingEvent = event }
             }
-        }
-        catch { errorMessage = "Impossibile caricare il calendario." }
+        } catch { errorMessage = "Impossibile caricare il calendario: \(error.localizedDescription)" }
+    }
+
+    private func openHistoricalEvent(_ id: UUID) async {
+        do {
+            let event: CalendarEvent = try await SupabaseService.shared.from("events").select().eq("id", value: id.uuidString).single().execute().value
+            viewingEvent = event
+        } catch { errorMessage = "Impossibile leggere l'evento: \(error.localizedDescription)" }
+    }
+
+    private func setCompleted(_ event: CalendarEvent, to value: Bool) async throws {
+        guard !changingEvent else { throw NativeIntegrationError.message("Operazione già in corso.") }
+        guard let owner = auth.session?.user.id else { throw NativeIntegrationError.message("Accedi per confermare l'evento.") }
+        changingEvent = true; defer { changingEvent = false }
+        let updated: CalendarEvent = try await SupabaseService.shared.from("events").update(["is_completed": value])
+            .eq("id", value: event.id.uuidString).or("user_id.eq.\(owner.uuidString),assigned_to.eq.\(owner.uuidString)").select().single().execute().value
+        guard auth.session?.user.id == owner else { return }
+        events.removeAll { $0.id == updated.id }
+        if !updated.isCompleted { events.append(updated) }
+        viewingEvent = nil
+        changedHistoryID = NativeHistoryChange(id: updated.id)
+        scheduleReminder(for: updated)
     }
 
     private func closeEditor() {
@@ -330,7 +349,9 @@ struct CalendarWorkspaceView: View {
     private func saveEvent(_ payload: CalendarEventPayload, _ existing: CalendarEvent?) async throws {
         if let existing {
             let updated: CalendarEvent = try await SupabaseService.shared.from("events").update(payload).eq("id", value: existing.id.uuidString).select().single().execute().value
-            events = events.map { $0.id == updated.id ? updated : $0 }
+            events.removeAll { $0.id == updated.id }
+            if !updated.isCompleted && updated.archivedAt == nil { events.append(updated) }
+            changedHistoryID = NativeHistoryChange(id: updated.id)
             scheduleReminder(for: updated)
         } else {
             guard let userID = auth.session?.user.id else { throw CalendarSaveError.missingAuthenticatedUser }
@@ -344,17 +365,17 @@ struct CalendarWorkspaceView: View {
     private func scheduleReminder(for event: CalendarEvent) {
         guard let manager = PushNotificationManager.shared else { return }
         let start = eventDate(event.startDate)
-        guard event.reminderMinutes > 0 else { manager.cancelCalendarEvent(eventID: event.id); return }
-        manager.scheduleCalendarEvent(eventID: event.id, title: event.title, date: start.addingTimeInterval(-Double(event.reminderMinutes * 60)))
+        guard !event.isCompleted, let minutes = event.reminderMinutes, minutes > 0 else { manager.cancelCalendarEvent(eventID: event.id); return }
+        manager.scheduleCalendarEvent(eventID: event.id, title: event.title, date: start.addingTimeInterval(-Double(minutes * 60)))
     }
 
     private func deleteEvent(_ event: CalendarEvent) async {
-        do { try await SupabaseService.shared.from("events").delete().eq("id", value: event.id.uuidString).execute(); events.removeAll { $0.id == event.id } }
+        do { try await SupabaseService.shared.from("events").delete().eq("id", value: event.id.uuidString).execute(); events.removeAll { $0.id == event.id }; changedHistoryID = NativeHistoryChange(id: event.id); PushNotificationManager.shared?.cancelCalendarEvent(eventID: event.id) }
         catch { errorMessage = "Impossibile eliminare l'evento." }
     }
 
     private func moveMonth(by value: Int) { visibleMonth = calendar.date(byAdding: .month, value: value, to: visibleMonth) ?? visibleMonth }
-    private func eventDate(_ value: String) -> Date { ISO8601DateFormatter().date(from: value) ?? .now }
+    private func eventDate(_ value: String) -> Date { NativeDates.parse(value) ?? .distantPast }
     private func eventOverlaps(_ event: CalendarEvent, _ date: Date) -> Bool {
         let start = eventDate(event.startDate); let end = event.endDate.map(eventDate) ?? start
         let dayStart = calendar.startOfDay(for: date); let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart
@@ -398,6 +419,9 @@ private struct CalendarEventSummarySheet: View {
     let workItemName: String?
     let onEdit: () -> Void
     let onDelete: () -> Void
+    let onCompletion: () async throws -> Void
+    @State private var busy = false
+    @State private var error: String?
 
     private var startDate: Date { ISO8601DateFormatter().date(from: event.startDate) ?? .now }
     private var endDate: Date? { event.endDate.flatMap(ISO8601DateFormatter().date(from:)) }
@@ -407,6 +431,7 @@ private struct CalendarEventSummarySheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text(event.title).font(.title2.weight(.black)).foregroundStyle(Color(hex: "#2d2754"))
+                    Text(event.isCompleted ? "Evento eseguito" : "L'evento è stato eseguito?").font(.headline)
                     Label(dateLabel, systemImage: "calendar").font(.subheadline.weight(.semibold)).foregroundStyle(Color(hex: "#257259"))
                     if let clientName {
                         Label(clientName, systemImage: "person.crop.circle").font(.subheadline).foregroundStyle(Color(hex: "#716a91"))
@@ -424,14 +449,23 @@ private struct CalendarEventSummarySheet: View {
                             Text(description).font(.body).foregroundStyle(Color(hex: "#2d2754"))
                         }
                     }
-                    Label(event.reminderMinutes > 0 ? "Promemoria \(reminderLabel(event.reminderMinutes)) prima" : "Nessun promemoria", systemImage: event.reminderMinutes > 0 ? "bell" : "bell.slash")
+                    Label((event.reminderMinutes ?? 0) > 0 ? "Promemoria \(reminderLabel(event.reminderMinutes ?? 0)) prima" : "Nessun promemoria", systemImage: (event.reminderMinutes ?? 0) > 0 ? "bell" : "bell.slash")
                         .font(.subheadline).foregroundStyle(Color(hex: "#716a91"))
+                    if let error { Text(error).foregroundStyle(.red) }
+                    Button(event.isCompleted ? "Riporta da fare" : "Sì, completato") {
+                        Task {
+                            busy = true; defer { busy = false }
+                            do { try await onCompletion() }
+                            catch { self.error = error.localizedDescription }
+                        }
+                    }.buttonStyle(.borderedProminent).disabled(busy)
+                    if !event.isCompleted { Button("No, scegli nuova data e ora", action: onEdit).disabled(busy) }
                     HStack(spacing: 10) {
                         Button(action: onEdit) {
                             Label("Modifica", systemImage: "pencil").font(.subheadline.weight(.bold))
                                 .frame(maxWidth: .infinity).padding(.vertical, 13).foregroundStyle(.white)
                                 .background(Color(hex: "#2d2754")).clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
+                        }.disabled(busy)
                         Button(role: .destructive, action: onDelete) {
                             Label("Elimina", systemImage: "trash").font(.subheadline.weight(.bold))
                                 .frame(maxWidth: .infinity).padding(.vertical, 13)
@@ -443,9 +477,10 @@ private struct CalendarEventSummarySheet: View {
             .background(Color(hex: "#fffdf9"))
             .toolbar {
                 ToolbarItem(placement: .principal) { Text("Riepilogo evento").font(.headline.weight(.black)).foregroundStyle(Color(hex: "#2d2754")) }
-                ToolbarItem(placement: .topBarTrailing) { Button("Chiudi") { dismiss() } }
+                ToolbarItem(placement: .topBarTrailing) { Button("Chiudi") { dismiss() }.disabled(busy) }
             }
         }
+        .interactiveDismissDisabled(busy)
     }
 
     private var dateLabel: String {
@@ -546,6 +581,7 @@ private struct EventEditorView: View {
                             }
                             modalField("Titolo *") { TextField("Es: Riunione, Compleanno, Scadenza...", text: $title) }
                             modalField("Descrizione") { TextField("Aggiungi dettagli...", text: $description, axis: .vertical).lineLimit(3...5) }
+                            NativeDictationButton(text: $description)
                             Toggle("Evento giornata intera", isOn: $allDay).font(.subheadline.weight(.medium)).tint(Color(hex: "#e45f4e"))
                             HStack(alignment: .top, spacing: 12) {
                                 VStack(alignment: .leading, spacing: 7) {
@@ -643,7 +679,7 @@ private struct EventEditorView: View {
             }
             return
         }
-        title = event.title; description = event.description ?? ""; startDate = parseDate(event.startDate); hasEndDate = event.endDate != nil; endDate = event.endDate.map(parseDate) ?? startDate; allDay = event.allDay; clientConfirmed = event.clientConfirmed; clientID = event.clientID; workItemID = event.workItemID; location = event.location ?? ""; color = event.color; isRecurring = event.isRecurring; recurringType = event.recurringType ?? "weekly"; reminderMinutes = event.reminderMinutes
+        title = event.title; description = event.description ?? ""; startDate = parseDate(event.startDate); hasEndDate = event.endDate != nil; endDate = event.endDate.map(parseDate) ?? startDate; allDay = event.allDay; clientConfirmed = event.clientConfirmed; clientID = event.clientID; workItemID = event.workItemID; location = event.location ?? ""; color = event.color; isRecurring = event.isRecurring; recurringType = event.recurringType ?? "weekly"; reminderMinutes = event.reminderMinutes ?? 0
     }
 
     private func clientLabel(_ client: CalendarClient) -> String {

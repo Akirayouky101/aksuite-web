@@ -54,6 +54,9 @@ final class AuthViewModel: ObservableObject {
     }
 
     func signOut() async {
-        try? await client.auth.signOut()
+        do {
+            try await PushNotificationManager.shared?.unregisterDevice()
+            try await client.auth.signOut()
+        } catch { errorMessage = "Uscita non riuscita: \(error.localizedDescription)" }
     }
 }

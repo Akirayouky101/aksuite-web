@@ -144,6 +144,8 @@ private struct WorkItem: Codable, Identifiable, Equatable {
     var materials: [NativeChecklistEntry]
     var createdAt: String?
     var updatedAt: String?
+    var completedAt: String?
+    var archivedAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id, kind, title, description, status, priority, notes, checklist, materials
@@ -153,6 +155,8 @@ private struct WorkItem: Codable, Identifiable, Equatable {
         case nextAction = "next_action"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case completedAt = "completed_at"
+        case archivedAt = "archived_at"
     }
 }
 
@@ -161,7 +165,7 @@ private struct WorkItemPayload: Encodable {
     let kind: String
     let title: String
     let description: String
-    let status: String
+    var status: String?
     let priority: String
     let scheduledAt: String?
     let dueDate: String?
@@ -186,7 +190,7 @@ private struct WorkItemPayload: Encodable {
         try container.encode(kind, forKey: .kind)
         try container.encode(title, forKey: .title)
         try container.encode(description, forKey: .description)
-        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(status, forKey: .status)
         try container.encode(priority, forKey: .priority)
         try container.encode(scheduledAt, forKey: .scheduledAt)
         try container.encode(dueDate, forKey: .dueDate)
@@ -231,11 +235,15 @@ struct WorkItemsWorkspaceView: View {
     let mode: String
     let initialClientID: UUID?
     let onBack: () -> Void
+    var initialItemID: UUID? = nil
     @State private var items: [WorkItem] = []
     @State private var clients: [WorkClient] = []
     @State private var interventions: [WorkIntervention] = []
     @State private var query = ""
     @State private var selectedStatus = WorkStatus.all
+    @State private var historyState: NativeHistoryState = .pending
+    @State private var changedHistoryID: NativeHistoryChange?
+    @State private var historicalItem: WorkItem?
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var showEditor = false
@@ -244,7 +252,7 @@ struct WorkItemsWorkspaceView: View {
     @State private var selectedList: WorkListKind?
     @State private var itemToDelete: WorkItem?
 
-    private var selectedItem: WorkItem? { items.first { $0.id == selectedItemID } }
+    private var selectedItem: WorkItem? { historicalItem?.id == selectedItemID ? historicalItem : items.first { $0.id == selectedItemID } }
 
     private let columns = [GridItem(.adaptive(minimum: 300, maximum: 440), spacing: 12, alignment: .top)]
 
@@ -286,14 +294,18 @@ struct WorkItemsWorkspaceView: View {
         }
         .overlay {
             if let item = selectedItem {
-                WorkItemSummaryView(item: item, interventions: interventions.filter { $0.workItemID == item.id }, clientName: clientName(for: item), onClose: { selectedItemID = nil }, onEdit: { selectedItemID = nil; editingItem = item; showEditor = true }, onOpenList: { selectedList = $0 })
+                WorkItemSummaryView(item: item, interventions: interventions.filter { $0.workItemID == item.id }, clientName: clientName(for: item), onClose: { selectedItemID = nil; historicalItem = nil }, onEdit: { selectedItemID = nil; editingItem = item; showEditor = true }, onOpenList: { selectedList = $0 }, onRestore: {
+                    let updated: WorkItem = try await SupabaseService.shared.from("work_items").update(["status": "planned"]).eq("id", value: item.id.uuidString).select().single().execute().value
+                    retain(updated)
+                    selectedItemID = nil; historicalItem = nil
+                })
                     .platformModalWidth(compact: 380, regular: 760)
                     .shadow(color: Color.black.opacity(0.18), radius: 24, y: 10)
             }
         }
         .sheet(item: $selectedList) { kind in
             if let item = selectedItem {
-                WorkListEditorView(kind: kind, simple: mode == "todo", title: item.title, entries: kind == .checklist ? item.checklist : item.materials, materials: item.materials, checklist: item.checklist) { entries in
+                WorkListEditorView(kind: kind, simple: mode == "todo", title: item.title, entries: kind == .checklist ? item.checklist : item.materials, materials: item.materials, checklist: item.checklist, workItemID: item.id) { entries in
                     try await saveList(entries, kind: kind, for: item)
                 }
             }
@@ -307,42 +319,56 @@ struct WorkItemsWorkspaceView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 15) {
                 header
-                HStack(spacing: 9) {
-                    Image(systemName: "magnifyingglass").foregroundStyle(Color(hex: "#8a7f9f"))
-                    TextField("Cerca lavoro o cliente...", text: $query).platformNoAutocapitalization()
+                if mode == "todo" {
+                    Picker("Stato", selection: $historyState) {
+                        ForEach(NativeHistoryState.allCases) { Text($0.title).tag($0) }
+                    }.pickerStyle(.segmented)
                 }
-                .padding(13).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 14))
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 7) {
-                        statusFilter("all", title: "Tutte", count: scopedItems.count)
-                        statusFilter("planned", title: "Da pianificare", count: count("planned"))
-                        if mode != "todo" {
-                            statusFilter("in_progress", title: "In corso", count: count("in_progress"))
-                            statusFilter("waiting", title: "In attesa", count: count("waiting"))
+                if mode == "todo" && historyState != .pending {
+                    NativeHistoryView(kind: "todo", state: historyState, clientID: initialClientID, changedItem: changedHistoryID) { id in
+                        Task {
+                            do {
+                                historicalItem = try await SupabaseService.shared.from("work_items").select().eq("id", value: id.uuidString).single().execute().value
+                                selectedItemID = id
+                            } catch { errorMessage = error.localizedDescription }
                         }
-                        statusFilter("completed", title: "Completate", count: count("completed"))
-                    }
-                }
-
-                if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
-                if filteredItems.isEmpty {
-                    emptyState
+                    }.id(historyState)
                 } else {
-                    LazyVGrid(columns: columns, spacing: 12) {
-                        ForEach(filteredItems) { item in
-                            WorkItemCard(
-                                item: item,
-                                mode: mode,
-                                clientName: clientName(for: item),
-                                onOpen: { selectedItemID = item.id },
-                                onEdit: { editingItem = item; showEditor = true },
-                                onStatusChange: { status in Task { await updateStatus(item, to: status) } },
-                                onDelete: { itemToDelete = item }
-                            )
+                    HStack(spacing: 9) {
+                        Image(systemName: "magnifyingglass").foregroundStyle(Color(hex: "#8a7f9f"))
+                        TextField("Cerca lavoro o cliente...", text: $query).platformNoAutocapitalization()
+                    }
+                    .padding(13).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 14))
+                    if mode != "todo" {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 7) {
+                                statusFilter("all", title: "Tutte", count: scopedItems.count)
+                                statusFilter("planned", title: "Da pianificare", count: count("planned"))
+                                statusFilter("in_progress", title: "In corso", count: count("in_progress"))
+                                statusFilter("waiting", title: "In attesa", count: count("waiting"))
+                                statusFilter("completed", title: "Completate", count: count("completed"))
+                            }
+                        }
+                    }
+                    if filteredItems.isEmpty {
+                        emptyState
+                    } else {
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(filteredItems) { item in
+                                WorkItemCard(
+                                    item: item,
+                                    mode: mode,
+                                    clientName: clientName(for: item),
+                                    onOpen: { selectedItemID = item.id },
+                                    onEdit: { editingItem = item; showEditor = true },
+                                    onStatusChange: { status in Task { await updateStatus(item, to: status) } },
+                                    onDelete: { itemToDelete = item }
+                                )
+                            }
                         }
                     }
                 }
+                if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
             }
             .padding(16)
         }
@@ -397,11 +423,17 @@ struct WorkItemsWorkspaceView: View {
         isLoading = true
         defer { isLoading = false }
         do {
-            async let loadedItems: [WorkItem] = SupabaseService.shared.from("work_items").select().order("updated_at", ascending: false).execute().value
+            var itemQuery = SupabaseService.shared.from("work_items").select().eq("kind", value: mode)
+            if mode == "todo" { itemQuery = itemQuery.neq("status", value: "completed").is("archived_at", value: nil) }
+            async let loadedItems: [WorkItem] = itemQuery.order("updated_at", ascending: false).execute().value
             async let loadedClients: [WorkClient] = SupabaseService.shared.from("clients").select("id,name,company,parent_client_id").order("name", ascending: true).execute().value
             items = try await loadedItems
+            if let initialItemID {
+                historicalItem = try await SupabaseService.shared.from("work_items").select().eq("id", value: initialItemID.uuidString).single().execute().value
+                selectedItemID = initialItemID
+            }
             clients = (try? await loadedClients) ?? []
-            interventions = (try? await SupabaseService.shared.from("events").select("id,work_item_id,title,start_date,end_date,all_day,location").not("work_item_id", operator: .is, value: "null").execute().value) ?? []
+            interventions = (try? await SupabaseService.shared.from("events").select("id,work_item_id,title,start_date,end_date,all_day,location").not("work_item_id", operator: .is, value: "null").eq("is_completed", value: false).is("archived_at", value: nil).execute().value) ?? []
             errorMessage = nil
         } catch {
             errorMessage = "Impossibile caricare le lavorazioni. Verifica la configurazione Supabase."
@@ -410,21 +442,24 @@ struct WorkItemsWorkspaceView: View {
 
     private func save(_ payload: WorkItemPayload, _ existing: WorkItem?) async throws {
         if let existing {
-            let updated: WorkItem = try await SupabaseService.shared.from("work_items").update(payload).eq("id", value: existing.id.uuidString).select().single().execute().value
-            items = items.map { $0.id == updated.id ? updated : $0 }
+            var update = payload
+            if update.status == existing.status { update.status = nil }
+            let updated: WorkItem = try await SupabaseService.shared.from("work_items").update(update).eq("id", value: existing.id.uuidString).select().single().execute().value
+            retain(updated)
         } else {
             guard let userID = auth.session?.user.id else { throw WorkItemSaveError.missingUser }
             var insert = payload
             insert.userID = userID
             let created: WorkItem = try await SupabaseService.shared.from("work_items").insert(insert).select().single().execute().value
-            items.insert(created, at: 0)
+            retain(created)
         }
     }
 
     private func updateStatus(_ item: WorkItem, to status: String) async {
         do {
             let updated: WorkItem = try await SupabaseService.shared.from("work_items").update(["status": status, "updated_at": ISO8601DateFormatter().string(from: .now)]).eq("id", value: item.id.uuidString).select().single().execute().value
-            items = items.map { $0.id == updated.id ? updated : $0 }
+            retain(updated)
+            selectedItemID = nil; historicalItem = nil
         } catch {
             errorMessage = "Impossibile aggiornare lo stato."
         }
@@ -436,13 +471,15 @@ struct WorkItemsWorkspaceView: View {
         let updated: WorkItem = try await SupabaseService.shared.from("work_items")
             .update(WorkListUpdate(checklist: checklist, materials: materials))
             .eq("id", value: item.id.uuidString).select().single().execute().value
-        items = items.map { $0.id == updated.id ? updated : $0 }
+        retain(updated)
+        if historicalItem?.id == updated.id { historicalItem = updated }
     }
 
     private func delete(_ item: WorkItem) async {
         do {
             try await SupabaseService.shared.from("work_items").delete().eq("id", value: item.id.uuidString).execute()
             items.removeAll { $0.id == item.id }
+            changedHistoryID = NativeHistoryChange(id: item.id)
             itemToDelete = nil
         } catch {
             errorMessage = "Impossibile eliminare la lavorazione."
@@ -450,6 +487,12 @@ struct WorkItemsWorkspaceView: View {
     }
 
     private func closeEditor() { showEditor = false; editingItem = nil }
+
+    private func retain(_ updated: WorkItem) {
+        items.removeAll { $0.id == updated.id }
+        if mode != "todo" || (updated.status != "completed" && updated.archivedAt == nil) { items.append(updated) }
+        changedHistoryID = NativeHistoryChange(id: updated.id)
+    }
 }
 
 private struct WorkItemCard: View {
@@ -546,6 +589,9 @@ private struct WorkItemSummaryView: View {
     let onClose: () -> Void
     let onEdit: () -> Void
     let onOpenList: (WorkListKind) -> Void
+    let onRestore: () async throws -> Void
+    @State private var restoring = false
+    @State private var restoreError: String?
 
     private var orderedInterventions: [WorkIntervention] { interventions.sorted { $0.startDate < $1.startDate } }
 
@@ -566,7 +612,7 @@ private struct WorkItemSummaryView: View {
                     Text(clientName).font(.subheadline).foregroundStyle(Color(hex: "#716a91"))
                 }
                 Spacer()
-                Button(action: onClose) { Image(systemName: "xmark") }.accessibilityLabel("Chiudi")
+                Button(action: onClose) { Image(systemName: "xmark") }.accessibilityLabel("Chiudi").disabled(restoring)
             }
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
@@ -577,6 +623,17 @@ private struct WorkItemSummaryView: View {
                     if let scheduled = item.scheduledAt { summaryDetail("APPUNTAMENTO", ISO8601DateFormatter().date(from: scheduled)?.formatted(date: .abbreviated, time: .shortened) ?? scheduled) }
                     if !item.nextAction.isEmpty { summaryDetail("PROSSIMA AZIONE", item.nextAction) }
                     if !item.notes.isEmpty { summaryDetail("NOTE", item.notes) }
+                    NativePhotoGallery(workItemID: item.id)
+                    if item.kind == "todo" && item.status == "completed" {
+                        Button(restoring ? "Salvataggio..." : "Riporta da fare") {
+                            Task {
+                                restoring = true; restoreError = nil; defer { restoring = false }
+                                do { try await onRestore() }
+                                catch { restoreError = error.localizedDescription }
+                            }
+                        }.buttonStyle(.bordered).disabled(restoring)
+                        if let restoreError { Text(restoreError).foregroundStyle(.red) }
+                    }
                     if horizontalSizeClass == .compact {
                         VStack(spacing: 10) {
                             listButton(.checklist, entries: item.checklist)
@@ -621,7 +678,7 @@ private struct WorkItemSummaryView: View {
                         Label("Esporta e condividi PDF", systemImage: "square.and.arrow.up")
                             .frame(maxWidth: .infinity).padding(12)
                     }.buttonStyle(.borderedProminent).tint(Color(hex: "#257259")) }
-                    Button(item.kind == "todo" ? "Modifica attività" : "Modifica lavorazione", action: onEdit).buttonStyle(.borderedProminent).tint(Color(hex: "#2d2754")).frame(maxWidth: .infinity)
+                    Button(item.kind == "todo" ? "Modifica attività" : "Modifica lavorazione", action: onEdit).buttonStyle(.borderedProminent).tint(Color(hex: "#2d2754")).frame(maxWidth: .infinity).disabled(restoring)
                 }
             }
         }
@@ -672,14 +729,19 @@ private struct WorkListEditorView: View {
     @State private var editingID: String?
     @State private var isSaving = false
     @State private var errorMessage: String?
+    let workItemID: UUID?
+    private let savedEntryIDs: Set<String>
+    @State private var photoEntry: NativeChecklistEntry?
 
-    init(kind: WorkListKind, simple: Bool = false, title: String, entries: [NativeChecklistEntry], materials: [NativeChecklistEntry], checklist: [NativeChecklistEntry], onSave: @escaping ([NativeChecklistEntry]) async throws -> Void) {
+    init(kind: WorkListKind, simple: Bool = false, title: String, entries: [NativeChecklistEntry], materials: [NativeChecklistEntry], checklist: [NativeChecklistEntry], workItemID: UUID? = nil, onSave: @escaping ([NativeChecklistEntry]) async throws -> Void) {
         self.kind = kind
         self.simple = simple
         self.title = title
         self.materials = materials
         self.checklist = checklist
         self.onSave = onSave
+        self.workItemID = workItemID
+        self.savedEntryIDs = Set(entries.flatMap { [$0.id] + ($0.steps ?? []).map(\.id) })
         _draft = State(initialValue: entries)
     }
 
@@ -737,6 +799,7 @@ private struct WorkListEditorView: View {
                             TextField(kind == .materials ? "Nuovo materiale" : parent == nil ? "Nuova voce" : "Nuova sottoattività", text: parent == nil ? $newText : $newStepText).onSubmit(addEntry).paymentInputStyle()
                             Button(action: addEntry) { Image(systemName: "plus") }.disabled(pendingText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityLabel("Aggiungi voce")
                         }
+                        NativeDictationButton(text: parent == nil ? $newText : $newStepText)
                     }
                     if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
                 }.padding(20)
@@ -752,6 +815,13 @@ private struct WorkListEditorView: View {
                 }.buttonStyle(.plain).disabled(isSaving)
             }.padding(16).background(Color(hex: "#fffdf9"))
         }.foregroundStyle(Color(hex: "#2d2754")).background(Color(hex: "#fffdf9")).presentationDetents([.large])
+        .sheet(item: $photoEntry) { entry in
+            NavigationStack {
+                ScrollView { NativePhotoGallery(workItemID: workItemID, entryID: entry.id).padding() }
+                    .navigationTitle("Foto voce")
+                    .toolbar { ToolbarItem(placement: .akTrailing) { Button("Chiudi") { photoEntry = nil } } }
+            }
+        }
     }
 
     private func entryRow(_ entry: NativeChecklistEntry) -> some View {
@@ -823,6 +893,13 @@ private struct WorkListEditorView: View {
                 }.accessibilityLabel("Materiale per \(entry.text)")
             }
             if !simple { coverageStatus(for: entry) }
+            if kind == .checklist {
+                Button { photoEntry = entry } label: { Label("Foto voce", systemImage: "photo") }
+                    .disabled(workItemID == nil || !savedEntryIDs.contains(entry.id))
+                if workItemID == nil || !savedEntryIDs.contains(entry.id) {
+                    Text("Salva prima la voce per aggiungere foto.").font(.caption)
+                }
+            }
         }.font(.subheadline).padding(10).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -1002,6 +1079,7 @@ private struct WorkItemEditorView: View {
                     VStack(alignment: .leading, spacing: 7) {
                         fieldLabel("NOTE", icon: "text.alignleft")
                         TextField("Dettagli da ritrovare al volo...", text: $notes, axis: .vertical).lineLimit(3...6).paymentInputStyle()
+                        NativeDictationButton(text: $notes)
                     }
                     if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
                 }

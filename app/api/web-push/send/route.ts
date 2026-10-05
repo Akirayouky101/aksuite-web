@@ -42,21 +42,36 @@ export async function POST(request: Request) {
               url: `/?event-response=${job.event_id}`, tag: `event-confirmation-${job.event_id}`,
               actions: [{ action: 'complete', title: 'Sì, completato' }, { action: 'reschedule', title: 'No, riprogramma' }],
             }), { TTL: 86400, timeout: 10000, vapidDetails: { subject, publicKey, privateKey } })
+            return true
           } catch (cause) {
             if (cause instanceof webpush.WebPushError && [404, 410].includes(cause.statusCode)) {
               const { error } = await client.from('web_push_subscriptions').delete().eq('id', subscription.id)
               if (error) throw error
-              return
+              return false
             }
             throw cause
           }
         }))
         const failures = results.filter(result => result.status === 'rejected')
         if (failures.length) throw new Error(`Invio non riuscito per ${failures.length} dispositivi; verrà ritentato.`)
+        const { data: devices, error: deviceError } = await client.from('push_devices').select('id').eq('user_id', job.user_id).eq('event_confirmations', true).limit(1)
+        if (deviceError) throw deviceError
+        let nativeDelivered = 0
+        if (devices?.length) {
+          const { data: nativeResult, error: nativeError } = await client.functions.invoke('send-push', {
+            body: {
+              user_id: job.user_id, title: 'Evento eseguito?', body: `Hai eseguito “${job.title}”?`,
+              data: { destination: 'calendar-confirmation', id: job.event_id, category: 'EVENT_CONFIRMATION' },
+            },
+          })
+          if (nativeError) throw new Error('Invio conferma APNs non riuscito; verrà ritentato.')
+          if (!nativeResult || nativeResult.failed || !nativeResult.sent) throw new Error('Conferma APNs non consegnata a tutti i dispositivi; verrà ritentata.')
+          nativeDelivered = nativeResult.sent
+        }
         const { error: updateError } = await client.from('event_confirmation_queue')
           .update({ sent_at: new Date().toISOString(), last_error: null }).eq('id', job.queue_id).eq('lease_id', job.lease_id)
         if (updateError) throw updateError
-        if (subscriptions.length) delivered++
+        if (results.some(result => result.status === 'fulfilled' && result.value === true) || nativeDelivered) delivered++
         else skipped++
       } catch (cause) {
         failed++

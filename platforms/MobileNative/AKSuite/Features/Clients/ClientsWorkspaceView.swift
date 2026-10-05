@@ -266,8 +266,8 @@ struct ClientsWorkspaceView: View {
         defer { isLoading = false }
         do {
             clients = try await SupabaseService.shared.from("clients").select().order("name", ascending: true).execute().value
-            workItems = (try? await SupabaseService.shared.from("work_items").select("id,client_id,title,status,kind").execute().value) ?? []
-            appointments = (try? await SupabaseService.shared.from("events").select("id,client_id,work_item_id,title,description,client_confirmed,start_date,end_date,all_day,location,reminder_minutes").execute().value) ?? []
+            workItems = (try? await SupabaseService.shared.from("work_items").select("id,client_id,title,status,kind").or("kind.eq.work,and(kind.eq.todo,status.neq.completed,archived_at.is.null)").execute().value) ?? []
+            appointments = (try? await SupabaseService.shared.from("events").select("id,client_id,work_item_id,title,description,client_confirmed,start_date,end_date,all_day,location,reminder_minutes").eq("is_completed", value: false).is("archived_at", value: nil).execute().value) ?? []
         } catch { errorMessage = "Impossibile caricare la rubrica." }
     }
     private func saveClient(_ payload: NativeClientPayload, _ existing: NativeClient?) async throws {

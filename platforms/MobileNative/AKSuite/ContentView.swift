@@ -14,10 +14,19 @@ struct ContentView: View {
     @State private var initialCalendarID: UUID?
     @State private var initialCalendarClientID: UUID?
     @State private var editInitialCalendarEvent = false
+    @State private var completeInitialCalendarEvent = false
+    @State private var calendarPresentationID = UUID()
     @State private var initialWorkClientID: UUID?
     @State private var initialTodoClientID: UUID?
     @State private var returnClientID: UUID?
     @State private var showGlobalSearch = false
+    @State private var initialTodoID: UUID?
+
+    private var dashboard: some View {
+        var view = DashboardView(onOpenCalls: { section = .calls }, onOpenCalendar: { section = .calendar }, onOpenNotes: { section = .notes }, onOpenPasswords: { section = .passwords }, onOpenClients: { returnClientID = nil; section = .clients }, onOpenPayments: { section = .payments }, onOpenWorkItems: { section = .workItems }, onOpenTodos: { initialTodoID = nil; section = .todos }, onOpenShopping: { section = .shopping })
+        view.onOpenPhotos = { section = .photos }
+        return view
+    }
 
     var body: some View {
         Group {
@@ -26,9 +35,9 @@ struct ContentView: View {
             } else if auth.session != nil {
                 switch section {
                 case .today:
-                    ZStack(alignment: .topTrailing) { DashboardView(onOpenCalls: { section = .calls }, onOpenCalendar: { section = .calendar }, onOpenNotes: { section = .notes }, onOpenPasswords: { section = .passwords }, onOpenClients: { returnClientID = nil; section = .clients }, onOpenPayments: { section = .payments }, onOpenWorkItems: { section = .workItems }, onOpenTodos: { section = .todos }, onOpenShopping: { section = .shopping }); Button { showGlobalSearch = true } label: { Image(systemName: "magnifyingglass").padding(12).background(.white.opacity(0.85)).clipShape(Circle()) }.padding(20) }
+                    ZStack(alignment: .topTrailing) { dashboard; Button { showGlobalSearch = true } label: { Image(systemName: "magnifyingglass").padding(12).background(.white.opacity(0.85)).clipShape(Circle()) }.padding(20) }
                 case .dashboard:
-                    DashboardView(onOpenCalls: { section = .calls }, onOpenCalendar: { section = .calendar }, onOpenNotes: { section = .notes }, onOpenPasswords: { section = .passwords }, onOpenClients: { returnClientID = nil; section = .clients }, onOpenPayments: { section = .payments }, onOpenWorkItems: { section = .workItems }, onOpenTodos: { section = .todos }, onOpenShopping: { section = .shopping })
+                    dashboard
                 case .calls:
                     CallsView(initialCallID: initialCallID, initialClientID: initialFollowUpClientID, initialFollowUpDate: initialFollowUpDate, initialFollowUpNote: initialFollowUpNote, onBack: {
                         if let clientID = initialFollowUpClientID {
@@ -46,6 +55,7 @@ struct ContentView: View {
                         initialEventID: initialCalendarID,
                         initialClientID: initialCalendarClientID,
                         editInitialEvent: editInitialCalendarEvent,
+                        completeInitialEvent: completeInitialCalendarEvent,
                         onBack: {
                             if let clientID = initialCalendarClientID {
                                 returnClientID = clientID
@@ -53,9 +63,11 @@ struct ContentView: View {
                             } else {
                                 section = .dashboard
                             }
+
                             initialCalendarID = nil
                             initialCalendarClientID = nil
                             editInitialCalendarEvent = false
+                            completeInitialCalendarEvent = false
                         },
                         onReturnToClient: {
                             if let clientID = initialCalendarClientID {
@@ -65,8 +77,10 @@ struct ContentView: View {
                             initialCalendarID = nil
                             initialCalendarClientID = nil
                             editInitialCalendarEvent = false
+                            completeInitialCalendarEvent = false
                         }
                     )
+                    .id(calendarPresentationID)
                 case .notes:
                     NotesWorkspaceView(initialNoteID: initialNoteID, onBack: { section = .dashboard })
                 case .passwords:
@@ -93,7 +107,9 @@ struct ContentView: View {
                 case .workItems:
                     WorkItemsWorkspaceView(mode: "work", initialClientID: initialWorkClientID, onBack: { returnClientID = initialWorkClientID; section = initialWorkClientID == nil ? .dashboard : .clients; initialWorkClientID = nil })
                 case .todos:
-                    WorkItemsWorkspaceView(mode: "todo", initialClientID: initialTodoClientID, onBack: { returnClientID = initialTodoClientID; section = initialTodoClientID == nil ? .dashboard : .clients; initialTodoClientID = nil })
+                    WorkItemsWorkspaceView(mode: "todo", initialClientID: initialTodoClientID, onBack: { returnClientID = initialTodoClientID; section = initialTodoClientID == nil ? .dashboard : .clients; initialTodoClientID = nil; initialTodoID = nil }, initialItemID: initialTodoID)
+                case .photos:
+                    NativeGalleryWorkspace(onBack: { section = .dashboard }).id(auth.session?.user.id)
                 case .shopping:
                     ShoppingWorkspaceView(onBack: { section = .dashboard }).id(auth.session?.user.id)
                 }
@@ -101,17 +117,24 @@ struct ContentView: View {
                 LoginView()
             }
         }
+        .id(auth.session?.user.id)
         .onChange(of: pushNotifications.pendingDestination) { destination in
             guard let destination else { return }
             switch destination {
             case .call(let id): initialCallID = id; section = .calls
             case .note(let id): initialNoteID = id; section = .notes
             case .payment(let id): initialPaymentID = id; section = .payments
-            case .calendar(let id): initialCalendarID = id; section = .calendar
+            case .calendar(let id): initialCalendarID = id; editInitialCalendarEvent = false; completeInitialCalendarEvent = false; section = .calendar
+            case .calendarConfirmation(let id, let action):
+                initialCalendarID = id; editInitialCalendarEvent = action == "reschedule"; completeInitialCalendarEvent = action == "complete"; section = .calendar
             }
+            calendarPresentationID = UUID()
             pushNotifications.pendingDestination = nil
         }
-        .sheet(isPresented: $showGlobalSearch) { GlobalSearchView { type, id in switch type { case "call": initialCallID = id; section = .calls; case "note": initialNoteID = id; section = .notes; case "event": initialCalendarID = id; section = .calendar; case "payment": initialPaymentID = id; section = .payments; case "client": section = .clients; default: break } } }
+        .sheet(isPresented: $showGlobalSearch) { GlobalSearchView { type, id in switch type { case "call": initialCallID = id; section = .calls; case "note": initialNoteID = id; section = .notes; case "event": initialCalendarID = id; initialCalendarClientID = nil; editInitialCalendarEvent = false; completeInitialCalendarEvent = false; section = .calendar; case "todo": initialTodoID = id; section = .todos; case "payment": initialPaymentID = id; section = .payments; case "client": returnClientID = id; section = .clients; default: break } } }
+        .alert("Operazione non riuscita", isPresented: Binding(get: { auth.session != nil && auth.errorMessage != nil }, set: { if !$0 { auth.errorMessage = nil } })) {
+            Button("OK") { auth.errorMessage = nil }
+        } message: { Text(auth.errorMessage ?? "") }
     }
 }
 
@@ -127,6 +150,7 @@ private enum AppSection {
     case workItems
     case todos
     case shopping
+    case photos
 }
 
 #Preview {

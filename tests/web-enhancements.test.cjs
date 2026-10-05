@@ -67,6 +67,65 @@ const event = (changes = {}) => ({
   all_day: false, is_recurring: false, recurring_type: null, is_completed: false, ...changes,
 })
 test('history pages contain exactly five visible entries', () => assert.equal(lifecycle.HISTORY_PAGE_SIZE, 5))
+test('event confirmation worker supports web-only, native-only and mixed devices and retries APNs failures', async () => {
+  const envNames = ['WEB_PUSH_SUBJECT', 'WEB_PUSH_PUBLIC_KEY', 'WEB_PUSH_PRIVATE_KEY']
+  const previous = envNames.map(name => process.env[name])
+  envNames.forEach(name => { process.env[name] = 'fixture' })
+  try {
+    for (const scenario of [
+      { web: true, native: false, failed: false, delivered: 1 },
+      { web: false, native: true, failed: false, delivered: 1 },
+      { web: true, native: true, failed: false, delivered: 1 },
+      { web: false, native: false, failed: false, delivered: 0 },
+      { web: true, native: true, failed: true, delivered: 0 },
+    ]) {
+      const mutations = []
+      const nativeRequests = []
+      let webRequests = 0
+      const client = {
+        rpc: async () => ({ data: [{ queue_id: 'q', event_id: 'event', user_id: 'owner', lease_id: 'lease', title: 'Test' }] }),
+        from(table) {
+          const builder = {
+            select: () => builder, eq: () => builder, limit: () => builder,
+            maybeSingle: async () => ({ data: { is_completed: false } }),
+            update(value) { mutations.push(value); return builder },
+            then(resolve) {
+              const data = table === 'web_push_subscriptions' ? (scenario.web ? [{ id: 'web', endpoint: 'https://web.push.apple.com/fixture', p256dh: 'key', auth: 'auth' }] : []) :
+                table === 'push_devices' ? (scenario.native ? [{ id: 'native' }] : []) : null
+              return Promise.resolve({ data }).then(resolve)
+            },
+          }
+          return builder
+        },
+        functions: { invoke: async (name, input) => {
+          nativeRequests.push({ name, input })
+          return { data: { sent: scenario.failed ? 0 : 1, failed: scenario.failed ? 1 : 0 } }
+        } },
+      }
+      const route = load('app/api/web-push/send/route.ts', {
+        'next/server': { NextResponse: { json: (body, options) => ({ body, status: options?.status || 200 }) } },
+        '@/lib/serverAuth': { serverClient: () => client, validCronAuthorization: () => true },
+        'web-push': { default: { sendNotification: async () => { webRequests++ }, WebPushError: class extends Error {} } },
+      })
+      const response = await route.POST(new Request('https://aksuite.app/api/web-push/send', { method: 'POST' }))
+      assert.equal(response.body.delivered, scenario.delivered)
+      assert.equal(response.status, scenario.failed ? 502 : 200)
+      assert.equal(webRequests, scenario.web ? 1 : 0)
+      assert.equal(nativeRequests.length, scenario.native ? 1 : 0)
+      if (scenario.native) {
+        assert.equal(nativeRequests[0].name, 'send-push')
+        assert.equal(nativeRequests[0].input.body.data.category, 'EVENT_CONFIRMATION')
+        assert.equal(nativeRequests[0].input.body.data.destination, 'calendar-confirmation')
+      }
+      assert.equal(mutations.some(value => value.sent_at), !scenario.failed)
+    }
+  } finally {
+    envNames.forEach((name, index) => {
+      if (previous[index] === undefined) delete process.env[name]
+      else process.env[name] = previous[index]
+    })
+  }
+})
 test('web APIs, PWA launches and notification/OAuth responses stay on origin for Apple browser agents', () => {
   const { middleware } = load('middleware.ts', { 'next/server': { NextResponse: { next: () => 'next', redirect: () => 'redirect' } } })
   const request = (path, agent) => ({ headers: new Headers({ 'user-agent': agent }), nextUrl: { clone: () => new URL(`https://aksuite.app${path}`) }, url: `https://aksuite.app${path}` })

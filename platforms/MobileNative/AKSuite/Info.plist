@@ -22,6 +22,10 @@
 	<string>1</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>AK Suite usa Face ID per sbloccare in modo sicuro le tue password.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AK Suite usa il microfono solo quando avvii la dettatura.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>AK Suite trascrive la voce in italiano quando avvii la dettatura.</string>
 	<key>SUPABASE_ANON_KEY</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>

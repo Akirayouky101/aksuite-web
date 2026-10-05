@@ -94,6 +94,7 @@ struct DashboardView: View {
     let onOpenWorkItems: () -> Void
     let onOpenTodos: () -> Void
     let onOpenShopping: () -> Void
+    var onOpenPhotos: () -> Void = {}
     @State private var notes: [DashboardNote] = []
     @State private var counts = DashboardCounts()
     @State private var agenda: [AgendaItem] = []
@@ -262,6 +263,10 @@ struct DashboardView: View {
 
     private var shortcuts: some View {
         LazyVGrid(columns: columns, spacing: 14) {
+            Button(action: onOpenPhotos) {
+                Label("Galleria foto", systemImage: "photo.on.rectangle").font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 110).background(Color(hex: "#fff8ed")).clipShape(RoundedRectangle(cornerRadius: 20))
+            }
             DashboardShortcut(title: "Chiamate", count: counts.calls, icon: "phone.fill", fill: "#ff765f", ink: "#a9322b", action: onOpenCalls)
             DashboardShortcut(title: "Calendario", count: counts.events, icon: "calendar", fill: "#f7c948", ink: "#785b00", action: onOpenCalendar)
             DashboardShortcut(title: "Note", count: counts.notes, icon: "note.text", fill: "#8ed8c3", ink: "#176653", action: onOpenNotes)
@@ -347,7 +352,7 @@ struct DashboardView: View {
     }
 
     private func fetchEvents() async -> [DashboardEvent] {
-        (try? await SupabaseService.shared.from("events").select().order("start_date", ascending: true).execute().value) ?? []
+        (try? await SupabaseService.shared.from("events").select().eq("is_completed", value: false).is("archived_at", value: nil).order("start_date", ascending: true).execute().value) ?? []
     }
 
     private func fetchWorkItems() async -> [DashboardWorkItem] {
@@ -355,12 +360,16 @@ struct DashboardView: View {
     }
 
     private func workCount(kind: String) async -> Int {
-        let resources: [ResourceID] = (try? await SupabaseService.shared.from("work_items").select("id").eq("kind", value: kind).execute().value) ?? []
+        var query = SupabaseService.shared.from("work_items").select("id").eq("kind", value: kind)
+        if kind == "todo" { query = query.neq("status", value: "completed").is("archived_at", value: nil) }
+        let resources: [ResourceID] = (try? await query.execute().value) ?? []
         return resources.count
     }
 
     private func resourceCount(_ table: String) async -> Int {
-        let resources: [ResourceID] = (try? await SupabaseService.shared.from(table).select("id").execute().value) ?? []
+        var query = SupabaseService.shared.from(table).select("id")
+        if table == "events" { query = query.eq("is_completed", value: false).is("archived_at", value: nil) }
+        let resources: [ResourceID] = (try? await query.execute().value) ?? []
         return resources.count
     }
 

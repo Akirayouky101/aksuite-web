@@ -138,8 +138,8 @@ rm /tmp/aksuite-shopping-tests
 ### Web calendar, task history and photos
 
 Apply the four additive migrations `20261005020000` through `20261005050000`
-before deploying the new web version. Native app sources are unchanged in
-this batch. Existing native status strings remain valid.
+before deploying the web version. The iPhone/iPad app now uses the same
+lifecycle and photo schema. Existing native status strings remain valid.
 
 Calendar events now have completion timestamps and an archive timestamp.
 Completing cancels their pre-event reminders and end-event confirmation
@@ -160,6 +160,51 @@ completed at least seven days ago. Work items are not automatically archived.
 Existing completed tasks use their previous `updated_at` as the best
 available estimate of completion time. The original status is preserved.
 Archives can be restored to pending; nothing is automatically deleted.
+
+### Native iPhone/iPad enhancements
+
+Regenerate the Xcode project with XcodeGen after pulling. The universal
+iOS target includes event completion/restoration/rescheduling, pending-only
+calendar and task queries, five-item on-demand history with title/date
+filters, explicit global database/history search, and private photo galleries
+for notes, work items, saved checklist entries/subtasks and the dashboard.
+PhotosPicker converts selected images to JPEG and enforces the existing
+10 MB storage limit. Unsaved entries must be saved before attaching photos.
+
+User-triggered Italian dictation uses Apple's Speech framework, with explicit
+microphone/speech permission messages and cleanup when the editor closes.
+Microphone and speech usage descriptions are generated from `project.yml`.
+Real audio recognition still requires a device test.
+
+Calendar settings reuse the existing authenticated web APIs and the selected
+Google connection. Initial Google consent/renewal opens the protected web
+application in the system browser: sign into the same AK Suite account,
+authorize from Calendar settings and return to refresh the native connection.
+Selection, date cutoff, sync, conflict choices and disconnection are native.
+No Google client secret or encryption key is included in the app.
+
+Apply `20261005060000_native_event_confirmations.sql` before releasing the
+updated iOS app and deploy the updated `send-push` Edge Function and web
+confirmation worker. New native devices opt into `event_confirmations`;
+existing registrations default to false so older app versions do not receive
+unknown confirmation destinations. The same scheduler delivers Web Push and
+APNs, retrying failures. APNs category `EVENT_CONFIRMATION` offers authenticated
+foreground Yes/No actions: Yes completes after sign-in, No opens the date/time
+editor, and a body tap opens the confirmation summary. Signing out removes
+the device registration. APNs credentials, environment, signing/provisioning
+and actual iPhone/iPad receipt must be validated on physical devices.
+
+Native lifecycle regression checks (on macOS):
+
+```bash
+swiftc platforms/MobileNative/AKSuite/Core/Networking/NativeLifecycle.swift \
+  tests/NativeLifecycleTests.swift -o /tmp/aksuite-lifecycle-tests
+/tmp/aksuite-lifecycle-tests
+```
+
+The Xcode project still targets iOS only. A future Mac Catalyst port can
+reuse much of this app but requires separate compatibility, signing,
+notification and desktop-UX validation; it is not enabled by this release.
 Reopened/deleted events are removed from the currently displayed history
 without an extra archive query, preserving text/date filters. An explicit
 new search can load an event again if it was subsequently completed again.
@@ -184,8 +229,9 @@ may process audio remotely; do not dictate passwords or sensitive data.
 
 ### Closed-page Web Push
 
-The native APNs functions below remain separate and unchanged. Web
-confirmation delivery uses `/api/web-push/send`, not an open-tab timer.
+Confirmation delivery uses `/api/web-push/send`, not an open-tab timer.
+The worker also invokes the native APNs sender for opted-in iPhone/iPad
+registrations; existing pre-event native reminder functions remain separate.
 Configure server-only variables in Vercel Production:
 
 - `WEB_PUSH_PUBLIC_KEY` and `WEB_PUSH_PRIVATE_KEY`: generate a VAPID pair
@@ -211,7 +257,8 @@ use `https://aksuite.app/?web=1` to install the primary web version rather
 than the legacy mobile/tablet redirect. The PWA launch URL and notification/
 OAuth response links stay on this origin, as do API/service-worker resources.
 Normal browser root navigation retains the existing device redirects;
-native apps and legacy mobile/tablet deployments are not updated by this batch.
+legacy mobile/tablet web deployments retain their existing behavior. Native
+app updates require a separate signed installation/build.
 The browser may omit notification action buttons. Clicking the body opens
 the same authenticated response screen. `Sì` completes only after sign-in;
 `No` opens an editor where the user chooses the new date/time. Subscription

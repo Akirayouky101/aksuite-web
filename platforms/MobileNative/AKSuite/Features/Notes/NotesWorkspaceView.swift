@@ -281,6 +281,7 @@ private struct NoteSummaryView: View {
 
                         Label("Aggiornata \(formattedDate)", systemImage: "clock")
                             .font(.caption).foregroundStyle(Color(hex: "#8a7f9f"))
+                        NativePhotoGallery(noteID: note.id)
 
                         Button(action: onEdit) {
                             Label("Modifica nota", systemImage: "pencil")
@@ -342,6 +343,7 @@ private struct NoteEditorView: View {
                         VStack(alignment: .leading, spacing: 17) {
                             field("Titolo *") { TextField("Inserisci il titolo della nota...", text: $title) }
                             field("Contenuto") { TextField("Scrivi qui il contenuto della nota...", text: $content, axis: .vertical).lineLimit(7...10) }
+                            NativeDictationButton(text: $content)
                             HStack(alignment: .top, spacing: 12) {
                                 VStack(alignment: .leading, spacing: 7) { label("Cartella", icon: "folder"); Picker("", selection: $folder) { ForEach(folders, id: \.self) { Text($0.capitalized).tag($0) } }.labelsHidden().pickerStyle(.menu).noteControlStyle() }
                                 VStack(alignment: .leading, spacing: 7) { label("In evidenza", icon: "pin"); Toggle("Fissata", isOn: $isPinned).tint(Color(hex: "#e45f4e")).frame(height: 42) }
@@ -364,7 +366,8 @@ private struct NoteEditorView: View {
                                 if hasReminder { Picker("Ripetizione", selection: $recurrenceType) { Text("Non ripetere").tag(""); Text("Ogni giorno").tag("daily"); Text("Ogni settimana").tag("weekly"); Text("Ogni mese").tag("monthly"); Text("Ogni anno").tag("yearly") }.pickerStyle(.menu) }
                             }
                             field("Tag separati da virgola", icon: "tag") { TextField("Lavoro, urgente, idee", text: $tagsText) }
-                            if let note { attachmentSection(note) }
+                            if let note { attachmentSection(note); NativePhotoGallery(noteID: note.id) }
+                            else { Text("Salva la nota per aggiungere foto.").font(.caption) }
                             if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
                         }.padding(20)
                     }

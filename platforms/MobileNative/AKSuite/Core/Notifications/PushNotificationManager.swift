@@ -7,14 +7,22 @@ enum PushDestination: Equatable {
     case note(UUID)
     case payment(UUID)
     case calendar(UUID)
+    case calendarConfirmation(UUID, String)
 }
 
 @MainActor
 final class PushNotificationManager: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, ObservableObject {
     static weak var shared: PushNotificationManager?
     @Published var pendingDestination: PushDestination?
+    @Published var errorMessage: String?
     private var pendingDeviceToken: String?
     private var registeredUserID: UUID?
+    private struct Device: Encodable {
+        let user_id: UUID
+        let device_token: String
+        let platform = "ios"
+        let event_confirmations = true
+    }
 
     override init() {
         super.init()
@@ -27,6 +35,13 @@ final class PushNotificationManager: NSObject, UIApplicationDelegate, UNUserNoti
     ) -> Bool {
         let center = UNUserNotificationCenter.current()
         center.delegate = self
+        center.setNotificationCategories([UNNotificationCategory(
+            identifier: "EVENT_CONFIRMATION",
+            actions: [
+                UNNotificationAction(identifier: "complete", title: "Sì, completato", options: [.foreground, .authenticationRequired]),
+                UNNotificationAction(identifier: "reschedule", title: "No, riprogramma", options: [.foreground, .authenticationRequired]),
+            ], intentIdentifiers: []
+        )])
         UIApplication.shared.applicationIconBadgeNumber = 0
         return true
     }
@@ -38,10 +53,12 @@ final class PushNotificationManager: NSObject, UIApplicationDelegate, UNUserNoti
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         print("APNs registration failed: \(error.localizedDescription)")
+        errorMessage = "Registrazione notifiche non riuscita: \(error.localizedDescription)"
     }
 
     func registerDevice(for userID: UUID) async {
         registeredUserID = userID
+        errorMessage = nil
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
 
@@ -53,11 +70,13 @@ final class PushNotificationManager: NSObject, UIApplicationDelegate, UNUserNoti
                 if granted { UIApplication.shared.registerForRemoteNotifications() }
             } catch {
                 print("Push permission request failed: \(error.localizedDescription)")
+                errorMessage = "Richiesta permesso notifiche non riuscita."
             }
         case .authorized, .provisional, .ephemeral:
             UIApplication.shared.registerForRemoteNotifications()
         case .denied:
             print("Push permission denied. Enable notifications in iOS Settings.")
+            errorMessage = "Permesso notifiche negato. Abilitalo nelle Impostazioni."
         @unknown default:
             break
         }
@@ -128,6 +147,7 @@ final class PushNotificationManager: NSObject, UIApplicationDelegate, UNUserNoti
         case "note": pendingDestination = .note(id)
         case "payment": pendingDestination = .payment(id)
         case "calendar": pendingDestination = .calendar(id)
+        case "calendar-confirmation": pendingDestination = .calendarConfirmation(id, response.actionIdentifier)
         default: break
         }
     }
@@ -137,14 +157,22 @@ final class PushNotificationManager: NSObject, UIApplicationDelegate, UNUserNoti
         do {
             try await SupabaseService.shared
                 .from("push_devices")
-                .upsert([
-                    "user_id": userID.uuidString,
-                    "device_token": deviceToken,
-                    "platform": "ios"
-                ], onConflict: "user_id,device_token")
+                .upsert(Device(user_id: userID, device_token: deviceToken), onConflict: "user_id,device_token")
                 .execute()
         } catch {
             print("Unable to save APNs device token: \(error.localizedDescription)")
+            errorMessage = "Impossibile registrare il dispositivo sul server. Riprova."
         }
+
+    }
+
+    func unregisterDevice() async throws {
+        if let userID = registeredUserID, let token = pendingDeviceToken {
+            try await SupabaseService.shared.from("push_devices").delete()
+                .eq("user_id", value: userID.uuidString).eq("device_token", value: token).execute()
+        }
+        registeredUserID = nil
+        pendingDestination = nil
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
     }
 }
