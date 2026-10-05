@@ -11,6 +11,9 @@ import { Event } from '../hooks/useEvents'
 import { Client } from '../hooks/useClients'
 import { WorkItem } from '../hooks/useWorkItems'
 import EventDetailModal from './EventDetailModal'
+import HistoryBrowser from './HistoryBrowser'
+import WebPushSettings from './WebPushSettings'
+import GoogleCalendarSettings from './GoogleCalendarSettings'
 
 interface CalendarTask {
   id: string
@@ -21,6 +24,7 @@ interface CalendarTask {
 }
 
 interface CalendarViewProps {
+  initialSettings?: boolean
   isOpen: boolean
   onClose: () => void
   events: Event[]
@@ -70,13 +74,15 @@ const USER_COLORS = ['blue', 'green', 'red', 'purple', 'orange', 'pink', 'yellow
 
 export default function CalendarView({
   isOpen, onClose, events, clients = [], workItems = [], tasks = [], onDelete, onEdit, onAdd, onScheduleFollowUp,
-  isAdmin = false, currentUserId, managedUsers = []
+  isAdmin = false, currentUserId, managedUsers = [], initialSettings = false
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [filterUserId, setFilterUserId] = useState<string>('all')
   const [onlyWithoutReminder, setOnlyWithoutReminder] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [history, setHistory] = useState<'pending' | 'completed' | 'archived'>('pending')
+  const [settings, setSettings] = useState(initialSettings)
 
   const currentYear = currentDate.getFullYear()
   const currentMonth = currentDate.getMonth()
@@ -265,6 +271,13 @@ export default function CalendarView({
           </div>
 
           {/* BODY */}
+          <div className="flex flex-wrap gap-2 border-b p-3">
+            <button onClick={() => setSettings(current => !current)} className="rounded-xl border px-3 py-2 text-sm font-bold">Impostazioni calendario</button>
+            {(['pending', 'completed', 'archived'] as const).map(value => <button key={value} aria-pressed={history === value} onClick={() => setHistory(value)} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === value ? 'bg-[#d9e8d9]' : 'bg-slate-100'}`}>{value === 'pending' ? 'Da fare' : value === 'completed' ? 'Eseguite' : 'Archiviate'}</button>)}
+          </div>
+          {settings && <div className="max-h-[40vh] overflow-y-auto px-5"><WebPushSettings /><GoogleCalendarSettings /></div>}
+          {history !== 'pending' && <div className="min-h-0 flex-1 overflow-y-auto p-5"><HistoryBrowser key={history} kind="event" state={history} onOpen={setSelectedEvent} /></div>}
+          {history === 'pending' &&
           <div className="flex-1 overflow-hidden flex min-h-0">
 
             {/* GRIGLIA */}
@@ -449,6 +462,7 @@ export default function CalendarView({
             </div>
           </div>
 
+          }
           {selectedEvent && <EventDetailModal
             event={selectedEvent}
             clientName={clients.find(client => client.id === selectedEvent.client_id)?.name}

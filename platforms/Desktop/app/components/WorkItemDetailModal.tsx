@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { checklistProgress, materialsCoverage, WorkItem } from '../hooks/useWorkItems'
 import { Event } from '../hooks/useEvents'
 import EventDetailModal from './EventDetailModal'
+import PhotoGallery from './PhotoGallery'
 
 interface WorkItemDetailModalProps {
   item: WorkItem
@@ -14,12 +15,13 @@ interface WorkItemDetailModalProps {
   onEdit: () => void
   onOpenList: (kind: 'checklist' | 'materials') => void
   onScheduleFollowUp: (event: Event) => void
+  onRescheduleEvent?: (event: Event) => void
 }
 
 const statusLabel = { planned: 'Da pianificare', in_progress: 'In corso', waiting: 'In attesa', completed: 'Completata' }
 const priorityLabel = { low: 'Bassa', normal: 'Normale', high: 'Alta' }
 
-export default function WorkItemDetailModal({ item, events, clientName, onClose, onEdit, onOpenList, onScheduleFollowUp }: WorkItemDetailModalProps) {
+export default function WorkItemDetailModal({ item, events, clientName, onClose, onEdit, onOpenList, onScheduleFollowUp, onRescheduleEvent }: WorkItemDetailModalProps) {
   const isTodo = item.kind === 'todo'
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState('')
@@ -116,12 +118,13 @@ export default function WorkItemDetailModal({ item, events, clientName, onClose,
           })}
         </ol> : <p className="mt-3 text-sm text-[#716a91]">Nessun intervento nel calendario per questa lavorazione.</p>}
       </section>}
+      <PhotoGallery scope={{ workItemId: item.id }} />
       {exportError && <p role="alert" className="mt-4 text-sm text-[#a83d35]">{exportError}</p>}
       <div className="mt-5 flex flex-wrap gap-2">
         {!isTodo && <button onClick={() => void exportPdf()} disabled={exporting || !preparedPdf} className="flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-lg bg-[#257259] px-3 py-3 text-sm font-bold text-white disabled:opacity-50"><FileDown className="h-4 w-4" />{preparedPdf ? 'Esporta e condividi PDF' : 'Preparazione PDF...'}</button>}
         <button onClick={onEdit} className="flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-lg bg-[#2d2754] px-3 py-3 text-sm font-bold text-white"><Pencil className="h-4 w-4" />{isTodo ? 'Modifica attività' : 'Modifica lavorazione'}</button>
       </div>
-      {selectedIntervention && <EventDetailModal event={selectedIntervention} clientName={clientName} workItemName={item.title} onClose={() => setInterventionId(null)} onScheduleFollowUp={onScheduleFollowUp} />}
+      {selectedIntervention &&       <EventDetailModal onReschedule={onRescheduleEvent} event={selectedIntervention} clientName={clientName} workItemName={item.title} onClose={() => setInterventionId(null)} onScheduleFollowUp={onScheduleFollowUp} />}
     </div>
   </div>
 }

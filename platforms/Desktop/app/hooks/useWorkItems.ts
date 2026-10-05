@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
@@ -80,6 +80,8 @@ export interface WorkItem {
   materials: ChecklistEntry[]
   created_at: string
   updated_at: string
+  completed_at?: string | null
+  archived_at?: string | null
 }
 
 export type WorkItemInput = Omit<WorkItem, 'id' | 'user_id' | 'created_at' | 'updated_at'>
@@ -89,6 +91,8 @@ export function useWorkItems() {
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const { user } = useAuth()
+  const owner = useRef(user?.id)
+  owner.current = user?.id
 
   useEffect(() => {
     let mounted = true
@@ -99,13 +103,17 @@ export function useWorkItems() {
     }
 
     const loadWorkItems = async () => {
+      setWorkItems([])
       setLoading(true)
       try {
         const { data, error } = await supabase
           .from('work_items')
           .select('*')
+          .is('archived_at', null)
+          .or('kind.eq.work,status.neq.completed')
           .order('updated_at', { ascending: false })
         if (error) throw error
+        if (owner.current !== user.id) return
         if (mounted) {
           setWorkItems(data || [])
           setErrorMessage(null)
@@ -131,11 +139,13 @@ export function useWorkItems() {
       .select()
       .single()
     if (error) throw error
-    setWorkItems(current => [data, ...current])
+    if (owner.current !== user.id) throw new Error('Sessione cambiata. Accedi nuovamente.')
+    if (data.kind !== 'todo' || data.status !== 'completed') setWorkItems(current => [data, ...current])
     return data as WorkItem
   }
 
   const updateWorkItem = async (id: string, updates: Partial<WorkItemInput>) => {
+    if (!user) throw new Error('Accedi per modificare una lavorazione.')
     const previous = workItems.find(item => item.id === id)
     const changes = previous && (updates.checklist || updates.materials)
       ? { ...updates, materials: synchronizeMaterialUsage(updates.materials || previous.materials, updates.checklist || previous.checklist, previous.checklist) }
@@ -147,15 +157,21 @@ export function useWorkItems() {
       .select()
       .single()
     if (error) throw error
-    setWorkItems(current => current.map(item => item.id === id ? data : item))
+    if (owner.current !== user.id) throw new Error('Sessione cambiata. Accedi nuovamente.')
+    setWorkItems(current => {
+      const remaining = current.filter(item => item.id !== id)
+      return data.archived_at || (data.kind === 'todo' && data.status === 'completed') ? remaining : [data, ...remaining]
+    })
     return data as WorkItem
   }
 
   const deleteWorkItem = async (id: string) => {
+    if (!user) throw new Error('Accedi per eliminare una lavorazione.')
     const { error } = await supabase.from('work_items').delete().eq('id', id)
     if (error) throw error
+    if (owner.current !== user.id) throw new Error('Sessione cambiata. Accedi nuovamente.')
     setWorkItems(current => current.filter(item => item.id !== id))
   }
 
-  return { workItems, loading, errorMessage, addWorkItem, updateWorkItem, deleteWorkItem }
+  return { workItems: workItems.filter(item => item.user_id === user?.id), loading, errorMessage, addWorkItem, updateWorkItem, deleteWorkItem }
 }

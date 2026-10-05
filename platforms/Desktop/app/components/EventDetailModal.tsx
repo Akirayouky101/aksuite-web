@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CalendarDays, Clock3, Briefcase, Building2, MapPin, Pencil, PhoneCall, Repeat2, Trash2, User, Users, X } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
+import EventCompletionActions from './EventCompletionActions'
 
 interface EventDetailModalProps {
   event: Event
@@ -11,11 +12,12 @@ interface EventDetailModalProps {
   workItemName?: string
   onClose: () => void
   onEdit?: (event: Event) => void
+  onReschedule?: (event: Event) => void
   onDelete?: (id: string) => void
   onScheduleFollowUp?: (event: Event) => void
 }
 
-export default function EventDetailModal({ event, clientName, workItemName, onClose, onEdit, onDelete, onScheduleFollowUp }: EventDetailModalProps) {
+export default function EventDetailModal({ event, clientName, workItemName, onClose, onEdit, onReschedule, onDelete, onScheduleFollowUp }: EventDetailModalProps) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const date = new Date(event.start_date)
   const endDate = event.end_date ? new Date(event.end_date) : null
@@ -29,6 +31,7 @@ export default function EventDetailModal({ event, clientName, workItemName, onCl
         <button onClick={onClose} title="Chiudi" className="shrink-0 rounded-lg p-2 text-[#716a91] hover:bg-[#f5dfca]"><X className="h-4 w-4" /></button>
       </header>
       <div className="space-y-5 px-5 py-5 sm:px-6">
+        <EventCompletionActions event={event} onDone={onClose} onReschedule={onReschedule || onEdit ? () => (onReschedule || onEdit)?.(event) : undefined} />
         <div className="flex gap-3"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-[#257259]" /><div><p className="text-xs font-bold text-[#716a91]">DATA</p><p className="mt-1 text-sm font-bold capitalize text-[#2d2754]">{startLabel}</p></div></div>
         <div className="flex gap-3"><Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[#257259]" /><div><p className="text-xs font-bold text-[#716a91]">ORARIO</p><p className="mt-1 text-sm text-[#2d2754]">{timeLabel}</p></div></div>
         {event.location && <div className="flex gap-3"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#257259]" /><div><p className="text-xs font-bold text-[#716a91]">LUOGO</p><a href={`https://maps.apple.com/?q=${encodeURIComponent(event.location)}`} target="_blank" rel="noreferrer" className="mt-1 inline-flex break-words text-sm font-semibold text-[#257259] underline">{event.location} · Apri in Mappe</a></div></div>}

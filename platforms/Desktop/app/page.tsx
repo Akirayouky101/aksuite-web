@@ -51,12 +51,14 @@ const ShoppingWorkspace = dynamic(() => import('./components/ShoppingWorkspace')
 })
 
 const emptyRelations = { passwords: [], calls: [], notes: [], events: [] }
+const PhotoGallery = dynamic(() => import('./components/PhotoGallery'))
+const EventResponsePrompt = dynamic(() => import('./components/EventResponsePrompt'))
 
 export default function Home() {
   const { passwords, categories, addPassword, addCategory, updateCategory, deleteCategory, updatePassword, deletePassword, user } = usePasswords()
   const { calls, addCall, updateCall, deleteCall, updateCallStatus } = useCalls()
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
-  const { events, addEvent, updateEvent, deleteEvent } = useEvents()
+  const { events, addEvent, updateEvent, deleteEvent, errorMessage: eventsError } = useEvents()
   const { clients, addClient, updateClient, deleteClient, toggleFavorite } = useClients()
   const { payments, addPayment, updatePayment, deletePayment } = usePayments()
   const { workItems, loading: workItemsLoading, errorMessage: workItemsError, addWorkItem, updateWorkItem, deleteWorkItem } = useWorkItems()
@@ -80,9 +82,22 @@ export default function Home() {
   const [returnClientId, setReturnClientId] = useState<string | null>(null)
   const [selectedAgendaItem, setSelectedAgendaItem] = useState<AgendaItem | null>(null)
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false)
+  const [calendarSettingsOpen, setCalendarSettingsOpen] = useState(false)
+  const [integrationNotice, setIntegrationNotice] = useState('')
   const [selectedSearchResult, setSelectedSearchResult] = useState<{ type: string; item: any } | null>(null)
   const { requestPermission } = useDesktopReminders(events, notes, payments, calls)
   usePwa()
+  useEffect(() => {
+    if (!user) return
+    const url = new URL(window.location.href)
+    const result = url.searchParams.get('google-calendar')
+    if (!result) return
+    setIntegrationNotice(result === 'connected' ? 'Account Google collegato. Scegli il calendario nelle impostazioni.' : 'Collegamento Google non riuscito o annullato. Riprova dalle impostazioni calendario.')
+    setCalendarSettingsOpen(true); setSection('calendar'); setModal('calendar')
+    url.searchParams.delete('google-calendar')
+    url.searchParams.set('web', '1')
+    window.history.replaceState(null, '', url)
+  }, [user?.id])
   useEffect(() => { if (section !== 'payments') { setPaymentView('overview'); setSelectedPaymentId(null) } }, [section])
 
   const open = (name: string, item: any = null) => { setEditing(item); setModal(name) }
@@ -110,6 +125,7 @@ export default function Home() {
     if (appointmentClientId) setReturnClientId(appointmentClientId)
     setEditing(null)
     setModal(null)
+    setCalendarSettingsOpen(false)
     setAppointmentClientId(null)
     setFollowUpClient(null)
     setFollowUpDate('')
@@ -149,6 +165,7 @@ export default function Home() {
     return !Number.isNaN(date.getTime()) && date >= todayStart && date <= todayEnd
   }
   const isPendingEvent = (event: typeof events[number]) => {
+    if (event.is_completed || event.archived_at) return false
     const start = new Date(event.start_date)
     if (Number.isNaN(start.getTime())) return false
     if (event.all_day) return start >= todayStart
@@ -169,6 +186,7 @@ export default function Home() {
     ['calls', 'Chiamate', Phone, openCalls.length, 'bg-[#ff765f]', 'text-[#a9322b]'],
     ['calendar', 'Calendario', Calendar, events.filter(isPendingEvent).length, 'bg-[#f7c948]', 'text-[#785b00]'],
     ['notes', 'Note', StickyNote, notes.length, 'bg-[#8ed8c3]', 'text-[#176653]'],
+    ['photos', 'Galleria foto', LayoutGrid, null, 'bg-[#d9e8d9]', 'text-[#257259]'],
     ['passwords', 'Password', KeyRound, passwords.length, 'bg-[#9d8cff]', 'text-[#4b3ba5]'],
     ['clients', 'Rubrica', Users, clients.length, 'bg-[#76a9f7]', 'text-[#174a9b]'],
     ['work_items', 'Lavorazioni', Briefcase, openWorkItems.length, 'bg-[#d9e8d9]', 'text-[#257259]'],
@@ -219,10 +237,13 @@ export default function Home() {
             ))}
           </nav>
         </header>
-        {section === 'today' && <><section className="ak-hero mb-5 grid gap-6 overflow-hidden rounded-[2rem] p-6 sm:p-9 lg:grid-cols-[1.4fr_0.6fr] lg:p-12"><div className="relative z-10"><p className="text-sm font-bold capitalize text-[#716a91]">{todayLabel}</p><h1 className="mt-3 max-w-2xl text-5xl font-black leading-[0.95] tracking-[-0.04em] text-[#2d2754] sm:text-7xl">Buongiorno,<br /><span className="text-[#e45f4e]">facciamo ordine.</span></h1><p className="mt-6 max-w-lg text-base leading-7 text-[#514b70]">Il tuo centro operativo per le cose che contano davvero oggi.</p><button onClick={() => open(openNew)} className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-[#2d2754] px-5 py-3.5 font-bold text-[#fff6df] shadow-lg shadow-[#2d2754]/20 transition hover:-translate-y-1"><Plus className="h-4 w-4" />Aggiungi qualcosa</button></div><NotesStickyWidget notes={notes} onOpenNote={(note) => open('note', note)} onAddNote={() => open('note')} /></section><section className="grid gap-5 lg:grid-cols-[1.5fr_0.8fr]"><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.filter(([id]) => id !== 'today').map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { if (id === 'work_items' || id === 'todos') navigateToSection(id); else { setSection(id); if (id === 'payments') close(); else open(id === 'calls' ? 'calls' : id === 'calendar' ? 'calendar' : id === 'notes' ? 'notes' : id === 'passwords' ? 'passwords' : id === 'clients' ? 'clients' : 'users') } }} className="ak-bento group text-left"><div className={`mb-7 flex h-12 w-12 items-center justify-center rounded-2xl ${tint} ${ink}`}><Icon className="h-5 w-5" /></div><div className="flex items-end justify-between"><div><p className="text-4xl font-black text-[#2d2754]">{count}</p><p className="mt-1 font-bold text-[#716a91]">{label}</p></div><ArrowUpRight className="h-5 w-5 text-[#a99dbb] transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#e45f4e]" /></div></button>)}</div><DashboardDesk calls={calls} events={events} payments={payments} onOpenAgendaItem={setSelectedAgendaItem} /></section></>}
+        {section === 'today' && <><section className="ak-hero mb-5 grid gap-6 overflow-hidden rounded-[2rem] p-6 sm:p-9 lg:grid-cols-[1.4fr_0.6fr] lg:p-12"><div className="relative z-10"><p className="text-sm font-bold capitalize text-[#716a91]">{todayLabel}</p><h1 className="mt-3 max-w-2xl text-5xl font-black leading-[0.95] tracking-[-0.04em] text-[#2d2754] sm:text-7xl">Buongiorno,<br /><span className="text-[#e45f4e]">facciamo ordine.</span></h1><p className="mt-6 max-w-lg text-base leading-7 text-[#514b70]">Il tuo centro operativo per le cose che contano davvero oggi.</p><button onClick={() => open(openNew)} className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-[#2d2754] px-5 py-3.5 font-bold text-[#fff6df] shadow-lg shadow-[#2d2754]/20 transition hover:-translate-y-1"><Plus className="h-4 w-4" />Aggiungi qualcosa</button></div><NotesStickyWidget notes={notes} onOpenNote={(note) => open('note', note)} onAddNote={() => open('note')} /></section><section className="grid gap-5 lg:grid-cols-[1.5fr_0.8fr]"><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.filter(([id]) => id !== 'today').map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { if (id === 'work_items' || id === 'todos' || id === 'photos') navigateToSection(id); else { setSection(id); if (id === 'payments') close(); else open(id === 'calls' ? 'calls' : id === 'calendar' ? 'calendar' : id === 'notes' ? 'notes' : id === 'passwords' ? 'passwords' : id === 'clients' ? 'clients' : 'users') } }} className="ak-bento group text-left"><div className={`mb-7 flex h-12 w-12 items-center justify-center rounded-2xl ${tint} ${ink}`}><Icon className="h-5 w-5" /></div><div className="flex items-end justify-between"><div><p className="text-4xl font-black text-[#2d2754]">{count ?? '—'}</p><p className="mt-1 font-bold text-[#716a91]">{label}</p></div><ArrowUpRight className="h-5 w-5 text-[#a99dbb] transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#e45f4e]" /></div></button>)}</div><DashboardDesk calls={calls} events={events} payments={payments} onOpenAgendaItem={setSelectedAgendaItem} /></section></>}
+        {eventsError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{eventsError}</p>}
+        {integrationNotice && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm">{integrationNotice}<button className="ml-3 underline" onClick={() => setIntegrationNotice('')}>Chiudi</button></p>}
+        {section === 'photos' && <PhotoGallery key={user?.id || 'guest'} scope={{ general: true }} />}
         {section === 'calls' && <CallsWorkspace calls={calls} onNew={() => open('call')} onEdit={(call) => open('call', call)} onDetail={setSelectedCall} onDelete={deleteCall} onStatusChange={updateCallStatus} />}
-        {section === 'work_items' && <WorkItemsWorkspace workItems={workItems} events={events} clients={clients} loading={workItemsLoading} errorMessage={workItemsError} clientScopeId={workClientId} onBackToClients={() => { setReturnClientId(workClientId); setWorkClientId(null); setSection('clients') }} onNew={() => open('work_item')} onEdit={item => open('work_item', item)} onUpdate={updateWorkItem} onDelete={deleteWorkItem} onScheduleFollowUp={scheduleEventFollowUp} />}
-        {section === 'todos' && <WorkItemsWorkspace mode="todo" workItems={workItems} events={events} clients={clients} loading={workItemsLoading} errorMessage={workItemsError} clientScopeId={todoClientId} onBackToClients={() => { setReturnClientId(todoClientId); setTodoClientId(null); setSection('clients') }} onNew={() => open('todo')} onEdit={item => open('todo', item)} onUpdate={updateWorkItem} onDelete={deleteWorkItem} onScheduleFollowUp={scheduleEventFollowUp} />}
+        {section === 'work_items' &&                 <WorkItemsWorkspace onRescheduleEvent={event => open('event', event)} key={`${user?.id || 'guest'}-work`} workItems={workItems} events={events} clients={clients} loading={workItemsLoading} errorMessage={workItemsError} clientScopeId={workClientId} onBackToClients={() => { setReturnClientId(workClientId); setWorkClientId(null); setSection('clients') }} onNew={() => open('work_item')} onEdit={item => open('work_item', item)} onUpdate={updateWorkItem} onDelete={deleteWorkItem} onScheduleFollowUp={scheduleEventFollowUp} />}
+        {section === 'todos' &&                 <WorkItemsWorkspace onRescheduleEvent={event => open('event', event)} key={`${user?.id || 'guest'}-todo`} mode="todo" workItems={workItems} events={events} clients={clients} loading={workItemsLoading} errorMessage={workItemsError} clientScopeId={todoClientId} onBackToClients={() => { setReturnClientId(todoClientId); setTodoClientId(null); setSection('clients') }} onNew={() => open('todo')} onEdit={item => open('todo', item)} onUpdate={updateWorkItem} onDelete={deleteWorkItem} onScheduleFollowUp={scheduleEventFollowUp} />}
         {section === 'shopping' && <ShoppingWorkspace key={user.id} data={shopping} />}
         {section === 'today' && <TodayWorkspace calls={calls} events={events} notes={notes} payments={payments} workItems={workItems.filter(item => item.kind !== 'todo')} clients={clients} onOpen={(type, item) => { if (type === 'call') setSelectedCall(item); else if (type === 'event') open('event', item); else if (type === 'note') open('note', item); else if (type === 'work_item') { setSection('work_items'); open('work_item', item) } else { setSection('payments'); setSelectedPaymentId(item.id); setPaymentView('practice') } }} />}
         {section === 'passwords' && <PasswordsWorkspace passwords={passwords} categories={categories} onCreateCategory={addCategory} onUpdateCategory={updateCategory} onDeleteCategory={deleteCategory} onNew={() => open('password')} onEdit={(password) => open('password', password)} onDetail={setSelectedPassword} onDelete={deletePassword} />}
@@ -236,8 +257,8 @@ export default function Home() {
       {modal === 'call' && <CallModal isOpen onClose={close} onSave={async (data) => { if (editing) await updateCall(editing.id, data); else await addCall(data); close() }} editCall={editing} clients={clients} initialClient={followUpClient} defaultFollowUpDate={followUpDate} initialFollowUpNote={followUpNote} onAddClient={addClient} availableItems={emptyRelations} />}
       {modal === 'notes' && <NotesListModal isOpen onClose={close} notes={notes} onDelete={deleteNote} onUpdate={updateNote} onTogglePin={togglePin} onEdit={(note) => open('note', note)} onAdd={() => open('note')} />}
       {modal === 'note' && <NoteModal isOpen onClose={close} onSave={async (data) => { if (editing) await updateNote(editing.id, data); else await addNote(data); close() }} editNote={editing} availableItems={emptyRelations} />}
-      {modal === 'calendar' && <CalendarView isOpen onClose={close} events={events} clients={clients} workItems={workItems} onDelete={deleteEvent} onEdit={(event) => open('event', event)} onAdd={() => open('event')} onScheduleFollowUp={scheduleEventFollowUp} isAdmin={isAdmin} currentUserId={user?.id} managedUsers={users} />}
-      {modal === 'event' && <EventModal isOpen clients={clients} workItems={workItems} events={events} defaultClientId={appointmentClientId} onClose={close} onSave={async (data) => { if (editing) await updateEvent(editing.id, data); else await addEvent(data); close() }} editEvent={editing} isAdmin={isAdmin} managedUsers={users} availableItems={emptyRelations} />}
+      {modal === 'calendar' &&       <CalendarView key={user?.id || 'guest'} initialSettings={calendarSettingsOpen} isOpen onClose={close} events={events} clients={clients} workItems={workItems} onDelete={deleteEvent} onEdit={(event) => open('event', event)} onAdd={() => open('event')} onScheduleFollowUp={scheduleEventFollowUp} isAdmin={isAdmin} currentUserId={user?.id} managedUsers={users} />}
+      {modal === 'event' && <EventModal isOpen clients={clients} workItems={workItems} events={events} defaultClientId={appointmentClientId} onClose={close} onSave={async (data) => {       if (editing) await updateEvent(editing.id, data); else await addEvent(data) }} editEvent={editing} isAdmin={isAdmin} managedUsers={users} availableItems={emptyRelations} />}
       {modal === 'clients' && <>
         <ClientsListModal isOpen onClose={close} clients={clients} onDelete={deleteClient} onToggleFavorite={toggleFavorite} onAdd={() => open('client')} onEdit={(client) => open('client', client)} onSelectClient={setSelectedClient} />
         {selectedClient && <ClientDetailModal
@@ -266,8 +287,9 @@ export default function Home() {
       <CallDetailModal isOpen={Boolean(selectedCall)} onClose={() => setSelectedCall(null)} call={selectedCall} />
       <PasswordDetailModal password={selectedPassword} onClose={() => setSelectedPassword(null)} onEdit={(password) => open('password', password)} onDelete={deletePassword} />
       <AgendaSummaryModal item={selectedAgendaItem} onClose={() => setSelectedAgendaItem(null)} onOpenFull={item => { setSelectedAgendaItem(null); if (item.kind === 'call') { setSection('calls'); setSelectedCall(item.item) } else if (item.kind === 'event') { setSection('calendar'); setModal('calendar') } else { setSection('payments'); setSelectedPaymentId(item.kind === 'advance' ? item.item.payment.id : item.item.id); setPaymentView('practice') } }} />
-      <GlobalSearchModal isOpen={globalSearchOpen} onClose={() => setGlobalSearchOpen(false)} calls={calls} events={events} notes={notes} payments={payments} clients={clients} passwords={passwords} onOpen={(type, item) => setSelectedSearchResult({ type, item })} />
-      <SearchResultSummaryModal result={selectedSearchResult} onClose={() => setSelectedSearchResult(null)} onOpen={() => { const result = selectedSearchResult; setSelectedSearchResult(null); if (!result) return; if (result.type === 'call') setSelectedCall(result.item); else if (result.type === 'event') open('event', result.item); else if (result.type === 'note') open('note', result.item); else if (result.type === 'client') open('client', result.item); else if (result.type === 'payment') { setSection('payments'); setSelectedPaymentId(result.item.id); setPaymentView('practice') } else if (result.type === 'password') setSelectedPassword(result.item) }} />
+      <EventResponsePrompt onReschedule={event => open('event', event)} />
+      <GlobalSearchModal key={user?.id || 'guest'} isOpen={globalSearchOpen} onClose={() => setGlobalSearchOpen(false)} calls={calls} events={events} notes={notes} payments={payments} clients={clients} passwords={passwords} onOpen={(type, item) => setSelectedSearchResult({ type, item })} />
+      <SearchResultSummaryModal result={selectedSearchResult} onClose={() => setSelectedSearchResult(null)} onOpen={() => { const result = selectedSearchResult; setSelectedSearchResult(null); if (!result) return; if (result.type === 'call') setSelectedCall(result.item); else if (result.type === 'event') open('event', result.item); else if (result.type === 'note') open('note', result.item); else if (result.type === 'client') open('client', result.item); else if (result.type === 'payment') { setSection('payments'); setSelectedPaymentId(result.item.id); setPaymentView('practice') }       else if (result.type === 'password') setSelectedPassword(result.item); else if (result.type === 'todo') { setSection('todos'); open('todo', result.item) } }} />
     </main>
   )
 }

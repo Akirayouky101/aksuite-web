@@ -3,6 +3,14 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || ''
   const url = request.nextUrl.clone()
+  // Server resources and explicit web/PWA workflows must stay on this origin.
+  if (url.pathname.startsWith('/api/') ||
+      ['/sw.js', '/manifest.webmanifest', '/icon.svg', '/aksuite-icon.png'].includes(url.pathname) ||
+      url.searchParams.get('web') === '1' ||
+      url.searchParams.has('event-response') ||
+      url.searchParams.has('google-calendar')) {
+    return NextResponse.next()
+  }
   
   // Detect device type
   const isMobile = /iPhone|Android|webOS|BlackBerry|Windows Phone/i.test(userAgent)

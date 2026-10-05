@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
@@ -25,217 +25,91 @@ export interface Event {
   is_shared?: boolean
   created_by?: string | null
   created_by_name?: string | null
+  is_completed?: boolean
+  completed_at?: string | null
+  archived_at?: string | null
   created_at: string
   updated_at: string
 }
 
 export function useEvents() {
-  const [events, setEvents] = useState<Event[]>([])
   const { user } = useAuth()
+  const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadEvents()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const owner = useRef(user?.id)
+  const request = useRef(0)
+  const loadedFor = useRef<string | null>(null)
+  owner.current = user?.id
+  const loadEvents = useCallback(async () => {
+    if (!user) { setEvents([]); setLoading(false); return }
+    setLoading(true)
+    const ticket = ++request.current
+    const userId = user.id
+    try {
+      const { data, error } = await supabase.from('events').select('*').eq('is_completed', false)
+        .is('archived_at', null).order('start_date')
+      if (error) throw error
+      if (owner.current !== userId || ticket !== request.current) return
+      loadedFor.current = userId
+      setEvents(data ?? [])
+      setErrorMessage(null)
+    } catch (cause) {
+      console.error('Events loading failed:', cause)
+      if (owner.current === userId && ticket === request.current) setErrorMessage('Impossibile caricare il calendario. Riprova.')
+    } finally { if (owner.current === userId && ticket === request.current) setLoading(false) }
   }, [user?.id])
+  useEffect(() => { setEvents([]); void loadEvents() }, [loadEvents])
+  useEffect(() => {
+    const reload = () => void loadEvents()
+    window.addEventListener('aksuite-events-changed', reload)
+    return () => window.removeEventListener('aksuite-events-changed', reload)
+  }, [loadEvents])
 
-  const loadEvents = async () => {
-    try {
-      if (user) {
-        // Load from Supabase
-        const { data, error } = await supabase
-          .from('events')
-          .select('*')
-          .order('start_date', { ascending: true })
-
-        if (error) {
-          console.error('Error loading events from Supabase:', error)
-          loadFromLocalStorage()
-        } else {
-          setEvents(data || [])
-        }
-      } else {
-        // Load from localStorage if not logged in
-        loadFromLocalStorage()
-      }
-    } catch (error) {
-      console.error('Error in loadEvents:', error)
-      loadFromLocalStorage()
-    } finally {
-      setLoading(false)
-    }
+  function retain(data: Event) {
+    const sameOwner = loadedFor.current === user?.id
+    loadedFor.current = user?.id || null
+    setEvents(current => {
+      const others = sameOwner ? current.filter(event => event.id !== data.id) : []
+      return data.is_completed || data.archived_at ? others : [...others, data].sort((a, b) => a.start_date.localeCompare(b.start_date))
+    })
   }
-
-  const loadFromLocalStorage = () => {
-    const stored = localStorage.getItem('events')
-    if (stored) {
-      setEvents(JSON.parse(stored))
-    }
+  const addEvent = async (input: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) throw new Error('Accedi per salvare un evento.')
+    const { data, error } = await supabase.from('events').insert({ ...input, user_id: user.id, created_by: user.id }).select().single()
+    if (error) throw error
+    if (owner.current !== user.id) throw new Error('Sessione cambiata. Accedi nuovamente.')
+    retain(data)
+    return data as Event
   }
-
-  const saveToLocalStorage = (updatedEvents: Event[]) => {
-    localStorage.setItem('events', JSON.stringify(updatedEvents))
-  }
-
-  const addEvent = async (eventData: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        // Save to Supabase
-        const { data, error } = await supabase
-          .from('events')
-          .insert([{
-            ...eventData,
-            user_id: user.id,
-            created_by: user.id
-          }])
-          .select()
-          .single()
-
-        if (error) {
-          console.error('Error adding event to Supabase:', error)
-          addEventLocally(eventData)
-        } else {
-          setEvents(prev => [...prev, data].sort((a, b) => 
-            new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
-          ))
-        }
-      } else {
-        addEventLocally(eventData)
-      }
-    } catch (error) {
-      console.error('Error in addEvent:', error)
-      addEventLocally(eventData)
-    }
-  }
-
-  const addEventLocally = (eventData: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    const newEvent: Event = {
-      ...eventData,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-    const updatedEvents = [...events, newEvent].sort((a, b) => 
-      new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
-    )
-    setEvents(updatedEvents)
-    saveToLocalStorage(updatedEvents)
-  }
-
   const updateEvent = async (id: string, updates: Partial<Event>) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        // Update in Supabase
-        const { error } = await supabase
-          .from('events')
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', id)
-
-        if (error) {
-          console.error('Error updating event in Supabase:', error)
-          updateEventLocally(id, updates)
-        } else {
-          setEvents(prev => prev.map(event => 
-            event.id === id 
-              ? { ...event, ...updates, updated_at: new Date().toISOString() }
-              : event
-          ).sort((a, b) => 
-            new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
-          ))
-        }
-      } else {
-        updateEventLocally(id, updates)
-      }
-    } catch (error) {
-      console.error('Error in updateEvent:', error)
-      updateEventLocally(id, updates)
-    }
+    if (!user) throw new Error('Accedi per modificare un evento.')
+    const { data, error } = await supabase.from('events').update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id).select().single()
+    if (error) throw error
+    if (owner.current !== user.id) throw new Error('Sessione cambiata. Accedi nuovamente.')
+    retain(data)
+    return data as Event
   }
-
-  const updateEventLocally = (id: string, updates: Partial<Event>) => {
-    const updatedEvents = events.map(event =>
-      event.id === id 
-        ? { ...event, ...updates, updated_at: new Date().toISOString() }
-        : event
-    ).sort((a, b) => 
-      new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
-    )
-    setEvents(updatedEvents)
-    saveToLocalStorage(updatedEvents)
-  }
-
   const deleteEvent = async (id: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        // Delete from Supabase
-        const { error } = await supabase
-          .from('events')
-          .delete()
-          .eq('id', id)
-
-        if (error) {
-          console.error('Error deleting event from Supabase:', error)
-          deleteEventLocally(id)
-        } else {
-          setEvents(prev => prev.filter(event => event.id !== id))
-        }
-      } else {
-        deleteEventLocally(id)
-      }
-    } catch (error) {
-      console.error('Error in deleteEvent:', error)
-      deleteEventLocally(id)
-    }
+    if (!user) throw new Error('Accedi per eliminare un evento.')
+    const { error } = await supabase.from('events').delete().eq('id', id)
+    if (error) throw error
+    if (owner.current !== user.id) throw new Error('Sessione cambiata. Accedi nuovamente.')
+    setEvents(current => current.filter(event => event.id !== id))
   }
-
-  const deleteEventLocally = (id: string) => {
-    const updatedEvents = events.filter(event => event.id !== id)
-    setEvents(updatedEvents)
-    saveToLocalStorage(updatedEvents)
-  }
-
   const getEventsForDate = (date: Date) => {
-    return events.filter(event => {
-      const eventStart = new Date(event.start_date)
-      const eventEnd = event.end_date ? new Date(event.end_date) : eventStart
-      
-      const dateStart = new Date(date)
-      dateStart.setHours(0, 0, 0, 0)
-      const dateEnd = new Date(date)
-      dateEnd.setHours(23, 59, 59, 999)
-
-      return (
-        (eventStart >= dateStart && eventStart <= dateEnd) ||
-        (eventEnd >= dateStart && eventEnd <= dateEnd) ||
-        (eventStart <= dateStart && eventEnd >= dateEnd)
-      )
-    })
+    const start = new Date(date); start.setHours(0, 0, 0, 0)
+    const end = new Date(date); end.setHours(23, 59, 59, 999)
+    return visibleEvents.filter(event => new Date(event.start_date) <= end && new Date(event.end_date || event.start_date) >= start)
   }
-
-  const getEventsForMonth = (year: number, month: number) => {
-    return events.filter(event => {
-      const eventDate = new Date(event.start_date)
-      return eventDate.getFullYear() === year && eventDate.getMonth() === month
-    })
-  }
-
+  const visibleEvents = loadedFor.current === user?.id ? events : []
   return {
-    events,
-    user,
-    loading,
-    addEvent,
-    updateEvent,
-    deleteEvent,
-    getEventsForDate,
-    getEventsForMonth,
-    refreshEvents: loadEvents
+    events: visibleEvents, user, loading, errorMessage, addEvent, updateEvent, deleteEvent, getEventsForDate,
+    getEventsForMonth: (year: number, month: number) => visibleEvents.filter(event => {
+      const date = new Date(event.start_date)
+      return date.getFullYear() === year && date.getMonth() === month
+    }),
+    refreshEvents: loadEvents,
   }
 }

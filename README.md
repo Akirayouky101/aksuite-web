@@ -135,6 +135,146 @@ rm /tmp/aksuite-shopping-tests
 
 ## Calendar Push Reminders
 
+### Web calendar, task history and photos
+
+Apply the four additive migrations `20261005020000` through `20261005050000`
+before deploying the new web version. Native app sources are unchanged in
+this batch. Existing native status strings remain valid.
+
+Calendar events now have completion timestamps and an archive timestamp.
+Completing cancels their pre-event reminders and end-event confirmation
+queue. Reopening clears both timestamps; rescheduling an unfinished event
+requeues its confirmation. Events without an end expire at their start.
+All-day events expire at midnight after their inclusive last day, in
+`Europe/Rome`, with daylight saving accounted for.
+
+`Cose da fare` opens on `Da fare`. `Eseguite` and `Archiviate` fetch only
+on an explicit search/load request, with five visible records per page
+and one database lookahead. Completion date filters are inclusive.
+The global search includes a separate user-triggered database search
+over completed and archived events/tasks, including description and
+checklist text; it does not preload the archive.
+
+A Supabase cron job runs every five minutes, archiving **events and to-dos**
+completed at least seven days ago. Work items are not automatically archived.
+Existing completed tasks use their previous `updated_at` as the best
+available estimate of completion time. The original status is preserved.
+Archives can be restored to pending; nothing is automatically deleted.
+Authenticated event errors are now surfaced rather than saved silently
+only in browser localStorage. Previously stored localStorage copies are
+not deleted, but the authoritative calendar requires sign-in and Supabase.
+
+Photos use a private `photos` Storage bucket plus owner-only `photo_assets`
+metadata. JPEG, PNG and WebP are supported, up to 10 MiB per image.
+The general gallery and galleries on saved notes/work items/checklist
+entries load five images at a time only when requested. Images use expiring
+signed URLs; refresh the gallery when previews expire. Unsaved checklist
+entries must be saved before attaching photos. Deleting a note or work item
+keeps its photos in the general gallery instead of leaving inaccessible
+storage objects. Deleting a photo removes both object and metadata.
+
+Dictation is available for notes, event descriptions, work notes and new
+checklist/subtask entries. It is user-triggered, Italian, and appends text.
+Browser support varies; unsupported browsers can use keyboard dictation.
+The microphone is never activated automatically. Browser speech services
+may process audio remotely; do not dictate passwords or sensitive data.
+
+### Closed-page Web Push
+
+The native APNs functions below remain separate and unchanged. Web
+confirmation delivery uses `/api/web-push/send`, not an open-tab timer.
+Configure server-only variables in Vercel Production:
+
+- `WEB_PUSH_PUBLIC_KEY` and `WEB_PUSH_PRIVATE_KEY`: generate a VAPID pair
+  with the installed `web-push` package. Keep the same keys on redeploys.
+- `WEB_PUSH_SUBJECT`: a contact URL such as `https://aksuite.app` or `mailto:`.
+- `CRON_SECRET`: a random secret shared only with the Supabase scheduler.
+- `SUPABASE_SERVICE_ROLE_KEY`: the existing server-only key.
+
+Store `CRON_SECRET` in Supabase Vault as `aksuite_web_cron_secret`. Enable
+the **web-event-confirmations** section of
+`supabase/web-integrations-cron.sql` only after deploying and checking the
+endpoint. The worker claims at most five jobs per run with a five-minute
+lease, retries up to twelve times, records delivery failures, and removes
+expired browser subscriptions. A partially failed multi-device delivery
+may be retried; a stable notification tag replaces duplicate visible
+notifications. Jobs without subscriptions are counted as skipped, not
+delivered. Existing past events are not backfilled with push requests.
+
+The user must opt in from Calendar settings on each browser/device.
+Denied permission and unsupported browsers are displayed explicitly.
+Web Push on iOS/iPadOS requires a Home Screen web app and iOS 16.4+;
+use `https://aksuite.app/?web=1` to install the primary web version rather
+than the legacy mobile/tablet redirect. The PWA launch URL and notification/
+OAuth response links stay on this origin, as do API/service-worker resources.
+Normal browser root navigation retains the existing device redirects;
+native apps and legacy mobile/tablet deployments are not updated by this batch.
+The browser may omit notification action buttons. Clicking the body opens
+the same authenticated response screen. `Sì` completes only after sign-in;
+`No` opens an editor where the user chooses the new date/time. Subscription
+revocation on logout prevents subsequent notifications to a signed-out
+browser; unreachable subscriptions are removed by the sender.
+
+### Google Calendar configuration
+
+OAuth is intentionally disabled until the following **server-only**
+variables are configured:
+
+- `APP_URL=https://aksuite.app` (local OAuth needs a separately registered
+  localhost redirect and a local APP_URL).
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+- `GOOGLE_TOKEN_ENCRYPTION_KEY`: a random 32-byte key, encoded as Base64.
+  Back it up securely; changing it prevents decryption of saved tokens.
+
+Create a Google Cloud project, enable Google Calendar API, configure the
+OAuth consent screen and add test users while in Testing, then create
+a **Web application** OAuth client. Register this exact production redirect:
+`https://aksuite.app/api/google-calendar/callback`. Configure secrets via
+the Vercel CLI/dashboard, never source code or chat. Testing-mode Google
+refresh tokens may expire after seven days; production use may require
+Google app verification for Calendar scopes.
+
+Linking uses a one-time, ten-minute state bound to an HttpOnly cookie,
+PKCE, and encrypted server-only credentials. Choose a calendar with write
+access and the date from which to initially import Google events. AK Suite
+exports only active appointments owned by that user at initial selection;
+future changes and deletions are queued transactionally. Photos, notes,
+passwords and other users' appointments are not exported.
+
+Manual sync processes ten remote events and up to ten local changes per
+lot. Pagination, stable identity mappings, deletion tombstones, conditional
+writes and a server lease prevent duplicate creation or silent conflict
+overwrites. Choose the AK Suite or Google version for conflicts; the
+cursor is not advanced past unresolved changes. Expired sync tokens cause
+a full reread without wiping local events. Google all-day exclusive ends
+are converted to the inclusive dates used by the app. Complex recurrence
+rules are preserved; completing a recurring master applies to the series,
+not an individual occurrence.
+
+Only after a real OAuth/manual-sync test succeeds, enable the **Google**
+section of `supabase/web-integrations-cron.sql`. It processes one selected
+connection per minute, with the least recently synced first. Connections
+with errors/conflicts require manual resolution before background retries.
+Disconnect revokes OAuth where possible and deletes private integration
+credentials/mappings, without deleting appointments on either service.
+Revocation failures explicitly instruct the user to revoke access in Google.
+
+Validate with:
+
+```sh
+node --test tests/web-enhancements.test.cjs tests/google-sync.test.cjs tests/shopping.test.cjs
+npm run build
+```
+
+`tests/web-enhancements.integration.sql` checks real lifecycle triggers,
+the exact seven-day boundary, archive cursor pagination, private photos,
+saved checklist scopes, queue leases, server-only RPC permissions and
+Google outbox/tombstone behavior inside a transaction that rolls back.
+Google sync unit tests use simulated API responses: they do **not**
+replace a real OAuth, selected-calendar and closed-page push smoke test.
+
+### Existing native APNs reminders
+
 Calendar reminders are sent by Supabase, including when the app is closed. Apply `supabase/calendar-push-reminders.sql` after the events and push-device schemas, replacing `YOUR_PROJECT_REF` with the Supabase project reference. Before applying its final cron section, store the service-role key in Vault:
 
 ```sql

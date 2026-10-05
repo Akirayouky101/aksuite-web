@@ -6,6 +6,8 @@ import { X, Save, Tag, Pin, Folder, Palette, Bell } from 'lucide-react'
 import { Note } from '../hooks/useNotes'
 import DateTimePicker, { localDateTimeToIso } from './DateTimePicker'
 import AttachmentPanel from './AttachmentPanel'
+import PhotoGallery from './PhotoGallery'
+import DictationButton from './DictationButton'
 import RelationsIntegration from './RelationsIntegration'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
 
@@ -174,6 +176,7 @@ export default function NoteModal({
 
               {/* Content */}
               <div>
+                <DictationButton onText={text => setFormData(prev => ({ ...prev, content: `${prev.content}${prev.content ? ' ' : ''}${text}` }))} label="Detta nota" />
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   Contenuto
                 </label>
@@ -317,8 +320,10 @@ export default function NoteModal({
                   onNavigateToItem={onNavigateToItem}
                 />
                 <AttachmentPanel entityType="note" entityId={editNote.id} />
+                <PhotoGallery scope={{ noteId: editNote.id }} />
               </div>
             )}
+            {!editNote?.id && <p className="px-6 pb-4 text-xs text-slate-500">Salva la nota prima di aggiungere foto alla galleria.</p>}
 
             {/* Footer */}
             <div className="px-6 pb-6">

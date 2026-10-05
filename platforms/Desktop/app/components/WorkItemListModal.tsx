@@ -4,11 +4,14 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, ChevronRight, ListChecks, Package, Pencil, Plus, Save, Trash2, X } from 'lucide-react'
 import { checklistProgress, ChecklistEntry, installedQuantity, linkedQuantity, mismatchedQuantity, WorkUnit } from '../hooks/useWorkItems'
+import PhotoGallery from './PhotoGallery'
+import DictationButton from './DictationButton'
 
 interface WorkItemListModalProps {
   kind: 'checklist' | 'materials'
   simple?: boolean
   title: string
+  workItemId?: string
   items: ChecklistEntry[]
   materials: ChecklistEntry[]
   checklist: ChecklistEntry[]
@@ -16,7 +19,7 @@ interface WorkItemListModalProps {
   onClose: () => void
 }
 
-export default function WorkItemListModal({ kind, simple = false, title, items, materials, checklist, onSave, onClose }: WorkItemListModalProps) {
+export default function WorkItemListModal({ kind, simple = false, title, items, materials, checklist, onSave, onClose, workItemId }: WorkItemListModalProps) {
   const [draft, setDraft] = useState<ChecklistEntry[]>(items || [])
   const [newEntry, setNewEntry] = useState('')
   const [newStep, setNewStep] = useState('')
@@ -25,6 +28,8 @@ export default function WorkItemListModal({ kind, simple = false, title, items, 
   const [reorderDraft, setReorderDraft] = useState<ChecklistEntry[] | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [photoEntryId, setPhotoEntryId] = useState<string | null>(null)
+  const savedEntryIds = new Set(items.flatMap(entry => [entry.id, ...(entry.steps || []).map(step => step.id)]))
   const isMaterials = kind === 'materials'
   const heading = isMaterials ? 'Materiali' : 'Checklist'
   const activeParent = draft.find(entry => entry.id === activeParentId)
@@ -155,6 +160,12 @@ export default function WorkItemListModal({ kind, simple = false, title, items, 
 
           {visibleEntries.length ? <div className="space-y-2">
             {visibleEntries.map(entry => <div key={entry.id} className="space-y-2 rounded-lg bg-[#f8e8cf] p-2">
+              {!isMaterials && <div className="px-2">
+                {workItemId && savedEntryIds.has(entry.id) ? <>
+                  <button type="button" onClick={() => setPhotoEntryId(current => current === entry.id ? null : entry.id)} className="text-xs font-bold text-[#257259]">Foto di questa voce</button>
+                  {photoEntryId === entry.id && <PhotoGallery key={entry.id} scope={{ workItemId, entryId: entry.id }} />}
+                </> : <p className="text-xs text-[#716a91]">Salva la lavorazione e la checklist prima di allegare foto a questa voce.</p>}
+              </div>}
               <div className="flex items-center gap-2">
                   <input type="checkbox" checked={entry.done} disabled={isMaterials && hasMaterialLink(entry)} title={isMaterials && hasMaterialLink(entry) ? 'Utilizzo gestito dalla checklist lavorazione' : undefined} aria-label={`${isMaterials ? 'Utilizzato' : 'Completata'}: ${entry.text}`} onChange={event => activeParent ? updateStep(entry.id, { done: event.target.checked }) : setDraft(current => current.map(item => item.id === entry.id ? { ...item, done: event.target.checked, steps: item.steps?.map(step => ({ ...step, done: event.target.checked })) } : item))} className="h-4 w-4 shrink-0 accent-[#257259] disabled:opacity-70" />
                   {!isMaterials && !activeParent && editingId !== entry.id ? <button type="button" onClick={() => { setActiveParentId(entry.id); setEditingId(null) }} className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-sm font-semibold text-[#2d2754] hover:bg-white">
@@ -202,6 +213,11 @@ export default function WorkItemListModal({ kind, simple = false, title, items, 
             <input value={activeParent ? newStep : newEntry} onChange={event => activeParent ? setNewStep(event.target.value) : setNewEntry(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addEntry() } }} aria-label={isMaterials ? 'Nuovo materiale' : activeParent ? 'Nuova sottoattività' : 'Nuova voce checklist'} placeholder={isMaterials ? 'Aggiungi un materiale...' : activeParent ? 'Aggiungi una sottoattività...' : 'Aggiungi una voce...'} className="min-w-0 flex-1 rounded-lg border border-[#dfcdb1] bg-white px-3 py-2 text-sm text-[#2d2754]" />
             <button type="button" title="Aggiungi voce" onClick={addEntry} disabled={!(activeParent ? newStep : newEntry).trim()} className="rounded-lg bg-[#257259] p-2 text-white disabled:opacity-50"><Plus className="h-4 w-4" /></button>
           </div>
+          <DictationButton key={activeParentId || 'new'} label={activeParent ? 'Detta sottoattività' : 'Detta voce'} onText={text => {
+            const append = (current: string) => `${current}${current ? ' ' : ''}${text}`
+            if (activeParent) setNewStep(append)
+            else setNewEntry(append)
+          }} />
           </>}
           {error && <p role="alert" className="text-sm font-semibold text-[#a83d35]">{error}</p>}
         </div>

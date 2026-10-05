@@ -1,4 +1,7 @@
 'use client'
+import DictationButton from './DictationButton'
+import EventCompletionActions from './EventCompletionActions'
+import { validateEventTiming } from '@/lib/lifecycle'
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -17,7 +20,7 @@ interface EventModalProps {
   events?: Event[]
   defaultClientId?: string | null
   onClose: () => void
-  onSave: (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
+  onSave: (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void | Promise<void>
   editEvent?: Event | null
   isAdmin?: boolean
   managedUsers?: { id: string; full_name: string; email: string }[]
@@ -101,6 +104,9 @@ export default function EventModal({
     is_shared: false,
   })
   const [conflictingEvents, setConflictingEvents] = useState<Event[]>([])
+  const [saving, setSaving] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
     if (editEvent) {
@@ -163,18 +169,16 @@ export default function EventModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.title.trim() || !formData.start_date) return
-
-    const parseLocalDate = (value: string) => {
-      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-      return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : new Date(value)
-    }
-    const start = formData.all_day ? parseLocalDate(formData.start_date) : new Date(formData.start_date)
-    if (Number.isNaN(start.getTime())) return
-    const end = formData.end_date ? (formData.all_day ? parseLocalDate(formData.end_date) : new Date(formData.end_date)) : null
+    if (saving || completing) return
+    let timing
+    try { timing = validateEventTiming({ ...formData, end_date: formData.end_date || null }) }
+    catch (cause) { setSaveError(cause instanceof Error ? cause.message : 'Date evento non valide.'); return }
+    const { start, end } = timing
+    setSaveError('')
     const proposedInterval = getInterval(start, end, formData.all_day)
     const conflicts = events.filter(event => {
       if (event.id === editEvent?.id) return false
+      if (event.is_completed || event.archived_at) return false
       const eventStart = new Date(event.start_date)
       const eventEnd = event.end_date ? new Date(event.end_date) : null
       if (Number.isNaN(eventStart.getTime()) || (eventEnd && Number.isNaN(eventEnd.getTime()))) return false
@@ -188,17 +192,24 @@ export default function EventModal({
     saveEvent()
   }
 
-  const saveEvent = () => {
-    // Convert datetime-local to ISO string
-    const eventData = {
-      ...formData,
-      start_date: new Date(formData.start_date).toISOString(),
-      end_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
-      recurring_type: formData.is_recurring ? formData.recurring_type : null
-    }
-
-    onSave(eventData)
-    onClose()
+  const saveEvent = async () => {
+    if (saving || completing) return
+    setSaving(true)
+    setSaveError('')
+    try {
+      const { start, end } = validateEventTiming({ ...formData, end_date: formData.end_date || null })
+      const eventData = {
+        ...formData,
+        start_date: start.toISOString(),
+        end_date: end?.toISOString() || null,
+        recurring_type: formData.is_recurring ? formData.recurring_type : null,
+      }
+      await onSave(eventData)
+      onClose()
+    } catch (cause) {
+      console.error('Event save failed:', cause)
+      setSaveError('Impossibile salvare l’evento. Le modifiche non sono state salvate.')
+    } finally { setSaving(false) }
   }
 
   const getInterval = (start: Date, end: Date | null, allDay: boolean) => {
@@ -251,6 +262,9 @@ export default function EventModal({
             {/* Content (scrollable area with form + relations) */}
             <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                {saveError && <p role="alert" className="text-sm text-red-700">{saveError}</p>}
+                {editEvent &&                 <EventCompletionActions event={editEvent} onDone={onClose} disabled={saving} onBusyChange={setCompleting} />}
+                <DictationButton label="Detta descrizione evento" onText={text => setFormData(current => ({ ...current, description: `${current.description}${current.description ? ' ' : ''}${text}` }))} />
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-500">Cliente / struttura</label>
                 <select value={formData.client_id || ''} onChange={event => {
@@ -519,6 +533,7 @@ export default function EventModal({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmit}
+                disabled={saving || completing}
                 className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
               >
                 {editEvent ? 'Aggiorna Evento' : 'Salva Evento'}

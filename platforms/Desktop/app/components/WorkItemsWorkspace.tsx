@@ -7,6 +7,7 @@ import { Event } from '../hooks/useEvents'
 import { checklistProgress, materialsCoverage, WorkItem, WorkKind, WorkStatus } from '../hooks/useWorkItems'
 import WorkItemDetailModal from './WorkItemDetailModal'
 import WorkItemListModal from './WorkItemListModal'
+import HistoryBrowser from './HistoryBrowser'
 
 interface WorkItemsWorkspaceProps {
   workItems: WorkItem[]
@@ -22,6 +23,7 @@ interface WorkItemsWorkspaceProps {
   onUpdate: (id: string, updates: Partial<WorkItem>) => Promise<unknown>
   onDelete: (id: string) => Promise<void>
   onScheduleFollowUp: (event: Event) => void
+  onRescheduleEvent?: (event: Event) => void
 }
 
 const statuses: { value: 'all' | WorkStatus; label: string }[] = [
@@ -44,12 +46,15 @@ const dateLabel = (value: string | null) => value
   ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
   : 'Senza scadenza'
 
-export default function WorkItemsWorkspace({ workItems, events, clients, loading, errorMessage, mode = 'work', clientScopeId, onBackToClients, onNew, onEdit, onUpdate, onDelete, onScheduleFollowUp }: WorkItemsWorkspaceProps) {
+export default function WorkItemsWorkspace({ workItems, events, clients, loading, errorMessage, mode = 'work', clientScopeId, onBackToClients, onNew, onEdit, onUpdate, onDelete, onScheduleFollowUp, onRescheduleEvent }: WorkItemsWorkspaceProps) {
   const isTodo = mode === 'todo'
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'all' | WorkStatus>('all')
   const [summaryId, setSummaryId] = useState<string | null>(null)
   const [selectedList, setSelectedList] = useState<{ id: string; kind: 'checklist' | 'materials' } | null>(null)
+  const [history, setHistory] = useState<'pending' | 'completed' | 'archived'>('pending')
+  const [historyItem, setHistoryItem] = useState<WorkItem | null>(null)
+  const [actionError, setActionError] = useState('')
   const summaryItem = workItems.find(item => item.id === summaryId)
   const selectedItem = workItems.find(item => item.id === selectedList?.id)
   const clientsById = useMemo(() => new Map(clients.map(client => [client.id, client])), [clients])
@@ -61,7 +66,8 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
     const company = client.company?.trim()
     return company && company.localeCompare(client.name.trim(), 'it', { sensitivity: 'base' }) !== 0 ? `${path} · ${company}` : path
   }
-  const scopedItems = workItems.filter(item => (item.kind || 'work') === mode && (!clientScopeId || item.client_id === clientScopeId))
+  const scopedItems = workItems.filter(item => (item.kind || 'work') === mode && (!clientScopeId || item.client_id === clientScopeId)
+    && (!isTodo || (item.status !== 'completed' && !item.archived_at)))
   const scopedClient = clientsById.get(clientScopeId || '')
   const counts = {
     all: scopedItems.length,
@@ -86,6 +92,8 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
         </div>
         <button onClick={onNew} className="ak-primary-action"><Plus className="h-4 w-4" />{isTodo ? 'Nuova cosa da fare' : 'Nuova lavorazione'}</button>
       </header>
+      {isTodo && <div className="flex gap-2 border-b pb-3">{(['pending', 'completed', 'archived'] as const).map(value => <button key={value} aria-pressed={history === value} onClick={() => { setHistory(value); setHistoryItem(null) }} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === value ? 'bg-[#d9e8d9]' : 'bg-[#f8e8cf]'}`}>{value === 'pending' ? 'Da fare' : value === 'completed' ? 'Eseguite' : 'Archiviate'}</button>)}</div>}
+      {isTodo && history !== 'pending' ?       <HistoryBrowser key={`${history}-${clientScopeId || 'all'}`} kind="todo" state={history} clientId={clientScopeId} onOpen={setHistoryItem} /> : <>
 
       <div className="ak-toolbar flex-wrap justify-between">
         <div className="ak-search min-w-[220px]">
@@ -96,7 +104,7 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
       </div>
 
       <div className="flex gap-1 overflow-x-auto border-b border-[#ead8bf] pb-3">
-        {statuses.filter(item => !isTodo || ['all', 'planned', 'completed'].includes(item.value)).map(item => (
+        {statuses.filter(item => !isTodo || item.value === 'all').map(item => (
           <button
             key={item.value}
             onClick={() => setStatus(item.value)}
@@ -159,7 +167,13 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
 
                 <label onClick={event => event.stopPropagation()} className="mt-4 block text-[11px] font-bold text-[#716a91]">
                   AGGIORNA STATO
-                  <select value={item.status} onClick={event => event.stopPropagation()} onChange={event => void onUpdate(item.id, { status: event.target.value as WorkStatus })} className="mt-1 w-full rounded-lg border border-[#dfcdb1] bg-[#f8e8cf] px-2.5 py-2 text-xs text-[#2d2754]">
+                  <select value={item.status} onClick={event => event.stopPropagation()} onChange={event => {
+                    setActionError('')
+                    void onUpdate(item.id, { status: event.target.value as WorkStatus }).catch(cause => {
+                      console.error('Work status update failed:', cause)
+                      setActionError('Impossibile salvare lo stato. Riprova.')
+                    })
+                  }} className="mt-1 w-full rounded-lg border border-[#dfcdb1] bg-[#f8e8cf] px-2.5 py-2 text-xs text-[#2d2754]">
                     {statuses.filter(option => option.value !== 'all' && (!isTodo || ['planned', 'completed'].includes(option.value))).map(option => <option key={option.value} value={option.value}>{isTodo && option.value === 'planned' ? 'Da fare' : option.label}</option>)}
                   </select>
                 </label>
@@ -175,8 +189,19 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
           {!scopedItems.length && <button onClick={onNew} className="ak-primary-action mt-2"><Plus className="h-4 w-4" />{isTodo ? 'Nuova cosa da fare' : 'Nuova lavorazione'}</button>}
         </div>
       )}
-      {summaryItem && <WorkItemDetailModal item={summaryItem} events={events.filter(event => event.work_item_id === summaryItem.id)} clientName={clientLabel(summaryItem.client_id)} onClose={() => setSummaryId(null)} onEdit={() => { setSummaryId(null); onEdit(summaryItem) }} onOpenList={kind => setSelectedList({ id: summaryItem.id, kind })} onScheduleFollowUp={onScheduleFollowUp} />}
-      {selectedList && selectedItem && <WorkItemListModal key={`${selectedList.id}-${selectedList.kind}`} kind={selectedList.kind} simple={isTodo} title={selectedItem.title} items={selectedItem[selectedList.kind]} materials={selectedItem.materials || []} checklist={selectedItem.checklist || []} onSave={items => onUpdate(selectedItem.id, { [selectedList.kind]: items })} onClose={() => setSelectedList(null)} />}
+      </>}
+      {actionError && <p role="alert" className="mt-3 text-red-700">{actionError}</p>}
+      {historyItem && <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/40 p-4"><div role="dialog" aria-modal="true" aria-label={historyItem.title} className="max-h-[85vh] w-full max-w-xl overflow-auto rounded-xl bg-[#fff8ed] p-5">
+        <h3 className="text-xl font-black">{historyItem.title}</h3><p className="mt-3 whitespace-pre-wrap">{historyItem.description}</p>
+        <ul className="my-3">{historyItem.checklist.map(entry => <li key={entry.id}>{entry.done ? '✓' : '·'} {entry.text}</li>)}</ul>
+        <button onClick={() => setHistoryItem(null)} className="mr-3 rounded-xl border p-3">Chiudi</button>
+        <button className="ak-primary-action" onClick={async () => {
+          try { await onUpdate(historyItem.id, { status: 'planned' }); setHistoryItem(null); setHistory('pending'); setActionError('') }
+          catch (cause) { console.error('Restore todo failed:', cause); setActionError('Impossibile riportare l’attività da fare.') }
+        }}>Riporta da fare</button>
+      </div></div>}
+      {summaryItem &&       <WorkItemDetailModal onRescheduleEvent={onRescheduleEvent} item={summaryItem} events={events.filter(event => event.work_item_id === summaryItem.id)} clientName={clientLabel(summaryItem.client_id)} onClose={() => setSummaryId(null)} onEdit={() => { setSummaryId(null); onEdit(summaryItem) }} onOpenList={kind => setSelectedList({ id: summaryItem.id, kind })} onScheduleFollowUp={onScheduleFollowUp} />}
+      {selectedList && selectedItem && <WorkItemListModal workItemId={selectedItem.id} key={`${selectedList.id}-${selectedList.kind}`} kind={selectedList.kind} simple={isTodo} title={selectedItem.title} items={selectedItem[selectedList.kind]} materials={selectedItem.materials || []} checklist={selectedItem.checklist || []} onSave={items => onUpdate(selectedItem.id, { [selectedList.kind]: items })} onClose={() => setSelectedList(null)} />}
     </section>
   )
 }

@@ -6,6 +6,7 @@ import { Client } from '../hooks/useClients'
 import { checklistProgress, synchronizeMaterialUsage, WorkItem, WorkItemInput, WorkKind, WorkPriority, WorkStatus } from '../hooks/useWorkItems'
 import DateTimePicker, { localDateTimeToIso } from './DateTimePicker'
 import WorkItemListModal from './WorkItemListModal'
+import DictationButton from './DictationButton'
 
 interface WorkItemModalProps {
   isOpen: boolean
@@ -134,6 +135,7 @@ export default function WorkItemModal({ isOpen, clients, mode = 'work', defaultC
           <label className="block text-xs font-semibold text-[#716a91]">Note
             <textarea value={form.notes} onChange={event => setValue('notes', event.target.value)} rows={3} placeholder="Dettagli utili da ritrovare al volo" className="mt-1 w-full resize-y rounded-xl border border-[#dfcdb1] bg-[#f8e8cf] px-3.5 py-3 text-sm text-[#2d2754]" />
           </label>
+          <DictationButton label="Detta note lavorazione" onText={text => setForm(current => ({ ...current, notes: `${current.notes}${current.notes ? ' ' : ''}${text}` }))} />
           {error && <p role="alert" className="text-sm font-semibold text-[#a83d35]">{error}</p>}
           <footer className="flex gap-3 border-t border-[#ead8bf] pt-4">
             <button type="button" onClick={onClose} className="flex-1 rounded-xl bg-[#f5dfca] py-3 text-sm font-bold text-[#716a91]">Annulla</button>
