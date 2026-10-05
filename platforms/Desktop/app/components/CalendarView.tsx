@@ -1,13 +1,16 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  X, ChevronLeft, ChevronRight, Plus, Edit, Trash2,
-  Calendar as CalendarIcon, MapPin, Clock, Repeat,
+  X, ChevronLeft, ChevronRight, Plus, BellOff,
+  Calendar as CalendarIcon, Clock, MapPin,
   CheckCircle2, Users, User
 } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
+import { Client } from '../hooks/useClients'
+import { WorkItem } from '../hooks/useWorkItems'
+import EventDetailModal from './EventDetailModal'
 
 interface CalendarTask {
   id: string
@@ -21,10 +24,13 @@ interface CalendarViewProps {
   isOpen: boolean
   onClose: () => void
   events: Event[]
+  clients?: Client[]
+  workItems?: WorkItem[]
   tasks?: CalendarTask[]
   onDelete: (id: string) => void
   onEdit: (event: Event) => void
   onAdd: () => void
+  onScheduleFollowUp?: (event: Event) => void
   isAdmin?: boolean
   currentUserId?: string
   managedUsers?: { id: string; full_name: string; email: string }[]
@@ -63,30 +69,17 @@ const FB = EV_CARD.blue
 const USER_COLORS = ['blue', 'green', 'red', 'purple', 'orange', 'pink', 'yellow', 'gray']
 
 export default function CalendarView({
-  isOpen, onClose, events, tasks = [], onDelete, onEdit, onAdd,
+  isOpen, onClose, events, clients = [], workItems = [], tasks = [], onDelete, onEdit, onAdd, onScheduleFollowUp,
   isAdmin = false, currentUserId, managedUsers = []
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [filterUserId, setFilterUserId] = useState<string>('all')
+  const [onlyWithoutReminder, setOnlyWithoutReminder] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
-  const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null)
-  const popupRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const currentYear = currentDate.getFullYear()
   const currentMonth = currentDate.getMonth()
-
-  useEffect(() => {
-    if (!selectedEvent) return
-    const handler = (e: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        setSelectedEvent(null); setPopupPos(null)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [selectedEvent])
 
   const filteredEvents = useMemo(() => {
     if (!isAdmin || filterUserId === 'all') return events
@@ -149,7 +142,9 @@ export default function CalendarView({
     return ev.color || 'blue'
   }
 
-  const getEventsForDate = (date: Date) => filteredEvents.filter(ev => {
+  const calendarEvents = onlyWithoutReminder ? filteredEvents.filter(event => event.reminder_minutes === 0) : filteredEvents
+
+  const getEventsForDate = (date: Date) => calendarEvents.filter(ev => {
     const s = new Date(ev.start_date)
     const e = ev.end_date ? new Date(ev.end_date) : s
     const ds = new Date(date); ds.setHours(0,0,0,0)
@@ -181,23 +176,14 @@ export default function CalendarView({
     if (ev.all_day) return 'Tutto il giorno'
     return ev.end_date ? `${fmt(ev.start_date)} \u2192 ${fmt(ev.end_date)}` : fmt(ev.start_date)
   }
-  const fmtFullDate = (s: string) => {
-    const d = new Date(s)
-    return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
-  }
   const getUserName = (uid?: string | null) => {
     if (!uid) return null
-    const u = managedUsers.find(u => u.id === uid)
-    return u ? (u.full_name || u.email) : null
+    const user = managedUsers.find(user => user.id === uid)
+    return user ? (user.full_name || user.email) : null
   }
-
   const openPopup = (ev: Event, e: React.MouseEvent) => {
     e.stopPropagation()
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const cont = containerRef.current?.getBoundingClientRect()
-    if (!cont) return
     setSelectedEvent(ev)
-    setPopupPos({ x: rect.left - cont.left + rect.width / 2, y: rect.top - cont.top + rect.height + 8 })
   }
 
   if (!isOpen) return null
@@ -210,7 +196,6 @@ export default function CalendarView({
         onClick={onClose}
       >
         <motion.div
-          ref={containerRef}
           initial={{ scale: 0.96, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.96, opacity: 0, y: 16 }} transition={{ type: 'spring', damping: 24, stiffness: 280 }}
           onClick={e => e.stopPropagation()}
@@ -242,6 +227,11 @@ export default function CalendarView({
                     </select>
                   </div>
                 )}
+
+                <button onClick={() => setOnlyWithoutReminder(value => !value)} aria-pressed={onlyWithoutReminder} title="Filtra eventi senza promemoria"
+                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${onlyWithoutReminder ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-200/80 bg-slate-50 text-slate-500 hover:bg-white'}`}>
+                  <BellOff className="h-3.5 w-3.5" />Senza promemoria
+                </button>
 
                 <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/80 rounded-xl p-1">
                   <button onClick={() => setCurrentDate(new Date(currentYear, currentMonth - 1, 1))}
@@ -459,104 +449,15 @@ export default function CalendarView({
             </div>
           </div>
 
-          {/* POPUP DETTAGLIO EVENTO */}
-          <AnimatePresence>
-            {selectedEvent && popupPos && (
-              <motion.div
-                ref={popupRef}
-                initial={{ opacity: 0, scale: 0.88, y: -8 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.88, y: -8 }}
-                transition={{ type: 'spring', damping: 22, stiffness: 360 }}
-                style={{
-                  position: 'absolute',
-                  left: Math.max(8, Math.min(popupPos.x - 160, (containerRef.current?.offsetWidth ?? 900) - 336)),
-                  top: Math.max(8, Math.min(popupPos.y, (containerRef.current?.offsetHeight ?? 650) - 400)),
-                  zIndex: 200,
-                  width: 320,
-                }}
-                className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 border border-slate-200/80 overflow-hidden"
-              >
-                <div className={`h-1.5 ${EV_PILL[selectedEvent.color] || EV_PILL.blue}`} />
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${EV_PILL[selectedEvent.color] || EV_PILL.blue}`} />
-                      <h4 className="text-base font-bold text-slate-900 leading-tight">{selectedEvent.title}</h4>
-                    </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <button onClick={() => { const ev = selectedEvent; setSelectedEvent(null); setPopupPos(null); onEdit(ev) }}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all">
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => { if (confirm(`Eliminare "${selectedEvent.title}"?`)) { onDelete(selectedEvent.id); setSelectedEvent(null); setPopupPos(null) } }}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-all">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => { setSelectedEvent(null); setPopupPos(null) }}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-all">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {selectedEvent.description && (
-                    <p className="text-sm text-slate-600 mb-3 leading-relaxed bg-slate-50 rounded-xl px-3 py-2">
-                      {selectedEvent.description}
-                    </p>
-                  )}
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2.5 text-sm text-slate-600">
-                      <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      </div>
-                      <div>
-                        <p className="font-semibold">{fmtEvDate(selectedEvent)}</p>
-                        <p className="text-xs text-slate-400">{fmtFullDate(selectedEvent.start_date)}</p>
-                      </div>
-                    </div>
-
-                    {selectedEvent.location && (
-                      <div className="flex items-center gap-2.5 text-sm text-slate-600">
-                        <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        </div>
-                        <span className="font-medium">{selectedEvent.location}</span>
-                      </div>
-                    )}
-
-                    {selectedEvent.is_recurring && (
-                      <div className="flex items-center gap-2.5 text-sm text-slate-600">
-                        <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
-                          <Repeat className="w-3.5 h-3.5 text-slate-400" />
-                        </div>
-                        <span className="font-medium">Evento ricorrente</span>
-                      </div>
-                    )}
-
-
-                  </div>
-
-                  {(selectedEvent.assigned_to || selectedEvent.is_shared) && (
-                    <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-1.5">
-                      {selectedEvent.assigned_to && (
-                        <span className="inline-flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-full font-semibold border border-amber-200">
-                          <User className="w-3 h-3" />
-                          {selectedEvent.assigned_to_name || getUserName(selectedEvent.assigned_to) || 'Utente'}
-                        </span>
-                      )}
-                      {selectedEvent.is_shared && (
-                        <span className="inline-flex items-center gap-1.5 text-xs bg-teal-50 text-teal-700 px-3 py-1 rounded-full font-semibold border border-teal-200">
-                          <Users className="w-3 h-3" />Visibile a tutti
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {selectedEvent && <EventDetailModal
+            event={selectedEvent}
+            clientName={clients.find(client => client.id === selectedEvent.client_id)?.name}
+            workItemName={workItems.find(item => item.id === selectedEvent.work_item_id)?.title}
+            onClose={() => setSelectedEvent(null)}
+            onEdit={event => { setSelectedEvent(null); onEdit(event) }}
+            onDelete={id => { onDelete(id); setSelectedEvent(null) }}
+            onScheduleFollowUp={onScheduleFollowUp}
+          />}
 
         </motion.div>
       </motion.div>

@@ -4,12 +4,18 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, Calendar, Clock, MapPin, Palette, Repeat, Bell, Users } from 'lucide-react'
 import { Event } from '../hooks/useEvents'
+import { Client } from '../hooks/useClients'
+import { WorkItem } from '../hooks/useWorkItems'
 import RelationsIntegration from './RelationsIntegration'
 import DateTimePicker from './DateTimePicker'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
 
 interface EventModalProps {
   isOpen: boolean
+  clients: Client[]
+  workItems: WorkItem[]
+  events?: Event[]
+  defaultClientId?: string | null
   onClose: () => void
   onSave: (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
   editEvent?: Event | null
@@ -60,6 +66,10 @@ const REMINDER_OPTIONS = [
 
 export default function EventModal({ 
   isOpen, 
+  clients,
+  workItems,
+  events = [],
+  defaultClientId = null,
   onClose, 
   onSave, 
   editEvent,
@@ -71,12 +81,16 @@ export default function EventModal({
   getRelatedItems,
   onNavigateToItem
 }: EventModalProps) {
+  const clientLocation = (client: Client) => [client.address, [client.zip_code, client.city].filter(Boolean).join(' '), client.province].filter(Boolean).join(', ')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     start_date: '',
     end_date: '',
     all_day: false,
+    client_confirmed: false,
+    client_id: null as string | null,
+    work_item_id: null as string | null,
     location: '',
     color: 'blue',
     is_recurring: false,
@@ -86,6 +100,7 @@ export default function EventModal({
     assigned_to_name: null as string | null,
     is_shared: false,
   })
+  const [conflictingEvents, setConflictingEvents] = useState<Event[]>([])
 
   useEffect(() => {
     if (editEvent) {
@@ -99,6 +114,9 @@ export default function EventModal({
         start_date: formatDateTimeLocal(startDate),
         end_date: endDate ? formatDateTimeLocal(endDate) : '',
         all_day: editEvent.all_day,
+        client_confirmed: editEvent.client_confirmed ?? false,
+        client_id: editEvent.client_id ?? null,
+        work_item_id: editEvent.work_item_id ?? null,
         location: editEvent.location,
         color: editEvent.color,
         is_recurring: editEvent.is_recurring,
@@ -112,13 +130,17 @@ export default function EventModal({
       // Default to now
       const now = new Date()
       now.setMinutes(0)
+      const defaultClient = clients.find(client => client.id === defaultClientId)
       setFormData({
-        title: '',
+        title: defaultClient ? `Appuntamento · ${defaultClient.name}` : '',
         description: '',
         start_date: formatDateTimeLocal(now),
         end_date: '',
         all_day: false,
-        location: '',
+        client_confirmed: false,
+        client_id: defaultClientId,
+        work_item_id: null,
+        location: defaultClient ? clientLocation(defaultClient) : '',
         color: 'blue',
         is_recurring: false,
         recurring_type: null,
@@ -128,7 +150,7 @@ export default function EventModal({
         is_shared: false,
       })
     }
-  }, [editEvent, isOpen])
+  }, [editEvent, isOpen, defaultClientId, clients])
 
   const formatDateTimeLocal = (date: Date) => {
     const year = date.getFullYear()
@@ -143,6 +165,30 @@ export default function EventModal({
     e.preventDefault()
     if (!formData.title.trim() || !formData.start_date) return
 
+    const parseLocalDate = (value: string) => {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+      return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : new Date(value)
+    }
+    const start = formData.all_day ? parseLocalDate(formData.start_date) : new Date(formData.start_date)
+    if (Number.isNaN(start.getTime())) return
+    const end = formData.end_date ? (formData.all_day ? parseLocalDate(formData.end_date) : new Date(formData.end_date)) : null
+    const proposedInterval = getInterval(start, end, formData.all_day)
+    const conflicts = events.filter(event => {
+      if (event.id === editEvent?.id) return false
+      const eventStart = new Date(event.start_date)
+      const eventEnd = event.end_date ? new Date(event.end_date) : null
+      if (Number.isNaN(eventStart.getTime()) || (eventEnd && Number.isNaN(eventEnd.getTime()))) return false
+      const interval = getInterval(eventStart, eventEnd, event.all_day)
+      return proposedInterval.start < interval.end && interval.start < proposedInterval.end
+    })
+    if (conflicts.length) {
+      setConflictingEvents(conflicts)
+      return
+    }
+    saveEvent()
+  }
+
+  const saveEvent = () => {
     // Convert datetime-local to ISO string
     const eventData = {
       ...formData,
@@ -153,6 +199,19 @@ export default function EventModal({
 
     onSave(eventData)
     onClose()
+  }
+
+  const getInterval = (start: Date, end: Date | null, allDay: boolean) => {
+    const intervalStart = new Date(start)
+    if (allDay) intervalStart.setHours(0, 0, 0, 0)
+    if (allDay) {
+      const intervalEnd = end ? new Date(end) : new Date(intervalStart)
+      intervalEnd.setHours(0, 0, 0, 0)
+      intervalEnd.setDate(intervalEnd.getDate() + 1)
+      return { start: intervalStart.getTime(), end: intervalEnd.getTime() }
+    }
+    const intervalEnd = end && end.getTime() > intervalStart.getTime() ? new Date(end) : new Date(intervalStart.getTime() + 60 * 60 * 1000)
+    return { start: intervalStart.getTime(), end: intervalEnd.getTime() }
   }
 
   const selectedColor = COLORS.find(c => c.name === formData.color) || COLORS[0]
@@ -192,6 +251,36 @@ export default function EventModal({
             {/* Content (scrollable area with form + relations) */}
             <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-500">Cliente / struttura</label>
+                <select value={formData.client_id || ''} onChange={event => {
+                  const client = clients.find(item => item.id === event.target.value)
+                  setFormData(prev => ({ ...prev, client_id: client?.id || null, work_item_id: null, client_confirmed: client ? prev.client_confirmed : false, title: client?.name || prev.title, location: client ? clientLocation(client) || prev.location : prev.location }))
+                }} className="w-full rounded-xl border border-slate-200/60 bg-slate-50/80 px-4 py-3 text-slate-700 focus:border-indigo-400 focus:outline-none">
+                  <option value="">Nessun cliente collegato</option>
+                  {clients.map(client => {
+                    const parent = clients.find(item => item.id === client.parent_client_id)
+                    return <option key={client.id} value={client.id}>{parent ? `${parent.name} › ` : ''}{client.name}</option>
+                  })}
+                </select>
+              </div>
+
+              {formData.client_id && <div>
+                <label className="mb-2 block text-sm font-medium text-slate-500">Lavorazione</label>
+                <select value={formData.work_item_id || ''} onChange={event => {
+                  const workItem = workItems.find(item => item.id === event.target.value && item.client_id === formData.client_id && item.kind !== 'todo')
+                  setFormData(prev => ({ ...prev, work_item_id: workItem?.id || null, title: workItem?.title || prev.title }))
+                }} className="w-full rounded-xl border border-slate-200/60 bg-slate-50/80 px-4 py-3 text-slate-700 focus:border-indigo-400 focus:outline-none">
+                  <option value="">Nessuna lavorazione collegata</option>
+                  {workItems.filter(item => item.client_id === formData.client_id && item.kind !== 'todo').map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
+                </select>
+              </div>}
+
+              {formData.client_id && <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-sm font-semibold text-slate-700">
+                <input type="checkbox" checked={formData.client_confirmed} onChange={event => setFormData(prev => ({ ...prev, client_confirmed: event.target.checked }))} className="h-4 w-4 accent-emerald-600" />
+                Cliente ha confermato l'appuntamento
+              </label>}
+
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-slate-500 mb-2">
@@ -227,7 +316,7 @@ export default function EventModal({
                   type="checkbox"
                   id="all_day"
                   checked={formData.all_day}
-                  onChange={(e) => setFormData(prev => ({ ...prev, all_day: e.target.checked }))}
+                  onChange={(e) => { setConflictingEvents([]); setFormData(prev => ({ ...prev, all_day: e.target.checked })) }}
                   className="w-5 h-5 text-blue-600 bg-slate-50/80 border-slate-200 rounded focus:ring-indigo-200"
                 />
                 <label htmlFor="all_day" className="text-slate-500 font-medium">
@@ -244,7 +333,7 @@ export default function EventModal({
                   <DateTimePicker
                     mode={formData.all_day ? 'date' : 'datetime'}
                     value={formData.all_day ? formData.start_date.split('T')[0] : formData.start_date}
-                    onChange={(val) => setFormData(prev => ({ ...prev, start_date: val }))}
+                    onChange={(val) => { setConflictingEvents([]); setFormData(prev => ({ ...prev, start_date: val })) }}
                     placeholder="Seleziona data e ora"
                   />
                 </div>
@@ -256,7 +345,7 @@ export default function EventModal({
                   <DateTimePicker
                     mode={formData.all_day ? 'date' : 'datetime'}
                     value={formData.all_day && formData.end_date ? formData.end_date.split('T')[0] : formData.end_date}
-                    onChange={(val) => setFormData(prev => ({ ...prev, end_date: val }))}
+                    onChange={(val) => { setConflictingEvents([]); setFormData(prev => ({ ...prev, end_date: val })) }}
                     placeholder="Nessuna data di fine"
                     clearable
                   />
@@ -421,6 +510,11 @@ export default function EventModal({
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-200/60 bg-white/40 flex-shrink-0">
+              {conflictingEvents.length > 0 && <div role="alert" className="mb-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-left">
+                <p className="text-sm font-bold text-amber-900">Attenzione: l'orario si sovrappone a {conflictingEvents.length === 1 ? 'un evento' : `${conflictingEvents.length} eventi`}.</p>
+                <ul className="mt-1 list-inside list-disc text-xs text-amber-800">{conflictingEvents.map(event => <li key={event.id}>{event.title} · {new Date(event.start_date).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}</li>)}</ul>
+                <div className="mt-3 flex gap-2"><button type="button" onClick={() => setConflictingEvents([])} className="flex-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-amber-900">Rivedi orario</button><button type="button" onClick={saveEvent} className="flex-1 rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Salva comunque</button></div>
+              </div>}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

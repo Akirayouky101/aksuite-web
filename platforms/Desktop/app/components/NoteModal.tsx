@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Save, Tag, Pin, Folder, Palette } from 'lucide-react'
+import { X, Save, Tag, Pin, Folder, Palette, Bell } from 'lucide-react'
 import { Note } from '../hooks/useNotes'
+import DateTimePicker, { localDateTimeToIso } from './DateTimePicker'
+import AttachmentPanel from './AttachmentPanel'
 import RelationsIntegration from './RelationsIntegration'
 import { EntityType, RelationType, RelatedItem } from '../hooks/useRelations'
 
@@ -66,7 +68,8 @@ export default function NoteModal({
     tags: [] as string[],
     is_pinned: false,
     folder: 'general',
-    color: 'blue'
+    color: 'blue',
+    reminder_at: '', recurrence_type: '' as '' | 'daily' | 'weekly' | 'monthly' | 'yearly', recurrence_until: ''
   })
   const [tagInput, setTagInput] = useState('')
 
@@ -78,7 +81,8 @@ export default function NoteModal({
         tags: editNote.tags || [],
         is_pinned: editNote.is_pinned,
         folder: editNote.folder,
-        color: editNote.color
+        color: editNote.color,
+        reminder_at: editNote.reminder_at || '', recurrence_type: editNote.recurrence_type || '', recurrence_until: editNote.recurrence_until || ''
       })
     } else {
       setFormData({
@@ -87,7 +91,8 @@ export default function NoteModal({
         tags: [],
         is_pinned: false,
         folder: 'general',
-        color: 'blue'
+        color: 'blue',
+        reminder_at: '', recurrence_type: '' as '' | 'daily' | 'weekly' | 'monthly' | 'yearly', recurrence_until: ''
       })
     }
   }, [editNote, isOpen])
@@ -96,7 +101,7 @@ export default function NoteModal({
     e.preventDefault()
     if (!formData.title.trim()) return
 
-    onSave(formData)
+    onSave({ ...formData, recurrence_type: formData.recurrence_type || null, recurrence_until: formData.recurrence_until || null })
     onClose()
   }
 
@@ -127,7 +132,7 @@ export default function NoteModal({
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200/60"
+            className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200/60 flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
@@ -151,7 +156,7 @@ export default function NoteModal({
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            <form onSubmit={handleSubmit} className="flex-1 min-h-0 p-6 space-y-6 overflow-y-auto">
               {/* Title */}
               <div>
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
@@ -241,6 +246,14 @@ export default function NoteModal({
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <Bell size={16} /> Promemoria
+                </label>
+                <DateTimePicker value={formData.reminder_at} onChange={value => setFormData(previous => ({ ...previous, reminder_at: localDateTimeToIso(value) }))} placeholder="Nessun promemoria" clearable />
+                {formData.reminder_at && <select value={formData.recurrence_type} onChange={event => setFormData(previous => ({ ...previous, recurrence_type: event.target.value as typeof previous.recurrence_type }))} className="mt-2 w-full rounded-xl border border-slate-200/60 bg-slate-50/80 px-3 py-2 text-sm text-slate-700"><option value="">Non ripetere</option><option value="daily">Ogni giorno</option><option value="weekly">Ogni settimana</option><option value="monthly">Ogni mese</option><option value="yearly">Ogni anno</option></select>}
+              </div>
+
               {/* Tags */}
               <div>
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
@@ -285,7 +298,7 @@ export default function NoteModal({
 
             {/* Collegamenti Multi-Entità */}
             {editNote?.id && (
-              <div className="px-6 pb-4 space-y-3">
+              <div className="max-h-40 overflow-y-auto px-6 pb-4 space-y-3 flex-shrink-0">
                 <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   🔗 Collegamenti
                 </h4>
@@ -303,6 +316,7 @@ export default function NoteModal({
                   getRelatedItems={getRelatedItems || (async () => [])}
                   onNavigateToItem={onNavigateToItem}
                 />
+                <AttachmentPanel entityType="note" entityId={editNote.id} />
               </div>
             )}
 

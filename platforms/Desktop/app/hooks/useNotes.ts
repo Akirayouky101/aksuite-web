@@ -13,6 +13,9 @@ export interface Note {
   is_pinned: boolean
   folder: string
   color: string
+  reminder_at?: string | null
+  recurrence_type?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null
+  recurrence_until?: string | null
   created_at: string
   updated_at: string
 }

@@ -1,0 +1,15 @@
+{
+  "name": "AK Suite",
+  "short_name": "AK Suite",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#efe8d8",
+  "theme_color": "#2d2754",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

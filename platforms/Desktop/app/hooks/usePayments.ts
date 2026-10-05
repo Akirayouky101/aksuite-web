@@ -21,6 +21,9 @@ export interface Payment {
   payers: PaymentPayer[]
   notes: string
   down_payment_due_date: string | null
+  reminder_at: string | null
+  recurrence_type: 'daily' | 'weekly' | 'monthly' | 'yearly' | null
+  recurrence_until: string | null
   down_payment_paid_at: string | null
   down_payment_payer_payments: PaymentPayerPayment[]
   installment_schedule: PaymentInstallment[]
@@ -45,6 +48,24 @@ export interface PaymentPayerPayment {
   paid_at: string | null
   advanced_by_me?: boolean
   reimbursed_at?: string | null
+}
+
+export function paymentRemainingAmount(payment: Payment): number {
+  const payers = payment.payers || []
+  const schedule = payment.installment_schedule || []
+  const downPaymentPaid = payers.length
+    ? payers.reduce((sum, payer) => payment.down_payment_payer_payments?.some(record => record.payer_name === payer.name && record.paid_at)
+      ? sum + payment.down_payment * payer.percentage / 100
+      : sum, 0)
+    : payment.down_payment_paid_at ? payment.down_payment : 0
+  const variableSchedule = payment.payment_mode === 'salary_withholding'
+    || (!payers.length && schedule.some(installment => installment.amount != null || installment.paid_at))
+  const installmentsPaid = variableSchedule
+    ? schedule.reduce((sum, installment) => sum + (Number(installment.amount) || 0), 0)
+    : payers.length
+      ? payers.reduce((sum, payer) => sum + schedule.filter(installment => installment.payer_payments?.some(record => record.payer_name === payer.name && record.paid_at)).length * payment.installment_amount * payer.percentage / 100, 0)
+      : (payment.paid_installments || []).length * payment.installment_amount
+  return Math.max(0, payment.total_amount - downPaymentPaid - installmentsPaid)
 }
 
 export type PaymentInput = Omit<Payment, 'id' | 'user_id' | 'created_at' | 'updated_at'>

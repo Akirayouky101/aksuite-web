@@ -22,8 +22,26 @@ const MONTHS_SHORT = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 's
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+export function localDateTimeToIso(value: string): string {
+  if (!value) return ''
+  const [datePart, timePart = '00:00'] = value.split('T')
+  const [year, month, day] = datePart.split('-').map(Number)
+  const [hour, minute] = timePart.split(':').map(Number)
+  return new Date(year, month - 1, day, hour, minute).toISOString()
+}
+
 function parseValue(value: string): { date: Date | null; hour: number; minute: number } {
   if (!value) return { date: null, hour: 9, minute: 0 }
+  if (/Z$|[+-]\d{2}:\d{2}$/.test(value)) {
+    const instant = new Date(value)
+    if (!Number.isNaN(instant.getTime())) {
+      return {
+        date: new Date(instant.getFullYear(), instant.getMonth(), instant.getDate()),
+        hour: instant.getHours(),
+        minute: instant.getMinutes()
+      }
+    }
+  }
   const [datePart, timePart] = value.split('T')
   const [y, m, d] = datePart.split('-').map(Number)
   if (!y || !m || !d) return { date: null, hour: 9, minute: 0 }

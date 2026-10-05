@@ -1,8 +1,11 @@
 node_modules/
 .next/
 out/
-.env*.local
+.env*
+!.env.local.example
 .vercel
 *.log
 .DS_Store
 tsconfig.tsbuildinfo
+supabase/.temp/
+supabase/.branches/

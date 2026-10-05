@@ -13,6 +13,10 @@ export interface Client {
   phone: string
   phone2: string
   email: string
+  contact_first_name: string
+  contact_last_name: string
+  contact_phone: string
+  contact_email: string
   address: string
   city: string
   zip_code: string
@@ -22,6 +26,7 @@ export interface Client {
   category: string
   notes: string
   is_favorite: boolean
+  parent_client_id: string | null
   created_at: string
   updated_at: string
 }

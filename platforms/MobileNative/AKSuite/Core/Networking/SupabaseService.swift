@@ -18,5 +18,11 @@ enum SupabaseConfig {
 }
 
 enum SupabaseService {
-    static let shared = SupabaseClient(supabaseURL: SupabaseConfig.url, supabaseKey: SupabaseConfig.anonKey)
+    static let shared = SupabaseClient(
+        supabaseURL: SupabaseConfig.url,
+        supabaseKey: SupabaseConfig.anonKey,
+        options: SupabaseClientOptions(
+            auth: .init(emitLocalSessionAsInitialSession: true)
+        )
+    )
 }

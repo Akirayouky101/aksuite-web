@@ -1,0 +1,5 @@
+ALTER TABLE public.clients
+  ADD COLUMN IF NOT EXISTS contact_first_name TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS contact_last_name TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS contact_phone TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS contact_email TEXT DEFAULT '';

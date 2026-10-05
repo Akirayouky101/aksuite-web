@@ -13,6 +13,8 @@ interface PaymentsOverviewProps {
 
 const money = (value: number) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value || 0)
 
+const remainingAmount = (payment: Payment) => Math.max(0, payment.total_amount - paidAmount(payment))
+
 function paidAmount(payment: Payment) {
   const down = payment.payers?.length
     ? payment.payers.reduce((sum, payer) => payment.down_payment_payer_payments?.some(item => item.payer_name === payer.name && item.paid_at) ? sum + payment.down_payment * payer.percentage / 100 : sum, 0)
@@ -25,8 +27,79 @@ function paidAmount(payment: Payment) {
 
 export default function PaymentsOverview({ payments, onNew, onOpenPractice, onDelete }: PaymentsOverviewProps) {
   const [selected, setSelected] = useState<Payment | null>(null)
+  const [filter, setFilter] = useState<'all' | 'due' | 'completed'>('all')
+  const dueCount = payments.filter(payment => remainingAmount(payment) > 0).length
+  const completedCount = payments.length - dueCount
+  const visiblePayments = payments.filter(payment => {
+    if (filter === 'due') return remainingAmount(payment) > 0
+    if (filter === 'completed') return remainingAmount(payment) === 0
+    return true
+  })
 
-  return <section className="ak-workspace"><header className="ak-workspace-head"><div><p className="ak-kicker">Registro personale</p><h2>Pagamenti</h2><p>Scegli una pratica per vedere il riepilogo o gestire tutti i dettagli.</p></div><button onClick={onNew} className="ak-primary-action"><Plus className="h-4 w-4" />Nuovo pagamento</button></header><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{payments.length ? payments.map(payment => <div key={payment.id} className="relative rounded-[1.2rem] border border-[#ead8bf] bg-[#fff8ed] p-4 text-left transition hover:-translate-y-1 hover:shadow-lg"><button onClick={() => setSelected(payment)} className="w-full text-left"><div className="flex items-start justify-between gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#cfe4ff] text-[#376db5]"><CreditCard className="h-5 w-5" /></span><Eye className="h-4 w-4 text-[#a99dbb]" /></div><h3 className="mt-4 font-black text-[#2d2754]">{payment.payment_type}</h3><p className="mt-1 truncate text-sm text-[#716a91]">A {payment.recipient}</p><div className="mt-4 flex items-end justify-between gap-2 text-xs"><span className="text-[#716a91]">Totale<strong className="mt-1 block text-base text-[#2d2754]">{money(payment.total_amount)}</strong></span><span className="text-right text-[#716a91]">Pagato<strong className="mt-1 block text-base text-[#257259]">{money(paidAmount(payment))}</strong></span></div></button><button onClick={() => onDelete(payment.id)} title="Elimina pratica" className="absolute right-3 top-3 rounded-lg p-2 text-[#897e9d] hover:bg-[#f5dfca] hover:text-[#b43c44]"><Trash2 className="h-4 w-4" /></button></div>) : <div className="ak-empty sm:col-span-2 xl:col-span-3"><CreditCard className="h-8 w-8" /><h3>Nessun pagamento</h3><p>Crea il primo pagamento per iniziare.</p></div>}</div><QuickSummary payment={selected} onClose={() => setSelected(null)} onOpenPractice={payment => { setSelected(null); onOpenPractice(payment) }} /></section>
+  return (
+    <section className="ak-workspace">
+      <header className="ak-workspace-head">
+        <div>
+          <p className="ak-kicker">Registro personale</p>
+          <h2>Pagamenti</h2>
+          <p>Scegli una pratica per vedere il riepilogo o gestire tutti i dettagli.</p>
+        </div>
+        <button onClick={onNew} className="ak-primary-action"><Plus className="h-4 w-4" />Nuovo pagamento</button>
+      </header>
+      <div className="ak-toolbar flex-wrap justify-between">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-[#d8cbb8] bg-[#fff8ed] p-1" role="group" aria-label="Filtra pagamenti">
+          {([
+            ['all', 'Tutti', payments.length],
+            ['due', 'Da pagare', dueCount],
+            ['completed', 'Completati', completedCount],
+          ] as const).map(([value, label, count]) => (
+            <button
+              key={value}
+              onClick={() => setFilter(value)}
+              aria-pressed={filter === value}
+              className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filter === value ? 'bg-[#2d2754] text-white' : 'text-[#716a91] hover:bg-[#f5dfca]'}`}
+            >
+              {label} <span className="ml-1 opacity-70">{count}</span>
+            </button>
+          ))}
+        </div>
+        <span className="ak-count">{visiblePayments.length} registrati</span>
+      </div>
+      <div className="mt-2 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {visiblePayments.length ? visiblePayments.map(payment => {
+          const paid = paidAmount(payment)
+          const remaining = remainingAmount(payment)
+          const installmentCount = payment.installment_schedule?.length || payment.installments_count
+          return (
+            <div key={payment.id} className="relative rounded-[1.2rem] border border-[#ead8bf] bg-[#fff8ed] p-4 text-left transition hover:-translate-y-1 hover:shadow-lg">
+              <button onClick={() => setSelected(payment)} className="w-full text-left">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#cfe4ff] text-[#376db5]"><CreditCard className="h-5 w-5" /></span>
+                  <Eye className="h-4 w-4 text-[#a99dbb]" />
+                </div>
+                <div className="mt-4 flex items-center justify-between gap-2">
+                  <h3 className="min-w-0 truncate font-black text-[#2d2754]">{payment.payment_type}</h3>
+                  {payment.is_installment && <span className="shrink-0 rounded-full bg-[#ddd7ff] px-2 py-1 text-[10px] font-bold text-[#5144a1]">{installmentCount} {installmentCount === 1 ? 'rata' : 'rate'}</span>}
+                </div>
+                <p className="mt-1 truncate text-sm text-[#716a91]">A {payment.recipient}</p>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                  <span className="min-w-0 text-[#716a91]">Totale<strong className="mt-1 block whitespace-nowrap text-sm text-[#2d2754]">{money(payment.total_amount)}</strong></span>
+                  <span className="min-w-0 text-center text-[#716a91]">Pagato<strong className="mt-1 block whitespace-nowrap text-sm text-[#257259]">{money(paid)}</strong></span>
+                  <span className="min-w-0 text-right text-[#716a91]">Manca<strong className="mt-1 block whitespace-nowrap text-sm text-[#e45f4e]">{money(remaining)}</strong></span>
+                </div>
+              </button>
+              <button onClick={() => onDelete(payment.id)} title="Elimina pratica" className="absolute right-3 top-3 rounded-lg p-2 text-[#897e9d] hover:bg-[#f5dfca] hover:text-[#b43c44]"><Trash2 className="h-4 w-4" /></button>
+            </div>
+          )
+        }) : payments.length ? (
+          <div className="ak-empty sm:col-span-2 xl:col-span-3"><CreditCard className="h-8 w-8" /><h3>Nessun risultato</h3><p>Non ci sono pagamenti in questa categoria.</p></div>
+        ) : (
+          <div className="ak-empty sm:col-span-2 xl:col-span-3"><CreditCard className="h-8 w-8" /><h3>Nessun pagamento</h3><p>Crea il primo pagamento per iniziare.</p></div>
+        )}
+      </div>
+      <QuickSummary payment={selected} onClose={() => setSelected(null)} onOpenPractice={payment => { setSelected(null); onOpenPractice(payment) }} />
+    </section>
+  )
 }
 
 function QuickSummary({ payment, onClose, onOpenPractice }: { payment: Payment | null; onClose: () => void; onOpenPractice: (payment: Payment) => void }) {

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Phone, User, Mail, MessageSquare, Clock, MapPin, UserPlus, Users } from 'lucide-react'
+import { X, Bell, Phone, User, Mail, MessageSquare, Clock, MapPin, UserPlus, Users } from 'lucide-react'
 import SuccessModal from './SuccessModal'
+import DateTimePicker from './DateTimePicker'
 
 interface Call {
   id: string
@@ -18,6 +19,9 @@ interface Call {
   notes: string
   status: 'pending' | 'in_corso' | 'completed' | 'cancelled'
   call_date: string
+  follow_up: boolean
+  follow_up_date: string | null
+  follow_up_time?: string | null
 }
 
 interface ClientLite { id: string; name: string; company: string; phone: string; email: string; address: string; city: string; zip_code: string; province: string }
@@ -28,13 +32,16 @@ interface CallModalProps {
   onSave: (call: any) => Promise<void>
   editCall?: Call | null
   clients?: ClientLite[]
+  initialClient?: ClientLite | null
+  defaultFollowUpDate?: string | null
+  initialFollowUpNote?: string
   onAddClient?: (data: any) => Promise<any>
   [key: string]: any
 }
 
-const emptyForm = { callerName: '', phone: '', email: '', address: '', notes: '' }
+const emptyForm = { callerName: '', phone: '', email: '', address: '', notes: '', followUp: false, followUpDate: '' }
 
-export default function CallModal({ isOpen, onClose, onSave, editCall, clients = [], onAddClient }: CallModalProps) {
+export default function CallModal({ isOpen, onClose, onSave, editCall, clients = [], initialClient = null, defaultFollowUpDate = null, initialFollowUpNote = '', onAddClient }: CallModalProps) {
   const [form, setForm] = useState(emptyForm)
   const [isSaving, setIsSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -46,10 +53,18 @@ export default function CallModal({ isOpen, onClose, onSave, editCall, clients =
   const joinAddress = (c: { address?: string; zip_code?: string; city?: string; province?: string }) => [c.address, [c.zip_code, c.city].filter(Boolean).join(' '), c.province ? `(${c.province})` : ''].filter(Boolean).join(', ')
 
   useEffect(() => {
-    if (editCall) setForm({ callerName: editCall.caller_name, phone: editCall.phone, email: editCall.email || '', address: joinAddress(editCall), notes: editCall.notes || '' })
-    else setForm(emptyForm)
-    setMatchedClient(null)
-  }, [editCall, isOpen])
+    if (editCall) {
+      const followUpTime = editCall.follow_up_time?.slice(0, 5) || '09:00'
+      setForm({ callerName: editCall.caller_name, phone: editCall.phone, email: editCall.email || '', address: joinAddress(editCall), notes: editCall.notes || '', followUp: editCall.follow_up, followUpDate: editCall.follow_up_date ? `${editCall.follow_up_date}T${followUpTime}` : '' })
+      setMatchedClient(null)
+    } else if (initialClient) {
+      setForm({ callerName: initialClient.name, phone: initialClient.phone || '', email: initialClient.email || '', address: joinAddress(initialClient), notes: initialFollowUpNote, followUp: true, followUpDate: defaultFollowUpDate || '' })
+      setMatchedClient(initialClient)
+    } else {
+      setForm(emptyForm)
+      setMatchedClient(null)
+    }
+  }, [editCall, isOpen, initialClient, defaultFollowUpDate, initialFollowUpNote])
 
   const nameL = form.callerName.trim().toLowerCase()
   const phoneClean = form.phone.replace(/\s/g, '')
@@ -66,6 +81,7 @@ export default function CallModal({ isOpen, onClose, onSave, editCall, clients =
     e.preventDefault()
     setIsSaving(true)
     try {
+      const [followUpDate, followUpTime] = form.followUpDate.split('T')
       await onSave({
         caller_name: form.callerName.trim(),
         phone: form.phone.trim(),
@@ -75,7 +91,7 @@ export default function CallModal({ isOpen, onClose, onSave, editCall, clients =
         company: editCall?.company || '',
         city: '', zip_code: '', province: '',
         call_type: 'altro', priority: 'media', call_direction: 'inbound',
-        follow_up: false, follow_up_date: null,
+        follow_up: form.followUp, follow_up_date: form.followUp ? followUpDate || null : null, follow_up_time: form.followUp ? followUpTime || '09:00' : null,
         status: editCall?.status || 'pending',
         call_date: editCall?.call_date || new Date().toISOString(),
       })
@@ -162,6 +178,12 @@ export default function CallModal({ isOpen, onClose, onSave, editCall, clients =
                 <div>
                   <label className={labelClass}><MapPin className="w-3.5 h-3.5 inline mr-1" />Indirizzo</label>
                   <input type="text" value={form.address} onChange={set('address')} className={inputClass} placeholder="Via Roma 1, 00100 Roma (RM)" />
+                </div>
+
+                <div>
+                  <label className={labelClass}><Bell className="w-3.5 h-3.5 inline mr-1" />Promemoria ricontatto</label>
+                  <button type="button" onClick={() => setForm(current => ({ ...current, followUp: !current.followUp }))} className={`mb-2 rounded-lg px-3 py-2 text-sm font-semibold ${form.followUp ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>{form.followUp ? 'Campanella attiva' : 'Attiva campanella'}</button>
+                  {form.followUp && <DateTimePicker value={form.followUpDate} onChange={value => setForm(current => ({ ...current, followUpDate: value }))} placeholder="Seleziona data e ora" />}
                 </div>
 
                 <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} type="submit" disabled={isSaving} className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm">

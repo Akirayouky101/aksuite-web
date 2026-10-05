@@ -22,14 +22,23 @@ final class AuthViewModel: ObservableObject {
     private func observeAuthState() async {
         for await state in client.auth.authStateChanges {
             switch state.event {
-            case .initialSession, .signedIn, .tokenRefreshed, .userUpdated:
+            case .initialSession:
+                if let initialSession = state.session, !initialSession.isExpired {
+                    session = initialSession
+                    isLoading = false
+                } else if state.session == nil {
+                    session = nil
+                    isLoading = false
+                }
+            case .signedIn, .tokenRefreshed, .userUpdated:
                 session = state.session
+                isLoading = false
             case .signedOut:
                 session = nil
+                isLoading = false
             default:
                 break
             }
-            isLoading = false
         }
     }
 

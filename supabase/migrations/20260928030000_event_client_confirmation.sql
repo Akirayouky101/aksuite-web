@@ -1,0 +1,2 @@
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS client_confirmed BOOLEAN NOT NULL DEFAULT false;

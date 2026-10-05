@@ -7,11 +7,14 @@ import { useAuth } from './useAuth'
 export interface Event {
   id: string
   user_id?: string
+  client_id: string | null
+  work_item_id: string | null
   title: string
   description: string
   start_date: string
   end_date: string | null
   all_day: boolean
+  client_confirmed: boolean
   location: string
   color: string
   is_recurring: boolean

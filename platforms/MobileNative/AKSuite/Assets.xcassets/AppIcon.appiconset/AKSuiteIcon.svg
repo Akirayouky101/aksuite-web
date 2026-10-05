@@ -1,0 +1,8 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" rx="220" fill="#f8dfb9"/>
+  <rect x="56" y="56" width="912" height="912" rx="184" fill="none" stroke="#e7c792" stroke-width="18"/>
+  <g transform="rotate(-8 512 512)" fill="#e45f4e" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif">
+    <text x="512" y="530" font-size="430" font-weight="800" letter-spacing="-30">AK</text>
+    <text x="512" y="700" font-size="142" font-weight="800" letter-spacing="4">SUITE</text>
+  </g>
+</svg>
