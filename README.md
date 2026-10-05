@@ -78,6 +78,13 @@ to build navigation counts. Open-page web reminders retain a separate
 minute-refreshed metadata feed; server Web Push/APNs scheduling is unchanged.
 Native section loading remains scoped to the selected workspace.
 
+Mac Catalyst defaults to the larger `Molto grande` text preset and large
+controls. The account menu provides `Dimensione interfaccia` with Standard,
+Grande and Molto grande; the preference persists locally on the Mac.
+Sidebar and dashboard panel widths adapt to the text size. Larger system
+accessibility text settings are preserved. iPhone/iPad and the web do not
+use this Mac-only preset.
+
 ## Supabase Synchronization
 
 Authenticate using `supabase login` in an interactive terminal. Verify the

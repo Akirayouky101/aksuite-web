@@ -732,7 +732,7 @@ private extension Date {
 
 private extension View {
     func calendarControlStyle() -> some View {
-        self.font(.system(size: 15)).foregroundStyle(Color(hex: "#2d2754")).padding(.horizontal, 12).padding(.vertical, 10)
+        self.platformScaledFont(size: 15).foregroundStyle(Color(hex: "#2d2754")).padding(.horizontal, 12).padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading).background(Color(hex: "#fae9ce"))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#e6d3b6"), lineWidth: 1)).clipShape(RoundedRectangle(cornerRadius: 12))
     }

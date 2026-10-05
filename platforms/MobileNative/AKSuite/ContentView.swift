@@ -24,6 +24,8 @@ struct ContentView: View {
     @State private var initialWorkID: UUID?
     @State private var sidebarVisible = true
     @State private var createInSection: AppSection?
+    @AppStorage("macInterfaceSize") private var macInterfaceSize = MacInterfaceSize.largest.rawValue
+    @ScaledMetric(relativeTo: .body) private var sidebarWidth: CGFloat = 220
 
     private var dashboard: some View {
         OperationalDashboardView(onNavigate: navigate, onOpen: { kind, id in
@@ -73,7 +75,7 @@ struct ContentView: View {
                     }.buttonStyle(.plain)
                 }
             }.padding(12)
-        }.frame(width: 220).background(Color(hex: "#fff8ed"))
+        }.frame(width: sidebarWidth).background(Color(hex: "#fff8ed"))
     }
 
     var body: some View {
@@ -95,6 +97,13 @@ struct ContentView: View {
                                 Spacer()
                                 Button { showGlobalSearch = true } label: { Image(systemName: "magnifyingglass") }.accessibilityLabel("Ricerca globale")
                                 Menu {
+                                    #if targetEnvironment(macCatalyst)
+                                    Picker("Dimensione interfaccia", selection: $macInterfaceSize) {
+                                        ForEach(MacInterfaceSize.allCases) { size in
+                                            Text(size.title).tag(size.rawValue)
+                                        }
+                                    }
+                                    #endif
                                     Button("Esci", role: .destructive) { Task { await auth.signOut() } }
                                 } label: { Image(systemName: "person.crop.circle") }.accessibilityLabel("Account")
                             }.padding(14).background(Color(hex: "#fff8ed"))

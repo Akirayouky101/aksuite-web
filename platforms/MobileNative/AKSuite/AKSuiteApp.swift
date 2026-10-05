@@ -16,6 +16,7 @@ struct AKSuiteApp: App {
                         await pushNotifications.registerDevice(for: userID)
                     }
                 }
+                .platformReadableInterface()
         }
     }
 }

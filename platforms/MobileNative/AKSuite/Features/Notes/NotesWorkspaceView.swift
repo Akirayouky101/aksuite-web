@@ -397,4 +397,4 @@ private struct NoteEditorView: View {
     private func colorValue(_ value: String) -> Color { ["blue": "#3b82f6", "green": "#10b981", "yellow": "#f59e0b", "red": "#ef4444", "purple": "#8b5cf6", "pink": "#ec4899", "orange": "#f97316", "gray": "#94a3b8"][value].map(Color.init(hex:)) ?? Color(hex: "#3b82f6") }
 }
 
-private extension View { func noteControlStyle() -> some View { self.font(.system(size: 15)).foregroundStyle(Color(hex: "#2d2754")).padding(.horizontal, 12).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading).background(Color(hex: "#fae9ce")).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#e6d3b6"), lineWidth: 1)).clipShape(RoundedRectangle(cornerRadius: 12)) } }
+private extension View { func noteControlStyle() -> some View { self.platformScaledFont(size: 15).foregroundStyle(Color(hex: "#2d2754")).padding(.horizontal, 12).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading).background(Color(hex: "#fae9ce")).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#e6d3b6"), lineWidth: 1)).clipShape(RoundedRectangle(cornerRadius: 12)) } }

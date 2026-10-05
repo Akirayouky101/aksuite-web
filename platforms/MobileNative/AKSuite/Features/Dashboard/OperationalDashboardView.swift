@@ -28,6 +28,7 @@ struct OperationalDashboardView: View {
     @State private var loading = true
     @State private var errorMessage: String?
     @State private var requestID = UUID()
+    @ScaledMetric(relativeTo: .body) private var panelWidth: CGFloat = 280
 
     var body: some View {
         ScrollView {
@@ -49,7 +50,7 @@ struct OperationalDashboardView: View {
                 }
                 if loading { ProgressView("Aggiorno il riepilogo...").frame(maxWidth: .infinity) }
                 if !loading && errorMessage == nil {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 16, alignment: .top)], alignment: .leading, spacing: 16) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: panelWidth), spacing: 16, alignment: .top)], alignment: .leading, spacing: 16) {
                         panel(title: "Agenda di oggi", icon: "calendar", empty: "Nessun appuntamento oggi.", rows: agenda, kind: "event", section: "calendar")
                         panel(title: "Cose da fare", icon: "checklist", empty: "Nessuna attività da fare.", rows: todos, kind: "todo", section: "todos")
                         VStack(alignment: .leading, spacing: 14) {
