@@ -1,10 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Event } from './useEvents'
-import { Note } from './useNotes'
-import { Payment } from './usePayments'
-import { Call } from './useCalls'
+import type { ReminderEvent, ReminderNote, ReminderPayment, ReminderCall } from './useReminderFeed'
 
 const notifiedKey = 'aksuite-desktop-reminders'
 
@@ -15,7 +12,7 @@ function callReminderTimestamp(date: string, time?: string | null) {
   return new Date(year, month - 1, day, hour, minute).getTime()
 }
 
-export function useDesktopReminders(events: Event[], notes: Note[], payments: Payment[], calls: Call[]) {
+export function useDesktopReminders(events: ReminderEvent[], notes: ReminderNote[], payments: ReminderPayment[], calls: ReminderCall[]) {
   useEffect(() => {
     if (!('Notification' in window) || Notification.permission !== 'granted') return
     const notifyDue = () => {

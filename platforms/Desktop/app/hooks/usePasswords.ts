@@ -22,7 +22,7 @@ export interface PasswordCategory {
   parent_id: string | null
 }
 
-export function usePasswords() {
+export function usePasswords(enabled = true) {
   const [passwords, setPasswords] = useState<Password[]>([])
   const [categories, setCategories] = useState<PasswordCategory[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -30,7 +30,11 @@ export function usePasswords() {
 
   // Load passwords from Supabase or localStorage
   useEffect(() => {
+    let active = true
+    if (!enabled) { setPasswords([]); setCategories([]); setIsLoading(true); return }
     const loadPasswords = async () => {
+      setPasswords([]); setCategories([])
+      setIsLoading(true)
       if (user) {
         // Load from Supabase if authenticated
         const { data, error } = await supabase
@@ -38,6 +42,7 @@ export function usePasswords() {
           .select('*')
           .order('created_at', { ascending: false })
 
+        if (!active) return
         if (error) {
           console.error('Error loading passwords:', error)
         } else if (data) {
@@ -56,7 +61,8 @@ export function usePasswords() {
               createdAt: new Date(p.created_at),
             }))
           )
-          setPasswords(decryptedPasswords)
+          if (!active) return
+          if (active) setPasswords(decryptedPasswords)
         }
 
         const { data: categoryData, error: categoryError } = await supabase
@@ -64,7 +70,7 @@ export function usePasswords() {
           .select('id, name, parent_id')
           .order('name')
         if (categoryError && categoryError.code !== '42P01') console.error('Error loading password categories:', categoryError)
-        if (categoryData) setCategories(categoryData)
+        if (active && categoryData) setCategories(categoryData)
       } else {
         // Fallback to localStorage if not authenticated
         const stored = localStorage.getItem('ak-passwords')
@@ -80,18 +86,19 @@ export function usePasswords() {
           }
         }
       }
-      setIsLoading(false)
+      if (active) setIsLoading(false)
     }
 
     loadPasswords()
-  }, [user?.id])
+    return () => { active = false }
+  }, [user?.id, enabled])
 
   // Save to localStorage as backup
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (enabled && !isLoading && !user) {
       localStorage.setItem('ak-passwords', JSON.stringify(passwords))
     }
-  }, [passwords, isLoading, user?.id])
+  }, [passwords, isLoading, user?.id, enabled])
 
   const addPassword = async (password: Omit<Password, 'id' | 'createdAt'>) => {
     if (user) {

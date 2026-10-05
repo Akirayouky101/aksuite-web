@@ -20,16 +20,20 @@ export interface Note {
   updated_at: string
 }
 
-export function useNotes() {
+export function useNotes(enabled = true) {
   const [notes, setNotes] = useState<Note[]>([])
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadNotes()
-  }, [user?.id])
+    if (!enabled) { setNotes([]); setLoading(false); return }
+    let active = true
+    void loadNotes(() => active)
+    return () => { active = false }
+  }, [user?.id, enabled])
 
-  const loadNotes = async () => {
+  const loadNotes = async (isCurrent: () => boolean = () => true) => {
+    setLoading(true)
     try {
       if (user) {
         // Load from Supabase
@@ -39,6 +43,7 @@ export function useNotes() {
           .order('is_pinned', { ascending: false })
           .order('updated_at', { ascending: false })
 
+        if (!isCurrent()) return
         if (error) {
           console.error('Error loading notes from Supabase:', error)
           loadFromLocalStorage()
@@ -50,10 +55,11 @@ export function useNotes() {
         loadFromLocalStorage()
       }
     } catch (error) {
+      if (!isCurrent()) return
       console.error('Error in loadNotes:', error)
       loadFromLocalStorage()
     } finally {
-      setLoading(false)
+      if (isCurrent()) setLoading(false)
     }
   }
 

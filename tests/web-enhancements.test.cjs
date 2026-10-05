@@ -41,7 +41,14 @@ function hookHarness(runEffects = false) {
         if (runEffects) effects.push(callback)
       }
     },
-    useCallback: callback => callback,
+    useCallback(callback, dependencies) {
+      const index = cursor++
+      const previous = slots[index]
+      if (!previous || dependencies.some((value, offset) => !Object.is(value, previous.dependencies[offset]))) {
+        slots[index] = { callback, dependencies }
+      }
+      return slots[index].callback
+    },
   }
   return { react, render(component) {
     let result, renders = 0
@@ -67,6 +74,85 @@ const event = (changes = {}) => ({
   all_day: false, is_recurring: false, recurring_type: null, is_completed: false, ...changes,
 })
 test('history pages contain exactly five visible entries', () => assert.equal(lifecycle.HISTORY_PAGE_SIZE, 5))
+test('operational dashboard bounds every summary query and never downloads full records or counts', async () => {
+  const queries = []
+  const rows = Array.from({ length: 5 }, (_, index) => ({ id: `row-${index}`, title: `Entry ${index}`, date: `2026-10-${String(index + 1).padStart(2, '0')}` }))
+  const client = { from(table) {
+    const query = { table, steps: [] }
+    queries.push(query)
+    const builder = {}
+    for (const method of ['select', 'eq', 'neq', 'is', 'lt', 'lte', 'or', 'in', 'order', 'limit']) {
+      builder[method] = (...args) => { query.steps.push([method, ...args]); return builder }
+    }
+    builder.returns = () => Promise.resolve({ data: rows, error: null })
+    return builder
+  } }
+  const dashboard = load('lib/dashboard.ts', { './supabase': { supabase: client } })
+  const result = await dashboard.loadDashboardSnapshot()
+  assert.equal(queries.length, 5)
+  assert.equal(result.agenda.length, 5)
+  assert.equal(result.todos.length, 5)
+  assert.equal(result.deadlines.length, 5)
+  for (const query of queries) {
+    assert.ok(query.steps.some(step => step[0] === 'limit' && step[1] === 5))
+    assert.equal(query.steps.find(step => step[0] === 'select')[1].split(',').length, query.table === 'events' ? 4 : 3)
+    assert.ok(!query.steps.some(step => step.includes('*')))
+  }
+  assert.ok(queries[0].steps.some(step => step[0] === 'or' && step[1].includes('end_date.is.null')))
+  assert.ok(queries[0].steps.some(step => step[0] === 'eq' && step[1] === 'is_completed' && step[2] === false))
+  assert.ok(queries[1].steps.some(step => step[0] === 'is' && step[1] === 'archived_at'))
+  assert.deepEqual(dashboard.dashboardDeadlines(result.deadlines).map(row => row.date), result.deadlines.map(row => row.date))
+})
+test('dashboard query errors are surfaced rather than reported as an empty successful summary', async () => {
+  const failure = new Error('Offline')
+  const builder = {}
+  for (const method of ['select', 'eq', 'neq', 'is', 'lt', 'lte', 'or', 'in', 'order', 'limit']) builder[method] = () => builder
+  builder.returns = () => Promise.resolve({ data: null, error: failure })
+  const dashboard = load('lib/dashboard.ts', { './supabase': { supabase: { from: () => builder } } })
+  await assert.rejects(dashboard.loadDashboardSnapshot(), failure)
+})
+test('dashboard day boundaries follow local calendar days across DST, not fixed 24-hour intervals', () => {
+  const dashboard = load('lib/dashboard.ts', { './supabase': { supabase: {} } })
+  const previous = process.env.TZ
+  try {
+    process.env.TZ = 'Europe/Rome'
+    for (const [date, hours] of [['2026-03-29T12:00:00+02:00', 23], ['2026-10-25T12:00:00+01:00', 25]]) {
+      const { start, end } = dashboard.dashboardBounds(new Date(date))
+      assert.equal((new Date(end) - new Date(start)) / 3600000, hours)
+    }
+  } finally { if (previous === undefined) delete process.env.TZ; else process.env.TZ = previous }
+})
+test('disabled section hooks make no database requests on the dashboard', () => {
+  const previousWindow = global.window
+  global.window = { addEventListener() {}, removeEventListener() {} }
+  try {
+    for (const [file, symbol] of [['useCalls', 'useCalls'], ['useClients', 'useClients'], ['usePayments', 'usePayments'], ['useWorkItems', 'useWorkItems'], ['useEvents', 'useEvents'], ['useNotes', 'useNotes'], ['useShopping', 'useShopping'], ['usePasswords', 'usePasswords']]) {
+      const harness = hookHarness(true)
+      let requests = 0
+      const exported = load(`platforms/Desktop/app/hooks/${file}.ts`, {
+        react: harness.react,
+        './useAuth': { useAuth: () => ({ user: { id: 'owner' }, authLoading: false }) },
+        '@/lib/supabase': { supabase: { from() { requests++; throw new Error('Unexpected query') } } },
+        '@/lib/activityLogger': { logActivity() {} },
+        '@/lib/shopping': {},
+      })
+      harness.render(() => exported[symbol](false))
+      assert.equal(requests, 0, file)
+    }
+  } finally { global.window = previousWindow }
+})
+test('native dashboard matches the bounded web summaries and keeps section navigation separate', () => {
+  const native = fs.readFileSync(path.join(root, 'platforms/MobileNative/AKSuite/Features/Dashboard/OperationalDashboardView.swift'), 'utf8')
+  const navigation = fs.readFileSync(path.join(root, 'platforms/MobileNative/AKSuite/ContentView.swift'), 'utf8')
+  for (const title of ['Agenda di oggi', 'Cose da fare', 'Scadenze e richiami']) assert.ok(native.includes(title))
+  assert.equal((native.match(/\.limit\(5\)/g) || []).length, 5)
+  assert.ok(!native.includes('resourceCount'))
+  assert.ok(!native.includes('.select("*")'))
+  assert.ok(native.includes('requestID == ticket'))
+  assert.ok(navigation.includes('geometry.size.width >= 760 && sidebarVisible'))
+  assert.ok(navigation.includes('Menu { sectionMenu }'))
+  assert.ok(navigation.includes('createInSection = destination'))
+})
 test('event confirmation worker supports web-only, native-only and mixed devices and retries APNs failures', async () => {
   const envNames = ['WEB_PUSH_SUBJECT', 'WEB_PUSH_PUBLIC_KEY', 'WEB_PUSH_PRIVATE_KEY']
   const previous = envNames.map(name => process.env[name])
@@ -274,15 +360,15 @@ test('calendar completion actions expose both completion and user-chosen resched
   const completed = renderToStaticMarkup(React.createElement(Actions, { event: event({ is_completed: true }), onDone() {} }))
   assert.ok(completed.includes('Riporta da fare'))
 })
-test('dashboard photo card opens the gallery and does not invent an unloaded photo count', () => {
+test('section menu opens the gallery without loading or inventing resource counts', () => {
   const source = ts.createSourceFile('page.tsx', fs.readFileSync(path.join(root, 'platforms/Desktop/app/page.tsx'), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   let itemsNode, clickNode
   function visit(node) {
     if (ts.isVariableDeclaration(node) && node.name.getText(source) === 'items') itemsNode = node.initializer
     if (ts.isJsxOpeningElement(node) && node.tagName.getText(source) === 'button') {
       const attributes = node.attributes.properties
-      const card = attributes.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText(source) === 'className')
-      if (card?.initializer && ts.isStringLiteral(card.initializer) && card.initializer.text === 'ak-bento group text-left') {
+      const current = attributes.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText(source) === 'aria-current')
+      if (current) {
         clickNode = attributes.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText(source) === 'onClick')?.initializer?.expression
       }
     }
@@ -299,7 +385,8 @@ test('dashboard photo card opens the gallery and does not invent an unloaded pho
   const compiled = ts.transpileModule(`module.exports = ${itemsNode.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText
   vm.runInNewContext(compiled, context)
   assert.equal(context.module.exports[0][0], 'today')
-  assert.equal(context.module.exports.find(item => item[0] === 'photos')[3], null)
+  assert.equal(context.module.exports.find(item => item[0] === 'photos').length, 3)
+  assert.ok(context.module.exports.every(item => item.length === 3))
   const calls = []
   const click = vm.runInNewContext(`(${clickNode.getText(source)})`, {
     id: 'photos', navigateToSection: id => calls.push(['navigate', id]),

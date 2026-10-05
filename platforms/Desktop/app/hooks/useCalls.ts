@@ -29,13 +29,15 @@ export interface Call {
   created_at: string
 }
 
-export function useCalls() {
+export function useCalls(enabled = true) {
   const [calls, setCalls] = useState<Call[]>([])
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!enabled) { setCalls([]); setLoading(false); return }
     if (!user) { setCalls([]); setLoading(false); return }
+    setLoading(true)
     let mounted = true
     const loadCalls = async () => {
       try {
@@ -53,7 +55,7 @@ export function useCalls() {
     }
     loadCalls()
     return () => { mounted = false }
-  }, [user?.id])
+  }, [user?.id, enabled])
 
   const addCall = async (callData: Omit<Call, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) throw new Error('User not authenticated')

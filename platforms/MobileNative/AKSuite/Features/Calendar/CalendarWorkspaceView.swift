@@ -107,13 +107,14 @@ struct CalendarWorkspaceView: View {
     @State private var changingEvent = false
     @State private var consumedInitialCompletion = false
 
-    init(initialEventID: UUID? = nil, initialClientID: UUID? = nil, editInitialEvent: Bool = false, completeInitialEvent: Bool = false, onBack: @escaping () -> Void, onReturnToClient: @escaping () -> Void = {}) {
+    init(initialEventID: UUID? = nil, initialClientID: UUID? = nil, editInitialEvent: Bool = false, completeInitialEvent: Bool = false, createNewEvent: Bool = false, onBack: @escaping () -> Void, onReturnToClient: @escaping () -> Void = {}) {
         self.initialEventID = initialEventID
         self.initialClientID = initialClientID
         self.editInitialEvent = editInitialEvent
         self.completeInitialEvent = completeInitialEvent
         self.onBack = onBack
         self.onReturnToClient = onReturnToClient
+        _showEditor = State(initialValue: createNewEvent)
     }
 
     private let calendar = Calendar.current

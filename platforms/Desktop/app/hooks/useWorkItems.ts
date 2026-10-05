@@ -86,7 +86,7 @@ export interface WorkItem {
 
 export type WorkItemInput = Omit<WorkItem, 'id' | 'user_id' | 'created_at' | 'updated_at'>
 
-export function useWorkItems() {
+export function useWorkItems(enabled = true) {
   const [workItems, setWorkItems] = useState<WorkItem[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -96,6 +96,7 @@ export function useWorkItems() {
 
   useEffect(() => {
     let mounted = true
+    if (!enabled) { setWorkItems([]); setLoading(false); return }
     if (!user) {
       setWorkItems([])
       setLoading(false)
@@ -128,7 +129,7 @@ export function useWorkItems() {
 
     void loadWorkItems()
     return () => { mounted = false }
-  }, [user?.id])
+  }, [user?.id, enabled])
 
   const addWorkItem = async (input: WorkItemInput) => {
     if (!user) throw new Error('Devi accedere per salvare una lavorazione.')

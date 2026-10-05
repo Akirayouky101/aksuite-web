@@ -53,6 +53,31 @@ Native credentials belong in the ignored
 `Secrets.example.xcconfig` as a template. Xcode projects, user state, and
 build output are generated/local artifacts and are not versioned.
 
+### Operational dashboard and navigation
+
+Web, iPhone, iPad and Mac Catalyst open an operational dashboard instead of
+a grid of section cards. All sections remain accessible from a collapsible
+sidebar on wide layouts and a compact section menu on narrow layouts.
+The user-management entry remains admin-only on the web.
+
+Three summaries show today's active appointments (including overlapping
+multi-day events), pending to-dos and nearby/overdue work deadlines, callbacks
+and payment reminders. Each panel displays at most five entries, not a
+total count. Five parallel database queries select only summary fields and
+fetch at most five rows each; completed/archived events and tasks are excluded.
+Payment reminders are not a complete installment/advance overview: use the
+Payments section for those details. Errors expose a retry rather than
+pretending the dashboard is empty.
+
+Quick actions open new event, to-do and note editors. Selecting a summary
+entry opens its details; refresh and returning from a section update the
+summaries. The web reloads the dashboard after an editor closes. Full web
+section hooks load only when that section/editor or global search is opened,
+so passwords, contacts, shopping lists and archives are not preloaded just
+to build navigation counts. Open-page web reminders retain a separate
+minute-refreshed metadata feed; server Web Push/APNs scheduling is unchanged.
+Native section loading remains scoped to the selected workspace.
+
 ## Supabase Synchronization
 
 Authenticate using `supabase login` in an interactive terminal. Verify the

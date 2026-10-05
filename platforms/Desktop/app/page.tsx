@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { ArrowUpRight, Bell, Briefcase, Calendar, CheckCircle2, ClipboardList, CreditCard, KeyRound, LayoutGrid, LogIn, LogOut, Phone, Plus, Search, Shield, ShoppingCart, Sparkles, StickyNote, Users } from 'lucide-react'
+import { Bell, Briefcase, Calendar, CheckCircle2, ClipboardList, CreditCard, KeyRound, LayoutGrid, LogIn, LogOut, Menu, Phone, Search, Shield, ShoppingCart, Sparkles, StickyNote, Users, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { usePasswords } from './hooks/usePasswords'
 import { useCalls } from './hooks/useCalls'
@@ -32,15 +32,15 @@ import AuthModal from './components/AuthModal'
 import PaymentsWorkspace from './components/PaymentsWorkspace'
 import PaymentModal from './components/PaymentModal'
 import PaymentsOverview from './components/PaymentsOverview'
-import DashboardDesk from './components/DashboardDesk'
 import AgendaSummaryModal, { AgendaItem } from './components/AgendaSummaryModal'
-import NotesStickyWidget from './components/NotesStickyWidget'
-import TodayWorkspace from './components/TodayWorkspace'
+import OperationalDashboard from './components/OperationalDashboard'
+import { DashboardRow } from '@/lib/dashboard'
+import { useReminderFeed } from './hooks/useReminderFeed'
 import GlobalSearchModal from './components/GlobalSearchModal'
 import SearchResultSummaryModal from './components/SearchResultSummaryModal'
 import WorkItemsWorkspace from './components/WorkItemsWorkspace'
 import WorkItemModal from './components/WorkItemModal'
-import { paymentRemainingAmount, usePayments } from './hooks/usePayments'
+import { usePayments } from './hooks/usePayments'
 import { useDesktopReminders } from './hooks/useDesktopReminders'
 import { usePwa } from './hooks/usePwa'
 import { useWorkItems } from './hooks/useWorkItems'
@@ -55,18 +55,24 @@ const PhotoGallery = dynamic(() => import('./components/PhotoGallery'))
 const EventResponsePrompt = dynamic(() => import('./components/EventResponsePrompt'))
 
 export default function Home() {
-  const { passwords, categories, addPassword, addCategory, updateCategory, deleteCategory, updatePassword, deletePassword, user } = usePasswords()
-  const { calls, addCall, updateCall, deleteCall, updateCallStatus } = useCalls()
-  const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes()
-  const { events, addEvent, updateEvent, deleteEvent, errorMessage: eventsError } = useEvents()
-  const { clients, addClient, updateClient, deleteClient, toggleFavorite } = useClients()
-  const { payments, addPayment, updatePayment, deletePayment } = usePayments()
-  const { workItems, loading: workItemsLoading, errorMessage: workItemsError, addWorkItem, updateWorkItem, deleteWorkItem } = useWorkItems()
-  const shopping = useShopping()
-  const { users, isAdmin, createUser, togglePermission, setAllPermissions, deleteUserPermissions, loadAllUsers } = useUserManagement()
-  const [authOpen, setAuthOpen] = useState(false)
   const [section, setSection] = useState('today')
   const [modal, setModal] = useState<string | null>(null)
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const active = (...sections: string[]) => globalSearchOpen || sections.includes(section) || (modal !== null && sections.includes(modal))
+  const { passwords, categories, addPassword, addCategory, updateCategory, deleteCategory, updatePassword, deletePassword, user } = usePasswords(active('passwords', 'password'))
+  const { calls, addCall, updateCall, deleteCall, updateCallStatus } = useCalls(active('calls', 'call', 'clients'))
+  const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes(active('notes', 'note'))
+  const { events, addEvent, updateEvent, deleteEvent, errorMessage: eventsError } = useEvents(active('calendar', 'event', 'clients', 'work_items', 'todos'))
+  const { clients, addClient, updateClient, deleteClient, toggleFavorite } = useClients(active('clients', 'client', 'calendar', 'event', 'call', 'calls', 'work_items', 'work_item', 'todos', 'todo', 'payments', 'payment'))
+  const { payments, addPayment, updatePayment, deletePayment } = usePayments(active('payments', 'payment'))
+  const { workItems, loading: workItemsLoading, errorMessage: workItemsError, addWorkItem, updateWorkItem, deleteWorkItem } = useWorkItems(active('work_items', 'work_item', 'todos', 'todo', 'clients', 'calendar', 'event'))
+  const shopping = useShopping(section === 'shopping')
+  const { users, isAdmin, createUser, togglePermission, setAllPermissions, deleteUserPermissions, loadAllUsers } = useUserManagement()
+  const owner = useRef(user?.id)
+  owner.current = user?.id
+  const [authOpen, setAuthOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [selectedCall, setSelectedCall] = useState<any>(null)
   const [selectedClient, setSelectedClient] = useState<any | null>(null)
@@ -81,11 +87,12 @@ export default function Home() {
   const [todoClientId, setTodoClientId] = useState<string | null>(null)
   const [returnClientId, setReturnClientId] = useState<string | null>(null)
   const [selectedAgendaItem, setSelectedAgendaItem] = useState<AgendaItem | null>(null)
-  const [globalSearchOpen, setGlobalSearchOpen] = useState(false)
   const [calendarSettingsOpen, setCalendarSettingsOpen] = useState(false)
   const [integrationNotice, setIntegrationNotice] = useState('')
   const [selectedSearchResult, setSelectedSearchResult] = useState<{ type: string; item: any } | null>(null)
-  const { requestPermission } = useDesktopReminders(events, notes, payments, calls)
+  const revision = `${section}:${modal || ''}`
+  const reminderFeed = useReminderFeed(user?.id, revision)
+  const { requestPermission } = useDesktopReminders(reminderFeed.events, reminderFeed.notes, reminderFeed.payments, reminderFeed.calls)
   usePwa()
   useEffect(() => {
     if (!user) return
@@ -133,6 +140,7 @@ export default function Home() {
     if (['calendar', 'notes', 'users'].includes(section)) setSection('today')
   }
   const navigateToSection = (id: string) => {
+    setMenuOpen(false)
     setEditing(null)
     setWorkClientId(null)
     setTodoClientId(null)
@@ -156,50 +164,29 @@ export default function Home() {
     close()
   }
 
-  const now = new Date()
-  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0)
-  const todayEnd = new Date(todayStart); todayEnd.setHours(23, 59, 59, 999)
-  const isToday = (value?: string | null) => {
-    if (!value) return false
-    const date = new Date(value)
-    return !Number.isNaN(date.getTime()) && date >= todayStart && date <= todayEnd
+  const openDashboardEntry = async (row: DashboardRow) => {
+    const userId = user?.id
+    const tables = { event: 'events', todo: 'work_items', work_item: 'work_items', call: 'calls', payment: 'payments' }
+    const { data, error } = await supabase.from(tables[row.kind]).select('*').eq('id', row.id).single()
+    if (error) throw error
+    if (owner.current !== userId) throw new Error('Sessione cambiata. Riprova.')
+    setSelectedSearchResult({ type: row.kind, item: data })
   }
-  const isPendingEvent = (event: typeof events[number]) => {
-    if (event.is_completed || event.archived_at) return false
-    const start = new Date(event.start_date)
-    if (Number.isNaN(start.getTime())) return false
-    if (event.all_day) return start >= todayStart
-    const end = new Date(event.end_date || event.start_date)
-    return !Number.isNaN(end.getTime()) && end >= now
-  }
-  const openCalls = calls.filter(call => call.status === 'pending' || call.status === 'in_corso')
-  const openWorkItems = workItems.filter(item => item.kind !== 'todo' && item.status !== 'completed')
-  const openTodos = workItems.filter(item => item.kind === 'todo' && item.status !== 'completed')
-  const unpaidPayments = payments.filter(payment => paymentRemainingAmount(payment) > 0)
-  const todayCount = calls.filter(call => (call.status === 'pending' || call.status === 'in_corso') && call.follow_up && isToday(call.follow_up_date)).length
-    + events.filter(event => isToday(event.start_date) && isPendingEvent(event)).length
-    + notes.filter(note => isToday(note.reminder_at)).length
-    + unpaidPayments.filter(payment => isToday(payment.reminder_at)).length
-    + workItems.filter(item => item.kind !== 'todo' && item.status !== 'completed' && (isToday(item.scheduled_at) || isToday(item.due_date))).length
+
   const items = [
-    ['today', 'Oggi', CheckCircle2, todayCount, 'bg-[#d9e8d9]', 'text-[#257259]'],
-    ['calls', 'Chiamate', Phone, openCalls.length, 'bg-[#ff765f]', 'text-[#a9322b]'],
-    ['calendar', 'Calendario', Calendar, events.filter(isPendingEvent).length, 'bg-[#f7c948]', 'text-[#785b00]'],
-    ['notes', 'Note', StickyNote, notes.length, 'bg-[#8ed8c3]', 'text-[#176653]'],
-    ['photos', 'Galleria foto', LayoutGrid, null, 'bg-[#d9e8d9]', 'text-[#257259]'],
-    ['passwords', 'Password', KeyRound, passwords.length, 'bg-[#9d8cff]', 'text-[#4b3ba5]'],
-    ['clients', 'Rubrica', Users, clients.length, 'bg-[#76a9f7]', 'text-[#174a9b]'],
-    ['work_items', 'Lavorazioni', Briefcase, openWorkItems.length, 'bg-[#d9e8d9]', 'text-[#257259]'],
-    ['todos', 'Cose da fare', ClipboardList, openTodos.length, 'bg-[#f7c948]', 'text-[#785b00]'],
-    ['shopping', 'Spesa', ShoppingCart, shopping.items.filter(item => !item.purchased).length, 'bg-[#d9e8d9]', 'text-[#257259]'],
-    ['payments', 'Pagamenti', CreditCard, unpaidPayments.length, 'bg-[#cfe4ff]', 'text-[#376db5]'],
-    ...(isAdmin ? [['users', 'Utenti', Shield, users.length, 'bg-[#f2a7cf]', 'text-[#9a3268]'] as const] : []),
+    ['today', 'Dashboard', CheckCircle2],
+    ['calls', 'Chiamate', Phone],
+    ['calendar', 'Calendario', Calendar],
+    ['notes', 'Note', StickyNote],
+    ['photos', 'Galleria foto', LayoutGrid],
+    ['passwords', 'Password', KeyRound],
+    ['clients', 'Rubrica', Users],
+    ['work_items', 'Lavorazioni', Briefcase],
+    ['todos', 'Cose da fare', ClipboardList],
+    ['shopping', 'Spesa', ShoppingCart],
+    ['payments', 'Pagamenti', CreditCard],
+    ...(isAdmin ? [['users', 'Utenti', Shield] as const] : []),
   ] as const
-  const activeItem = items.find(([id]) => id === section) || items[0]
-  const todayLabel = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())
-  const recentItems = [...calls.slice(0, 2).map((item) => ({ label: item.caller_name, type: 'Chiamata', date: item.call_date })), ...notes.slice(0, 2).map((item) => ({ label: item.title, type: 'Nota', date: item.updated_at })), ...clients.slice(0, 2).map((item) => ({ label: item.name, type: 'Cliente', date: item.created_at }))].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 4)
-  const openList = section === 'calls' ? 'calls' : section === 'calendar' ? 'calendar' : section === 'notes' ? 'notes' : section === 'passwords' ? 'passwords' : section === 'clients' ? 'clients' : 'users'
-  const openNew = section === 'calls' ? 'call' : section === 'calendar' ? 'event' : section === 'notes' ? 'note' : section === 'passwords' ? 'password' : section === 'clients' ? 'client' : section === 'payments' ? 'payment' : section === 'work_items' ? 'work_item' : section === 'todos' ? 'todo' : 'call'
 
   if (!user) return (
     <main className="ak-login relative flex min-h-screen items-center overflow-hidden p-5 sm:p-10">
@@ -208,7 +195,7 @@ export default function Home() {
         <div className="ak-login-poster flex min-h-[33rem] flex-col justify-between rounded-[2.5rem] p-8 sm:p-12 lg:p-16">
           <div className="flex items-center gap-3"><span className="flex h-12 w-12 rotate-3 items-center justify-center rounded-2xl bg-[#ff765f] text-[#2d2754]"><KeyRound className="h-6 w-6" /></span><span className="text-lg font-black tracking-tight">AK SUITE</span></div>
           <div><p className="mb-5 text-sm font-black uppercase tracking-[0.3em] text-[#ff765f]">personal command center</p><h1 className="max-w-2xl text-5xl font-black leading-[0.98] tracking-[-0.04em] sm:text-7xl">Le tue giornate, con più ritmo.</h1><p className="mt-7 max-w-lg text-lg leading-8 text-[#514b70]">Una console personale per tenere insieme contatti, chiamate, appunti, appuntamenti e credenziali.</p></div>
-          <div className="flex items-center gap-3 text-sm font-bold text-[#514b70]"><Sparkles className="h-5 w-5 text-[#ff765f]" /> Sei aree. Un solo posto. Zero rumore.</div>
+          <div className="flex items-center gap-3 text-sm font-bold text-[#514b70]"><Sparkles className="h-5 w-5 text-[#ff765f]" /> Tutto il tuo lavoro. Un solo posto.</div>
         </div>
         <div className="ak-login-card flex min-h-[33rem] flex-col justify-center rounded-[2.5rem] p-8 sm:p-12"><div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f7c948] text-[#2d2754] shadow-lg shadow-[#f7c948]/30"><LogIn className="h-6 w-6" /></div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#716a91]">Bentornato</p><h2 className="mt-3 text-4xl font-black tracking-tight text-[#2d2754]">Riprendiamo da qui.</h2><p className="mt-4 leading-7 text-[#716a91]">Accedi al tuo spazio personale e ritrova tutto al suo posto.</p><button onClick={() => setAuthOpen(true)} className="mt-9 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2d2754] px-4 py-4 font-bold text-[#fff6df] shadow-xl shadow-[#2d2754]/20 transition hover:-translate-y-1 hover:bg-[#40376f]"><LogIn className="h-4 w-4" />Entra nella suite</button><div className="mt-6 flex items-center gap-2 text-xs font-semibold text-[#716a91]"><Shield className="h-4 w-4 text-[#5f9e8e]" />Accesso personale protetto</div></div>
       </div>
@@ -221,6 +208,8 @@ export default function Home() {
       <div className="mx-auto max-w-7xl">
         <header className="ak-topbar mb-5 grid gap-4 rounded-[1.75rem] px-5 py-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:px-7">
           <div className="flex items-center gap-3">
+            <button onClick={() => setMenuOpen(value => !value)} aria-label="Menu sezioni" aria-expanded={menuOpen} className="ak-logout lg:hidden"><Menu className="h-5 w-5" /></button>
+            <button onClick={() => setSidebarOpen(value => !value)} aria-label="Mostra o nascondi menu sezioni" aria-expanded={sidebarOpen} className="ak-logout hidden lg:inline-flex"><Menu className="h-5 w-5" /></button>
             <span className="flex h-11 w-11 -rotate-3 items-center justify-center rounded-2xl bg-[#ff765f] text-[#2d2754]"><KeyRound className="h-5 w-5" /></span>
             <div><p className="text-lg font-black tracking-tight">AK SUITE</p><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8a7f9f]">personal edition</p></div>
           </div>
@@ -229,15 +218,15 @@ export default function Home() {
             <button onClick={() => void requestPermission()} title="Attiva notifiche" className="ak-logout"><Bell className="h-4 w-4" />Notifiche</button>
             <button onClick={() => supabase.auth.signOut()} title="Esci" className="ak-logout"><LogOut className="h-4 w-4" />Esci</button>
           </div>
-          <nav className="hide-scrollbar flex min-w-0 gap-1 overflow-x-auto border-t border-[#ead8bf] pt-3 sm:col-span-2" aria-label="Navigazione principale">
-            {items.map(([id, label, Icon, count, tint, ink]) => (
-              <button key={id} onClick={() => navigateToSection(id)} className={`ak-nav-item shrink-0 whitespace-nowrap ${section === id ? `${tint} ${ink}` : ''}`}>
-                <Icon className="h-4 w-4" />{label}<span className="opacity-60">{count}</span>
-              </button>
-            ))}
-          </nav>
         </header>
-        {section === 'today' && <><section className="ak-hero mb-5 grid gap-6 overflow-hidden rounded-[2rem] p-6 sm:p-9 lg:grid-cols-[1.4fr_0.6fr] lg:p-12"><div className="relative z-10"><p className="text-sm font-bold capitalize text-[#716a91]">{todayLabel}</p><h1 className="mt-3 max-w-2xl text-5xl font-black leading-[0.95] tracking-[-0.04em] text-[#2d2754] sm:text-7xl">Buongiorno,<br /><span className="text-[#e45f4e]">facciamo ordine.</span></h1><p className="mt-6 max-w-lg text-base leading-7 text-[#514b70]">Il tuo centro operativo per le cose che contano davvero oggi.</p><button onClick={() => open(openNew)} className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-[#2d2754] px-5 py-3.5 font-bold text-[#fff6df] shadow-lg shadow-[#2d2754]/20 transition hover:-translate-y-1"><Plus className="h-4 w-4" />Aggiungi qualcosa</button></div><NotesStickyWidget notes={notes} onOpenNote={(note) => open('note', note)} onAddNote={() => open('note')} /></section><section className="grid gap-5 lg:grid-cols-[1.5fr_0.8fr]"><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.filter(([id]) => id !== 'today').map(([id, label, Icon, count, tint, ink]) => <button key={id} onClick={() => { if (id === 'work_items' || id === 'todos' || id === 'photos') navigateToSection(id); else { setSection(id); if (id === 'payments') close(); else open(id === 'calls' ? 'calls' : id === 'calendar' ? 'calendar' : id === 'notes' ? 'notes' : id === 'passwords' ? 'passwords' : id === 'clients' ? 'clients' : 'users') } }} className="ak-bento group text-left"><div className={`mb-7 flex h-12 w-12 items-center justify-center rounded-2xl ${tint} ${ink}`}><Icon className="h-5 w-5" /></div><div className="flex items-end justify-between"><div><p className="text-4xl font-black text-[#2d2754]">{count ?? '—'}</p><p className="mt-1 font-bold text-[#716a91]">{label}</p></div><ArrowUpRight className="h-5 w-5 text-[#a99dbb] transition group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#e45f4e]" /></div></button>)}</div><DashboardDesk calls={calls} events={events} payments={payments} onOpenAgendaItem={setSelectedAgendaItem} /></section></>}
+        <div className={`grid items-start gap-5 ${sidebarOpen ? 'lg:grid-cols-[220px_minmax(0,1fr)]' : ''}`}>
+          {(sidebarOpen || menuOpen) && <aside className={`${menuOpen ? 'block' : 'hidden'} rounded-2xl bg-[#fff8ed] p-3 ${sidebarOpen ? 'lg:sticky lg:top-5 lg:block' : 'lg:hidden'}`}>
+            <div className="mb-2 flex items-center justify-between px-3 py-2"><strong className="text-xs uppercase text-[#716a91]">Sezioni</strong><button onClick={() => setMenuOpen(false)} aria-label="Chiudi menu" className="lg:hidden"><X className="h-4 w-4" /></button></div>
+            <nav aria-label="Navigazione principale" className="space-y-1">{items.map(([id, label, Icon]) => <button key={id} aria-current={section === id ? 'page' : undefined} onClick={() => navigateToSection(id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold ${section === id ? 'bg-[#f8dfb9] text-[#2d2754]' : 'text-[#716a91] hover:bg-[#efe8d8]'}`}><Icon className="h-4 w-4" />{label}</button>)}</nav>
+          </aside>}
+          <div className="min-w-0">
+        {section === 'today' && <OperationalDashboard key={user.id} revision={revision} enabled={modal === null} onNavigate={navigateToSection} onCreate={name => open(name)} onOpen={openDashboardEntry} />}
+        {reminderFeed.error && <p role="alert" className="mt-3 rounded-xl bg-amber-50 p-3 text-sm">{reminderFeed.error}</p>}
         {eventsError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{eventsError}</p>}
         {integrationNotice && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm">{integrationNotice}<button className="ml-3 underline" onClick={() => setIntegrationNotice('')}>Chiudi</button></p>}
         {section === 'photos' && <PhotoGallery key={user?.id || 'guest'} scope={{ general: true }} />}
@@ -245,10 +234,11 @@ export default function Home() {
         {section === 'work_items' &&                 <WorkItemsWorkspace onRescheduleEvent={event => open('event', event)} key={`${user?.id || 'guest'}-work`} workItems={workItems} events={events} clients={clients} loading={workItemsLoading} errorMessage={workItemsError} clientScopeId={workClientId} onBackToClients={() => { setReturnClientId(workClientId); setWorkClientId(null); setSection('clients') }} onNew={() => open('work_item')} onEdit={item => open('work_item', item)} onUpdate={updateWorkItem} onDelete={deleteWorkItem} onScheduleFollowUp={scheduleEventFollowUp} />}
         {section === 'todos' &&                 <WorkItemsWorkspace onRescheduleEvent={event => open('event', event)} key={`${user?.id || 'guest'}-todo`} mode="todo" workItems={workItems} events={events} clients={clients} loading={workItemsLoading} errorMessage={workItemsError} clientScopeId={todoClientId} onBackToClients={() => { setReturnClientId(todoClientId); setTodoClientId(null); setSection('clients') }} onNew={() => open('todo')} onEdit={item => open('todo', item)} onUpdate={updateWorkItem} onDelete={deleteWorkItem} onScheduleFollowUp={scheduleEventFollowUp} />}
         {section === 'shopping' && <ShoppingWorkspace key={user.id} data={shopping} />}
-        {section === 'today' && <TodayWorkspace calls={calls} events={events} notes={notes} payments={payments} workItems={workItems.filter(item => item.kind !== 'todo')} clients={clients} onOpen={(type, item) => { if (type === 'call') setSelectedCall(item); else if (type === 'event') open('event', item); else if (type === 'note') open('note', item); else if (type === 'work_item') { setSection('work_items'); open('work_item', item) } else { setSection('payments'); setSelectedPaymentId(item.id); setPaymentView('practice') } }} />}
         {section === 'passwords' && <PasswordsWorkspace passwords={passwords} categories={categories} onCreateCategory={addCategory} onUpdateCategory={updateCategory} onDeleteCategory={deleteCategory} onNew={() => open('password')} onEdit={(password) => open('password', password)} onDetail={setSelectedPassword} onDelete={deletePassword} />}
         {section === 'clients' && <ClientsWorkspace clients={clients} calls={calls} events={events} workItems={workItems} initialSelectedClientId={returnClientId} onOpenWorkItems={client => { setReturnClientId(null); setWorkClientId(client.id); setSection('work_items') }} onOpenTodos={client => { setReturnClientId(null); setTodoClientId(client.id); setSection('todos') }} onNewAppointment={openNewAppointment} onEditEvent={openEditAppointment} onDeleteEvent={id => { void deleteEvent(id) }} onScheduleFollowUp={scheduleEventFollowUp} onNew={() => open('client')} onEdit={(client) => open('client', client)} onDelete={deleteClient} onToggleFavorite={toggleFavorite} />}
         {section === 'payments' && (paymentView === 'overview' ? <PaymentsOverview payments={payments} onNew={() => open('payment')} onDelete={deletePayment} onOpenPractice={(payment) => { setSelectedPaymentId(payment.id); setPaymentView('practice') }} /> : <PaymentsWorkspace payments={payments} focusPaymentId={selectedPaymentId} onNew={() => open('payment')} onEdit={(payment) => open('payment', payment)} onDelete={deletePayment} onUpdate={(id, updates) => updatePayment(id, updates)} onBack={() => { setSelectedPaymentId(null); setPaymentView('overview') }} />)}
+          </div>
+        </div>
       </div>
 
       {modal === 'password' && <PasswordModal isOpen onClose={close} onSave={savePassword} editPassword={editing} categories={categories} />}
@@ -289,7 +279,19 @@ export default function Home() {
       <AgendaSummaryModal item={selectedAgendaItem} onClose={() => setSelectedAgendaItem(null)} onOpenFull={item => { setSelectedAgendaItem(null); if (item.kind === 'call') { setSection('calls'); setSelectedCall(item.item) } else if (item.kind === 'event') { setSection('calendar'); setModal('calendar') } else { setSection('payments'); setSelectedPaymentId(item.kind === 'advance' ? item.item.payment.id : item.item.id); setPaymentView('practice') } }} />
       <EventResponsePrompt onReschedule={event => open('event', event)} />
       <GlobalSearchModal key={`global-search-${user?.id || 'guest'}`} isOpen={globalSearchOpen} onClose={() => setGlobalSearchOpen(false)} calls={calls} events={events} notes={notes} payments={payments} clients={clients} passwords={passwords} onOpen={(type, item) => setSelectedSearchResult({ type, item })} />
-      <SearchResultSummaryModal result={selectedSearchResult} onClose={() => setSelectedSearchResult(null)} onOpen={() => { const result = selectedSearchResult; setSelectedSearchResult(null); if (!result) return; if (result.type === 'call') setSelectedCall(result.item); else if (result.type === 'event') open('event', result.item); else if (result.type === 'note') open('note', result.item); else if (result.type === 'client') open('client', result.item); else if (result.type === 'payment') { setSection('payments'); setSelectedPaymentId(result.item.id); setPaymentView('practice') }       else if (result.type === 'password') setSelectedPassword(result.item); else if (result.type === 'todo') { setSection('todos'); open('todo', result.item) } }} />
+      <SearchResultSummaryModal result={selectedSearchResult} onClose={() => setSelectedSearchResult(null)} onOpen={() => {
+        const result = selectedSearchResult
+        setSelectedSearchResult(null)
+        if (!result) return
+        if (result.type === 'call') setSelectedCall(result.item)
+        else if (result.type === 'event') open('event', result.item)
+        else if (result.type === 'note') open('note', result.item)
+        else if (result.type === 'client') open('client', result.item)
+        else if (result.type === 'payment') { setSection('payments'); setSelectedPaymentId(result.item.id); setPaymentView('practice') }
+        else if (result.type === 'password') setSelectedPassword(result.item)
+        else if (result.type === 'todo') { setSection('todos'); open('todo', result.item) }
+        else if (result.type === 'work_item') { setSection('work_items'); open('work_item', result.item) }
+      }} />
     </main>
   )
 }

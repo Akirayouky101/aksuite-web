@@ -236,6 +236,8 @@ struct WorkItemsWorkspaceView: View {
     let initialClientID: UUID?
     let onBack: () -> Void
     var initialItemID: UUID? = nil
+    var createNewItem = false
+    @State private var consumedInitialCreation = false
     @State private var items: [WorkItem] = []
     @State private var clients: [WorkClient] = []
     @State private var interventions: [WorkIntervention] = []
@@ -283,7 +285,13 @@ struct WorkItemsWorkspaceView: View {
                 ToolbarItem(placement: .akTrailing) { Button { editingItem = nil; showEditor = true } label: { Image(systemName: "plus") }.accessibilityLabel(mode == "todo" ? "Nuova cosa da fare" : "Nuova lavorazione") }
             }
         }
-        .task { await load() }
+        .task {
+            await load()
+            if createNewItem && !consumedInitialCreation {
+                consumedInitialCreation = true
+                showEditor = true
+            }
+        }
         .overlay {
             if showEditor {
                 WorkItemEditorView(item: editingItem, clients: clients, mode: mode, defaultClientID: initialClientID, onClose: closeEditor, onSave: save)

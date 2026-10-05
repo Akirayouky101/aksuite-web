@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { ShoppingItem, ShoppingItemInput, ShoppingList, shoppingQuantity, validateShoppingItem, validateShoppingTitle } from '@/lib/shopping'
 import { useAuth } from './useAuth'
 
-export function useShopping() {
+export function useShopping(enabled = true) {
   const { user, authLoading } = useAuth()
   const userId = user?.id ?? null
   const currentUserId = useRef(userId)
@@ -23,8 +23,8 @@ export function useShopping() {
     setItems([])
     setLoadedUserId(null)
     setErrorMessage(null)
-    if (!userId) {
-      setLoading(authLoading)
+    if (!enabled || !userId) {
+      setLoading(enabled && authLoading)
       return () => { active = false }
     }
     setLoading(true)
@@ -50,7 +50,7 @@ export function useShopping() {
     }
     void load()
     return () => { active = false }
-  }, [userId, authLoading, reloadKey])
+  }, [userId, authLoading, reloadKey, enabled])
 
   function requireUser() {
     if (!userId) throw new Error('Devi accedere per gestire la spesa.')

@@ -70,18 +70,20 @@ export function paymentRemainingAmount(payment: Payment): number {
 
 export type PaymentInput = Omit<Payment, 'id' | 'user_id' | 'created_at' | 'updated_at'>
 
-export function usePayments() {
+export function usePayments(enabled = true) {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
   useEffect(() => {
+    if (!enabled) { setPayments([]); setLoading(false); return }
     if (!user) {
       setPayments([])
       setLoading(false)
       return
     }
     let mounted = true
+    setLoading(true)
     const loadPayments = async () => {
       try {
         const { data, error } = await supabase.from('payments').select('*').order('created_at', { ascending: false })
@@ -95,7 +97,7 @@ export function usePayments() {
     }
     loadPayments()
     return () => { mounted = false }
-  }, [user?.id])
+  }, [user?.id, enabled])
 
   const addPayment = async (paymentData: PaymentInput) => {
     if (!user) return null

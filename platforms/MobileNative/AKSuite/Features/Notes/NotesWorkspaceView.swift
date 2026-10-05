@@ -64,9 +64,10 @@ struct NotesWorkspaceView: View {
     @State private var selectedNote: NativeNote?
     @State private var noteToDelete: NativeNote?
 
-    init(initialNoteID: UUID? = nil, onBack: @escaping () -> Void) {
+    init(initialNoteID: UUID? = nil, createNewNote: Bool = false, onBack: @escaping () -> Void) {
         self.initialNoteID = initialNoteID
         self.onBack = onBack
+        _showNewNote = State(initialValue: createNewNote)
     }
 
     private var folders: [String] { ["all"] + Array(Set(notes.map(\.folder))).sorted() }

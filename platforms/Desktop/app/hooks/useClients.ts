@@ -31,13 +31,15 @@ export interface Client {
   updated_at: string
 }
 
-export function useClients() {
+export function useClients(enabled = true) {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
   useEffect(() => {
+    if (!enabled) { setClients([]); setLoading(false); return }
     if (!user) { setClients([]); setLoading(false); return }
+    setLoading(true)
     let mounted = true
     const fetchClients = async () => {
       try {
@@ -55,7 +57,7 @@ export function useClients() {
     }
     fetchClients()
     return () => { mounted = false }
-  }, [user?.id])
+  }, [user?.id, enabled])
 
   const addClient = async (clientData: Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) return null

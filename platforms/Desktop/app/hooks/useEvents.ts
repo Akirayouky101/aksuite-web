@@ -32,7 +32,7 @@ export interface Event {
   updated_at: string
 }
 
-export function useEvents() {
+export function useEvents(enabled = true) {
   const { user } = useAuth()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,7 +42,7 @@ export function useEvents() {
   const loadedFor = useRef<string | null>(null)
   owner.current = user?.id
   const loadEvents = useCallback(async () => {
-    if (!user) { setEvents([]); setLoading(false); return }
+    if (!enabled || !user) { ++request.current; setEvents([]); setLoading(false); return }
     setLoading(true)
     const ticket = ++request.current
     const userId = user.id
@@ -58,7 +58,7 @@ export function useEvents() {
       console.error('Events loading failed:', cause)
       if (owner.current === userId && ticket === request.current) setErrorMessage('Impossibile caricare il calendario. Riprova.')
     } finally { if (owner.current === userId && ticket === request.current) setLoading(false) }
-  }, [user?.id])
+  }, [user?.id, enabled])
   useEffect(() => { setEvents([]); void loadEvents() }, [loadEvents])
   useEffect(() => {
     const reload = () => void loadEvents()
