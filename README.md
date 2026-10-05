@@ -160,6 +160,9 @@ completed at least seven days ago. Work items are not automatically archived.
 Existing completed tasks use their previous `updated_at` as the best
 available estimate of completion time. The original status is preserved.
 Archives can be restored to pending; nothing is automatically deleted.
+Reopened/deleted events are removed from the currently displayed history
+without an extra archive query, preserving text/date filters. An explicit
+new search can load an event again if it was subsequently completed again.
 Authenticated event errors are now surfaced rather than saved silently
 only in browser localStorage. Previously stored localStorage copies are
 not deleted, but the authoritative calendar requires sign-in and Supabase.

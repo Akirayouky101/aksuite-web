@@ -13,25 +13,44 @@ interface EventDetailModalProps {
   onClose: () => void
   onEdit?: (event: Event) => void
   onReschedule?: (event: Event) => void
-  onDelete?: (id: string) => void
+  onDelete?: (id: string) => void | Promise<void>
+  onChanged?: (id: string) => void
   onScheduleFollowUp?: (event: Event) => void
 }
 
-export default function EventDetailModal({ event, clientName, workItemName, onClose, onEdit, onReschedule, onDelete, onScheduleFollowUp }: EventDetailModalProps) {
+export default function EventDetailModal({ event, clientName, workItemName, onClose, onEdit, onReschedule, onDelete, onChanged, onScheduleFollowUp }: EventDetailModalProps) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const busy = deleting || completing
+  async function remove() {
+    if (!onDelete || busy) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await onDelete(event.id)
+      onChanged?.(event.id)
+      onClose()
+    } catch (cause) {
+      console.error('Event deletion failed:', cause)
+      setDeleteError(cause instanceof Error ? cause.message : 'Impossibile eliminare l’evento. Riprova.')
+    } finally { setDeleting(false) }
+  }
   const date = new Date(event.start_date)
   const endDate = event.end_date ? new Date(event.end_date) : null
   const startLabel = Number.isNaN(date.getTime()) ? event.start_date : date.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const timeLabel = event.all_day ? 'Tutto il giorno' : `${date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}${endDate ? ` – ${endDate.toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}` : ''}`
 
-  return createPortal(<div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-5" onClick={e => { e.stopPropagation(); onClose() }}>
+  return createPortal(<div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-5" onClick={e => { e.stopPropagation(); if (!busy) onClose() }}>
     <div role="dialog" aria-modal="true" aria-label={`Intervento ${event.title}`} className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
       <header className="flex items-start justify-between gap-3 border-b border-[#ead8bf] px-5 py-5 sm:px-6">
         <div className="min-w-0"><p className="ak-kicker">Intervento programmato</p><h2 className="mt-1 break-words text-xl font-black text-[#2d2754]">{event.title}</h2></div>
-        <button onClick={onClose} title="Chiudi" className="shrink-0 rounded-lg p-2 text-[#716a91] hover:bg-[#f5dfca]"><X className="h-4 w-4" /></button>
+        <button disabled={busy} onClick={onClose} title="Chiudi" className="shrink-0 rounded-lg p-2 text-[#716a91] hover:bg-[#f5dfca]"><X className="h-4 w-4" /></button>
       </header>
       <div className="space-y-5 px-5 py-5 sm:px-6">
-        <EventCompletionActions event={event} onDone={onClose} onReschedule={onReschedule || onEdit ? () => (onReschedule || onEdit)?.(event) : undefined} />
+        <EventCompletionActions event={event} disabled={deleting} onBusyChange={setCompleting} onDone={() => { onChanged?.(event.id); onClose() }} onReschedule={onReschedule || onEdit ? () => (onReschedule || onEdit)?.(event) : undefined} />
+        {deleteError && <p role="alert" className="text-sm text-red-700">{deleteError}</p>}
         <div className="flex gap-3"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-[#257259]" /><div><p className="text-xs font-bold text-[#716a91]">DATA</p><p className="mt-1 text-sm font-bold capitalize text-[#2d2754]">{startLabel}</p></div></div>
         <div className="flex gap-3"><Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[#257259]" /><div><p className="text-xs font-bold text-[#716a91]">ORARIO</p><p className="mt-1 text-sm text-[#2d2754]">{timeLabel}</p></div></div>
         {event.location && <div className="flex gap-3"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#257259]" /><div><p className="text-xs font-bold text-[#716a91]">LUOGO</p><a href={`https://maps.apple.com/?q=${encodeURIComponent(event.location)}`} target="_blank" rel="noreferrer" className="mt-1 inline-flex break-words text-sm font-semibold text-[#257259] underline">{event.location} · Apri in Mappe</a></div></div>}
@@ -46,11 +65,11 @@ export default function EventDetailModal({ event, clientName, workItemName, onCl
         </div>}
       </div>
       {(onEdit || onDelete || (event.client_id && onScheduleFollowUp)) && <footer className="border-t border-[#ead8bf] px-5 py-4 sm:px-6">
-        {confirmDelete ? <><p className="flex-1 self-center text-sm font-semibold text-[#a83d35]">Eliminare questo evento?</p><button onClick={() => setConfirmDelete(false)} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-[#2d2754]">Annulla</button><button onClick={() => onDelete?.(event.id)} className="rounded-lg bg-[#a83d35] px-3 py-2 text-sm font-bold text-white">Elimina</button></> : <>
+        {confirmDelete ? <><p className="flex-1 self-center text-sm font-semibold text-[#a83d35]">Eliminare questo evento?</p><button disabled={busy} onClick={() => setConfirmDelete(false)} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-[#2d2754]">Annulla</button><button type="button" disabled={busy} onClick={() => void remove()} className="rounded-lg bg-[#a83d35] px-3 py-2 text-sm font-bold text-white">{deleting ? 'Eliminazione...' : 'Elimina'}</button></> : <>
           <div className="grid grid-cols-2 gap-2">
-            {event.client_id && onScheduleFollowUp && <button onClick={() => onScheduleFollowUp(event)} className="col-span-2 flex items-center justify-center gap-2 rounded-lg bg-[#257259] py-2.5 text-sm font-bold text-white"><PhoneCall className="h-4 w-4" />Programma richiamo</button>}
-            {onEdit && <button onClick={() => onEdit(event)} className="flex items-center justify-center gap-2 rounded-lg bg-[#2d2754] py-2.5 text-sm font-bold text-white"><Pencil className="h-4 w-4" />Modifica</button>}
-            {onDelete && <button onClick={() => setConfirmDelete(true)} className="flex items-center justify-center gap-2 rounded-lg border border-red-200 py-2.5 text-sm font-bold text-[#a83d35] hover:bg-red-50"><Trash2 className="h-4 w-4" />Elimina</button>}
+            {event.client_id && onScheduleFollowUp && <button disabled={busy} onClick={() => onScheduleFollowUp(event)} className="col-span-2 flex items-center justify-center gap-2 rounded-lg bg-[#257259] py-2.5 text-sm font-bold text-white"><PhoneCall className="h-4 w-4" />Programma richiamo</button>}
+            {onEdit && <button disabled={busy} onClick={() => onEdit(event)} className="flex items-center justify-center gap-2 rounded-lg bg-[#2d2754] py-2.5 text-sm font-bold text-white"><Pencil className="h-4 w-4" />Modifica</button>}
+            {onDelete && <button disabled={busy} onClick={() => setConfirmDelete(true)} className="flex items-center justify-center gap-2 rounded-lg border border-red-200 py-2.5 text-sm font-bold text-[#a83d35] hover:bg-red-50"><Trash2 className="h-4 w-4" />Elimina</button>}
           </div>
         </>}
       </footer>}

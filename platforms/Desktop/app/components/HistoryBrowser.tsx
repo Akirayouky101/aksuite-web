@@ -7,8 +7,9 @@ import type { Event } from '../hooks/useEvents'
 import type { WorkItem } from '../hooks/useWorkItems'
 import { useAuth } from '../hooks/useAuth'
 
-type Props = { kind: 'event'; state: HistoryState; onOpen: (item: Event) => void; clientId?: string | null }
-  | { kind: 'todo'; state: HistoryState; onOpen: (item: WorkItem) => void; clientId?: string | null }
+type Props = ({ kind: 'event'; state: HistoryState; onOpen: (item: Event) => void; clientId?: string | null }
+  | { kind: 'todo'; state: HistoryState; onOpen: (item: WorkItem) => void; clientId?: string | null })
+  & { changedItem?: { id: string } | null }
 
 export default function HistoryBrowser(props: Props) {
   const { user } = useAuth()
@@ -26,7 +27,14 @@ export default function HistoryBrowser(props: Props) {
   const cursor = useRef<{ time: string; id: string } | null>(null)
   const fetching = useRef(false)
   const loadedOwner = useRef<string | null>(null)
-  useEffect(() => { setRows([]); setSearched(false); setHasMore(false); cursor.current = null }, [user?.id])
+  const invalidated = useRef(new Set<string>())
+  useEffect(() => { setRows([]); setSearched(false); setHasMore(false); cursor.current = null; invalidated.current.clear() }, [user?.id])
+  useEffect(() => {
+    const id = props.changedItem?.id
+    if (!id) return
+    invalidated.current.add(id)
+    setRows(current => current.filter(item => item.id !== id))
+  }, [props.changedItem])
 
   async function search(more = false) {
     if (fetching.current) return
@@ -36,6 +44,7 @@ export default function HistoryBrowser(props: Props) {
     const userId = user?.id
     try {
       if (!userId) throw new Error('Accedi per consultare lo storico.')
+      if (!more) invalidated.current.clear()
       const input = more ? criteria.current : { text: text.trim(), from, until }
       const dates = historyDates(input.from, input.until)
       let query = supabase.from(props.kind === 'event' ? 'events' : 'work_items').select('*')
@@ -51,7 +60,7 @@ export default function HistoryBrowser(props: Props) {
         .order('id', { ascending: false }).limit(HISTORY_PAGE_SIZE + 1)
       if (queryError) throw queryError
       if (owner.current !== userId) return
-      const page = (data ?? []).slice(0, HISTORY_PAGE_SIZE)
+      const page = (data ?? []).filter(item => !invalidated.current.has(item.id)).slice(0, HISTORY_PAGE_SIZE)
       loadedOwner.current = userId
       setRows(current => more ? [...current, ...page] : page)
       criteria.current = input

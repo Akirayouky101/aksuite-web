@@ -6,7 +6,7 @@ import { WorkItem } from '../hooks/useWorkItems'
 import { Event } from '../hooks/useEvents'
 import EventDetailModal from './EventDetailModal'
 
-export default function ClientDetailModal({ client, clients, calls, events, workItems, onOpenWorkItems, onOpenTodos, onNewAppointment, onEditEvent, onDeleteEvent, onScheduleFollowUp, onClose, onSelectClient, onEdit, onDelete }: { client: any | null; clients: any[]; calls: any[]; events: Event[]; workItems: WorkItem[]; onOpenWorkItems: (client: any) => void; onOpenTodos: (client: any) => void; onNewAppointment: (client: any) => void; onEditEvent: (event: Event) => void; onDeleteEvent: (id: string) => void; onScheduleFollowUp: (event: Event) => void; onClose: () => void; onSelectClient: (client: any) => void; onEdit: (client: any) => void; onDelete: (id: string) => Promise<void> }) {
+export default function ClientDetailModal({ client, clients, calls, events, workItems, onOpenWorkItems, onOpenTodos, onNewAppointment, onEditEvent, onDeleteEvent, onScheduleFollowUp, onClose, onSelectClient, onEdit, onDelete }: { client: any | null; clients: any[]; calls: any[]; events: Event[]; workItems: WorkItem[]; onOpenWorkItems: (client: any) => void; onOpenTodos: (client: any) => void; onNewAppointment: (client: any) => void; onEditEvent: (event: Event) => void; onDeleteEvent: (id: string) => void | Promise<void>; onScheduleFollowUp: (event: Event) => void; onClose: () => void; onSelectClient: (client: any) => void; onEdit: (client: any) => void; onDelete: (id: string) => Promise<void> }) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [appointmentFilter, setAppointmentFilter] = useState<'upcoming' | 'past'>('upcoming')
   if (!client) return null
@@ -85,7 +85,7 @@ export default function ClientDetailModal({ client, clients, calls, events, work
       </section>
       <div className="mt-6 flex gap-2"><button onClick={() => onEdit(client)} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#2d2754] py-3 text-sm font-bold text-white"><Pencil className="h-4 w-4" />Modifica contatto</button>{parent && <button onClick={() => { if (window.confirm(`Eliminare ${client.name}?`)) { void onDelete(client.id).then(() => onSelectClient(parent)) } }} title="Elimina struttura" className="rounded-lg border border-red-200 px-3 text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>}</div>
     </div>
-    {selectedEvent && <EventDetailModal event={selectedEvent} clientName={client.name} workItemName={workItems.find(item => item.id === selectedEvent.work_item_id)?.title} onClose={() => setSelectedEventId(null)} onEdit={event => { setSelectedEventId(null); onEditEvent(event) }} onDelete={id => { setSelectedEventId(null); onDeleteEvent(id) }} onScheduleFollowUp={event => { setSelectedEventId(null); onScheduleFollowUp(event) }} />}
+    {selectedEvent && <EventDetailModal event={selectedEvent} clientName={client.name} workItemName={workItems.find(item => item.id === selectedEvent.work_item_id)?.title} onClose={() => setSelectedEventId(null)} onEdit={event => { setSelectedEventId(null); onEditEvent(event) }} onDelete={onDeleteEvent} onScheduleFollowUp={event => { setSelectedEventId(null); onScheduleFollowUp(event) }} />}
   </div>
 }
 

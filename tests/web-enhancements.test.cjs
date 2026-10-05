@@ -16,6 +16,49 @@ function load(relative, overrides = {}) {
   )
   return module.exports
 }
+function hookHarness(runEffects = false) {
+  const slots = []
+  let cursor = 0, effects = [], dirty = false
+  const react = {
+    useState(initial) {
+      const index = cursor++
+      if (!Object.hasOwn(slots, index)) slots[index] = initial
+      return [slots[index], value => {
+        const next = typeof value === 'function' ? value(slots[index]) : value
+        if (!Object.is(next, slots[index])) { slots[index] = next; dirty = true }
+      }]
+    },
+    useRef(initial) {
+      const index = cursor++
+      if (!Object.hasOwn(slots, index)) slots[index] = { current: initial }
+      return slots[index]
+    },
+    useEffect(callback, dependencies) {
+      const index = cursor++
+      const previous = slots[index]
+      if (!previous || dependencies.some((value, offset) => !Object.is(value, previous[offset]))) {
+        slots[index] = dependencies
+        if (runEffects) effects.push(callback)
+      }
+    },
+    useCallback: callback => callback,
+  }
+  return { react, render(component) {
+    let result, renders = 0
+    do {
+      dirty = false; cursor = 0; effects = []
+      result = component()
+      effects.forEach(callback => callback())
+      if (++renders > 10) throw new Error('Unexpected hook render loop')
+    } while (dirty)
+    return result
+  } }
+}
+function elements(node, type) {
+  if (Array.isArray(node)) return node.flatMap(child => elements(child, type))
+  if (!node || typeof node !== 'object') return []
+  return [...(node.type === type ? [node] : []), ...elements(node.props?.children, type)]
+}
 const lifecycle = load('lib/lifecycle.ts')
 const google = load('lib/googleCalendar.ts')
 const event = (changes = {}) => ({
@@ -225,27 +268,59 @@ test('calendar and global search use distinct account-scoped React keys', () => 
     for (const key of keys) assert.ok(key.includes(user?.id || 'guest'))
   }
 })
+test('history prunes changed records, rejects stale in-flight results and reloads only on user request', async () => {
+  const harness = hookHarness(true)
+  const item = event({ is_completed: true, completed_at: '2026-10-05T13:00:00Z' })
+  let requests = 0, deferred = false, finishRead
+  const query = {}
+  for (const name of ['select', 'eq', 'is', 'not', 'ilike', 'order']) query[name] = () => query
+  query.limit = limit => {
+    assert.equal(limit, 6)
+    requests++
+    const result = { data: [item], error: null }
+    return deferred ? new Promise(resolve => { finishRead = () => resolve(result) }) : Promise.resolve(result)
+  }
+  const jsx = (type, props, key) => ({ type, props, key })
+  const History = load('platforms/Desktop/app/components/HistoryBrowser.tsx', {
+    react: harness.react, 'react/jsx-runtime': { jsx, jsxs: jsx },
+    '@/lib/supabase': { supabase: { from: () => query } }, '@/lib/lifecycle': lifecycle,
+    '../hooks/useAuth': { useAuth: () => ({ user: { id: 'owner' } }) },
+  }).default
+  let props = { kind: 'event', state: 'completed', onOpen() {} }
+  const render = () => harness.render(() => History(props))
+  const records = tree => elements(tree, 'button').filter(button => button.key === item.id)
+  const submit = tree => elements(tree, 'form')[0].props.onSubmit({ preventDefault() {} })
+  let tree = render()
+  assert.equal(requests, 0)
+  elements(tree, 'input')[0].props.onChange({ target: { value: 'fixture title' } })
+  submit(render())
+  await Promise.resolve()
+  assert.equal(records(render()).length, 1)
+  props = { ...props, changedItem: { id: item.id } }
+  tree = render()
+  assert.equal(records(tree).length, 0)
+  assert.equal(elements(tree, 'input')[0].props.value, 'fixture title')
+  assert.equal(requests, 1)
+  deferred = true
+  submit(tree)
+  props = { ...props, changedItem: { id: item.id } }
+  render()
+  finishRead()
+  await Promise.resolve()
+  assert.equal(records(render()).length, 0)
+  deferred = false
+  submit(render())
+  await Promise.resolve()
+  assert.equal(records(render()).length, 1)
+  assert.equal(requests, 3)
+})
 test('event and work hooks hide previous-account data and reject late writes after an account change', async () => {
   for (const [filename, exportName, addName, field] of [
     ['useEvents', 'useEvents', 'addEvent', 'events'],
     ['useWorkItems', 'useWorkItems', 'addWorkItem', 'workItems'],
   ]) {
-    const slots = []
-    let cursor = 0, user = { id: 'owner' }, deferred = false, finishWrite, inserted
-    const react = {
-      useState(initial) {
-        const index = cursor++
-        if (!Object.hasOwn(slots, index)) slots[index] = initial
-        return [slots[index], value => { slots[index] = typeof value === 'function' ? value(slots[index]) : value }]
-      },
-      useRef(initial) {
-        const index = cursor++
-        if (!Object.hasOwn(slots, index)) slots[index] = { current: initial }
-        return slots[index]
-      },
-      useEffect() {},
-      useCallback: callback => callback,
-    }
+    const harness = hookHarness()
+    let user = { id: 'owner' }, deferred = false, finishWrite, inserted
     const query = {
       insert(value) { inserted = Array.isArray(value) ? value[0] : value; return query },
       select() { return query },
@@ -255,9 +330,9 @@ test('event and work hooks hide previous-account data and reject late writes aft
       },
     }
     const hook = load(`platforms/Desktop/app/hooks/${filename}.ts`, {
-      react, './useAuth': { useAuth: () => ({ user }) }, '@/lib/supabase': { supabase: { from: () => query } },
+      react: harness.react, './useAuth': { useAuth: () => ({ user }) }, '@/lib/supabase': { supabase: { from: () => query } },
     })[exportName]
-    const render = () => { cursor = 0; return hook() }
+    const render = () => harness.render(hook)
     const input = { ...event(), kind: 'todo', status: 'planned', materials: [], checklist: [] }
     await render()[addName](input)
     assert.equal(render()[field].length, 1, filename)

@@ -31,7 +31,7 @@ interface CalendarViewProps {
   clients?: Client[]
   workItems?: WorkItem[]
   tasks?: CalendarTask[]
-  onDelete: (id: string) => void
+  onDelete: (id: string) => void | Promise<void>
   onEdit: (event: Event) => void
   onAdd: () => void
   onScheduleFollowUp?: (event: Event) => void
@@ -81,6 +81,7 @@ export default function CalendarView({
   const [filterUserId, setFilterUserId] = useState<string>('all')
   const [onlyWithoutReminder, setOnlyWithoutReminder] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [changedHistoryItem, setChangedHistoryItem] = useState<{ id: string } | null>(null)
   const [history, setHistory] = useState<'pending' | 'completed' | 'archived'>('pending')
   const [settings, setSettings] = useState(initialSettings)
 
@@ -276,7 +277,7 @@ export default function CalendarView({
             {(['pending', 'completed', 'archived'] as const).map(value => <button key={value} aria-pressed={history === value} onClick={() => setHistory(value)} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === value ? 'bg-[#d9e8d9]' : 'bg-slate-100'}`}>{value === 'pending' ? 'Da fare' : value === 'completed' ? 'Eseguite' : 'Archiviate'}</button>)}
           </div>
           {settings && <div className="max-h-[40vh] overflow-y-auto px-5"><WebPushSettings /><GoogleCalendarSettings /></div>}
-          {history !== 'pending' && <div className="min-h-0 flex-1 overflow-y-auto p-5"><HistoryBrowser key={history} kind="event" state={history} onOpen={setSelectedEvent} /></div>}
+          {history !== 'pending' && <div className="min-h-0 flex-1 overflow-y-auto p-5"><HistoryBrowser key={history} kind="event" state={history} changedItem={changedHistoryItem} onOpen={setSelectedEvent} /></div>}
           {history === 'pending' &&
           <div className="flex-1 overflow-hidden flex min-h-0">
 
@@ -469,7 +470,8 @@ export default function CalendarView({
             workItemName={workItems.find(item => item.id === selectedEvent.work_item_id)?.title}
             onClose={() => setSelectedEvent(null)}
             onEdit={event => { setSelectedEvent(null); onEdit(event) }}
-            onDelete={id => { onDelete(id); setSelectedEvent(null) }}
+            onDelete={onDelete}
+            onChanged={id => setChangedHistoryItem({ id })}
             onScheduleFollowUp={onScheduleFollowUp}
           />}
 
