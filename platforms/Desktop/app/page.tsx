@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowUpRight, Bell, Briefcase, Calendar, CheckCircle2, ClipboardList, CreditCard, KeyRound, LayoutGrid, LogIn, LogOut, Phone, Plus, Search, Shield, Sparkles, StickyNote, Users } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { ArrowUpRight, Bell, Briefcase, Calendar, CheckCircle2, ClipboardList, CreditCard, KeyRound, LayoutGrid, LogIn, LogOut, Phone, Plus, Search, Shield, ShoppingCart, Sparkles, StickyNote, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { usePasswords } from './hooks/usePasswords'
 import { useCalls } from './hooks/useCalls'
@@ -43,6 +44,11 @@ import { paymentRemainingAmount, usePayments } from './hooks/usePayments'
 import { useDesktopReminders } from './hooks/useDesktopReminders'
 import { usePwa } from './hooks/usePwa'
 import { useWorkItems } from './hooks/useWorkItems'
+import { useShopping } from './hooks/useShopping'
+
+const ShoppingWorkspace = dynamic(() => import('./components/ShoppingWorkspace'), {
+  loading: () => <p role="status" className="py-8 text-center text-[#716a91]">Caricamento sezione Spesa...</p>,
+})
 
 const emptyRelations = { passwords: [], calls: [], notes: [], events: [] }
 
@@ -54,6 +60,7 @@ export default function Home() {
   const { clients, addClient, updateClient, deleteClient, toggleFavorite } = useClients()
   const { payments, addPayment, updatePayment, deletePayment } = usePayments()
   const { workItems, loading: workItemsLoading, errorMessage: workItemsError, addWorkItem, updateWorkItem, deleteWorkItem } = useWorkItems()
+  const shopping = useShopping()
   const { users, isAdmin, createUser, togglePermission, setAllPermissions, deleteUserPermissions, loadAllUsers } = useUserManagement()
   const [authOpen, setAuthOpen] = useState(false)
   const [section, setSection] = useState('today')
@@ -166,6 +173,7 @@ export default function Home() {
     ['clients', 'Rubrica', Users, clients.length, 'bg-[#76a9f7]', 'text-[#174a9b]'],
     ['work_items', 'Lavorazioni', Briefcase, openWorkItems.length, 'bg-[#d9e8d9]', 'text-[#257259]'],
     ['todos', 'Cose da fare', ClipboardList, openTodos.length, 'bg-[#f7c948]', 'text-[#785b00]'],
+    ['shopping', 'Spesa', ShoppingCart, shopping.items.filter(item => !item.purchased).length, 'bg-[#d9e8d9]', 'text-[#257259]'],
     ['payments', 'Pagamenti', CreditCard, unpaidPayments.length, 'bg-[#cfe4ff]', 'text-[#376db5]'],
     ...(isAdmin ? [['users', 'Utenti', Shield, users.length, 'bg-[#f2a7cf]', 'text-[#9a3268]'] as const] : []),
   ] as const
@@ -215,6 +223,7 @@ export default function Home() {
         {section === 'calls' && <CallsWorkspace calls={calls} onNew={() => open('call')} onEdit={(call) => open('call', call)} onDetail={setSelectedCall} onDelete={deleteCall} onStatusChange={updateCallStatus} />}
         {section === 'work_items' && <WorkItemsWorkspace workItems={workItems} events={events} clients={clients} loading={workItemsLoading} errorMessage={workItemsError} clientScopeId={workClientId} onBackToClients={() => { setReturnClientId(workClientId); setWorkClientId(null); setSection('clients') }} onNew={() => open('work_item')} onEdit={item => open('work_item', item)} onUpdate={updateWorkItem} onDelete={deleteWorkItem} onScheduleFollowUp={scheduleEventFollowUp} />}
         {section === 'todos' && <WorkItemsWorkspace mode="todo" workItems={workItems} events={events} clients={clients} loading={workItemsLoading} errorMessage={workItemsError} clientScopeId={todoClientId} onBackToClients={() => { setReturnClientId(todoClientId); setTodoClientId(null); setSection('clients') }} onNew={() => open('todo')} onEdit={item => open('todo', item)} onUpdate={updateWorkItem} onDelete={deleteWorkItem} onScheduleFollowUp={scheduleEventFollowUp} />}
+        {section === 'shopping' && <ShoppingWorkspace key={user.id} data={shopping} />}
         {section === 'today' && <TodayWorkspace calls={calls} events={events} notes={notes} payments={payments} workItems={workItems.filter(item => item.kind !== 'todo')} clients={clients} onOpen={(type, item) => { if (type === 'call') setSelectedCall(item); else if (type === 'event') open('event', item); else if (type === 'note') open('note', item); else if (type === 'work_item') { setSection('work_items'); open('work_item', item) } else { setSection('payments'); setSelectedPaymentId(item.id); setPaymentView('practice') } }} />}
         {section === 'passwords' && <PasswordsWorkspace passwords={passwords} categories={categories} onCreateCategory={addCategory} onUpdateCategory={updateCategory} onDeleteCategory={deleteCategory} onNew={() => open('password')} onEdit={(password) => open('password', password)} onDetail={setSelectedPassword} onDelete={deletePassword} />}
         {section === 'clients' && <ClientsWorkspace clients={clients} calls={calls} events={events} workItems={workItems} initialSelectedClientId={returnClientId} onOpenWorkItems={client => { setReturnClientId(null); setWorkClientId(client.id); setSection('work_items') }} onOpenTodos={client => { setReturnClientId(null); setTodoClientId(client.id); setSection('todos') }} onNewAppointment={openNewAppointment} onEditEvent={openEditAppointment} onDeleteEvent={id => { void deleteEvent(id) }} onScheduleFollowUp={scheduleEventFollowUp} onNew={() => open('client')} onEdit={(client) => open('client', client)} onDelete={deleteClient} onToggleFavorite={toggleFavorite} />}

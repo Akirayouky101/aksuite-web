@@ -66,6 +66,33 @@ migrations and back up the database before applying any database changes.
 Edge Function sources are versioned in `supabase/functions`; deploy them
 only when their source changes.
 
+## Shopping Lists (Web)
+
+The `Spesa` section provides multiple personal shopping lists with products,
+optional free-text quantities and notes, purchased checkboxes, search,
+filters, and progress. Existing to-do checklists are not converted or removed.
+
+Apply `supabase/migrations/20261005000000_shopping_lists.sql` through the
+normal migration workflow before deploying the web feature. It adds
+`shopping_lists` and `shopping_items`; row-level security permits only the
+owner to access a list and its products, and deleting a list cascades to its
+products. This feature does not grant other users access to private lists.
+
+`PDF` exports the complete selected list, with pending products first and
+purchased products marked. `Condividi PDF` uses file sharing on supported
+devices/browsers, so the user can choose an installed app such as WhatsApp,
+Telegram, or email. Otherwise, it downloads a PDF to attach manually.
+Sharing sends a static copy, not an editable or synchronized list.
+Native Apple UI support is a separate follow-up; the database model is
+available for those clients without changing existing native features.
+
+Run focused shopping validation with `node --test tests/shopping.test.cjs`
+and the web build with `npm run build`.
+`tests/shopping.integration.sql` checks owner CRUD, isolation between
+identities, ownership-transfer denial, and cascading deletion using
+temporary fixtures in a transaction that is always rolled back. Run it
+through an administrator SQL connection after applying the migration.
+
 ## Calendar Push Reminders
 
 Calendar reminders are sent by Supabase, including when the app is closed. Apply `supabase/calendar-push-reminders.sql` after the events and push-device schemas, replacing `YOUR_PROJECT_REF` with the Supabase project reference. Before applying its final cron section, store the service-role key in Vault:
