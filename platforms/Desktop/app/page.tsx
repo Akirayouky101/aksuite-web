@@ -47,6 +47,7 @@ import { useWorkItems } from './hooks/useWorkItems'
 import { useShopping } from './hooks/useShopping'
 import WebOrbitNavigation from './components/WebOrbitNavigation'
 import shell from './components/MacShell.module.css'
+import { webSectionStyle } from './components/webSectionColors'
 
 const ShoppingWorkspace = dynamic(() => import('./components/ShoppingWorkspace'), {
   loading: () => <p role="status" className="py-8 text-center text-ak-muted">Caricamento sezione Spesa...</p>,
@@ -208,6 +209,8 @@ export default function Home() {
     ['payments', 'Pagamenti', CreditCard],
     ...(isAdmin ? [['users', 'Utenti', Shield] as const] : []),
   ] as const
+  const currentSection = items.find(item => item[0] === section) || items[0]
+  const SectionIcon = currentSection[2]
 
   if (!user) return (
     <main className={`${shell.shell} ak-mac-web ak-web-login relative flex min-h-screen items-center overflow-hidden p-5 sm:p-10`}>
@@ -225,10 +228,10 @@ export default function Home() {
   )
 
   return (
-    <main className={`${shell.shell} ak-mac-web`}>
+    <main className={`${shell.shell} ak-mac-web`} style={webSectionStyle(section)}>
         <header className={shell.topbar}>
           <div className={shell.brand}><span className={shell.brandIcon}><LayoutGrid size={22} aria-hidden="true" /></span>AK SUITE</div>
-          <p className={shell.sectionTitle}>{items.find(item => item[0] === section)?.[1] || 'Dashboard'}</p>
+          <p className={shell.sectionTitle}><span className={shell.sectionIcon}><SectionIcon size={18} aria-hidden="true" /></span>{currentSection[1]}</p>
           <div className={shell.actions}>
             <button onClick={() => setGlobalSearchOpen(true)} title="Ricerca globale (Maiusc-Comando-F)" className={shell.button}><Search size={18} aria-hidden="true" />Cerca</button>
             <button onClick={() => void requestPermission()} title="Attiva notifiche" className={shell.button}><Bell size={18} aria-hidden="true" />Notifiche</button>

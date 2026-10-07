@@ -211,7 +211,7 @@ export default function CalendarView({
         >
 
           {/* HEADER */}
-          <div className="flex-shrink-0 px-6 pt-5 pb-4 border-b border-ak-line bg-gradient-to-r from-ak-panel/60 to-ak-panel">
+          <div className="ak-section-header flex-shrink-0 px-6 pt-5 pb-4 border-b border-ak-line bg-gradient-to-r from-ak-panel/60 to-ak-panel">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-ak-accent via-ak-accent to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 flex-shrink-0">

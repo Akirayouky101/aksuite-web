@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, LayoutGrid, Phone, Sparkles, Users, X, type LucideIcon } from 'lucide-react'
 import styles from './MacShell.module.css'
+import { webSectionStyle } from './webSectionColors'
 
 type NavigationItem = readonly [id: string, title: string, icon: LucideIcon]
 const EXIT_DURATION = 240
@@ -119,7 +120,7 @@ export default function WebOrbitNavigation({ open, section, items, onNavigate, o
                 </div>
                 {destinations.map(([id, title, Icon], index) => (
                   <button type="button" key={id} className={styles.destination}
-                    style={{ '--orbit-delay': `${index * 35}ms` } as React.CSSProperties}
+                    style={{ ...webSectionStyle(id), '--orbit-delay': `${index * 35}ms` } as React.CSSProperties}
                     aria-current={section === id ? 'page' : undefined} onClick={() => onNavigate(id)}>
                     <Icon size={22} aria-hidden="true" /><span>{title}</span><ArrowUpRight size={18} aria-hidden="true" />
                   </button>

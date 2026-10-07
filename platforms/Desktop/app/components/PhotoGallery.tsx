@@ -130,7 +130,7 @@ export default function PhotoGallery({ scope }: { scope: Scope }) {
     await load(false, true)
   }
 
-  return <section className="my-4 space-y-3 rounded-xl border border-ak-line p-3">
+  return <section className={`${'general' in scope ? 'ak-workspace ak-photos-workspace' : ''} my-4 space-y-3 rounded-xl border border-ak-line p-3`}>
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Galleria foto</h3>
       <label className={`rounded-lg border bg-ak-success-bg px-3 py-2 text-sm font-bold ${busy ? 'opacity-50' : 'cursor-pointer'}`}>
         Aggiungi foto<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={busy} className="hidden" onChange={event => { const files = Array.from(event.target.files || []); event.target.value = ''; if (files.length) void run(() => upload(files)) }} />

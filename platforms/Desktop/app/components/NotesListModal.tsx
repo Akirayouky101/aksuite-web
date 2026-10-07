@@ -125,7 +125,7 @@ export default function NotesListModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className={embedded ? 'ak-workspace !p-0 overflow-hidden' : 'ak-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-ak-inset/30'}>
+        <div className={embedded ? 'ak-workspace ak-notes-workspace !p-0 overflow-hidden' : 'ak-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-ak-inset/30'}>
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
