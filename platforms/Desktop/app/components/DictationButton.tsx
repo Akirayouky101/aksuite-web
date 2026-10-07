@@ -65,9 +65,9 @@ export default function DictationButton({ onText, label = 'Detta testo' }: { onT
     catch (cause) { console.error('Dictation start failed:', cause); setError('Impossibile avviare il microfono. Riprova.'); setListening(false) }
   }
   return <div className="my-2">
-    <button type="button" onClick={toggle} aria-pressed={listening} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold ${listening ? 'bg-red-100 text-red-800' : 'bg-[#d9e8d9] text-[#257259]'}`}><Mic className="h-4 w-4" />{listening ? 'Ferma dettatura' : label}</button>
-    {!supported && <p className="mt-1 text-xs text-[#716a91]">Se non disponibile, usa il microfono della tastiera del dispositivo.</p>}
+    <button type="button" onClick={toggle} aria-pressed={listening} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold ${listening ? 'bg-ak-danger-bg text-ak-danger' : 'bg-ak-success-bg text-ak-success'}`}><Mic className="h-4 w-4" />{listening ? 'Ferma dettatura' : label}</button>
+    {!supported && <p className="mt-1 text-xs text-ak-muted">Se non disponibile, usa il microfono della tastiera del dispositivo.</p>}
     {listening && <p role="status" className="mt-1 text-xs">Microfono attivo. Il testo riconosciuto viene aggiunto senza cancellare quello scritto.</p>}
-    {error && <p role="alert" className="mt-1 text-xs text-red-700">{error}</p>}
+    {error && <p role="alert" className="mt-1 text-xs text-ak-danger">{error}</p>}
   </div>
 }

@@ -89,17 +89,18 @@ or by phone) before granting access.
 - `supabase/password-vault-enforce.sql`: optional, run manually after migration.
   It refuses to run while legacy rows exist. Once run, it makes v1 mandatory.
 
-The vault migration has been applied to production. Optional enforcement has
-not been applied; existing credentials remain legacy until explicitly converted.
+The vault migration has been applied to production. The user has completed
+conversion of existing credentials. Optional enforcement has not been applied.
 
 ### Production rollout status (2026-10-07)
 
 - The linked production project is `tecvggqaunfbelqksghj`. The additive
   `20261007000000_password_vault` migration was committed and recorded in its
   migration history.
-- All 24 existing credentials remain legacy; password and PIN fields were
-  compared before and after the migration and are unchanged. The shared vault
-  has not yet been initialized. The optional enforcement script was not run.
+- Immediately after the schema migration, all 24 existing credentials were
+  still legacy; password and PIN fields compared before and after it were
+  unchanged. The shared vault had not yet been initialized at that point.
+  The optional enforcement script was not run.
 - A protected pre-migration PostgreSQL custom-format backup was created outside
   Git (directory mode 700, archive mode 600). Native `pg_dump` with the
   authorized `postgres` role bypassed the unavailable Docker daemon.
@@ -111,6 +112,13 @@ not been applied; existing credentials remain legacy until explicitly converted.
   not applied as part of this vault rollout. A future migration push must
   explicitly account for this older pending migration; do not blindly apply
   all pending migrations.
+- The web vault release (`965f79c`) was pushed to `main`; its Vercel production
+  deployment is Ready and aliased to `aksuite.app`. The production login screen
+  was checked in a browser. The user subsequently confirmed vault setup and
+  successful unlock on both Mac and iPhone, then completed credential conversion.
+  Read-only verification after conversion found 24 v1 credentials, zero legacy
+  credentials and zero non-null plaintext PIN fields. Native source improvements
+  remain local; the web visual redesign is versioned separately from that release.
 
 ## Rollout
 
@@ -119,7 +127,8 @@ not been applied; existing credentials remain legacy until explicitly converted.
 3. Deploy the web app and native builds together. Older clients cannot read v1
    values, and new clients can't save until the vault is unlocked.
 4. An administrator opens Passwords, creates a master password, saves the
-   recovery key, and taps **Crea cassaforte condivisa**.
+   recovery key, confirms it was saved and taps **Attiva cassaforte**.
+   Then the administrator taps **Crea cassaforte condivisa**.
 5. Every other user creates their own master password and sends their
    fingerprint to an unlocked member. That member verifies it under
    **Membri → Impronta verificata** and grants access.

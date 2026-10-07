@@ -57,10 +57,10 @@ export default function EventResponsePrompt({ onReschedule }: { onReschedule: (e
     setRequested(false); setEvent(null); setError('')
   }
   if (!requested) return null
-  return <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 p-4"><div role="dialog" aria-modal="true" aria-label="Conferma evento" className="w-full max-w-lg space-y-4 rounded-xl bg-white p-5">
+  return <div className="ak-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black/40 p-4"><div role="dialog" aria-modal="true" aria-label="Conferma evento" className="w-full max-w-lg space-y-4 rounded-xl bg-ak-panel p-5">
     <h2 className="text-xl font-bold">{event?.title || 'Conferma evento'}</h2>
     {!user && <p>Accedi ad AK Suite per confermare o riprogrammare questo evento. Chiudi questo messaggio e usa Accedi: l’evento verrà riaperto dopo l’accesso.</p>}
-    {error && <p role="alert" className="text-red-700">{error}</p>}
+    {error && <p role="alert" className="text-ak-danger">{error}</p>}
     {user && !error && !event && <p role="status">Caricamento...</p>}
     {event && !completing && <><p className="text-sm">{new Date(event.start_date).toLocaleString('it-IT')}</p>
       {event.is_completed ? <p>Questo evento è già stato completato.</p> :

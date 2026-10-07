@@ -56,8 +56,8 @@ export default function ClientsWorkspace({ clients, calls, events, workItems, in
             </div>
             <h3 className="mt-5">{client.name}</h3>
             <p className="ak-client-company">{client.category === 'azienda' ? 'Azienda' : client.company || 'Contatto privato'}</p>
-            {parent && <p className="mt-1 text-xs font-bold text-[#376db5]">Sotto: {parent.name}</p>}
-            {children > 0 && <p className="mt-1 text-xs font-bold text-[#257259]">{children} clienti collegati</p>}
+            {parent && <p className="mt-1 text-xs font-bold text-ak-cyan">Sotto: {parent.name}</p>}
+            {children > 0 && <p className="mt-1 text-xs font-bold text-ak-success">{children} clienti collegati</p>}
             <div className="ak-client-details">
               <span><Phone className="h-3.5 w-3.5" />{client.phone || 'Nessun telefono'}</span>
               <span><Mail className="h-3.5 w-3.5" />{client.email || 'Nessuna email'}</span>

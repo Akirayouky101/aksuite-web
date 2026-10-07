@@ -9,10 +9,10 @@ import {
   refreshVault, resetMyVaultKeys, unlockVault, usePasswordVault,
 } from '@/lib/passwordVault/store'
 
-const input = 'w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400'
-const primary = 'px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
-const secondary = 'px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
-const danger = 'px-3 py-2 bg-white hover:bg-red-50 border border-red-200 text-red-700 text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
+const input = 'w-full px-3 py-2 bg-ak-panel border border-ak-line rounded-lg text-sm text-ak-text focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400'
+const primary = 'px-3 py-2 bg-ak-accent hover:bg-ak-accent-hover text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
+const secondary = 'px-3 py-2 bg-ak-panel hover:bg-ak-panel border border-ak-line text-ak-text text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
+const danger = 'px-3 py-2 bg-ak-panel hover:bg-ak-danger-bg border border-ak-danger text-ak-danger text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
 
 type Mode = 'default' | 'recover' | 'reset' | 'change' | 'rotate' | 'members'
 
@@ -27,9 +27,9 @@ function RecoveryKeyConfirm({ prepared, title, onDone, onCancel }: { prepared: P
   }
   return (
     <div className="space-y-3">
-      <p className="text-sm font-semibold text-slate-800">{title}</p>
-      <p className="text-sm text-slate-600">Questa chiave di recupero è l’unico modo per tornare alle password se dimentichi la master password. Non viene salvata in chiaro da nessuna parte: conservala offline (stampata o in un gestore sicuro). Non verrà mostrata di nuovo.</p>
-      <code className="block p-3 bg-slate-900 text-emerald-200 rounded-lg text-sm font-mono break-all select-all" aria-label="Chiave di recupero">{prepared.recoveryKey}</code>
+      <p className="text-sm font-semibold text-ak-text">{title}</p>
+      <p className="text-sm text-ak-text">Questa chiave di recupero è l’unico modo per tornare alle password se dimentichi la master password. Non viene salvata in chiaro da nessuna parte: conservala offline (stampata o in un gestore sicuro). Non verrà mostrata di nuovo.</p>
+      <code className="block p-3 bg-ak-inset text-emerald-200 rounded-lg text-sm font-mono break-all select-all" aria-label="Chiave di recupero">{prepared.recoveryKey}</code>
       <div className="flex flex-wrap gap-2">
         <button type="button" className={secondary} onClick={async () => {
           setError('')
@@ -37,8 +37,8 @@ function RecoveryKeyConfirm({ prepared, title, onDone, onCancel }: { prepared: P
           catch { setError('Impossibile copiare la chiave. Trascrivila e conservala in un posto sicuro.') }
         }}><Copy className="inline w-4 h-4 mr-1" />{copied ? 'Copiata' : 'Copia'}</button>
       </div>
-      <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={saved} onChange={e => setSaved(e.target.checked)} /> Ho salvato la chiave di recupero in un posto sicuro</label>
-      {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
+      <label className="flex items-center gap-2 text-sm text-ak-text"><input type="checkbox" checked={saved} onChange={e => setSaved(e.target.checked)} /> Ho salvato la chiave di recupero in un posto sicuro</label>
+      {error && <p className="text-sm text-ak-danger" role="alert">{error}</p>}
       <div className="flex gap-2">
         <button type="button" className={primary} disabled={!saved || busy} onClick={confirm}>{busy ? 'Salvataggio…' : 'Conferma'}</button>
         <button type="button" className={secondary} disabled={busy} onClick={() => { prepared.discard(); onCancel() }}>Annulla</button>
@@ -64,20 +64,20 @@ function MembersPanel() {
   }
   return (
     <div className="space-y-3">
-      <p className="text-sm text-slate-600">Prima di concedere l’accesso, confronta l’impronta con quella che il collega vede nella sua app (di persona o al telefono). Così sei sicuro di cifrare la chiave per la persona giusta.</p>
-      {message && <p className="text-sm text-slate-700" role="status">{message}</p>}
-      {!entries ? <p className="text-sm text-slate-500">Caricamento…</p> : entries.length === 0 ? <p className="text-sm text-slate-500">Nessun utente ha ancora configurato la master password.</p> : (
-        <ul className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
+      <p className="text-sm text-ak-text">Prima di concedere l’accesso, confronta l’impronta con quella che il collega vede nella sua app (di persona o al telefono). Così sei sicuro di cifrare la chiave per la persona giusta.</p>
+      {message && <p className="text-sm text-ak-text" role="status">{message}</p>}
+      {!entries ? <p className="text-sm text-ak-muted">Caricamento…</p> : entries.length === 0 ? <p className="text-sm text-ak-muted">Nessun utente ha ancora configurato la master password.</p> : (
+        <ul className="divide-y divide-ak-line border border-ak-line rounded-lg">
           {entries.map(entry => (
             <li key={entry.userId} className="p-3 flex flex-wrap items-center gap-3 justify-between">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-800 truncate">{entry.fullName || entry.email || entry.userId}</p>
-                {entry.fullName && entry.email && <p className="text-xs text-slate-500 truncate">{entry.email}</p>}
-                <p className="text-xs font-mono text-slate-600 mt-1">Impronta: {entry.fingerprint}</p>
+                <p className="text-sm font-medium text-ak-text truncate">{entry.fullName || entry.email || entry.userId}</p>
+                {entry.fullName && entry.email && <p className="text-xs text-ak-muted truncate">{entry.email}</p>}
+                <p className="text-xs font-mono text-ak-text mt-1">Impronta: {entry.fingerprint}</p>
               </div>
-              {entry.hasAccess ? <span className="text-xs font-semibold text-emerald-700">Ha accesso</span> : (
+              {entry.hasAccess ? <span className="text-xs font-semibold text-ak-success">Ha accesso</span> : (
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-1 text-xs text-slate-700"><input type="checkbox" checked={Boolean(verified[entry.userId])} onChange={e => setVerified(prev => ({ ...prev, [entry.userId]: e.target.checked }))} /> Impronta verificata</label>
+                  <label className="flex items-center gap-1 text-xs text-ak-text"><input type="checkbox" checked={Boolean(verified[entry.userId])} onChange={e => setVerified(prev => ({ ...prev, [entry.userId]: e.target.checked }))} /> Impronta verificata</label>
                   <button type="button" className={primary} disabled={!verified[entry.userId] || busy !== null} onClick={() => grant(entry)}>{busy === entry.userId ? 'Concessione…' : 'Concedi accesso'}</button>
                 </div>
               )}
@@ -118,18 +118,18 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
   if (vault.status === 'signed-out') return null
 
   const box = `border rounded-xl ${compact ? 'p-3' : 'p-4'} space-y-3`
-  const header = (icon: React.ReactNode, title: string, tone = 'border-slate-200 bg-white') => ({ tone, title: <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">{icon}{title}</div> })
-  const errorLine = error ? <p className="text-sm text-red-600" role="alert">{error}</p> : null
+  const header = (icon: React.ReactNode, title: string, tone = 'border-ak-line bg-ak-panel') => ({ tone, title: <div className="flex items-center gap-2 text-sm font-semibold text-ak-text">{icon}{title}</div> })
+  const errorLine = error ? <p className="text-sm text-ak-danger" role="alert">{error}</p> : null
 
   if (prepared) {
-    return <section className={`${box} border-amber-300 bg-amber-50`}><RecoveryKeyConfirm prepared={prepared.value} title={prepared.title} onDone={() => { setPrepared(null); clearFields(); setMode('default') }} onCancel={() => setPrepared(null)} /></section>
+    return <section className={`${box} border-ak-warning bg-ak-warning-bg`}><RecoveryKeyConfirm prepared={prepared.value} title={prepared.title} onDone={() => { setPrepared(null); clearFields(); setMode('default') }} onCancel={() => setPrepared(null)} /></section>
   }
 
-  if (vault.status === 'loading') return <section className={`${box} border-slate-200 bg-white`}><p className="text-sm text-slate-500">Caricamento cassaforte password…</p></section>
+  if (vault.status === 'loading') return <section className={`${box} border-ak-line bg-ak-panel`}><p className="text-sm text-ak-muted">Caricamento cassaforte password…</p></section>
 
   if (vault.status === 'unavailable' || vault.status === 'error') {
-    const h = header(<ShieldAlert className="w-4 h-4 text-red-600" />, 'Cassaforte password non disponibile')
-    return <section className={`${box} border-red-200 bg-red-50`}>{h.title}<p className="text-sm text-red-700">{vault.error}</p>{vault.status === 'error' && <button type="button" className={secondary} onClick={() => refreshVault(vault.userId)}>Riprova</button>}</section>
+    const h = header(<ShieldAlert className="w-4 h-4 text-ak-danger" />, 'Cassaforte password non disponibile')
+    return <section className={`${box} border-ak-danger bg-ak-danger-bg`}>{h.title}<p className="text-sm text-ak-danger">{vault.error}</p>{vault.status === 'error' && <button type="button" className={secondary} onClick={() => refreshVault(vault.userId)}>Riprova</button>}</section>
   }
 
   const newPasswordFields = (
@@ -140,11 +140,11 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
   )
 
   if (vault.status === 'needs-enrollment') {
-    const h = header(<KeyRound className="w-4 h-4 text-indigo-600" />, 'Configura la tua master password')
+    const h = header(<KeyRound className="w-4 h-4 text-ak-cyan" />, 'Configura la tua master password')
     return (
-      <section className={`${box} border-indigo-200 bg-indigo-50/60`}>
+      <section className={`${box} border-ak-line bg-ak-hover/60`}>
         {h.title}
-        <p className="text-sm text-slate-600">Le password condivise sono cifrate sul tuo dispositivo. Scegli una master password diversa da quella di accesso: serve a sbloccare la cassaforte su web, iPhone, iPad e Mac. Il server non la riceve mai.</p>
+        <p className="text-sm text-ak-text">Le password condivise sono cifrate sul tuo dispositivo. Scegli una master password diversa da quella di accesso: serve a sbloccare la cassaforte su web, iPhone, iPad e Mac. Il server non la riceve mai.</p>
         <form className="space-y-2" onSubmit={e => { e.preventDefault(); void run('configurare la cassaforte', async () => { const value = await prepareEnrollment(newPassword, confirmation); setPrepared({ value, title: 'Salva la tua chiave di recupero' }) }) }}>
           {newPasswordFields}
           {errorLine}
@@ -154,11 +154,11 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
     )
   }
 
-  const fingerprintLine = vault.fingerprint ? <p className="text-xs text-slate-600">La tua impronta: <span className="font-mono font-semibold">{vault.fingerprint}</span></p> : null
+  const fingerprintLine = vault.fingerprint ? <p className="text-xs text-ak-text">La tua impronta: <span className="font-mono font-semibold">{vault.fingerprint}</span></p> : null
 
   const resetForm = (
     <form className="space-y-2" onSubmit={e => { e.preventDefault(); void run('reimpostare le chiavi', async () => { await resetMyVaultKeys() }) }}>
-      <p className="text-sm text-red-700">Usa questa opzione solo se hai perso sia la master password sia la chiave di recupero. Le tue chiavi verranno eliminate: dovrai configurarne di nuove e farti concedere di nuovo l’accesso da un collega. Le password condivise non vengono cancellate.</p>
+      <p className="text-sm text-ak-danger">Usa questa opzione solo se hai perso sia la master password sia la chiave di recupero. Le tue chiavi verranno eliminate: dovrai configurarne di nuove e farti concedere di nuovo l’accesso da un collega. Le password condivise non vengono cancellate.</p>
       <input className={input} placeholder="Scrivi REIMPOSTA per confermare" value={resetText} onChange={e => setResetText(e.target.value)} />
       {errorLine}
       <div className="flex gap-2"><button className={danger} disabled={busy || resetText !== 'REIMPOSTA'}>Reimposta le mie chiavi</button><button type="button" className={secondary} onClick={() => setMode('default')}>Annulla</button></div>
@@ -166,13 +166,13 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
   )
 
   if (vault.status === 'pending') {
-    const h = header(<ShieldAlert className="w-4 h-4 text-amber-600" />, vault.vaultExists ? 'In attesa di accesso alla cassaforte' : 'Cassaforte condivisa non ancora creata')
+    const h = header(<ShieldAlert className="w-4 h-4 text-ak-warning" />, vault.vaultExists ? 'In attesa di accesso alla cassaforte' : 'Cassaforte condivisa non ancora creata')
     return (
-      <section className={`${box} border-amber-200 bg-amber-50`}>
+      <section className={`${box} border-ak-warning bg-ak-warning-bg`}>
         {h.title}
         {vault.vaultExists
-          ? <p className="text-sm text-slate-700">La tua master password è configurata. Chiedi a un collega che ha già accesso di concedertelo dalla sezione “Membri”, dopo aver confrontato con lui questa impronta.</p>
-          : <p className="text-sm text-slate-700">Un amministratore deve creare la cassaforte condivisa (dopo aver configurato la propria master password).</p>}
+          ? <p className="text-sm text-ak-text">La tua master password è configurata. Chiedi a un collega che ha già accesso di concedertelo dalla sezione “Membri”, dopo aver confrontato con lui questa impronta.</p>
+          : <p className="text-sm text-ak-text">Un amministratore deve creare la cassaforte condivisa (dopo aver configurato la propria master password).</p>}
         {fingerprintLine}
         {mode === 'reset' ? resetForm : (
           <>
@@ -189,13 +189,13 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
   }
 
   if (vault.status === 'locked') {
-    const h = header(<Lock className="w-4 h-4 text-slate-700" />, 'Cassaforte bloccata')
+    const h = header(<Lock className="w-4 h-4 text-ak-text" />, 'Cassaforte bloccata')
     return (
-      <section className={`${box} border-slate-200 bg-white`}>
+      <section className={`${box} border-ak-line bg-ak-panel`}>
         {h.title}
         {mode === 'recover' ? (
           <form className="space-y-2" onSubmit={e => { e.preventDefault(); void run('recuperare l’accesso', async () => { const value = await prepareRecovery(recoveryKey, newPassword, confirmation); setPrepared({ value, title: 'Nuova chiave di recupero' }) }) }}>
-            <p className="text-sm text-slate-600">Inserisci la chiave di recupero (AKR1-…) e scegli una nuova master password. Verrà generata anche una nuova chiave di recupero.</p>
+            <p className="text-sm text-ak-text">Inserisci la chiave di recupero (AKR1-…) e scegli una nuova master password. Verrà generata anche una nuova chiave di recupero.</p>
             <input className={`${input} font-mono`} autoComplete="off" spellCheck={false} placeholder="AKR1-XXXX-XXXX-…" value={recoveryKey} onChange={e => setRecoveryKey(e.target.value)} />
             {newPasswordFields}
             {errorLine}
@@ -203,7 +203,7 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
           </form>
         ) : mode === 'reset' ? resetForm : (
           <form className="space-y-2" onSubmit={e => { e.preventDefault(); void run('sbloccare la cassaforte', async () => { await unlockVault(password); setPassword('') }) }}>
-            <p className="text-sm text-slate-600">Inserisci la master password per vedere e modificare le password condivise.</p>
+            <p className="text-sm text-ak-text">Inserisci la master password per vedere e modificare le password condivise.</p>
             <input className={input} type="password" autoComplete="current-password" placeholder="Master password" value={password} onChange={e => setPassword(e.target.value)} autoFocus={!compact} />
             {errorLine}
             <div className="flex flex-wrap gap-2"><button className={primary} disabled={busy || !password}>{busy ? 'Sblocco…' : 'Sblocca'}</button><button type="button" className={secondary} onClick={() => setMode('recover')}>Master password dimenticata?</button></div>
@@ -215,9 +215,9 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
 
   // unlocked
   if (compact) return null
-  const h = header(<Unlock className="w-4 h-4 text-emerald-600" />, 'Cassaforte sbloccata')
+  const h = header(<Unlock className="w-4 h-4 text-ak-success" />, 'Cassaforte sbloccata')
   return (
-    <section className={`${box} border-emerald-200 bg-emerald-50/50`}>
+    <section className={`${box} border-ak-success bg-ak-success-bg/50`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {h.title}
         <div className="flex flex-wrap gap-2">
@@ -228,11 +228,11 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
         </div>
       </div>
       {fingerprintLine}
-      {notice && <p className="text-sm text-emerald-700" role="status">{notice}</p>}
+      {notice && <p className="text-sm text-ak-success" role="status">{notice}</p>}
       {legacyCount > 0 && mode === 'default' && (
-        <div className="p-3 border border-amber-300 bg-amber-50 rounded-lg space-y-2">
-          <p className="text-sm text-amber-900 flex items-center gap-2"><ShieldAlert className="w-4 h-4" />{legacyCount === 1 ? '1 credenziale è' : `${legacyCount} credenziali sono`} ancora nel vecchio formato non cifrato (Base64/PIN in chiaro).</p>
-          <p className="text-xs text-amber-800">La migrazione cifra password e PIN con la cassaforte condivisa, verifica ogni riga decifrandola e aggiorna solo le righe non modificate nel frattempo. Dopo la migrazione serviranno le app aggiornate per leggerle. Fai prima un backup del database.</p>
+        <div className="p-3 border border-ak-warning bg-ak-warning-bg rounded-lg space-y-2">
+          <p className="text-sm text-ak-warning flex items-center gap-2"><ShieldAlert className="w-4 h-4" />{legacyCount === 1 ? '1 credenziale è' : `${legacyCount} credenziali sono`} ancora nel vecchio formato non cifrato (Base64/PIN in chiaro).</p>
+          <p className="text-xs text-ak-warning">La migrazione cifra password e PIN con la cassaforte condivisa, verifica ogni riga decifrandola e aggiorna solo le righe non modificate nel frattempo. Dopo la migrazione serviranno le app aggiornate per leggerle. Fai prima un backup del database.</p>
           {errorLine}
           <button type="button" className={primary} disabled={busy} onClick={() => run('migrare le password', async () => {
             if (!window.confirm(`Cifrare ora ${legacyCount} credenziali nel nuovo formato? Le versioni vecchie dell’app non potranno più leggerle.`)) return
@@ -257,7 +257,7 @@ export default function PasswordVaultPanel({ legacyCount = 0, compact = false }:
           <button className={primary} disabled={busy}>{busy ? 'Generazione…' : 'Genera nuova chiave'}</button>
         </form>
       )}
-      {mode === 'default' && legacyCount === 0 && <p className="text-xs text-slate-600 flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />Tutte le credenziali sono cifrate. Blocco automatico dopo 10 minuti di inattività.</p>}
+      {mode === 'default' && legacyCount === 0 && <p className="text-xs text-ak-text flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-ak-success" />Tutte le credenziali sono cifrate. Blocco automatico dopo 10 minuti di inattività.</p>}
     </section>
   )
 }

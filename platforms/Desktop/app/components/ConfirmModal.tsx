@@ -44,7 +44,7 @@ export default function ConfirmModal({
       border: 'border-green-500',
       button: 'from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600',
       icon: 'text-green-400',
-      glow: 'from-green-500 via-emerald-500 to-indigo-500'
+      glow: 'from-green-500 via-emerald-500 to-ak-accent'
     }
   }
 
@@ -54,7 +54,7 @@ export default function ConfirmModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/30  z-[100] flex items-center justify-center p-4 overflow-x-hidden">
+      <div className="ak-modal-backdrop fixed inset-0 bg-ak-inset/30  z-[100] flex items-center justify-center p-4 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -66,31 +66,31 @@ export default function ConfirmModal({
           <div className="hidden" />
           
           {/* Main modal */}
-          <div className={`relative bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50 overflow-hidden`}>
+          <div className={`relative bg-ak-panel/90 backdrop-blur-2xl rounded-2xl border border-ak-line/60 shadow-2xl shadow-black/50 overflow-hidden`}>
             {/* Header with icon */}
-            <div className={`bg-slate-50/50 p-6 border-b border-slate-200`}>
+            <div className={`bg-ak-panel/50 p-6 border-b border-ak-line`}>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-slate-200 rounded-xl flex items-center justify-center ">
-                  {type === 'danger' && <AlertTriangle className="w-10 h-10 text-slate-800" strokeWidth={3} />}
-                  {type === 'warning' && <AlertTriangle className="w-10 h-10 text-slate-800" strokeWidth={3} />}
-                  {type === 'success' && <CheckCircle className="w-10 h-10 text-slate-800" strokeWidth={3} />}
+                <div className="w-16 h-16 bg-ak-inset rounded-xl flex items-center justify-center ">
+                  {type === 'danger' && <AlertTriangle className="w-10 h-10 text-ak-text" strokeWidth={3} />}
+                  {type === 'warning' && <AlertTriangle className="w-10 h-10 text-ak-text" strokeWidth={3} />}
+                  {type === 'success' && <CheckCircle className="w-10 h-10 text-ak-text" strokeWidth={3} />}
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-base font-bold text-slate-800">{title}</h2>
+                  <h2 className="text-base font-bold text-ak-text">{title}</h2>
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-10 h-10 bg-slate-200 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
+                  className="w-10 h-10 bg-ak-inset hover:bg-ak-panel/30 rounded-lg flex items-center justify-center transition-colors"
                   aria-label="Chiudi"
                 >
-                  <X className="w-6 h-6 text-slate-800" strokeWidth={3} />
+                  <X className="w-6 h-6 text-ak-text" strokeWidth={3} />
                 </button>
               </div>
             </div>
 
             {/* Content */}
             <div className="p-6">
-              <p className="text-lg text-slate-600 mb-6 leading-relaxed">
+              <p className="text-lg text-ak-text mb-6 leading-relaxed">
                 {message}
               </p>
 
@@ -100,7 +100,7 @@ export default function ConfirmModal({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onClose}
-                  className="flex-1 py-3 px-6 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold rounded-xl transition-colors"
+                  className="flex-1 py-3 px-6 bg-ak-panel hover:bg-ak-inset text-ak-text font-bold rounded-xl transition-colors"
                 >
                   {cancelText}
                 </motion.button>
@@ -111,7 +111,7 @@ export default function ConfirmModal({
                     onConfirm()
                     onClose()
                   }}
-                  className={`flex-1 py-3 px-6 bg-gradient-to-r ${color.button} text-slate-800 font-bold rounded-xl shadow-lg transition-all`}
+                  className={`flex-1 py-3 px-6 bg-gradient-to-r ${color.button} text-ak-text font-bold rounded-xl shadow-lg transition-all`}
                 >
                   {confirmText}
                 </motion.button>
@@ -119,8 +119,8 @@ export default function ConfirmModal({
             </div>
 
             {/* Decorative elements */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-slate-100" />
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-slate-100" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-ak-inset" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-ak-inset" />
           </div>
         </motion.div>
       </div>

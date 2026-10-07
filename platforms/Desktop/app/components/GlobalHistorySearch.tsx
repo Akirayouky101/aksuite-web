@@ -40,15 +40,15 @@ export default function GlobalHistorySearch({ term, onOpen }: { term: string; on
   }
   return <section className="border-t p-3">
     <h3 className="text-sm font-bold">Ricerca globale in eseguite e archiviate</h3>
-    <p className="my-2 text-xs text-[#716a91]">Il database viene interrogato solo premendo Cerca; include titoli, descrizioni, note e checklist.</p>
+    <p className="my-2 text-xs text-ak-muted">Il database viene interrogato solo premendo Cerca; include titoli, descrizioni, note e checklist.</p>
     <div className="flex flex-wrap items-end gap-2">
       <label className="text-xs">Dal<input type="date" value={from} onChange={e => setFrom(e.target.value)} className="block rounded border p-2" /></label>
       <label className="text-xs">Al<input type="date" value={until} onChange={e => setUntil(e.target.value)} className="block rounded border p-2" /></label>
       <button disabled={busy} onClick={() => void search()} className="rounded border p-2 text-sm font-bold">Cerca nel database</button>
     </div>
-    {error && <p role="alert" className="my-2 text-xs text-red-700">{error}</p>}
+    {error && <p role="alert" className="my-2 text-xs text-ak-danger">{error}</p>}
     {searched && !rows.length && <p className="my-2 text-sm">Nessun risultato nello storico.</p>}
-    {rows.map(row => <button key={`${row.kind}-${row.item_id}`} onClick={() => onOpen(row.kind, row.item)} className="my-2 block w-full rounded-xl bg-[#fff8ed] p-3 text-left text-sm"><strong>{row.item.title}</strong><span className="block text-xs">{row.kind === 'event' ? 'Calendario' : 'Cose da fare'} · {row.item.archived_at ? 'Archiviata' : 'Eseguita'}</span></button>)}
+    {rows.map(row => <button key={`${row.kind}-${row.item_id}`} onClick={() => onOpen(row.kind, row.item)} className="my-2 block w-full rounded-xl bg-ak-panel p-3 text-left text-sm"><strong>{row.item.title}</strong><span className="block text-xs">{row.kind === 'event' ? 'Calendario' : 'Cose da fare'} · {row.item.archived_at ? 'Archiviata' : 'Eseguita'}</span></button>)}
     {hasMore && <button disabled={busy} onClick={() => void search(true)} className="rounded border p-2 text-sm">Carica altre 5</button>}
   </section>
 }

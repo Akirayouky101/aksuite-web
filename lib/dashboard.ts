@@ -3,7 +3,8 @@ import { supabase } from './supabase'
 export type DashboardKind = 'event' | 'todo' | 'call' | 'work_item' | 'payment'
 export interface DashboardEntry { id: string; title: string; date: string | null; all_day?: boolean }
 export interface DashboardRow extends DashboardEntry { kind: DashboardKind }
-export interface DashboardSnapshot { agenda: DashboardRow[]; todos: DashboardRow[]; deadlines: DashboardRow[] }
+export interface DashboardDay { date: string; events: number; tasks: number }
+export interface DashboardSnapshot { agenda: DashboardRow[]; todos: DashboardRow[]; deadlines: DashboardRow[]; week: DashboardDay[] }
 
 export const DASHBOARD_LIMIT = 5
 export const DASHBOARD_LABELS: Record<DashboardKind, string> = { event: 'Evento', todo: 'Attività', call: 'Richiamo', work_item: 'Lavorazione', payment: 'Promemoria pagamento' }
@@ -23,9 +24,36 @@ export function dashboardDeadlines(rows: DashboardRow[]) {
   return [...rows].sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.id.localeCompare(b.id)).slice(0, DASHBOARD_LIMIT)
 }
 
+export function dashboardWeekBounds(now = new Date()) {
+  const start = new Date(now)
+  start.setHours(0, 0, 0, 0)
+  return Array.from({ length: 7 }, (_, offset) => {
+    const day = new Date(start)
+    day.setDate(day.getDate() + offset)
+    const end = new Date(day)
+    end.setDate(end.getDate() + 1)
+    return { start: day.toISOString(), end: end.toISOString() }
+  })
+}
+
+async function loadDashboardWeek(): Promise<DashboardDay[]> {
+  return Promise.all(dashboardWeekBounds().map(async ({ start, end }) => {
+    const [events, tasks] = await Promise.all([
+      supabase.from('events').select('id', { count: 'exact', head: true })
+        .eq('is_completed', false).is('archived_at', null).gte('start_date', start).lt('start_date', end),
+      supabase.from('work_items').select('id', { count: 'exact', head: true })
+        .eq('kind', 'todo').neq('status', 'completed').is('archived_at', null).gte('due_date', start).lt('due_date', end),
+    ])
+    if (events.error) throw events.error
+    if (tasks.error) throw tasks.error
+    if (events.count === null || tasks.count === null) throw new Error('Conteggi settimanali non disponibili.')
+    return { date: start, events: events.count, tasks: tasks.count }
+  }))
+}
+
 export async function loadDashboardSnapshot(): Promise<DashboardSnapshot> {
   const { start, end, horizon } = dashboardBounds()
-  const results = await Promise.all([
+  const [results, week] = await Promise.all([Promise.all([
     supabase.from('events').select('id,title,date:start_date,all_day').eq('is_completed', false).is('archived_at', null)
       .lt('start_date', end).or(`end_date.gte.${start},and(end_date.is.null,start_date.gte.${start})`)
       .order('start_date').order('id').limit(DASHBOARD_LIMIT).returns<DashboardEntry[]>(),
@@ -38,12 +66,13 @@ export async function loadDashboardSnapshot(): Promise<DashboardSnapshot> {
       .is('archived_at', null).lte('due_date', horizon).order('due_date').order('id').limit(DASHBOARD_LIMIT).returns<DashboardEntry[]>(),
     supabase.from('payments').select('id,title:payment_type,date:reminder_at').lte('reminder_at', horizon)
       .order('reminder_at').order('id').limit(DASHBOARD_LIMIT).returns<DashboardEntry[]>(),
-  ])
+  ]), loadDashboardWeek()])
   for (const result of results) if (result.error) throw result.error
   const [events, todos, calls, work, payments] = results.map(result => result.data || [])
   return {
     agenda: dashboardRows(events, 'event'),
     todos: dashboardRows(todos, 'todo'),
     deadlines: dashboardDeadlines([...dashboardRows(calls, 'call'), ...dashboardRows(work, 'work_item'), ...dashboardRows(payments, 'payment')]),
+    week,
   }
 }

@@ -40,14 +40,14 @@ interface EventModalProps {
 }
 
 const COLORS = [
-  { name: 'blue', class: 'bg-blue-500', light: 'bg-blue-100', dark: 'bg-blue-900' },
-  { name: 'green', class: 'bg-green-500', light: 'bg-green-100', dark: 'bg-green-900' },
-  { name: 'red', class: 'bg-red-500', light: 'bg-red-100', dark: 'bg-red-900' },
-  { name: 'purple', class: 'bg-purple-500', light: 'bg-purple-100', dark: 'bg-purple-900' },
-  { name: 'orange', class: 'bg-orange-500', light: 'bg-orange-100', dark: 'bg-orange-900' },
-  { name: 'pink', class: 'bg-pink-500', light: 'bg-pink-100', dark: 'bg-pink-900' },
-  { name: 'yellow', class: 'bg-yellow-500', light: 'bg-yellow-100', dark: 'bg-yellow-900' },
-  { name: 'gray', class: 'bg-gray-500', light: 'bg-gray-100', dark: 'bg-slate-50' }
+  { name: 'blue', class: 'bg-blue-500', light: 'bg-ak-hover', dark: 'bg-blue-900' },
+  { name: 'green', class: 'bg-green-500', light: 'bg-ak-success-bg', dark: 'bg-green-900' },
+  { name: 'red', class: 'bg-red-500', light: 'bg-ak-danger-bg', dark: 'bg-red-900' },
+  { name: 'purple', class: 'bg-purple-500', light: 'bg-ak-purple-bg', dark: 'bg-purple-900' },
+  { name: 'orange', class: 'bg-orange-500', light: 'bg-ak-orange-bg', dark: 'bg-orange-900' },
+  { name: 'pink', class: 'bg-pink-500', light: 'bg-ak-pink-bg', dark: 'bg-pink-900' },
+  { name: 'yellow', class: 'bg-yellow-500', light: 'bg-ak-warning-bg', dark: 'bg-yellow-900' },
+  { name: 'gray', class: 'bg-ak-inset', light: 'bg-ak-inset', dark: 'bg-ak-panel' }
 ]
 
 const RECURRING_TYPES = [
@@ -230,31 +230,31 @@ export default function EventModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-slate-900/30 ">
+        <div className="ak-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-ak-inset/30 ">
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200/60"
+            className="bg-ak-panel/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-ak-line/60"
           >
             {/* Header */}
-            <div className="px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
+            <div className="px-6 py-5 border-b border-ak-line/60 bg-ak-panel/60 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ak-accent to-ak-accent flex items-center justify-center shadow-lg shadow-indigo-500/25">
                     <Calendar className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-800">{editEvent ? 'Modifica Evento' : 'Nuovo Evento'}</h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Pianifica il tuo calendario</p>
+                    <h2 className="text-lg font-bold text-ak-text">{editEvent ? 'Modifica Evento' : 'Nuovo Evento'}</h2>
+                    <p className="text-xs text-ak-subtle mt-0.5">Pianifica il tuo calendario</p>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
                   title="Chiudi"
-                  className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+                  className="w-9 h-9 rounded-xl bg-ak-inset hover:bg-ak-danger-bg border border-ak-line/60 hover:border-ak-danger flex items-center justify-center transition-all"
                 >
-                  <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+                  <X className="w-4 h-4 text-ak-subtle hover:text-ak-danger" />
                 </button>
               </div>
             </div>
@@ -262,15 +262,15 @@ export default function EventModal({
             {/* Content (scrollable area with form + relations) */}
             <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                {saveError && <p role="alert" className="text-sm text-red-700">{saveError}</p>}
+                {saveError && <p role="alert" className="text-sm text-ak-danger">{saveError}</p>}
                 {editEvent &&                 <EventCompletionActions event={editEvent} onDone={onClose} disabled={saving} onBusyChange={setCompleting} />}
                 <DictationButton label="Detta descrizione evento" onText={text => setFormData(current => ({ ...current, description: `${current.description}${current.description ? ' ' : ''}${text}` }))} />
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-500">Cliente / struttura</label>
+                <label className="mb-2 block text-sm font-medium text-ak-muted">Cliente / struttura</label>
                 <select value={formData.client_id || ''} onChange={event => {
                   const client = clients.find(item => item.id === event.target.value)
                   setFormData(prev => ({ ...prev, client_id: client?.id || null, work_item_id: null, client_confirmed: client ? prev.client_confirmed : false, title: client?.name || prev.title, location: client ? clientLocation(client) || prev.location : prev.location }))
-                }} className="w-full rounded-xl border border-slate-200/60 bg-slate-50/80 px-4 py-3 text-slate-700 focus:border-indigo-400 focus:outline-none">
+                }} className="w-full rounded-xl border border-ak-line/60 bg-ak-panel/80 px-4 py-3 text-ak-text focus:border-indigo-400 focus:outline-none">
                   <option value="">Nessun cliente collegato</option>
                   {clients.map(client => {
                     const parent = clients.find(item => item.id === client.parent_client_id)
@@ -280,31 +280,31 @@ export default function EventModal({
               </div>
 
               {formData.client_id && <div>
-                <label className="mb-2 block text-sm font-medium text-slate-500">Lavorazione</label>
+                <label className="mb-2 block text-sm font-medium text-ak-muted">Lavorazione</label>
                 <select value={formData.work_item_id || ''} onChange={event => {
                   const workItem = workItems.find(item => item.id === event.target.value && item.client_id === formData.client_id && item.kind !== 'todo')
                   setFormData(prev => ({ ...prev, work_item_id: workItem?.id || null, title: workItem?.title || prev.title }))
-                }} className="w-full rounded-xl border border-slate-200/60 bg-slate-50/80 px-4 py-3 text-slate-700 focus:border-indigo-400 focus:outline-none">
+                }} className="w-full rounded-xl border border-ak-line/60 bg-ak-panel/80 px-4 py-3 text-ak-text focus:border-indigo-400 focus:outline-none">
                   <option value="">Nessuna lavorazione collegata</option>
                   {workItems.filter(item => item.client_id === formData.client_id && item.kind !== 'todo').map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
                 </select>
               </div>}
 
-              {formData.client_id && <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-sm font-semibold text-slate-700">
+              {formData.client_id && <label className="flex items-center gap-3 rounded-xl border border-ak-line bg-ak-panel/80 p-3 text-sm font-semibold text-ak-text">
                 <input type="checkbox" checked={formData.client_confirmed} onChange={event => setFormData(prev => ({ ...prev, client_confirmed: event.target.checked }))} className="h-4 w-4 accent-emerald-600" />
                 Cliente ha confermato l'appuntamento
               </label>}
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-slate-500 mb-2">
+                <label className="block text-sm font-medium text-ak-muted mb-2">
                   Titolo *
                 </label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                  className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   placeholder="Es: Riunione, Compleanno, Scadenza..."
                   required
                 />
@@ -312,14 +312,14 @@ export default function EventModal({
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-slate-500 mb-2">
+                <label className="block text-sm font-medium text-ak-muted mb-2">
                   Descrizione
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
-                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none resize-none"
+                  className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none resize-none"
                   placeholder="Aggiungi dettagli..."
                 />
               </div>
@@ -331,9 +331,9 @@ export default function EventModal({
                   id="all_day"
                   checked={formData.all_day}
                   onChange={(e) => { setConflictingEvents([]); setFormData(prev => ({ ...prev, all_day: e.target.checked })) }}
-                  className="w-5 h-5 text-blue-600 bg-slate-50/80 border-slate-200 rounded focus:ring-indigo-200"
+                  className="w-5 h-5 text-ak-cyan bg-ak-panel/80 border-ak-line rounded focus:ring-indigo-200"
                 />
-                <label htmlFor="all_day" className="text-slate-500 font-medium">
+                <label htmlFor="all_day" className="text-ak-muted font-medium">
                   Evento giornata intera
                 </label>
               </div>
@@ -341,7 +341,7 @@ export default function EventModal({
               {/* Dates */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium text-ak-muted mb-2 flex items-center gap-2">
                     <Calendar size={16} /> Data Inizio *
                   </label>
                   <DateTimePicker
@@ -353,7 +353,7 @@ export default function EventModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium text-ak-muted mb-2 flex items-center gap-2">
                     <Clock size={16} /> Data Fine
                   </label>
                   <DateTimePicker
@@ -368,21 +368,21 @@ export default function EventModal({
 
               {/* Location */}
               <div>
-                <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-medium text-ak-muted mb-2 flex items-center gap-2">
                   <MapPin size={16} /> Luogo
                 </label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                  className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   placeholder="Es: Ufficio, Casa, Online..."
                 />
               </div>
 
               {/* Color Picker */}
               <div>
-                <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-medium text-ak-muted mb-2 flex items-center gap-2">
                   <Palette size={16} /> Colore
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -413,9 +413,9 @@ export default function EventModal({
                       is_recurring: e.target.checked,
                       recurring_type: e.target.checked ? 'weekly' : null
                     }))}
-                    className="w-5 h-5 text-blue-600 bg-slate-50/80 border-slate-200 rounded focus:ring-indigo-200"
+                    className="w-5 h-5 text-ak-cyan bg-ak-panel/80 border-ak-line rounded focus:ring-indigo-200"
                   />
-                  <label htmlFor="is_recurring" className="text-slate-500 font-medium flex items-center gap-2">
+                  <label htmlFor="is_recurring" className="text-ak-muted font-medium flex items-center gap-2">
                     <Repeat size={16} /> Evento ricorrente
                   </label>
                 </div>
@@ -424,7 +424,7 @@ export default function EventModal({
                   <select
                     value={formData.recurring_type || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, recurring_type: e.target.value || null }))}
-                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                    className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   >
                     {RECURRING_TYPES.slice(1).map(type => (
                       <option key={type.value} value={type.value}>
@@ -437,13 +437,13 @@ export default function EventModal({
 
               {/* Reminder */}
               <div>
-                <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-medium text-ak-muted mb-2 flex items-center gap-2">
                   <Bell size={16} /> Promemoria
                 </label>
                 <select
                   value={formData.reminder_minutes}
                   onChange={(e) => setFormData(prev => ({ ...prev, reminder_minutes: parseInt(e.target.value) }))}
-                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                  className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                 >
                   {REMINDER_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -456,7 +456,7 @@ export default function EventModal({
               {/* Assegna a (solo admin) */}
               {isAdmin && managedUsers.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium text-ak-muted mb-2 flex items-center gap-2">
                     <Users size={16} /> Assegna a
                   </label>
                   <select
@@ -470,7 +470,7 @@ export default function EventModal({
                         assigned_to_name: user ? (user.full_name || user.email) : null
                       }))
                     }}
-                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                    className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   >
                     <option value="">Nessuno (solo tu)</option>
                     {managedUsers.map(u => (
@@ -488,9 +488,9 @@ export default function EventModal({
                     id="is_shared"
                     checked={formData.is_shared}
                     onChange={(e) => setFormData(prev => ({ ...prev, is_shared: e.target.checked }))}
-                    className="w-5 h-5 text-indigo-600 bg-slate-50/80 border-slate-200 rounded focus:ring-indigo-200"
+                    className="w-5 h-5 text-ak-cyan bg-ak-panel/80 border-ak-line rounded focus:ring-indigo-200"
                   />
-                  <label htmlFor="is_shared" className="text-slate-500 font-medium flex items-center gap-2">
+                  <label htmlFor="is_shared" className="text-ak-muted font-medium flex items-center gap-2">
                     <Users size={16} /> Visibile a tutti gli utenti
                   </label>
                 </div>
@@ -500,8 +500,8 @@ export default function EventModal({
 
               {/* Collegamenti Multi-Entità */}
               {editEvent?.id && (
-                <div className="p-6 border-t border-slate-200 space-y-3">
-                  <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <div className="p-6 border-t border-ak-line space-y-3">
+                  <h4 className="text-base font-bold text-ak-text flex items-center gap-2">
                     🔗 Collegamenti
                   </h4>
                   <RelationsIntegration
@@ -523,18 +523,18 @@ export default function EventModal({
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-slate-200/60 bg-white/40 flex-shrink-0">
-              {conflictingEvents.length > 0 && <div role="alert" className="mb-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-left">
-                <p className="text-sm font-bold text-amber-900">Attenzione: l'orario si sovrappone a {conflictingEvents.length === 1 ? 'un evento' : `${conflictingEvents.length} eventi`}.</p>
-                <ul className="mt-1 list-inside list-disc text-xs text-amber-800">{conflictingEvents.map(event => <li key={event.id}>{event.title} · {new Date(event.start_date).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}</li>)}</ul>
-                <div className="mt-3 flex gap-2"><button type="button" onClick={() => setConflictingEvents([])} className="flex-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-amber-900">Rivedi orario</button><button type="button" onClick={saveEvent} className="flex-1 rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Salva comunque</button></div>
+            <div className="px-6 py-4 border-t border-ak-line/60 bg-ak-panel/40 flex-shrink-0">
+              {conflictingEvents.length > 0 && <div role="alert" className="mb-3 rounded-xl border border-ak-warning bg-ak-warning-bg p-3 text-left">
+                <p className="text-sm font-bold text-ak-warning">Attenzione: l'orario si sovrappone a {conflictingEvents.length === 1 ? 'un evento' : `${conflictingEvents.length} eventi`}.</p>
+                <ul className="mt-1 list-inside list-disc text-xs text-ak-warning">{conflictingEvents.map(event => <li key={event.id}>{event.title} · {new Date(event.start_date).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}</li>)}</ul>
+                <div className="mt-3 flex gap-2"><button type="button" onClick={() => setConflictingEvents([])} className="flex-1 rounded-lg bg-ak-panel px-3 py-2 text-xs font-bold text-ak-warning">Rivedi orario</button><button type="button" onClick={saveEvent} className="flex-1 rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Salva comunque</button></div>
               </div>}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmit}
                 disabled={saving || completing}
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
+                className="w-full py-3.5 bg-gradient-to-r from-ak-accent to-ak-accent hover:from-ak-accent hover:to-ak-accent-hover text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
               >
                 {editEvent ? 'Aggiorna Evento' : 'Salva Evento'}
               </motion.button>

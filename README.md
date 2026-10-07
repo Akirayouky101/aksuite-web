@@ -56,15 +56,34 @@ build output are generated/local artifacts and are not versioned.
 ### Operational dashboard and navigation
 
 Web, iPhone, iPad and Mac Catalyst open an operational dashboard instead of
-a grid of section cards. All sections remain accessible from a collapsible
-sidebar on wide layouts and a compact section menu on narrow layouts.
+a grid of section cards. All sections remain accessible from the section menu.
 The user-management entry remains admin-only on the web.
+
+The web interface uses the native Mac blue glass shell, bottom menu
+launcher and grouped orbital navigation (Dashboard, Operatività, Gestione,
+Strumenti). On narrow screens the orbital groups become a compact grid.
+Command/Control-K opens the menu, Escape closes it and
+Shift-Command/Control-F opens global search. The native HTML dialog keeps
+keyboard focus within the menu and restores focus when closed.
+The login, section workspaces, editors, summaries, vault controls and date
+popovers now share semantic dark colors defined in `tailwind.config.js`, with
+glass surfaces in `app/mac-theme.css`. Status/error colors remain distinct.
+Calendar and Notes are embedded workspaces, so the header and navigation stay
+available while browsing; editing and closing a draft returns to the same
+workspace. The calendar agenda moves below the month grid on narrow screens.
+Portaled date/photo previews are themed explicitly rather than relying on
+global overrides of every fixed-position element.
+These visual changes are separate from the production password-vault release.
 
 Three summaries show today's active appointments (including overlapping
 multi-day events), pending to-dos and nearby/overdue work deadlines, callbacks
 and payment reminders. Each panel displays at most five entries, not a
 total count. Five parallel database queries select only summary fields and
 fetch at most five rows each; completed/archived events and tasks are excluded.
+The web weekly chart shows event start dates and pending to-do due dates for
+the next seven local calendar days, matching the native chart. Its daily exact
+count queries do not inherit the five-item summary limit or the database row
+return cap. An accessible table exposes the same values to screen readers.
 Payment reminders are not a complete installment/advance overview: use the
 Payments section for those details. Errors expose a retry rather than
 pretending the dashboard is empty.

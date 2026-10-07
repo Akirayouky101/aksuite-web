@@ -81,9 +81,9 @@ export default function WebPushSettings() {
   return <section className="my-4 rounded-xl border p-4">
     <h3 className="font-bold">Conferma eventi tramite notifica</h3>
     <p className="my-2 text-sm">Alla scadenza: Sì completa l’evento dopo l’accesso, No apre la scelta di una nuova data e ora. Nessuna modifica viene fatta senza il tuo accesso.</p>
-    {!supported && <p className="text-sm text-amber-800">Questo browser non supporta Web Push. Su iPhone/iPad le notifiche web richiedono l’app aggiunta alla schermata Home (iOS 16.4 o successivo).</p>}
-    {!configured && <p className="text-sm text-amber-800">Invio non ancora attivato sul server: occorre configurare le chiavi Web Push e il processo pianificato.</p>}
+    {!supported && <p className="text-sm text-ak-warning">Questo browser non supporta Web Push. Su iPhone/iPad le notifiche web richiedono l’app aggiunta alla schermata Home (iOS 16.4 o successivo).</p>}
+    {!configured && <p className="text-sm text-ak-warning">Invio non ancora attivato sul server: occorre configurare le chiavi Web Push e il processo pianificato.</p>}
     <button type="button" disabled={busy || !supported || (!configured && !enabled)} onClick={() => void toggle()} className="mt-3 rounded-xl border p-3 text-sm font-bold">{busy ? 'Attendere...' : enabled ? 'Disattiva su questo browser' : 'Attiva su questo browser'}</button>
-    {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
+    {error && <p role="alert" className="mt-2 text-sm text-ak-danger">{error}</p>}
   </section>
 }

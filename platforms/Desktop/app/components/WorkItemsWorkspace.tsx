@@ -85,14 +85,14 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
     <section className="ak-workspace">
       <header className="ak-workspace-head">
         <div>
-          {clientScopeId && <button onClick={onBackToClients} className="mb-2 flex items-center gap-1 text-sm font-bold text-[#257259] hover:underline"><ArrowLeft className="h-4 w-4" />Rubrica</button>}
+          {clientScopeId && <button onClick={onBackToClients} className="mb-2 flex items-center gap-1 text-sm font-bold text-ak-success hover:underline"><ArrowLeft className="h-4 w-4" />Rubrica</button>}
           <p className="ak-kicker">Lavoro in movimento</p>
           <h2>{isTodo ? 'Cose da fare' : 'Lavorazioni'}{scopedClient ? ` · ${scopedClient.name}` : ''}</h2>
           <p>{scopedClient ? `${isTodo ? 'Attività' : 'Lavorazioni'} collegate a ${scopedClient.name}.` : isTodo ? 'Le attività personali e i prossimi passi.' : 'Un solo posto per sapere cosa fare, con chi e qual è il prossimo passo.'}</p>
         </div>
         <button onClick={onNew} className="ak-primary-action"><Plus className="h-4 w-4" />{isTodo ? 'Nuova cosa da fare' : 'Nuova lavorazione'}</button>
       </header>
-      {isTodo && <div className="flex gap-2 border-b pb-3">{(['pending', 'completed', 'archived'] as const).map(value => <button key={value} aria-pressed={history === value} onClick={() => { setHistory(value); setHistoryItem(null) }} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === value ? 'bg-[#d9e8d9]' : 'bg-[#f8e8cf]'}`}>{value === 'pending' ? 'Da fare' : value === 'completed' ? 'Eseguite' : 'Archiviate'}</button>)}</div>}
+      {isTodo && <div className="flex gap-2 border-b pb-3">{(['pending', 'completed', 'archived'] as const).map(value => <button key={value} aria-pressed={history === value} onClick={() => { setHistory(value); setHistoryItem(null) }} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === value ? 'bg-ak-success-bg' : 'bg-ak-inset'}`}>{value === 'pending' ? 'Da fare' : value === 'completed' ? 'Eseguite' : 'Archiviate'}</button>)}</div>}
       {isTodo && history !== 'pending' ?       <HistoryBrowser key={`${history}-${clientScopeId || 'all'}`} kind="todo" state={history} clientId={clientScopeId} onOpen={setHistoryItem} /> : <>
 
       <div className="ak-toolbar flex-wrap justify-between">
@@ -103,21 +103,21 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
         <span className="ak-count">{filtered.length} di {scopedItems.length} {isTodo ? 'cose da fare' : 'lavorazioni'}</span>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto border-b border-[#ead8bf] pb-3">
+      <div className="flex gap-1 overflow-x-auto border-b border-ak-line pb-3">
         {statuses.filter(item => !isTodo || item.value === 'all').map(item => (
           <button
             key={item.value}
             onClick={() => setStatus(item.value)}
             aria-pressed={status === item.value}
-            className={`shrink-0 rounded-lg px-3 py-2 text-xs font-bold transition ${status === item.value ? 'bg-[#2d2754] text-white' : 'text-[#716a91] hover:bg-[#f5dfca]'}`}
+            className={`shrink-0 rounded-lg px-3 py-2 text-xs font-bold transition ${status === item.value ? 'bg-ak-accent text-white' : 'text-ak-muted hover:bg-ak-hover'}`}
           >
             {isTodo && item.value === 'planned' ? 'Da fare' : item.label} <span className="ml-1 opacity-70">{counts[item.value]}</span>
           </button>
         ))}
       </div>
 
-      {errorMessage && <p role="alert" className="mt-4 rounded-xl border border-[#f0c7b5] bg-[#fff0e9] p-3 text-sm font-semibold text-[#a83d35]">{errorMessage}</p>}
-      {loading ? <div className="py-12 text-center text-sm text-[#716a91]">Caricamento lavorazioni...</div> : filtered.length ? (
+      {errorMessage && <p role="alert" className="mt-4 rounded-xl border border-ak-danger bg-ak-danger-bg p-3 text-sm font-semibold text-ak-danger">{errorMessage}</p>}
+      {loading ? <div className="py-12 text-center text-sm text-ak-muted">Caricamento lavorazioni...</div> : filtered.length ? (
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map(item => {
             const overdue = item.due_date && new Date(`${item.due_date}T23:59:59`).getTime() < Date.now() && item.status !== 'completed'
@@ -125,47 +125,47 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
             const materialsProgress = checklistProgress(item.materials)
             const coverage = materialsCoverage(item.materials, item.checklist)
             return (
-              <article key={item.id} onClick={() => setSummaryId(item.id)} className="cursor-pointer rounded-[1.1rem] border border-[#ead8bf] bg-[#fff8ed] p-4 transition-colors hover:border-[#9aba9c]">
+              <article key={item.id} onClick={() => setSummaryId(item.id)} className="cursor-pointer rounded-[1.1rem] border border-ak-line bg-ak-panel p-4 transition-colors hover:border-ak-success">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#d9e8d9] text-[#257259]"><Briefcase className="h-5 w-5" /></span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ak-success-bg text-ak-success"><Briefcase className="h-5 w-5" /></span>
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-black text-[#2d2754]"><button onClick={event => { event.stopPropagation(); setSummaryId(item.id) }} aria-label={`Apri riepilogo ${item.title}`} className="max-w-full truncate text-left hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#257259]">{item.title}</button></h3>
-                    <p className="mt-1 truncate text-sm text-[#716a91]">{item.client_id ? `A ${clientLabel(item.client_id)}` : 'Nessun cliente collegato'}</p>
+                    <h3 className="truncate font-black text-ak-text"><button onClick={event => { event.stopPropagation(); setSummaryId(item.id) }} aria-label={`Apri riepilogo ${item.title}`} className="max-w-full truncate text-left hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#257259]">{item.title}</button></h3>
+                    <p className="mt-1 truncate text-sm text-ak-muted">{item.client_id ? `A ${clientLabel(item.client_id)}` : 'Nessun cliente collegato'}</p>
                   </div>
-                  <button onClick={event => { event.stopPropagation(); onEdit(item) }} title="Modifica" className="rounded-lg p-2 text-[#897e9d] hover:bg-[#f5dfca]"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={event => { event.stopPropagation(); void onDelete(item.id) }} title="Elimina" className="rounded-lg p-2 text-[#897e9d] hover:bg-[#ffd8d2] hover:text-[#a83d35]"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={event => { event.stopPropagation(); onEdit(item) }} title="Modifica" className="rounded-lg p-2 text-ak-subtle hover:bg-ak-hover"><Pencil className="h-4 w-4" /></button>
+                  <button onClick={event => { event.stopPropagation(); void onDelete(item.id) }} title="Elimina" className="rounded-lg p-2 text-ak-subtle hover:bg-ak-danger-bg hover:text-ak-danger"><Trash2 className="h-4 w-4" /></button>
                 </div>
 
-                {item.description && <p className="mt-3 line-clamp-2 text-sm text-[#514b70]">{item.description}</p>}
+                {item.description && <p className="mt-3 line-clamp-2 text-sm text-ak-muted">{item.description}</p>}
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <span className={`ak-status ${item.status === 'completed' ? 'ak-status-completed' : item.status === 'in_progress' ? 'ak-status-in_corso' : item.status === 'waiting' ? 'ak-status-pending' : ''}`}>{isTodo && item.status === 'planned' ? 'Da fare' : statusLabel[item.status]}</span>
                   <span className={`ak-status ${item.priority === 'high' ? 'ak-status-cancelled' : 'ak-status-pending'}`}>Priorità {priorityLabel[item.priority]}</span>
                 </div>
 
-                <div className="mt-4 space-y-2 border-t border-[#ead8bf] pt-3 text-xs text-[#716a91]">
+                <div className="mt-4 space-y-2 border-t border-ak-line pt-3 text-xs text-ak-muted">
                   <div className="flex items-center gap-2">
                     {item.scheduled_at ? <CalendarClock className="h-3.5 w-3.5" /> : <Clock3 className="h-3.5 w-3.5" />}
-                    <span className={overdue ? 'font-bold text-[#b43c44]' : ''}>{item.scheduled_at ? new Date(item.scheduled_at).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : dateLabel(item.due_date)}{overdue ? ' · Scaduta' : ''}</span>
+                    <span className={overdue ? 'font-bold text-ak-danger' : ''}>{item.scheduled_at ? new Date(item.scheduled_at).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : dateLabel(item.due_date)}{overdue ? ' · Scaduta' : ''}</span>
                   </div>
                   <p className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{item.next_action || 'Aggiungi la prossima azione'}</span></p>
                 </div>
 
                 <div className="mt-4">
-                  <button onClick={event => { event.stopPropagation(); setSelectedList({ id: item.id, kind: 'checklist' }) }} className="flex w-full items-center justify-between gap-2 text-left text-xs font-bold text-[#257259] hover:text-[#1c5d49]">
+                  <button onClick={event => { event.stopPropagation(); setSelectedList({ id: item.id, kind: 'checklist' }) }} className="flex w-full items-center justify-between gap-2 text-left text-xs font-bold text-ak-success hover:text-ak-success">
                     <span className="flex items-center gap-1.5"><ListChecks className="h-4 w-4" />Checklist</span>
                     <span>{progress.percent}% · {progress.done}/{progress.total}</span>
                   </button>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#ead8bf]" role="progressbar" aria-label={`Checklist ${item.title}`} aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}>
-                    <div className="h-full bg-[#257259] transition-[width]" style={{ width: `${progress.percent}%` }} />
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ak-line" role="progressbar" aria-label={`Checklist ${item.title}`} aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}>
+                    <div className="h-full bg-ak-accent transition-[width]" style={{ width: `${progress.percent}%` }} />
                   </div>
-                  {!isTodo && <button onClick={event => { event.stopPropagation(); setSelectedList({ id: item.id, kind: 'materials' }) }} className="mt-3 flex w-full items-center justify-between gap-2 text-left text-xs font-bold text-[#2d2754] hover:text-[#257259]">
+                  {!isTodo && <button onClick={event => { event.stopPropagation(); setSelectedList({ id: item.id, kind: 'materials' }) }} className="mt-3 flex w-full items-center justify-between gap-2 text-left text-xs font-bold text-ak-text hover:text-ak-success">
                     <span className="flex items-center gap-1.5"><Package className="h-4 w-4" />Materiali</span>
                     <span>{materialsProgress.done}/{materialsProgress.total} utilizzati</span>
                   </button>}
-                  {!isTodo && (coverage.total > 0 || coverage.orphaned > 0) && <p className={`mt-1 flex items-center gap-1 text-xs font-semibold ${coverage.total > 0 && coverage.matched === coverage.total && !coverage.orphaned && !coverage.unitMismatches ? 'text-[#257259]' : 'text-[#9a5b17]'}`}>{coverage.total > 0 && coverage.matched === coverage.total && !coverage.orphaned && !coverage.unitMismatches && <CheckCircle2 className="h-4 w-4" />}{coverage.matched}/{coverage.total} materiali installati{coverage.orphaned > 0 ? ` · ${coverage.orphaned} da verificare` : ''}{coverage.unitMismatches > 0 ? ` · ${coverage.unitMismatches} con unità diversa` : ''}</p>}
+                  {!isTodo && (coverage.total > 0 || coverage.orphaned > 0) && <p className={`mt-1 flex items-center gap-1 text-xs font-semibold ${coverage.total > 0 && coverage.matched === coverage.total && !coverage.orphaned && !coverage.unitMismatches ? 'text-ak-success' : 'text-ak-orange'}`}>{coverage.total > 0 && coverage.matched === coverage.total && !coverage.orphaned && !coverage.unitMismatches && <CheckCircle2 className="h-4 w-4" />}{coverage.matched}/{coverage.total} materiali installati{coverage.orphaned > 0 ? ` · ${coverage.orphaned} da verificare` : ''}{coverage.unitMismatches > 0 ? ` · ${coverage.unitMismatches} con unità diversa` : ''}</p>}
                 </div>
 
-                <label onClick={event => event.stopPropagation()} className="mt-4 block text-[11px] font-bold text-[#716a91]">
+                <label onClick={event => event.stopPropagation()} className="mt-4 block text-[11px] font-bold text-ak-muted">
                   AGGIORNA STATO
                   <select value={item.status} onClick={event => event.stopPropagation()} onChange={event => {
                     setActionError('')
@@ -173,7 +173,7 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
                       console.error('Work status update failed:', cause)
                       setActionError('Impossibile salvare lo stato. Riprova.')
                     })
-                  }} className="mt-1 w-full rounded-lg border border-[#dfcdb1] bg-[#f8e8cf] px-2.5 py-2 text-xs text-[#2d2754]">
+                  }} className="mt-1 w-full rounded-lg border border-ak-line bg-ak-inset px-2.5 py-2 text-xs text-ak-text">
                     {statuses.filter(option => option.value !== 'all' && (!isTodo || ['planned', 'completed'].includes(option.value))).map(option => <option key={option.value} value={option.value}>{isTodo && option.value === 'planned' ? 'Da fare' : option.label}</option>)}
                   </select>
                 </label>
@@ -190,8 +190,8 @@ export default function WorkItemsWorkspace({ workItems, events, clients, loading
         </div>
       )}
       </>}
-      {actionError && <p role="alert" className="mt-3 text-red-700">{actionError}</p>}
-      {historyItem && <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/40 p-4"><div role="dialog" aria-modal="true" aria-label={historyItem.title} className="max-h-[85vh] w-full max-w-xl overflow-auto rounded-xl bg-[#fff8ed] p-5">
+      {actionError && <p role="alert" className="mt-3 text-ak-danger">{actionError}</p>}
+      {historyItem && <div className="ak-modal-backdrop fixed inset-0 z-[75] flex items-center justify-center bg-black/40 p-4"><div role="dialog" aria-modal="true" aria-label={historyItem.title} className="max-h-[85vh] w-full max-w-xl overflow-auto rounded-xl bg-ak-panel p-5">
         <h3 className="text-xl font-black">{historyItem.title}</h3><p className="mt-3 whitespace-pre-wrap">{historyItem.description}</p>
         <ul className="my-3">{historyItem.checklist.map(entry => <li key={entry.id}>{entry.done ? '✓' : '·'} {entry.text}</li>)}</ul>
         <button onClick={() => setHistoryItem(null)} className="mr-3 rounded-xl border p-3">Chiudi</button>

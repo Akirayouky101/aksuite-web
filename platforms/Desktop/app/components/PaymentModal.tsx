@@ -173,23 +173,23 @@ export default function PaymentModal({
 
   return isOpen ? (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4"
+      className="ak-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4"
       onClick={onClose}
     >
       <div
         className="w-full max-w-lg overflow-hidden rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-100/80 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-ak-line/80 px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#cfe4ff] text-[#376db5]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ak-hover text-ak-cyan">
               <CreditCard className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-800">
+              <h2 className="text-base font-bold text-ak-text">
                 {editingPayment ? "Modifica pagamento" : "Nuovo pagamento"}
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-ak-subtle">
                 Tieni sotto controllo il saldo
               </p>
             </div>
@@ -197,9 +197,9 @@ export default function PaymentModal({
           <button
             onClick={onClose}
             title="Chiudi"
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-ak-inset"
           >
-            <X className="h-4 w-4 text-slate-400" />
+            <X className="h-4 w-4 text-ak-subtle" />
           </button>
         </div>
         <form
@@ -226,10 +226,10 @@ export default function PaymentModal({
             onChange={(value) => setValue("reason", value)}
             placeholder="Descrivi brevemente la spesa"
           />
-          <label className="block text-xs font-medium text-slate-500">
+          <label className="block text-xs font-medium text-ak-muted">
             <span className="mb-1 flex items-center gap-1"><Bell className="h-3.5 w-3.5" />Promemoria</span>
             <DateTimePicker mode="datetime" value={form.reminder_at || ''} onChange={(value) => setValue('reminder_at', value ? localDateTimeToIso(value) : null)} placeholder="Nessun promemoria" clearable />
-            {form.reminder_at && <select value={form.recurrence_type || ''} onChange={(event) => setValue('recurrence_type', (event.target.value || null) as PaymentInput['recurrence_type'])} className="mt-2 w-full rounded-xl border border-slate-200/60 bg-slate-50/80 px-3 py-2 text-sm text-slate-700"><option value="">Non ripetere</option><option value="daily">Ogni giorno</option><option value="weekly">Ogni settimana</option><option value="monthly">Ogni mese</option><option value="yearly">Ogni anno</option></select>}
+            {form.reminder_at && <select value={form.recurrence_type || ''} onChange={(event) => setValue('recurrence_type', (event.target.value || null) as PaymentInput['recurrence_type'])} className="mt-2 w-full rounded-xl border border-ak-line/60 bg-ak-panel/80 px-3 py-2 text-sm text-ak-text"><option value="">Non ripetere</option><option value="daily">Ogni giorno</option><option value="weekly">Ogni settimana</option><option value="monthly">Ogni mese</option><option value="yearly">Ogni anno</option></select>}
           </label>
           <div className="grid grid-cols-2 gap-3">
             <MoneyField
@@ -237,7 +237,7 @@ export default function PaymentModal({
               value={form.total_amount}
               onChange={(value) => setValue("total_amount", value)}
             />
-            <label className="flex items-end gap-2 pb-2 text-sm font-semibold text-slate-600">
+            <label className="flex items-end gap-2 pb-2 text-sm font-semibold text-ak-text">
               <input
                 type="checkbox"
                 checked={form.is_installment}
@@ -250,7 +250,7 @@ export default function PaymentModal({
             </label>
           </div>
           {form.is_installment && (
-            <label className="block text-xs font-medium text-slate-500">
+            <label className="block text-xs font-medium text-ak-muted">
               Tipo rateizzazione
               <select
                 value={form.payment_mode}
@@ -260,7 +260,7 @@ export default function PaymentModal({
                     event.target.value as PaymentInput["payment_mode"],
                   )
                 }
-                className="mt-1 w-full rounded-xl border border-slate-200/60 px-3.5 py-2.5 text-sm"
+                className="mt-1 w-full rounded-xl border border-ak-line/60 px-3.5 py-2.5 text-sm"
               >
                 <option value="fixed">Rate fisse</option>
                 <option value="salary_withholding">
@@ -270,14 +270,14 @@ export default function PaymentModal({
             </label>
           )}
           {form.is_installment && form.payment_mode === "salary_withholding" ? (
-            <div className="rounded-xl border border-[#f0c7b5] bg-[#fff0e9] p-4">
-              <p className="text-sm font-black text-[#2d2754]">
+            <div className="rounded-xl border border-ak-danger bg-ak-danger-bg p-4">
+              <p className="text-sm font-black text-ak-text">
                 Trattenuta variabile
               </p>
-              <p className="mt-1 text-xs text-[#716a91]">
+              <p className="mt-1 text-xs text-ak-muted">
                 Nessun acconto e nessuna rata fissa.
               </p>
-              <label className="mt-3 block text-xs font-medium text-slate-500">
+              <label className="mt-3 block text-xs font-medium text-ak-muted">
                 Percentuale sullo stipendio
                 <input
                   type="number"
@@ -288,7 +288,7 @@ export default function PaymentModal({
                   onChange={(event) =>
                     setValue("salary_percentage", Number(event.target.value))
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-200/60 px-3.5 py-2.5 text-sm"
+                  className="mt-1 w-full rounded-xl border border-ak-line/60 px-3.5 py-2.5 text-sm"
                 />
               </label>
             </div>
@@ -312,7 +312,7 @@ export default function PaymentModal({
             />
           )}
           {editingPayment && !editingPayment.is_installment && !form.is_installment && (
-            <label className="block text-xs font-medium text-slate-500">
+            <label className="block text-xs font-medium text-ak-muted">
               Pagato il
               <DateTimePicker
                 mode="date"
@@ -328,21 +328,21 @@ export default function PaymentModal({
               />
             </label>
           )}
-          <label className="block text-xs font-medium text-slate-500">
+          <label className="block text-xs font-medium text-ak-muted">
             Note
             <textarea
               value={form.notes}
               onChange={(event) => setValue("notes", event.target.value)}
               rows={3}
               placeholder="Aggiungi una nota..."
-              className="mt-1 w-full resize-none rounded-xl border border-slate-200/60 px-3.5 py-2.5 text-sm"
+              className="mt-1 w-full resize-none rounded-xl border border-ak-line/60 px-3.5 py-2.5 text-sm"
             />
           </label>
-          <div className="flex gap-3 border-t border-slate-100/80 pt-4">
+          <div className="flex gap-3 border-t border-ak-line/80 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl bg-slate-100 py-2.5 text-sm font-medium text-slate-600"
+              className="flex-1 rounded-xl bg-ak-inset py-2.5 text-sm font-medium text-ak-text"
             >
               Annulla
             </button>
@@ -354,7 +354,7 @@ export default function PaymentModal({
                 !form.recipient.trim() ||
                 !form.total_amount
               }
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2d2754] py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-ak-accent py-2.5 text-sm font-semibold text-white disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
               {saving ? "Salvataggio..." : "Salva pagamento"}
@@ -381,7 +381,7 @@ function FixedInstallments({
   setDueDate: (index: number, value: string) => void;
 }) {
   return (
-    <div className="rounded-xl border border-[#ead8bf] bg-[#fff8ed] p-4">
+    <div className="rounded-xl border border-ak-line bg-ak-panel p-4">
       <div className="grid grid-cols-2 gap-3">
         <MoneyField
           label="Acconto"
@@ -389,13 +389,13 @@ function FixedInstallments({
           onChange={(value) => setValue("down_payment", value)}
         />
         <div>
-          <p className="text-xs font-medium text-slate-500">Importo per rata</p>
-          <p className="mt-1 rounded-xl border border-[#b8d0c0] bg-[#d9e8d9] px-3.5 py-2.5 text-sm font-black text-[#257259]">
+          <p className="text-xs font-medium text-ak-muted">Importo per rata</p>
+          <p className="mt-1 rounded-xl border border-ak-line bg-ak-success-bg px-3.5 py-2.5 text-sm font-black text-ak-success">
             {money(calculatedInstallment)}
           </p>
         </div>
       </div>
-      <label className="mt-3 block text-xs font-medium text-slate-500">
+      <label className="mt-3 block text-xs font-medium text-ak-muted">
         Scadenza acconto
         <DateTimePicker
           mode="date"
@@ -405,7 +405,7 @@ function FixedInstallments({
           clearable
         />
       </label>
-      <label className="mt-3 block text-xs font-medium text-slate-500">
+      <label className="mt-3 block text-xs font-medium text-ak-muted">
         Numero rate
         <input
           type="number"
@@ -417,17 +417,17 @@ function FixedInstallments({
               Math.max(1, Number(event.target.value)),
             )
           }
-          className="mt-1 w-full rounded-xl border border-slate-200/60 px-3.5 py-2.5 text-sm"
+          className="mt-1 w-full rounded-xl border border-ak-line/60 px-3.5 py-2.5 text-sm"
         />
       </label>
       <div className="mt-3 space-y-2">
-        <p className="text-xs font-bold text-slate-500">Scadenze rate</p>
+        <p className="text-xs font-bold text-ak-muted">Scadenze rate</p>
         {Array.from(
           { length: Math.max(1, form.installments_count) },
           (_, index) => (
             <label
               key={index}
-              className="flex items-center gap-2 text-xs text-slate-500"
+              className="flex items-center gap-2 text-xs text-ak-muted"
             >
               <span className="w-16">Rata {index + 1}</span>
               <div className="flex-1">
@@ -461,16 +461,16 @@ function Payers({
   calculatedInstallment: number;
 }) {
   return (
-    <div className="rounded-xl border border-[#ead8bf] bg-[#fff8ed] p-4">
+    <div className="rounded-xl border border-ak-line bg-ak-panel p-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-black text-[#2d2754]">Utenti paganti</p>
-          <p className="text-xs text-[#257259]">Divisione automatica</p>
+          <p className="text-sm font-black text-ak-text">Utenti paganti</p>
+          <p className="text-xs text-ak-success">Divisione automatica</p>
         </div>
         <button
           type="button"
           onClick={addPayer}
-          className="rounded-lg bg-[#cfe4ff] px-3 py-2 text-xs font-bold text-[#376db5]"
+          className="rounded-lg bg-ak-hover px-3 py-2 text-xs font-bold text-ak-cyan"
         >
           + Aggiungi
         </button>
@@ -491,17 +491,17 @@ function Payers({
               <input
                 readOnly
                 value={`${payer.percentage}%`}
-                className="mt-1 w-full rounded-xl border border-slate-200/60 bg-[#d9e8d9] px-3 py-2.5 text-sm font-bold text-[#257259]"
+                className="mt-1 w-full rounded-xl border border-ak-line/60 bg-ak-success-bg px-3 py-2.5 text-sm font-bold text-ak-success"
               />
               <button
                 type="button"
                 onClick={() => removePayer(index)}
                 title="Rimuovi pagante"
-                className="mb-1 rounded-lg p-2 text-[#897e9d] hover:text-[#b43c44]"
+                className="mb-1 rounded-lg p-2 text-ak-subtle hover:text-ak-danger"
               >
                 ×
               </button>
-              <p className="col-span-3 -mt-1 text-right text-xs text-[#716a91]">
+              <p className="col-span-3 -mt-1 text-right text-xs text-ak-muted">
                 Quota rata:{" "}
                 {money((calculatedInstallment * payer.percentage) / 100)}
               </p>
@@ -509,7 +509,7 @@ function Payers({
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-ak-subtle">
           Aggiungi chi partecipa al pagamento.
         </p>
       )}
@@ -529,13 +529,13 @@ function Field({
   placeholder: string;
 }) {
   return (
-    <label className="block text-xs font-medium text-slate-500">
+    <label className="block text-xs font-medium text-ak-muted">
       {label}
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-xl border border-slate-200/60 px-3.5 py-2.5 text-sm"
+        className="mt-1 w-full rounded-xl border border-ak-line/60 px-3.5 py-2.5 text-sm"
       />
     </label>
   );
@@ -550,7 +550,7 @@ function MoneyField({
   onChange: (value: number) => void;
 }) {
   return (
-    <label className="block text-xs font-medium text-slate-500">
+    <label className="block text-xs font-medium text-ak-muted">
       {label}
       <input
         type="number"
@@ -558,7 +558,7 @@ function MoneyField({
         step="0.01"
         value={value || ""}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-1 w-full rounded-xl border border-slate-200/60 px-3.5 py-2.5 text-sm"
+        className="mt-1 w-full rounded-xl border border-ak-line/60 px-3.5 py-2.5 text-sm"
       />
     </label>
   );

@@ -114,25 +114,25 @@ export default function CallModal({ isOpen, onClose, onSave, editCall, clients =
     try { await onAddClient(pendingClient) } catch (error) { console.error('Error adding client from call:', error) } finally { setAddingToRubrica(false); setPendingClient(null); finish() }
   }
 
-  const inputClass = 'w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all text-sm'
-  const labelClass = 'block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5'
+  const inputClass = 'w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text placeholder-ak-subtle focus:border-ak-line focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all text-sm'
+  const labelClass = 'block text-xs font-medium text-ak-subtle uppercase tracking-wider mb-1.5'
 
   if (!isOpen) return null
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="ak-modal-backdrop fixed inset-0 bg-ak-inset/30 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
         <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} onClick={(e) => e.stopPropagation()} className="relative max-w-lg w-full">
-          <div className="bg-white/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-slate-200/60 shadow-2xl shadow-slate-200/50 flex flex-col">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
+          <div className="bg-ak-panel/90 backdrop-blur-2xl rounded-2xl max-h-[90vh] overflow-hidden border border-ak-line/60 shadow-2xl shadow-black/50 flex flex-col">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-ak-line/60 bg-ak-panel/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25"><Phone className="w-5 h-5 text-white" /></div>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ak-accent to-ak-accent flex items-center justify-center shadow-lg shadow-indigo-500/25"><Phone className="w-5 h-5 text-white" /></div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800">{editCall ? 'Modifica Chiamata' : 'Nuova Chiamata'}</h2>
-                  <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5"><Clock className="w-3 h-3" />{new Date(editCall?.call_date || Date.now()).toLocaleString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                  <h2 className="text-lg font-bold text-ak-text">{editCall ? 'Modifica Chiamata' : 'Nuova Chiamata'}</h2>
+                  <p className="text-xs text-ak-subtle mt-0.5 flex items-center gap-1.5"><Clock className="w-3 h-3" />{new Date(editCall?.call_date || Date.now()).toLocaleString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>
-              <button onClick={onClose} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"><X className="w-4 h-4 text-slate-400 hover:text-red-500" /></button>
+              <button onClick={onClose} className="w-9 h-9 rounded-xl bg-ak-inset hover:bg-ak-danger-bg border border-ak-line/60 hover:border-ak-danger flex items-center justify-center transition-all"><X className="w-4 h-4 text-ak-subtle hover:text-ak-danger" /></button>
             </div>
 
             <div className="p-4 sm:p-6 overflow-y-auto flex-1">
@@ -141,20 +141,20 @@ export default function CallModal({ isOpen, onClose, onSave, editCall, clients =
                   <label className={labelClass}><User className="w-3.5 h-3.5 inline mr-1" />Nome e Cognome *</label>
                   <input type="text" value={form.callerName} onChange={(e) => { set('callerName')(e); setMatchedClient(null) }} required className={inputClass} placeholder="Mario Rossi" />
                   {suggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200/60 shadow-xl z-30 py-1 max-h-48 overflow-y-auto">
-                      <div className="px-3 py-1.5 text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Dalla rubrica</div>
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-ak-panel rounded-xl border border-ak-line/60 shadow-xl z-30 py-1 max-h-48 overflow-y-auto">
+                      <div className="px-3 py-1.5 text-[10px] text-ak-subtle font-semibold uppercase tracking-wider">Dalla rubrica</div>
                       {suggestions.map((c) => (
-                        <button key={c.id} type="button" onClick={() => fillFromClient(c)} className="w-full px-3 py-2 text-left flex items-center gap-2.5 hover:bg-indigo-50 transition-colors">
+                        <button key={c.id} type="button" onClick={() => fillFromClient(c)} className="w-full px-3 py-2 text-left flex items-center gap-2.5 hover:bg-ak-hover transition-colors">
                           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center flex-shrink-0"><Users className="w-3 h-3 text-white" /></div>
-                          <div className="min-w-0"><p className="text-xs font-medium text-slate-700 truncate">{c.name}</p><p className="text-[10px] text-slate-400 truncate">{c.phone}</p></div>
+                          <div className="min-w-0"><p className="text-xs font-medium text-ak-text truncate">{c.name}</p><p className="text-[10px] text-ak-subtle truncate">{c.phone}</p></div>
                         </button>
                       ))}
                     </div>
                   )}
                   {matchedClient && (
-                    <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-emerald-50 border border-emerald-200/60 rounded-lg">
-                      <span className="text-[10px] text-emerald-600 font-medium">Collegato: {matchedClient.name}</span>
-                      <button type="button" onClick={() => setMatchedClient(null)} className="ml-auto text-slate-400 hover:text-red-400 transition-colors"><X className="w-3 h-3" /></button>
+                    <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-ak-success-bg border border-ak-success/60 rounded-lg">
+                      <span className="text-[10px] text-ak-success font-medium">Collegato: {matchedClient.name}</span>
+                      <button type="button" onClick={() => setMatchedClient(null)} className="ml-auto text-ak-subtle hover:text-red-400 transition-colors"><X className="w-3 h-3" /></button>
                     </div>
                   )}
                 </div>
@@ -182,11 +182,11 @@ export default function CallModal({ isOpen, onClose, onSave, editCall, clients =
 
                 <div>
                   <label className={labelClass}><Bell className="w-3.5 h-3.5 inline mr-1" />Promemoria ricontatto</label>
-                  <button type="button" onClick={() => setForm(current => ({ ...current, followUp: !current.followUp }))} className={`mb-2 rounded-lg px-3 py-2 text-sm font-semibold ${form.followUp ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>{form.followUp ? 'Campanella attiva' : 'Attiva campanella'}</button>
+                  <button type="button" onClick={() => setForm(current => ({ ...current, followUp: !current.followUp }))} className={`mb-2 rounded-lg px-3 py-2 text-sm font-semibold ${form.followUp ? 'bg-ak-hover text-ak-cyan' : 'bg-ak-inset text-ak-muted'}`}>{form.followUp ? 'Campanella attiva' : 'Attiva campanella'}</button>
                   {form.followUp && <DateTimePicker value={form.followUpDate} onChange={value => setForm(current => ({ ...current, followUpDate: value }))} placeholder="Seleziona data e ora" />}
                 </div>
 
-                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} type="submit" disabled={isSaving} className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} type="submit" disabled={isSaving} className="w-full py-3.5 bg-gradient-to-r from-ak-accent to-ak-accent hover:from-ak-accent hover:to-ak-accent-hover text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm">
                   {isSaving ? 'Salvataggio...' : editCall ? 'Aggiorna chiamata' : 'Salva chiamata'}
                 </motion.button>
               </form>
@@ -198,14 +198,14 @@ export default function CallModal({ isOpen, onClose, onSave, editCall, clients =
 
         <AnimatePresence>
           {pendingClient && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4" onClick={() => { setPendingClient(null); finish() }}>
-              <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} onClick={(e) => e.stopPropagation()} className="bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/60 w-full max-w-sm p-6 text-center">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="ak-modal-backdrop fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4" onClick={() => { setPendingClient(null); finish() }}>
+              <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} onClick={(e) => e.stopPropagation()} className="bg-ak-panel/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-ak-line/60 w-full max-w-sm p-6 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/25"><Users className="w-7 h-7 text-white" /></div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">Aggiungere alla Rubrica?</h3>
-                <p className="text-sm text-slate-500 mb-1"><span className="font-semibold text-slate-700">{pendingClient.name}</span></p>
-                <p className="text-xs text-slate-400 mb-6">Questo contatto non è presente in rubrica.</p>
+                <h3 className="text-lg font-bold text-ak-text mb-2">Aggiungere alla Rubrica?</h3>
+                <p className="text-sm text-ak-muted mb-1"><span className="font-semibold text-ak-text">{pendingClient.name}</span></p>
+                <p className="text-xs text-ak-subtle mb-6">Questo contatto non è presente in rubrica.</p>
                 <div className="flex gap-3">
-                  <button onClick={() => { setPendingClient(null); finish() }} className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium transition-all">No, grazie</button>
+                  <button onClick={() => { setPendingClient(null); finish() }} className="flex-1 py-2.5 rounded-xl bg-ak-inset hover:bg-ak-inset text-ak-text text-sm font-medium transition-all">No, grazie</button>
                   <button onClick={handleAddToRubrica} disabled={addingToRubrica} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-bold shadow-lg shadow-teal-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"><UserPlus className="w-4 h-4" />{addingToRubrica ? 'Salvataggio...' : 'Sì, aggiungi'}</button>
                 </div>
               </motion.div>

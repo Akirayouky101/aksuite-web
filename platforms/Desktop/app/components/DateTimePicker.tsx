@@ -92,10 +92,11 @@ export default function DateTimePicker({
     const estimatedHeight = mode === 'datetime' ? 420 : 340
     const spaceBelow = window.innerHeight - rect.bottom
     const placement: 'top' | 'bottom' = spaceBelow < estimatedHeight && rect.top > estimatedHeight ? 'top' : 'bottom'
+    const width = Math.min(Math.max(rect.width, 300), window.innerWidth - 24)
     setPos({
       top: placement === 'bottom' ? rect.bottom + 8 : rect.top - 8,
-      left: rect.left,
-      width: rect.width,
+      left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+      width,
       placement
     })
   }
@@ -173,7 +174,7 @@ export default function DateTimePicker({
 
   return (
     <>
-      <div className="flex w-full items-center gap-2 rounded-xl border border-slate-200/60 bg-slate-50/80 px-3 py-1.5 focus-within:ring-2 focus-within:ring-indigo-100">
+      <div className="flex w-full items-center gap-2 rounded-xl border border-ak-line/60 bg-ak-panel/80 px-3 py-1.5 focus-within:ring-2 focus-within:ring-indigo-100">
         <input
           value={manualDate}
           onChange={event => setManualDate(event.target.value)}
@@ -181,14 +182,14 @@ export default function DateTimePicker({
           onBlur={commitManualDate}
           placeholder="gg/mm/aaaa"
           aria-label="Inserisci data"
-          className="min-w-0 flex-1 bg-transparent py-1.5 text-sm text-slate-700 outline-none placeholder:text-slate-400"
+          className="min-w-0 flex-1 bg-transparent py-1.5 text-sm text-ak-text outline-none placeholder:text-ak-subtle"
         />
         <button
           ref={buttonRef}
           type="button"
           onClick={() => setOpen(o => !o)}
           title={displayLabel()}
-          className="flex shrink-0 items-center gap-2 py-1 text-slate-400 hover:text-indigo-500"
+          className="flex shrink-0 items-center gap-2 py-1 text-ak-subtle hover:text-ak-cyan"
         >
           {clearable && value && <span role="button" onClick={(e) => { e.stopPropagation(); onChange(''); setManualDate('') }} title="Cancella"><X size={14} /></span>}
           {mode === 'datetime' && <Clock size={15} />}
@@ -204,24 +205,26 @@ export default function DateTimePicker({
             top: pos.placement === 'bottom' ? pos.top : undefined,
             bottom: pos.placement === 'top' ? window.innerHeight - pos.top : undefined,
             left: pos.left,
-            minWidth: Math.max(pos.width, 300)
+            width: pos.width,
+            maxHeight: 'calc(100dvh - 24px)',
+            overflowY: 'auto'
           }}
-          className="z-[9999] bg-white rounded-2xl shadow-2xl border border-slate-200/60 p-4"
+          className="ak-date-popover z-[9999] bg-ak-panel rounded-2xl shadow-2xl border border-ak-line/60 p-4"
         >
           {/* Month navigation */}
           <div className="flex items-center justify-between mb-3">
             <button
               type="button"
               onClick={() => setViewMonth(m => { if (m === 0) { setViewYear(y => y - 1); return 11 } return m - 1 })}
-              className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"
+              className="w-7 h-7 rounded-lg hover:bg-ak-inset flex items-center justify-center text-ak-muted"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="text-sm font-semibold text-slate-700">{MONTHS[viewMonth]} {viewYear}</span>
+            <span className="text-sm font-semibold text-ak-text">{MONTHS[viewMonth]} {viewYear}</span>
             <button
               type="button"
               onClick={() => setViewMonth(m => { if (m === 11) { setViewYear(y => y + 1); return 0 } return m + 1 })}
-              className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"
+              className="w-7 h-7 rounded-lg hover:bg-ak-inset flex items-center justify-center text-ak-muted"
             >
               <ChevronRight size={16} />
             </button>
@@ -230,7 +233,7 @@ export default function DateTimePicker({
           {/* Days of week */}
           <div className="grid grid-cols-7 mb-1">
             {DAYS_SHORT.map(d => (
-              <div key={d} className="text-center text-[11px] font-medium text-slate-400 py-1">{d}</div>
+              <div key={d} className="text-center text-[11px] font-medium text-ak-subtle py-1">{d}</div>
             ))}
           </div>
 
@@ -247,10 +250,10 @@ export default function DateTimePicker({
                   onClick={() => commitDate(day)}
                   className={`w-8 h-8 rounded-lg text-sm flex items-center justify-center transition-colors ${
                     selected
-                      ? 'bg-indigo-500 text-white font-semibold shadow-md shadow-indigo-500/30'
+                      ? 'bg-ak-accent text-white font-semibold shadow-md shadow-indigo-500/30'
                       : isToday
-                      ? 'bg-indigo-50 text-indigo-600 font-semibold'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-ak-hover text-ak-cyan font-semibold'
+                      : 'text-ak-text hover:bg-ak-inset'
                   }`}
                 >
                   {day.getDate()}
@@ -261,20 +264,20 @@ export default function DateTimePicker({
 
           {/* Time selectors */}
           {mode === 'datetime' && (
-            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100">
-              <Clock size={14} className="text-slate-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-ak-line">
+              <Clock size={14} className="text-ak-subtle flex-shrink-0" />
               <select
                 value={parsed.hour}
                 onChange={(e) => commitTime(Number(e.target.value), parsed.minute)}
-                className="flex-1 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="flex-1 px-2 py-1.5 bg-ak-panel border border-ak-line rounded-lg text-sm text-ak-text focus:outline-none focus:ring-2 focus:ring-indigo-100"
               >
                 {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{pad(h)}</option>)}
               </select>
-              <span className="text-slate-400 font-medium">:</span>
+              <span className="text-ak-subtle font-medium">:</span>
               <select
                 value={parsed.minute}
                 onChange={(e) => commitTime(parsed.hour, Number(e.target.value))}
-                className="flex-1 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="flex-1 px-2 py-1.5 bg-ak-panel border border-ak-line rounded-lg text-sm text-ak-text focus:outline-none focus:ring-2 focus:ring-indigo-100"
               >
                 {Array.from({ length: 60 }, (_, m) => <option key={m} value={m}>{pad(m)}</option>)}
               </select>
@@ -282,14 +285,14 @@ export default function DateTimePicker({
           )}
 
           {/* Footer actions */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
-            <button type="button" onClick={goToday} className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-ak-line">
+            <button type="button" onClick={goToday} className="text-xs font-medium text-ak-cyan hover:text-ak-cyan">
               Oggi
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-ak-accent hover:bg-ak-accent rounded-lg transition-colors"
             >
               Fatto
             </button>

@@ -32,14 +32,14 @@ export default function TodayWorkspace({ calls, events, notes, payments, workIte
 
   return (
     <section className="ak-workspace">
-      <header className="ak-workspace-head"><div><p className="ak-kicker">Piano quotidiano</p><h2>Oggi</h2><p>Scadenze, appuntamenti e prossime azioni di oggi.</p></div><Bell className="h-7 w-7 text-[#e45f4e]" /></header>
+      <header className="ak-workspace-head"><div><p className="ak-kicker">Piano quotidiano</p><h2>Oggi</h2><p>Scadenze, appuntamenti e prossime azioni di oggi.</p></div><Bell className="h-7 w-7 text-ak-danger" /></header>
       <div className="mt-5 space-y-3">
         {items.length ? items.map(item => {
           const Icon = icons[item.type]
-          return <button key={`${item.type}-${item.id}`} onClick={() => onOpen(item.type, source[item.type].find((entry: any) => entry.id === item.id))} className="flex w-full items-center gap-4 rounded-2xl border border-[#ead8bf] bg-[#fff8ed] p-4 text-left transition hover:bg-white">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f8dfb9] text-[#e45f4e]"><Icon className="h-5 w-5" /></span>
-            <span className="min-w-0 flex-1"><strong className="block text-[#2d2754]">{item.title}</strong><small className="text-[#716a91]">{item.detail}</small></span>
-            <time className="text-sm font-black text-[#2d2754]">{item.at.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</time>
+          return <button key={`${item.type}-${item.id}`} onClick={() => onOpen(item.type, source[item.type].find((entry: any) => entry.id === item.id))} className="flex w-full items-center gap-4 rounded-2xl border border-ak-line bg-ak-panel p-4 text-left transition hover:bg-ak-panel">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ak-warning-bg text-ak-danger"><Icon className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1"><strong className="block text-ak-text">{item.title}</strong><small className="text-ak-muted">{item.detail}</small></span>
+            <time className="text-sm font-black text-ak-text">{item.at.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</time>
           </button>
         }) : <div className="ak-empty"><CheckCircle2 className="h-8 w-8" /><h3>Nessuna scadenza oggi</h3><p>Hai spazio per occuparti di ciò che conta.</p></div>}
       </div>

@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import './mac-theme.css'
 import { Providers } from './providers'
 
 export const metadata: Metadata = {
-  title: 'AK Vault',
-  description: 'Gestione password semplice e sicura',
+  title: 'AK Suite',
+  description: 'Il tuo spazio operativo: appuntamenti, attività, contatti e cassaforte password.',
   manifest: '/manifest.webmanifest',
 }
 
-export const viewport: Viewport = { themeColor: '#2d2754' }
+export const viewport: Viewport = { themeColor: '#030a17' }
 
 export default function RootLayout({
   children,

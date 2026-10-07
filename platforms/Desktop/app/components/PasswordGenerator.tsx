@@ -65,14 +65,14 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
   const strength = generatedPassword ? calculateStrength(generatedPassword) : null
 
   return (
-    <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200/60 rounded-xl p-4 space-y-4">
+    <div className="bg-gradient-to-br from-ak-panel to-ak-panel border border-ak-purple/60 rounded-xl p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-violet-600">🎲 Generatore Password</h3>
+        <h3 className="text-lg font-bold text-ak-purple">🎲 Generatore Password</h3>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleGenerate}
-          className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg font-bold text-slate-800 flex items-center gap-2"
+          className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg font-bold text-ak-text flex items-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
           Genera
@@ -87,14 +87,14 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
               type="text"
               value={generatedPassword}
               readOnly
-              className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono text-lg"
+              className="flex-1 px-4 py-3 bg-ak-panel border border-ak-line rounded-lg text-ak-text font-mono text-lg"
             />
             <button
               onClick={copyPassword}
-              className="p-3 bg-violet-500 hover:bg-indigo-600 rounded-lg transition-colors"
+              className="p-3 bg-ak-accent hover:bg-ak-accent rounded-lg transition-colors"
               title="Copia password"
             >
-              {copied ? <Check className="w-5 h-5 text-slate-800" /> : <Copy className="w-5 h-5 text-slate-800" />}
+              {copied ? <Check className="w-5 h-5 text-ak-text" /> : <Copy className="w-5 h-5 text-ak-text" />}
             </button>
           </div>
 
@@ -102,7 +102,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
           {strength && (
             <div className="space-y-1">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Forza Password:</span>
+                <span className="text-ak-subtle">Forza Password:</span>
                 <span className={`font-bold ${
                   strength.color === 'red' ? 'text-red-400' :
                   strength.color === 'yellow' ? 'text-yellow-400' :
@@ -111,7 +111,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
                   {strength.label}
                 </span>
               </div>
-              <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
+              <div className="h-2 bg-ak-panel rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: strength.width }}
@@ -130,7 +130,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
       {/* Length Slider */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm text-slate-400">Lunghezza: {length}</label>
+          <label className="text-sm text-ak-subtle">Lunghezza: {length}</label>
         </div>
         <input
           type="range"
@@ -138,7 +138,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
           max="32"
           value={length}
           onChange={(e) => setLength(Number(e.target.value))}
-          className="w-full h-2 bg-slate-50 rounded-lg appearance-none cursor-pointer accent-purple-500"
+          className="w-full h-2 bg-ak-panel rounded-lg appearance-none cursor-pointer accent-purple-500"
         />
       </div>
 
@@ -151,7 +151,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
             onChange={(e) => setIncludeUppercase(e.target.checked)}
             className="w-4 h-4 rounded accent-purple-500"
           />
-          <span className="text-slate-400">Maiuscole (A-Z)</span>
+          <span className="text-ak-subtle">Maiuscole (A-Z)</span>
         </label>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
@@ -160,7 +160,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
             onChange={(e) => setIncludeLowercase(e.target.checked)}
             className="w-4 h-4 rounded accent-purple-500"
           />
-          <span className="text-slate-400">Minuscole (a-z)</span>
+          <span className="text-ak-subtle">Minuscole (a-z)</span>
         </label>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
@@ -169,7 +169,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
             onChange={(e) => setIncludeNumbers(e.target.checked)}
             className="w-4 h-4 rounded accent-purple-500"
           />
-          <span className="text-slate-400">Numeri (0-9)</span>
+          <span className="text-ak-subtle">Numeri (0-9)</span>
         </label>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
@@ -178,7 +178,7 @@ export default function PasswordGenerator({ onGenerate }: PasswordGeneratorProps
             onChange={(e) => setIncludeSymbols(e.target.checked)}
             className="w-4 h-4 rounded accent-purple-500"
           />
-          <span className="text-slate-400">Simboli (!@#$)</span>
+          <span className="text-ak-subtle">Simboli (!@#$)</span>
         </label>
       </div>
     </div>

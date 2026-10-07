@@ -47,7 +47,7 @@ export default function PaymentsOverview({ payments, onNew, onOpenPractice, onDe
         <button onClick={onNew} className="ak-primary-action"><Plus className="h-4 w-4" />Nuovo pagamento</button>
       </header>
       <div className="ak-toolbar flex-wrap justify-between">
-        <div className="flex flex-wrap gap-1 rounded-xl border border-[#d8cbb8] bg-[#fff8ed] p-1" role="group" aria-label="Filtra pagamenti">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-ak-line bg-ak-panel p-1" role="group" aria-label="Filtra pagamenti">
           {([
             ['all', 'Tutti', payments.length],
             ['due', 'Da pagare', dueCount],
@@ -57,7 +57,7 @@ export default function PaymentsOverview({ payments, onNew, onOpenPractice, onDe
               key={value}
               onClick={() => setFilter(value)}
               aria-pressed={filter === value}
-              className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filter === value ? 'bg-[#2d2754] text-white' : 'text-[#716a91] hover:bg-[#f5dfca]'}`}
+              className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filter === value ? 'bg-ak-accent text-white' : 'text-ak-muted hover:bg-ak-hover'}`}
             >
               {label} <span className="ml-1 opacity-70">{count}</span>
             </button>
@@ -71,24 +71,24 @@ export default function PaymentsOverview({ payments, onNew, onOpenPractice, onDe
           const remaining = remainingAmount(payment)
           const installmentCount = payment.installment_schedule?.length || payment.installments_count
           return (
-            <div key={payment.id} className="relative rounded-[1.2rem] border border-[#ead8bf] bg-[#fff8ed] p-4 text-left transition hover:-translate-y-1 hover:shadow-lg">
+            <div key={payment.id} className="relative rounded-[1.2rem] border border-ak-line bg-ak-panel p-4 text-left transition hover:-translate-y-1 hover:shadow-lg">
               <button onClick={() => setSelected(payment)} className="w-full text-left">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#cfe4ff] text-[#376db5]"><CreditCard className="h-5 w-5" /></span>
-                  <Eye className="h-4 w-4 text-[#a99dbb]" />
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-ak-hover text-ak-cyan"><CreditCard className="h-5 w-5" /></span>
+                  <Eye className="h-4 w-4 text-ak-subtle" />
                 </div>
                 <div className="mt-4 flex items-center justify-between gap-2">
-                  <h3 className="min-w-0 truncate font-black text-[#2d2754]">{payment.payment_type}</h3>
-                  {payment.is_installment && <span className="shrink-0 rounded-full bg-[#ddd7ff] px-2 py-1 text-[10px] font-bold text-[#5144a1]">{installmentCount} {installmentCount === 1 ? 'rata' : 'rate'}</span>}
+                  <h3 className="min-w-0 truncate font-black text-ak-text">{payment.payment_type}</h3>
+                  {payment.is_installment && <span className="shrink-0 rounded-full bg-ak-purple-bg px-2 py-1 text-[10px] font-bold text-ak-purple">{installmentCount} {installmentCount === 1 ? 'rata' : 'rate'}</span>}
                 </div>
-                <p className="mt-1 truncate text-sm text-[#716a91]">A {payment.recipient}</p>
+                <p className="mt-1 truncate text-sm text-ak-muted">A {payment.recipient}</p>
                 <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-                  <span className="min-w-0 text-[#716a91]">Totale<strong className="mt-1 block whitespace-nowrap text-sm text-[#2d2754]">{money(payment.total_amount)}</strong></span>
-                  <span className="min-w-0 text-center text-[#716a91]">Pagato<strong className="mt-1 block whitespace-nowrap text-sm text-[#257259]">{money(paid)}</strong></span>
-                  <span className="min-w-0 text-right text-[#716a91]">Manca<strong className="mt-1 block whitespace-nowrap text-sm text-[#e45f4e]">{money(remaining)}</strong></span>
+                  <span className="min-w-0 text-ak-muted">Totale<strong className="mt-1 block whitespace-nowrap text-sm text-ak-text">{money(payment.total_amount)}</strong></span>
+                  <span className="min-w-0 text-center text-ak-muted">Pagato<strong className="mt-1 block whitespace-nowrap text-sm text-ak-success">{money(paid)}</strong></span>
+                  <span className="min-w-0 text-right text-ak-muted">Manca<strong className="mt-1 block whitespace-nowrap text-sm text-ak-danger">{money(remaining)}</strong></span>
                 </div>
               </button>
-              <button onClick={() => onDelete(payment.id)} title="Elimina pratica" className="absolute right-3 top-3 rounded-lg p-2 text-[#897e9d] hover:bg-[#f5dfca] hover:text-[#b43c44]"><Trash2 className="h-4 w-4" /></button>
+              <button onClick={() => onDelete(payment.id)} title="Elimina pratica" className="absolute right-3 top-3 rounded-lg p-2 text-ak-subtle hover:bg-ak-hover hover:text-ak-danger"><Trash2 className="h-4 w-4" /></button>
             </div>
           )
         }) : payments.length ? (
@@ -105,7 +105,7 @@ export default function PaymentsOverview({ payments, onNew, onOpenPractice, onDe
 function QuickSummary({ payment, onClose, onOpenPractice }: { payment: Payment | null; onClose: () => void; onOpenPractice: (payment: Payment) => void }) {
   if (!payment) return null
   const paid = paidAmount(payment)
-  return <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onClose}><div className="w-full max-w-md rounded-2xl p-5" onClick={event => event.stopPropagation()}><div className="flex items-start justify-between"><div><p className="ak-kicker">Riepilogo veloce</p><h3 className="mt-2 text-2xl font-black text-[#2d2754]">{payment.payment_type}</h3><p className="mt-1 text-sm text-[#716a91]">A {payment.recipient}</p></div><button onClick={onClose} title="Chiudi" className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100"><X className="h-4 w-4 text-slate-400" /></button></div><div className="mt-5 grid grid-cols-2 gap-3"><Metric label="Totale" value={money(payment.total_amount)} /><Metric label="Pagato" value={money(paid)} green /><Metric label="Manca" value={money(Math.max(0, payment.total_amount - paid))} red /><Metric label="Paganti" value={String(payment.payers?.length || 0)} /></div>{payment.reason && <p className="mt-4 rounded-xl bg-white/60 p-3 text-sm text-[#716a91]">{payment.reason}</p>}<button onClick={() => onOpenPractice(payment)} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2d2754] py-3 text-sm font-bold text-white">Apri pratica</button></div></div>
+  return <div className="ak-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onClose}><div className="w-full max-w-md rounded-2xl p-5" onClick={event => event.stopPropagation()}><div className="flex items-start justify-between"><div><p className="ak-kicker">Riepilogo veloce</p><h3 className="mt-2 text-2xl font-black text-ak-text">{payment.payment_type}</h3><p className="mt-1 text-sm text-ak-muted">A {payment.recipient}</p></div><button onClick={onClose} title="Chiudi" className="flex h-8 w-8 items-center justify-center rounded-xl bg-ak-inset"><X className="h-4 w-4 text-ak-subtle" /></button></div><div className="mt-5 grid grid-cols-2 gap-3"><Metric label="Totale" value={money(payment.total_amount)} /><Metric label="Pagato" value={money(paid)} green /><Metric label="Manca" value={money(Math.max(0, payment.total_amount - paid))} red /><Metric label="Paganti" value={String(payment.payers?.length || 0)} /></div>{payment.reason && <p className="mt-4 rounded-xl bg-ak-panel/60 p-3 text-sm text-ak-muted">{payment.reason}</p>}<button onClick={() => onOpenPractice(payment)} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-ak-accent py-3 text-sm font-bold text-white">Apri pratica</button></div></div>
 }
 
-function Metric({ label, value, green = false, red = false }: { label: string; value: string; green?: boolean; red?: boolean }) { return <div className="rounded-xl border border-[#ead8bf] bg-white/60 p-3"><p className="text-xs text-[#8a7f9f]">{label}</p><p className={`mt-1 font-black ${green ? 'text-[#257259]' : red ? 'text-[#e45f4e]' : 'text-[#2d2754]'}`}>{value}</p></div> }
+function Metric({ label, value, green = false, red = false }: { label: string; value: string; green?: boolean; red?: boolean }) { return <div className="rounded-xl border border-ak-line bg-ak-panel/60 p-3"><p className="text-xs text-ak-subtle">{label}</p><p className={`mt-1 font-black ${green ? 'text-ak-success' : red ? 'text-ak-danger' : 'text-ak-text'}`}>{value}</p></div> }

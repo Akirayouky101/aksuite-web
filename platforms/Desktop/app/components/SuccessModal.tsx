@@ -35,7 +35,7 @@ export default function SuccessModal({
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-slate-50  z-[100] flex items-center justify-center p-4 overflow-x-hidden"
+          className="ak-modal-backdrop fixed inset-0 bg-ak-panel  z-[100] flex items-center justify-center p-4 overflow-x-hidden"
           onClick={onClose}
         >
           <motion.div
@@ -54,7 +54,7 @@ export default function SuccessModal({
             <div className="hidden" />
             
             {/* Main modal */}
-            <div className="relative bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/50 p-8 overflow-hidden">
+            <div className="relative bg-ak-panel/90 backdrop-blur-2xl rounded-2xl border border-ak-line/60 shadow-2xl shadow-black/50 p-8 overflow-hidden">
               
               {/* Subtle background glow */}
               <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl" />
@@ -84,7 +84,7 @@ export default function SuccessModal({
                     />
                     {/* Icon */}
                     <div className="relative w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center shadow-2xl">
-                      <CheckCircle className="w-16 h-16 text-slate-800" strokeWidth={3} />
+                      <CheckCircle className="w-16 h-16 text-ak-text" strokeWidth={3} />
                     </div>
                   </div>
                 </motion.div>
@@ -94,7 +94,7 @@ export default function SuccessModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-lg font-bold text-slate-800 mb-3 drop-shadow-lg"
+                  className="text-lg font-bold text-ak-text mb-3 drop-shadow-lg"
                 >
                   {title}
                 </motion.h2>
@@ -104,7 +104,7 @@ export default function SuccessModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="text-lg text-slate-600 leading-relaxed"
+                  className="text-lg text-ak-text leading-relaxed"
                 >
                   {message}
                 </motion.p>
@@ -112,7 +112,7 @@ export default function SuccessModal({
                 {/* Progress bar (if auto-dismiss) */}
                 {autoDismiss && (
                   <motion.div
-                    className="mt-6 h-1 bg-slate-50 rounded-full overflow-hidden"
+                    className="mt-6 h-1 bg-ak-panel rounded-full overflow-hidden"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
@@ -133,7 +133,7 @@ export default function SuccessModal({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
                     onClick={onClose}
-                    className="mt-6 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl font-bold text-slate-800 text-lg shadow-lg transition-all transform hover:scale-105"
+                    className="mt-6 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl font-bold text-ak-text text-lg shadow-lg transition-all transform hover:scale-105"
                   >
                     OK
                   </motion.button>

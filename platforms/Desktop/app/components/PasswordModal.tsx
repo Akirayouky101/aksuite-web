@@ -147,7 +147,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="ak-modal-backdrop fixed inset-0 bg-ak-inset/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
@@ -157,27 +157,27 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-2xl"
           >
-            <div className="relative bg-white/95 backdrop-blur-2xl border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="relative bg-ak-panel/95 backdrop-blur-2xl border border-ak-line/60 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden max-h-[90vh] flex flex-col">
 
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-ak-line/60 bg-ak-panel/60 flex-shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-lg bg-ak-accent flex items-center justify-center">
                     <Lock className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-slate-800">
+                    <h2 className="text-base font-semibold text-ak-text">
                       {editPassword ? 'Modifica credenziale' : 'Nuova credenziale'}
                     </h2>
-                    <p className="text-xs text-slate-400">{editPassword ? 'Aggiorna i dati salvati' : 'Aggiungi al vault'}</p>
+                    <p className="text-xs text-ak-subtle">{editPassword ? 'Aggiorna i dati salvati' : 'Aggiungi al vault'}</p>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
                   title="Chiudi"
-                  className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+                  className="w-8 h-8 rounded-lg bg-ak-inset hover:bg-ak-danger-bg border border-ak-line/60 hover:border-ak-danger flex items-center justify-center transition-all"
                 >
-                  <X className="w-4 h-4 text-slate-400" />
+                  <X className="w-4 h-4 text-ak-subtle" />
                 </button>
               </div>
 
@@ -188,7 +188,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
 
                   {/* Titolo */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-medium text-ak-muted uppercase tracking-wider mb-1.5">
                       Titolo
                     </label>
                     <input
@@ -196,7 +196,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                       required
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all text-sm"
+                      className="w-full px-3.5 py-2.5 bg-ak-panel border border-ak-line rounded-xl text-ak-text placeholder-ak-subtle focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all text-sm"
                       placeholder="Es. Account Google, VPN aziendale..."
                     />
                   </div>
@@ -204,7 +204,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                   <div className="grid grid-cols-2 gap-4">
                     {/* Nome utente */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <label className="block text-xs font-medium text-ak-muted uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5" /> Nome utente
                       </label>
                       <input
@@ -212,14 +212,14 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                         required
                         value={formData.username}
                         onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all text-sm"
+                        className="w-full px-3.5 py-2.5 bg-ak-panel border border-ak-line rounded-xl text-ak-text placeholder-ak-subtle focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all text-sm"
                         placeholder="username o email"
                       />
                     </div>
 
                     {/* Categoria gerarchica */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <label className="block text-xs font-medium text-ak-muted uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                         <Tag className="w-3.5 h-3.5" /> Categoria
                       </label>
                       <div className="space-y-2">
@@ -229,14 +229,14 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                           if (level > 0 && !formData.category.split(' / ')[level - 1]) return null
                           return (
                             <div key={level} className="flex gap-2">
-                              <select required={level === 0} title={`Categoria livello ${level + 1}`} value={selected} onChange={(event) => selectCategory(level, event.target.value)} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10">
+                              <select required={level === 0} title={`Categoria livello ${level + 1}`} value={selected} onChange={(event) => selectCategory(level, event.target.value)} className="min-w-0 flex-1 rounded-xl border border-ak-line bg-ak-panel px-3.5 py-2.5 text-sm text-ak-text outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10">
                                 <option value="">{level === 0 ? 'Seleziona categoria' : 'Seleziona sottocategoria'}</option>
                                 {options.map(category => <option key={category.id} value={category.name}>{category.name}</option>)}
                               </select>
                             </div>
                           )
                         })}
-                        {!categories.length && <p className="text-xs text-slate-400">Crea prima una categoria dalla sezione Password.</p>}
+                        {!categories.length && <p className="text-xs text-ak-subtle">Crea prima una categoria dalla sezione Password.</p>}
                       </div>
                     </div>
                   </div>
@@ -244,13 +244,13 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                   {/* Password */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <label className="block text-xs font-medium text-ak-muted uppercase tracking-wider flex items-center gap-1.5">
                         <Lock className="w-3.5 h-3.5" /> Password
                       </label>
                       <button
                         type="button"
                         onClick={() => setShowGenerator(!showGenerator)}
-                        className="text-xs text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all bg-slate-50 hover:bg-indigo-50"
+                        className="text-xs text-ak-muted hover:text-ak-cyan border border-ak-line hover:border-ak-line px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all bg-ak-panel hover:bg-ak-hover"
                       >
                         <Dices className="w-3 h-3" />
                         {showGenerator ? 'Nascondi generatore' : 'Genera password'}
@@ -269,13 +269,13 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                         required
                         value={formData.password}
                         onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 pr-11 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all font-mono text-sm"
+                        className="w-full px-3.5 py-2.5 pr-11 bg-ak-panel border border-ak-line rounded-xl text-ak-text placeholder-ak-subtle focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all font-mono text-sm"
                         placeholder="••••••••••••"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-all"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-ak-inset text-ak-subtle hover:text-ak-text transition-all"
                         aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -285,21 +285,21 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
 
                   {/* Sito web */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <label className="block text-xs font-medium text-ak-muted uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                       <Globe className="w-3.5 h-3.5" /> Sito web (opzionale)
                     </label>
                     <input
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all text-sm"
+                      className="w-full px-3.5 py-2.5 bg-ak-panel border border-ak-line rounded-xl text-ak-text placeholder-ak-subtle focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all text-sm"
                       placeholder="https://esempio.com"
                     />
                   </div>
 
                   {/* PIN */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <label className="block text-xs font-medium text-ak-muted uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                       <Hash className="w-3.5 h-3.5" /> PIN / Codice (opzionale)
                     </label>
                     <div className="relative">
@@ -307,56 +307,56 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                         type={showPin ? 'text' : 'password'}
                         value={formData.pin_code || ''}
                         onChange={(e) => setFormData(prev => ({ ...prev, pin_code: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 pr-11 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all font-mono tracking-widest text-sm"
+                        className="w-full px-3.5 py-2.5 pr-11 bg-ak-panel border border-ak-line rounded-xl text-ak-text placeholder-ak-subtle focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all font-mono tracking-widest text-sm"
                         placeholder="●●●●"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPin(!showPin)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-all"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-ak-inset text-ak-subtle hover:text-ak-text transition-all"
                         aria-label={showPin ? 'Nascondi PIN' : 'Mostra PIN'}
                       >
                         {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1">PIN, codice dispositivo, pattern di sblocco, ecc.</p>
+                    <p className="text-[10px] text-ak-subtle mt-1">PIN, codice dispositivo, pattern di sblocco, ecc.</p>
                   </div>
 
                   {/* Note */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <label className="block text-xs font-medium text-ak-muted uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                       <MessageSquare className="w-3.5 h-3.5" /> Note (opzionale)
                     </label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                       rows={3}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all resize-none text-sm"
+                      className="w-full px-3.5 py-2.5 bg-ak-panel border border-ak-line rounded-xl text-ak-text placeholder-ak-subtle focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all resize-none text-sm"
                       placeholder="Note aggiuntive, domande di sicurezza..."
                     />
                   </div>
 
                   {/* Preferito */}
                   <div>
-                    <label className="flex items-center gap-3 cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl p-3.5 transition-all">
+                    <label className="flex items-center gap-3 cursor-pointer bg-ak-panel hover:bg-ak-inset border border-ak-line rounded-xl p-3.5 transition-all">
                       <input
                         type="checkbox"
                         checked={formData.isFavorite}
                         onChange={(e) => setFormData(prev => ({ ...prev, isFavorite: e.target.checked }))}
                         className="w-4 h-4 rounded accent-indigo-500"
                       />
-                      <Star className={`w-4 h-4 ${formData.isFavorite ? 'text-amber-400 fill-amber-400' : 'text-slate-400'}`} />
-                      <span className="text-sm text-slate-700">Aggiungi ai preferiti</span>
+                      <Star className={`w-4 h-4 ${formData.isFavorite ? 'text-amber-400 fill-amber-400' : 'text-ak-subtle'}`} />
+                      <span className="text-sm text-ak-text">Aggiungi ai preferiti</span>
                     </label>
                   </div>
 
-                  {(blockedReason || saveError) && <p className="text-sm text-red-600" role="alert">{saveError || blockedReason}</p>}
+                  {(blockedReason || saveError) && <p className="text-sm text-ak-danger" role="alert">{saveError || blockedReason}</p>}
 
                   {/* Submit */}
                   <button
                     type="submit"
                     disabled={isSaving || Boolean(blockedReason)}
-                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full py-3 bg-ak-accent hover:bg-ak-accent-hover text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     {isSaving ? 'Salvataggio...' : editPassword ? 'Aggiorna credenziale' : 'Salva credenziale'}
                   </button>

@@ -75,19 +75,19 @@ export default function HistoryBrowser(props: Props) {
   }
 
   return <section className="mt-4 space-y-4">
-    <p className="text-sm text-[#716a91]">Lo storico resta nel database. Cerca o carica 5 elementi alla volta, solo quando lo richiedi. Dopo 7 giorni le eseguite passano automaticamente in archivio.</p>
+    <p className="text-sm text-ak-muted">Lo storico resta nel database. Cerca o carica 5 elementi alla volta, solo quando lo richiedi. Dopo 7 giorni le eseguite passano automaticamente in archivio.</p>
     <form onSubmit={event => { event.preventDefault(); void search() }} className="flex flex-wrap items-end gap-3">
       <label className="text-sm">Titolo<input value={text} onChange={event => setText(event.target.value)} className="mt-1 block rounded-lg border p-2" /></label>
       <label className="text-sm">Eseguite dal<input type="date" value={from} onChange={event => setFrom(event.target.value)} className="mt-1 block rounded-lg border p-2" /></label>
       <label className="text-sm">Al<input type="date" value={until} onChange={event => setUntil(event.target.value)} className="mt-1 block rounded-lg border p-2" /></label>
       <button disabled={busy} className="ak-primary-action">{busy ? 'Caricamento...' : 'Cerca / carica 5'}</button>
     </form>
-    {error && <p role="alert" className="text-red-700">{error}</p>}
+    {error && <p role="alert" className="text-ak-danger">{error}</p>}
     {(loadedOwner.current === user?.id ? rows : []).map(item => <button key={item.id} onClick={() => {
       if (props.kind === 'event') props.onOpen(item as Event)
       else props.onOpen(item as WorkItem)
-    }} className="block w-full rounded-xl border border-[#ead8bf] bg-[#fff8ed] p-4 text-left">
-      <strong>{item.title}</strong><span className="mt-1 block text-xs text-[#716a91]">Eseguita: {item.completed_at ? new Date(item.completed_at).toLocaleString('it-IT') : 'data non disponibile'}</span>
+    }} className="block w-full rounded-xl border border-ak-line bg-ak-panel p-4 text-left">
+      <strong>{item.title}</strong><span className="mt-1 block text-xs text-ak-muted">Eseguita: {item.completed_at ? new Date(item.completed_at).toLocaleString('it-IT') : 'data non disponibile'}</span>
     </button>)}
     {searched && !rows.length && <p>Nessun risultato.</p>}
     {hasMore && <button disabled={busy} onClick={() => void search(true)} className="ak-primary-action">{busy ? 'Caricamento...' : 'Carica altre 5'}</button>}

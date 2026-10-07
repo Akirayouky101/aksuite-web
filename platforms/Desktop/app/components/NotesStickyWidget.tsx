@@ -34,10 +34,10 @@ export default function NotesStickyWidget({ notes, onOpenNote, onAddNote }: Note
   if (stack.length === 0) {
     return (
       <div className="ak-hero-sticker flex min-h-48 flex-col justify-between rounded-[1.75rem] p-6">
-        <Sparkles className="h-7 w-7 text-[#e45f4e]" />
+        <Sparkles className="h-7 w-7 text-ak-danger" />
         <div>
-          <p className="text-sm font-bold text-[#716a91]">Nessun appunto in vista</p>
-          <button onClick={onAddNote} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#2d2754] px-3 py-2 text-xs font-bold text-[#fff6df]">
+          <p className="text-sm font-bold text-ak-muted">Nessun appunto in vista</p>
+          <button onClick={onAddNote} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-ak-accent px-3 py-2 text-xs font-bold text-ak-text">
             <Plus className="h-3.5 w-3.5" />Nuova nota
           </button>
         </div>
@@ -89,29 +89,29 @@ export default function NotesStickyWidget({ notes, onOpenNote, onAddNote }: Note
         >
           <span className="absolute -top-2 left-1/2 h-4 w-10 -translate-x-1/2 rounded-sm" style={{ background: sticky.tape, opacity: 0.85 }} />
           <div className="flex items-center justify-between">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/60 text-[#e45f4e]"><StickyNote className="h-4 w-4" /></span>
-            {stack.length > 1 && <span className="text-[10px] font-black uppercase tracking-widest text-[#8a7f9f]">{index + 1}/{stack.length}</span>}
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ak-panel/60 text-ak-danger"><StickyNote className="h-4 w-4" /></span>
+            {stack.length > 1 && <span className="text-[10px] font-black uppercase tracking-widest text-ak-subtle">{index + 1}/{stack.length}</span>}
           </div>
           <div className="mt-2">
-            <p className="line-clamp-1 text-sm font-black text-[#2d2754]">{current.title}</p>
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#716a91]">{current.content || 'Nessun contenuto'}</p>
+            <p className="line-clamp-1 text-sm font-black text-ak-text">{current.title}</p>
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-ak-muted">{current.content || 'Nessun contenuto'}</p>
           </div>
         </motion.button>
       </AnimatePresence>
 
       {stack.length > 1 && (
         <div className="relative z-10 mt-3 flex items-center justify-center gap-2">
-          <button onClick={prev} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/70 text-[#716a91] transition hover:bg-white hover:text-[#e45f4e]">
+          <button onClick={prev} className="flex h-7 w-7 items-center justify-center rounded-full bg-ak-panel/70 text-ak-muted transition hover:bg-ak-panel hover:text-ak-danger">
             <ChevronLeft className="h-4 w-4" />
           </button>
           {showDots && stack.map((note, i) => (
             <button
               key={note.id}
               onClick={() => goTo(i)}
-              className={`h-1.5 rounded-full transition-all ${i === index ? 'w-4 bg-[#e45f4e]' : 'w-1.5 bg-[#d8cbb8]'}`}
+              className={`h-1.5 rounded-full transition-all ${i === index ? 'w-4 bg-ak-danger-bg' : 'w-1.5 bg-ak-line'}`}
             />
           ))}
-          <button onClick={next} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/70 text-[#716a91] transition hover:bg-white hover:text-[#e45f4e]">
+          <button onClick={next} className="flex h-7 w-7 items-center justify-center rounded-full bg-ak-panel/70 text-ak-muted transition hover:bg-ak-panel hover:text-ak-danger">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>

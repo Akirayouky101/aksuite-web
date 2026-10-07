@@ -32,14 +32,14 @@ interface NoteModalProps {
 }
 
 const COLORS = [
-  { name: 'blue', class: 'bg-blue-500', light: 'bg-blue-100', dark: 'bg-blue-900' },
-  { name: 'green', class: 'bg-green-500', light: 'bg-green-100', dark: 'bg-green-900' },
-  { name: 'yellow', class: 'bg-yellow-500', light: 'bg-yellow-100', dark: 'bg-yellow-900' },
-  { name: 'red', class: 'bg-red-500', light: 'bg-red-100', dark: 'bg-red-900' },
-  { name: 'purple', class: 'bg-purple-500', light: 'bg-purple-100', dark: 'bg-purple-900' },
-  { name: 'pink', class: 'bg-pink-500', light: 'bg-pink-100', dark: 'bg-pink-900' },
-  { name: 'orange', class: 'bg-orange-500', light: 'bg-orange-100', dark: 'bg-orange-900' },
-  { name: 'gray', class: 'bg-gray-500', light: 'bg-gray-100', dark: 'bg-slate-50' }
+  { name: 'blue', class: 'bg-blue-500', light: 'bg-ak-hover', dark: 'bg-blue-900' },
+  { name: 'green', class: 'bg-green-500', light: 'bg-ak-success-bg', dark: 'bg-green-900' },
+  { name: 'yellow', class: 'bg-yellow-500', light: 'bg-ak-warning-bg', dark: 'bg-yellow-900' },
+  { name: 'red', class: 'bg-red-500', light: 'bg-ak-danger-bg', dark: 'bg-red-900' },
+  { name: 'purple', class: 'bg-purple-500', light: 'bg-ak-purple-bg', dark: 'bg-purple-900' },
+  { name: 'pink', class: 'bg-pink-500', light: 'bg-ak-pink-bg', dark: 'bg-pink-900' },
+  { name: 'orange', class: 'bg-orange-500', light: 'bg-ak-orange-bg', dark: 'bg-orange-900' },
+  { name: 'gray', class: 'bg-ak-inset', light: 'bg-ak-inset', dark: 'bg-ak-panel' }
 ]
 
 const FOLDERS = [
@@ -129,31 +129,32 @@ export default function NoteModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-slate-900/30 ">
+        <div className="ak-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-ak-inset/30 ">
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-slate-200/60 flex flex-col"
+            className="bg-ak-panel/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-ak-line/60 flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 bg-white/60 flex-shrink-0">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-ak-line/60 bg-ak-panel/60 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ak-accent to-ak-accent flex items-center justify-center shadow-lg shadow-indigo-500/25">
                   <Save className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800">
+                  <h2 className="text-lg font-bold text-ak-text">
                     {editNote ? 'Modifica Nota' : 'Nuova Nota'}
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Appunti e promemoria</p>
+                  <p className="text-xs text-ak-subtle mt-0.5">Appunti e promemoria</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 border border-slate-200/60 hover:border-red-200 flex items-center justify-center transition-all"
+                aria-label="Chiudi nota"
+                className="w-9 h-9 rounded-xl bg-ak-inset hover:bg-ak-danger-bg border border-ak-line/60 hover:border-ak-danger flex items-center justify-center transition-all"
               >
-                <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+                <X className="w-4 h-4 text-ak-subtle hover:text-ak-danger" />
               </button>
             </div>
 
@@ -161,14 +162,14 @@ export default function NoteModal({
             <form onSubmit={handleSubmit} className="flex-1 min-h-0 p-6 space-y-6 overflow-y-auto">
               {/* Title */}
               <div>
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-medium text-ak-subtle uppercase tracking-wider mb-2">
                   Titolo *
                 </label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                  className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   placeholder="Inserisci il titolo della nota..."
                   required
                 />
@@ -177,14 +178,14 @@ export default function NoteModal({
               {/* Content */}
               <div>
                 <DictationButton onText={text => setFormData(prev => ({ ...prev, content: `${prev.content}${prev.content ? ' ' : ''}${text}` }))} label="Detta nota" />
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-medium text-ak-subtle uppercase tracking-wider mb-2">
                   Contenuto
                 </label>
                 <textarea
                   value={formData.content}
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                   rows={10}
-                  className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none resize-none"
+                  className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none resize-none"
                   placeholder="Scrivi qui il contenuto della nota..."
                 />
               </div>
@@ -193,13 +194,13 @@ export default function NoteModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Folder */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <label className="block text-xs font-medium text-ak-subtle uppercase tracking-wider mb-2 flex items-center gap-2">
                     <Folder size={16} /> Cartella
                   </label>
                   <select
                     value={formData.folder}
                     onChange={(e) => setFormData(prev => ({ ...prev, folder: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                    className="w-full px-4 py-3 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                   >
                     {FOLDERS.map(folder => (
                       <option key={folder} value={folder}>
@@ -211,7 +212,7 @@ export default function NoteModal({
 
                 {/* Pin Toggle */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <label className="block text-xs font-medium text-ak-subtle uppercase tracking-wider mb-2 flex items-center gap-2">
                     <Pin size={16} /> In Evidenza
                   </label>
                   <button
@@ -219,8 +220,8 @@ export default function NoteModal({
                     onClick={() => setFormData(prev => ({ ...prev, is_pinned: !prev.is_pinned }))}
                     className={`w-full px-4 py-3 rounded-lg font-medium transition-all ${
                       formData.is_pinned
-                        ? 'bg-yellow-500 text-black'
-                        : 'bg-slate-50 text-slate-400 border border-slate-200/60'
+                        ? 'bg-yellow-500 text-ak-text'
+                        : 'bg-ak-panel text-ak-subtle border border-ak-line/60'
                     }`}
                   >
                     {formData.is_pinned ? '📌 Fissata' : 'Fissa Nota'}
@@ -230,7 +231,7 @@ export default function NoteModal({
 
               {/* Color Picker */}
               <div>
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <label className="block text-xs font-medium text-ak-subtle uppercase tracking-wider mb-2 flex items-center gap-2">
                   <Palette size={16} /> Colore
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -250,16 +251,16 @@ export default function NoteModal({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <label className="block text-xs font-medium text-ak-subtle uppercase tracking-wider mb-2 flex items-center gap-2">
                   <Bell size={16} /> Promemoria
                 </label>
                 <DateTimePicker value={formData.reminder_at} onChange={value => setFormData(previous => ({ ...previous, reminder_at: localDateTimeToIso(value) }))} placeholder="Nessun promemoria" clearable />
-                {formData.reminder_at && <select value={formData.recurrence_type} onChange={event => setFormData(previous => ({ ...previous, recurrence_type: event.target.value as typeof previous.recurrence_type }))} className="mt-2 w-full rounded-xl border border-slate-200/60 bg-slate-50/80 px-3 py-2 text-sm text-slate-700"><option value="">Non ripetere</option><option value="daily">Ogni giorno</option><option value="weekly">Ogni settimana</option><option value="monthly">Ogni mese</option><option value="yearly">Ogni anno</option></select>}
+                {formData.reminder_at && <select value={formData.recurrence_type} onChange={event => setFormData(previous => ({ ...previous, recurrence_type: event.target.value as typeof previous.recurrence_type }))} className="mt-2 w-full rounded-xl border border-ak-line/60 bg-ak-panel/80 px-3 py-2 text-sm text-ak-text"><option value="">Non ripetere</option><option value="daily">Ogni giorno</option><option value="weekly">Ogni settimana</option><option value="monthly">Ogni mese</option><option value="yearly">Ogni anno</option></select>}
               </div>
 
               {/* Tags */}
               <div>
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <label className="block text-xs font-medium text-ak-subtle uppercase tracking-wider mb-2 flex items-center gap-2">
                   <Tag size={16} /> Tags
                 </label>
                 <div className="flex gap-2 mb-3">
@@ -268,13 +269,13 @@ export default function NoteModal({
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                    className="flex-1 px-4 py-2 bg-slate-50/80 border border-slate-200/60 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
+                    className="flex-1 px-4 py-2 bg-ak-panel/80 border border-ak-line/60 rounded-xl text-ak-text focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none"
                     placeholder="Aggiungi tag..."
                   />
                   <button
                     type="button"
                     onClick={addTag}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
+                    className="px-4 py-2 bg-ak-accent hover:bg-ak-accent text-white rounded-lg font-medium transition-colors"
                   >
                     Aggiungi
                   </button>
@@ -283,13 +284,13 @@ export default function NoteModal({
                   {formData.tags.map(tag => (
                     <span
                       key={tag}
-                      className="px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-sm flex items-center gap-2 border border-slate-200/60"
+                      className="px-3 py-1 bg-ak-panel text-ak-muted rounded-full text-sm flex items-center gap-2 border border-ak-line/60"
                     >
                       #{tag}
                       <button
                         type="button"
                         onClick={() => removeTag(tag)}
-                        className="text-slate-500 hover:text-red-500 transition-colors"
+                        className="text-ak-muted hover:text-ak-danger transition-colors"
                       >
                         <X size={14} />
                       </button>
@@ -302,7 +303,7 @@ export default function NoteModal({
             {/* Collegamenti Multi-Entità */}
             {editNote?.id && (
               <div className="max-h-40 overflow-y-auto px-6 pb-4 space-y-3 flex-shrink-0">
-                <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-xs font-medium text-ak-subtle uppercase tracking-wider flex items-center gap-1.5">
                   🔗 Collegamenti
                 </h4>
                 <RelationsIntegration
@@ -323,7 +324,7 @@ export default function NoteModal({
                 <PhotoGallery scope={{ noteId: editNote.id }} />
               </div>
             )}
-            {!editNote?.id && <p className="px-6 pb-4 text-xs text-slate-500">Salva la nota prima di aggiungere foto alla galleria.</p>}
+            {!editNote?.id && <p className="px-6 pb-4 text-xs text-ak-muted">Salva la nota prima di aggiungere foto alla galleria.</p>}
 
             {/* Footer */}
             <div className="px-6 pb-6">
@@ -331,7 +332,7 @@ export default function NoteModal({
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={handleSubmit}
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
+                className="w-full py-3.5 bg-gradient-to-r from-ak-accent to-ak-accent hover:from-ak-accent hover:to-ak-accent-hover text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all text-sm"
               >
                 {editNote ? '✏️ Aggiorna Nota' : '💾 Salva Nota'}
               </motion.button>

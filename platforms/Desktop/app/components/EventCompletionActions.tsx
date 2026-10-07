@@ -27,6 +27,6 @@ export default function EventCompletionActions({ event, onDone, onReschedule, di
       <button type="button"       disabled={busy || disabled} onClick={() => void complete()} className="ak-primary-action">{busy ? 'Salvataggio...' : event.is_completed ? 'Riporta da fare' : 'Sì, completato'}</button>
       {!event.is_completed && onReschedule &&       <button type="button"       disabled={busy || disabled} onClick={onReschedule} className="rounded-xl border px-3 py-2 text-sm font-bold">No, scegli nuova data e ora</button>}
     </div>
-    {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+    {error && <p role="alert" className="text-sm text-ak-danger">{error}</p>}
   </div>
 }

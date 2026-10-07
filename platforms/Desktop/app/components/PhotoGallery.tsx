@@ -130,28 +130,28 @@ export default function PhotoGallery({ scope }: { scope: Scope }) {
     await load(false, true)
   }
 
-  return <section className="my-4 space-y-3 rounded-xl border border-[#dfcdb1] p-3">
+  return <section className="my-4 space-y-3 rounded-xl border border-ak-line p-3">
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Galleria foto</h3>
-      <label className={`rounded-lg border bg-[#d9e8d9] px-3 py-2 text-sm font-bold ${busy ? 'opacity-50' : 'cursor-pointer'}`}>
+      <label className={`rounded-lg border bg-ak-success-bg px-3 py-2 text-sm font-bold ${busy ? 'opacity-50' : 'cursor-pointer'}`}>
         Aggiungi foto<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={busy} className="hidden" onChange={event => { const files = Array.from(event.target.files || []); event.target.value = ''; if (files.length) void run(() => upload(files)) }} />
       </label>
     </div>
-    <p className="text-xs text-[#716a91]">Foto private su Supabase, JPEG/PNG/WebP, massimo 10 MB. Caricamento su richiesta, 5 alla volta.</p>
+    <p className="text-xs text-ak-muted">Foto private su Supabase, JPEG/PNG/WebP, massimo 10 MB. Caricamento su richiesta, 5 alla volta.</p>
     {'general' in scope && <div className="flex flex-wrap gap-2">
       <input aria-label="Nome foto" placeholder="Cerca nome foto" value={name} onChange={event => setName(event.target.value)} className="min-w-0 rounded-lg border p-2" />
       <label className="text-xs">Dal<input type="date" value={from} onChange={event => setFrom(event.target.value)} className="block rounded-lg border p-2" /></label>
       <label className="text-xs">Al<input type="date" value={until} onChange={event => setUntil(event.target.value)} className="block rounded-lg border p-2" /></label>
     </div>}
     <button type="button" disabled={busy} onClick={() => void run(() => load())} className="rounded-lg border px-3 py-2 text-sm">{busy ? 'Caricamento...' : started ? 'Aggiorna / cerca' : 'Carica foto'}</button>
-    {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+    {error && <p role="alert" className="text-sm text-ak-danger">{error}</p>}
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{(loadedOwner.current === signedInUser?.id ? photos : []).map(photo => <article key={photo.id} className="min-w-0 rounded-lg border p-2">
       <button type="button" onClick={() => setPreview(photo)} className="w-full"><img loading="lazy" src={photo.url} alt={photo.file_name} className="h-28 w-full rounded-lg object-cover" onError={() => setError('Anteprima non disponibile o scaduta. Aggiorna la galleria.')} /></button>
-      <p className="truncate text-xs">{photo.file_name}</p><button type="button" disabled={busy} onClick={() => void run(() => remove(photo))} className="mt-1 text-xs text-red-700">Elimina</button>
+      <p className="truncate text-xs">{photo.file_name}</p><button type="button" disabled={busy} onClick={() => void run(() => remove(photo))} className="mt-1 text-xs text-ak-danger">Elimina</button>
     </article>)}</div>
     {started && !photos.length && <p className="text-sm">Nessuna foto trovata.</p>}
     {more && <button type="button" disabled={busy} onClick={() => void run(() => load(true))} className="rounded-lg border p-2 text-sm">Carica altre 5</button>}
-    {preview && loadedOwner.current === signedInUser?.id && createPortal(<div ref={previewPanel} role="dialog" aria-modal="true" aria-label="Anteprima foto" className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-3 bg-black/90 p-5" onClick={() => setPreview(null)}>
-      <button type="button" className="rounded-lg bg-white p-3" onClick={() => setPreview(null)}>Chiudi</button>
+    {preview && loadedOwner.current === signedInUser?.id && createPortal(<div ref={previewPanel} role="dialog" aria-modal="true" aria-label="Anteprima foto" className="ak-photo-preview fixed inset-0 z-[120] flex flex-col items-center justify-center gap-3 bg-black/90 p-5" onClick={() => setPreview(null)}>
+      <button type="button" className="rounded-lg bg-ak-panel p-3" onClick={() => setPreview(null)}>Chiudi</button>
       <img src={preview.url} alt={preview.file_name} className="max-h-[75vh] max-w-full object-contain" onClick={event => event.stopPropagation()} />
       <a href={preview.url} target="_blank" rel="noopener noreferrer" className="text-white underline">Apri foto originale</a>
     </div>, document.body)}

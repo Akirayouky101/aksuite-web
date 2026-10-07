@@ -68,7 +68,7 @@ export default function GoogleCalendarSettings() {
     <h3 className="font-bold">Collega calendario personale · Google Calendar</h3>
     <p className="text-sm">Sincronizzazione in entrambe le direzioni del calendario scelto: appuntamenti, modifiche ed eliminazioni. I conflitti richiedono una scelta, senza sovrascritture automatiche.</p>
     {!user && <p className="text-sm">Accedi per collegare il tuo calendario.</p>}
-    {settings && !settings.configured && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+    {settings && !settings.configured && <div className="rounded-lg bg-ak-warning-bg p-3 text-sm text-ak-warning">
       Google Cloud/OAuth non è ancora configurato. Occorre attivare Calendar API, creare un client OAuth Web e impostare sul server client ID, secret e chiave di cifratura.
       <p className="mt-2">Redirect di produzione: <code className="break-all">https://aksuite.app/api/google-calendar/callback</code>. Non inserire le chiavi qui o nella chat.</p>
     </div>}
@@ -92,8 +92,8 @@ export default function GoogleCalendarSettings() {
       {settings.calendarId && <button disabled={busy || Boolean(result?.conflicts.length && result.conflicts.some(item => !resolutions[item.id]))} onClick={() => void run(sync)} className="rounded-lg border px-3 py-2 font-bold">{busy ? 'Sincronizzazione...' : result?.more ? 'Continua sincronizzazione' : 'Sincronizza ora'}</button>}
       <p className="text-xs">Importazione paginata sul server (10 eventi per lotto). L’invio automatico richiede il processo pianificato configurato sul server. Le ricorrenze Google restano serie: il completamento riguarda la serie, non una singola occorrenza.</p>
       {settings.lastSync && <p className="text-xs">Ultimo lotto: {new Date(settings.lastSync).toLocaleString('it-IT')}</p>}
-      {settings.lastError && <p role="alert" className="text-sm text-amber-800">{settings.lastError}</p>}
-      {result?.conflicts.map(item => <div key={item.id} className="rounded-lg bg-amber-50 p-3">
+      {settings.lastError && <p role="alert" className="text-sm text-ak-warning">{settings.lastError}</p>}
+      {result?.conflicts.map(item => <div key={item.id} className="rounded-lg bg-ak-warning-bg p-3">
         <strong className="text-sm">{item.title}</strong><p className="text-xs">{item.reason}</p>
         <label className="mt-2 block text-sm">Versione da mantenere<select value={resolutions[item.id] || ''} onChange={event => {
           const value = event.target.value
@@ -105,10 +105,10 @@ export default function GoogleCalendarSettings() {
         const result = await api<{ warning: string | null }>('settings', 'DELETE')
         setSettings({ configured: true, connected: false }); setResult(null); setSelected('')
         setMessage(result.warning || 'Google disconnesso. Dati conservati.')
-      })} className="ml-3 rounded-lg border px-3 py-2 text-sm text-red-700">Disconnetti</button>
+      })} className="ml-3 rounded-lg border px-3 py-2 text-sm text-ak-danger">Disconnetti</button>
     </>}
     {message && <p role="status" className="text-sm">{message}</p>}
-    {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+    {error && <p role="alert" className="text-sm text-ak-danger">{error}</p>}
     {user && !settings && error && <button disabled={busy} onClick={() => void run(async () => { const data = await api<{ url: string }>('connect', 'POST'); window.location.assign(data.url) })} className="rounded-lg border px-3 py-2 text-sm">Riprova collegamento Google</button>}
   </section>
 }
