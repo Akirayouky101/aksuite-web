@@ -72,7 +72,15 @@
   box-shadow: 0 0 22px #1966a580, inset 0 0 0 1px #ffffff50;
   cursor: pointer;
 }
-.launcher:hover { background: #34597a; }
+.launcher {
+  animation: launcherGlow 4s ease-in-out infinite;
+  transition: transform .25s ease, background .25s ease;
+}
+.launcher svg { transition: transform .3s ease; }
+.launcher:hover, .launcher:focus-visible { background: #34597a; transform: translateY(-3px) scale(1.07); }
+.launcher:hover svg, .launcher:focus-visible svg { transform: rotate(12deg); }
+.launcher:active { transform: scale(.94); }
+.launcher[aria-expanded='true'] { animation-play-state: paused; }
 .notice { margin-bottom: 16px; padding: 14px; border: 1px solid #e78372; border-radius: 12px; color: #ffe3dc; background: #3c2029; }
 
 .orbitDialog {
@@ -90,8 +98,15 @@
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
 .orbitDialog::backdrop { background: #030a179e; backdrop-filter: blur(5px); }
+.orbitDialog[data-state='open']::backdrop { animation: orbitShadeIn .32s ease both; }
+.orbitDialog[data-state='closing']::backdrop { animation: orbitShadeOut var(--orbit-exit-duration) ease both; }
 .orbitBackdrop { display: flex; align-items: center; justify-content: center; min-height: 100%; padding: 28px; }
-.orbitContent { width: min(100%, 920px); }
+.orbitContent { width: min(100%, 920px); transform-origin: 50% 100%; }
+.orbitDialog[data-state='open'] .orbitContent { animation: orbitIn .4s cubic-bezier(.2, .8, .2, 1) both; }
+.orbitDialog[data-state='closing'] .orbitContent { animation: orbitOut var(--orbit-exit-duration) ease-in both; pointer-events: none; }
+.orbitDialog[data-state='open'] .orbitNode { animation: nodeIn .38s cubic-bezier(.2, .8, .2, 1) var(--orbit-delay) both; }
+.orbitDialog[data-state='open'] .destinationContent { animation: destinationIn .28s ease both; }
+.orbitDialog[data-state='open'] .destination { animation: destinationIn .28s ease var(--orbit-delay) both; }
 .orbitHeading { position: relative; margin-bottom: 28px; padding: 0 50px; text-align: center; }
 .closeOrbit { position: absolute; top: 0; right: 0; }
 .orbitHeading h2 { font-size: 25px; font-weight: 900; }
@@ -116,9 +131,12 @@
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
-  transition: background .2s, box-shadow .2s;
+  transition: background .2s, box-shadow .2s, translate .2s;
 }
-.orbitNode svg { width: 28px; height: 28px; color: var(--orbit-accent); }
+.orbitNode svg { width: 28px; height: 28px; color: var(--orbit-accent); transition: transform .25s ease; }
+.orbitNode:hover, .orbitNode:focus-visible { translate: 0 -4px; }
+.orbitNode:hover svg, .orbitNode:focus-visible svg { transform: scale(1.12) rotate(-6deg); }
+.orbitNode:active { translate: 0 0; }
 .orbitNode:hover, .orbitNode[data-selected='true'] { background: linear-gradient(135deg, #497194, #152841); box-shadow: 0 0 24px #1966a57d, inset 0 0 0 2px #83cfffad; }
 .orbitCore { position: absolute; z-index: 2; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 78px; height: 78px; gap: 3px; }
 .orbitCore strong { font-size: 25px; }
@@ -142,12 +160,37 @@
   font-weight: 700;
   text-align: left;
   cursor: pointer;
+  transition: background .2s, border-color .2s, translate .2s;
 }
 .destination svg { color: #9dc9e9; flex-shrink: 0; }
 .destination svg:last-child { margin-left: auto; }
 .destination:hover, .destination[aria-current='page'] { background: #83cfff20; border-color: #83cfff85; }
+.destination:hover, .destination:focus-visible { translate: 3px 0; }
 .destinationHint { color: #cfdeef; font-size: 15px; line-height: 1.7; text-align: center; }
 .orbitHelp { margin-top: 28px; text-align: center; color: #cfdeef; font-size: 12px; }
+
+@keyframes launcherGlow {
+  0%, 100% { box-shadow: 0 0 16px #1966a560, inset 0 0 0 1px #ffffff50; }
+  50% { box-shadow: 0 0 28px #83cfff55, inset 0 0 0 1px #ffffff70; }
+}
+@keyframes orbitShadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes orbitShadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes orbitIn {
+  from { opacity: 0; transform: translateY(36px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes orbitOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(28px) scale(.96); }
+}
+@keyframes nodeIn {
+  from { opacity: 0; transform: translateY(16px) scale(.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes destinationIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .dashboard { color: #eff9ff; }
 .glass {
@@ -219,7 +262,14 @@
   .orbitHelp { margin-top: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .orbitNode { transition: none; }
+  .launcher, .launcher svg, .orbitNode, .orbitNode svg, .destination { animation: none; transition: none; }
+  .launcher:hover, .launcher:focus-visible, .launcher:active,
+  .launcher:hover svg, .launcher:focus-visible svg,
+  .orbitNode:hover svg, .orbitNode:focus-visible svg { transform: none; }
+  .orbitNode:hover, .orbitNode:focus-visible, .destination:hover, .destination:focus-visible { translate: none; }
+  .orbitDialog[data-state]::backdrop,
+  .orbitDialog[data-state] .orbitContent, .orbitDialog[data-state] .orbitNode,
+  .orbitDialog[data-state] .destinationContent, .orbitDialog[data-state] .destination { animation: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .topbar, .glass, .destinationPanel, .orbitNode { background: #152841; backdrop-filter: none; }

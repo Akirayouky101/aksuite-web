@@ -65,6 +65,11 @@ Strumenti). On narrow screens the orbital groups become a compact grid.
 Command/Control-K opens the menu, Escape closes it and
 Shift-Command/Control-F opens global search. The native HTML dialog keeps
 keyboard focus within the menu and restores focus when closed.
+The web menu fades and expands on opening, staggers its group/destination
+entries and fades down on closing. The launcher has a subtle breathing glow
+and hover feedback. The dialog keeps focus and scroll locked until its exit
+finishes; reopening cancels the pending close. Reduced-motion preferences
+disable these animations and close the dialog without the exit delay.
 The login, section workspaces, editors, summaries, vault controls and date
 popovers now share semantic dark colors defined in `tailwind.config.js`, with
 glass surfaces in `app/mac-theme.css`. Status/error colors remain distinct.
