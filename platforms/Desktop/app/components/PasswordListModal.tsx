@@ -64,7 +64,10 @@ export default function PasswordListModal({
     })
   }
 
+  const isReadable = (item: Password) => item.secretStatus !== 'locked' && item.secretStatus !== 'error'
+  const lockedLabel = (item: Password) => item.secretStatus === 'error' ? 'Errore di decifratura' : 'Bloccata'
   const copyToClipboard = async (text: string, id: string) => {
+    if (!text) return
     await navigator.clipboard.writeText(text)
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
@@ -291,7 +294,7 @@ export default function PasswordListModal({
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs text-slate-400 w-16 flex-shrink-0">Password</span>
                                     <code className="text-sm text-slate-700 font-mono">
-                                      {visiblePasswords.has(pwd.id) ? pwd.password : '••••••••••'}
+                                      {!isReadable(pwd) ? lockedLabel(pwd) : visiblePasswords.has(pwd.id) ? pwd.password : '••••••••••'}
                                     </code>
                                     <button
                                       onClick={(e) => { e.stopPropagation(); togglePasswordVisibility(pwd.id); }}
@@ -338,12 +341,12 @@ export default function PasswordListModal({
                                 )}
 
                                 {/* PIN */}
-                                {pwd.pin_code && (
+                                {(pwd.pin_code || (!isReadable(pwd) && pwd.hasPin)) && (
                                   <div>
                                     <div className="flex items-center gap-2">
                                       <span className="text-xs text-slate-400 w-16 flex-shrink-0">PIN</span>
                                       <code className="text-sm text-slate-700 font-mono tracking-widest">
-                                        {visiblePins.has(pwd.id) ? pwd.pin_code : '●'.repeat(pwd.pin_code.length)}
+                                        {!isReadable(pwd) ? lockedLabel(pwd) : visiblePins.has(pwd.id) ? pwd.pin_code : '●'.repeat((pwd.pin_code || '').length)}
                                       </code>
                                       <button
                                         onClick={(e) => { e.stopPropagation(); togglePinVisibility(pwd.id); }}
@@ -357,7 +360,7 @@ export default function PasswordListModal({
                                         )}
                                       </button>
                                       <button
-                                        onClick={(e) => { e.stopPropagation(); copyToClipboard(pwd.pin_code!, `${pwd.id}-pin`); }}
+                                        onClick={(e) => { e.stopPropagation(); copyToClipboard(pwd.pin_code || '', `${pwd.id}-pin`); }}
                                         className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0"
                                         title="Copia PIN"
                                       >
@@ -478,7 +481,7 @@ export default function PasswordListModal({
                         <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Password</div>
                         <div className="flex items-center justify-between gap-3">
                           <code className="text-sm text-slate-800 font-mono flex-1 break-all">
-                            {visiblePasswords.has(selectedPassword.id) ? selectedPassword.password : '••••••••••••••••'}
+                            {!isReadable(selectedPassword) ? lockedLabel(selectedPassword) : visiblePasswords.has(selectedPassword.id) ? selectedPassword.password : '••••••••••••••••'}
                           </code>
                           <div className="flex gap-1.5 shrink-0">
                             <button
@@ -524,14 +527,14 @@ export default function PasswordListModal({
                       )}
 
                       {/* PIN */}
-                      {selectedPassword.pin_code && (
+                      {(selectedPassword.pin_code || (!isReadable(selectedPassword) && selectedPassword.hasPin)) && (
                         <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                           <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                             <Hash className="w-3.5 h-3.5" /> PIN / Codice
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <code className="text-sm text-slate-800 font-mono flex-1 break-all tracking-widest">
-                              {visiblePins.has(selectedPassword.id) ? selectedPassword.pin_code : '●'.repeat(selectedPassword.pin_code.length)}
+                              {!isReadable(selectedPassword) ? lockedLabel(selectedPassword) : visiblePins.has(selectedPassword.id) ? selectedPassword.pin_code : '●'.repeat((selectedPassword.pin_code || '').length)}
                             </code>
                             <div className="flex gap-1.5 shrink-0">
                               <button
@@ -546,7 +549,7 @@ export default function PasswordListModal({
                                 )}
                               </button>
                               <button
-                                onClick={() => copyToClipboard(selectedPassword.pin_code!, `detail-pin`)}
+                                onClick={() => copyToClipboard(selectedPassword.pin_code || '', `detail-pin`)}
                                 className="p-2 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-all"
                                 title="Copia PIN"
                               >

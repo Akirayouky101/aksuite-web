@@ -2,6 +2,7 @@
 
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { clearVaultSession, getVaultSnapshot } from '@/lib/passwordVault/store'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextValue {
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return
       const nextUser = session?.user ?? null
+      if (getVaultSnapshot().userId !== (nextUser?.id ?? null)) clearVaultSession()
       userIdRef.current = nextUser?.id ?? null
       setUser(nextUser)
       setLoading(false)
@@ -29,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return
       const nextUser = session?.user ?? null
+      if (getVaultSnapshot().userId !== (nextUser?.id ?? null)) clearVaultSession()
       userIdRef.current = nextUser?.id ?? null
       setUser(nextUser)
     })

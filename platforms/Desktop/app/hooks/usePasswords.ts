@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
-import { supabase, encryptPassword, decryptPassword } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
+import { decodeLegacySecret, isVaultEnvelope } from '@/lib/passwordVault/crypto'
+import { decryptVaultField, describeVaultError, encryptVaultField, isVaultUnlocked, refreshVault, usePasswordVault } from '@/lib/passwordVault/store'
 import { useAuth } from './useAuth'
+
+// legacy: old Base64/plaintext row (readable, not yet migrated); decrypted: v1 row opened with the vault key;
+// locked: v1 row while the vault is locked; error: v1 row that failed authentication/decryption (never shown).
+export type PasswordSecretStatus = 'legacy' | 'decrypted' | 'locked' | 'error'
 
 export interface Password {
   id: string
@@ -14,6 +20,9 @@ export interface Password {
   notes?: string
   isFavorite?: boolean
   pin_code?: string
+  hasPin?: boolean
+  secretStatus?: PasswordSecretStatus
+  isLegacy?: boolean
 }
 
 export interface PasswordCategory {
@@ -22,48 +31,83 @@ export interface PasswordCategory {
   parent_id: string | null
 }
 
+interface PasswordRow {
+  id: string
+  title: string
+  username: string
+  encrypted_password: string
+  website: string | null
+  category: string
+  emoji: string
+  notes: string | null
+  is_favorite: boolean | null
+  pin_code: string | null
+  encrypted_pin_code?: string | null
+  vault_format?: number | null
+  created_at: string
+}
+
+function isV1Row(row: PasswordRow) {
+  return row.vault_format === 1 || (row.vault_format == null && isVaultEnvelope(row.encrypted_password))
+}
+
+async function toPassword(row: PasswordRow, unlocked: boolean): Promise<Password> {
+  const base = {
+    id: row.id,
+    title: row.title,
+    username: row.username,
+    website: row.website || '',
+    category: row.category,
+    emoji: row.emoji,
+    notes: row.notes || undefined,
+    isFavorite: Boolean(row.is_favorite),
+    createdAt: new Date(row.created_at),
+  }
+  if (!isV1Row(row)) {
+    const pin = row.pin_code || ''
+    return { ...base, password: decodeLegacySecret(row.encrypted_password), pin_code: pin, hasPin: Boolean(pin), secretStatus: 'legacy', isLegacy: true }
+  }
+  const hasPin = Boolean(row.encrypted_pin_code)
+  if (!unlocked) return { ...base, password: '', pin_code: '', hasPin, secretStatus: 'locked', isLegacy: false }
+  try {
+    const password = await decryptVaultField(row.id, 'password', row.encrypted_password)
+    const pin = row.encrypted_pin_code ? await decryptVaultField(row.id, 'pin', row.encrypted_pin_code) : ''
+    return { ...base, password, pin_code: pin, hasPin, secretStatus: 'decrypted', isLegacy: false }
+  } catch {
+    return { ...base, password: '', pin_code: '', hasPin, secretStatus: 'error', isLegacy: false }
+  }
+}
+
 export function usePasswords(enabled = true) {
+  const [rows, setRows] = useState<PasswordRow[]>([])
   const [passwords, setPasswords] = useState<Password[]>([])
   const [categories, setCategories] = useState<PasswordCategory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { user } = useAuth()
+  const vault = usePasswordVault()
+  const vaultUnlocked = vault.status === 'unlocked' && vault.userId === user?.id
 
-  // Load passwords from Supabase or localStorage
+  useEffect(() => {
+    if (!enabled) return
+    void refreshVault(user?.id ?? null)
+  }, [user?.id, enabled])
+
+  // Legacy unauthenticated localStorage storage ("ak-passwords") is intentionally no longer read or written:
+  // it held plaintext secrets. Existing browser data is left untouched.
   useEffect(() => {
     let active = true
-    if (!enabled) { setPasswords([]); setCategories([]); setIsLoading(true); return }
+    if (!enabled) { setRows([]); setPasswords([]); setCategories([]); setIsLoading(true); return }
     const loadPasswords = async () => {
-      setPasswords([]); setCategories([])
+      setRows([]); setPasswords([]); setCategories([])
       setIsLoading(true)
       if (user) {
-        // Load from Supabase if authenticated
         const { data, error } = await supabase
           .from('passwords')
           .select('*')
           .order('created_at', { ascending: false })
-
         if (!active) return
-        if (error) {
-          console.error('Error loading passwords:', error)
-        } else if (data) {
-          const decryptedPasswords = await Promise.all(
-            data.map(async (p) => ({
-              id: p.id,
-              title: p.title,
-              username: p.username,
-              password: await decryptPassword(p.encrypted_password),
-              website: p.website || '',
-              category: p.category,
-              emoji: p.emoji,
-              notes: p.notes,
-              isFavorite: p.is_favorite,
-              pin_code: p.pin_code || '',
-              createdAt: new Date(p.created_at),
-            }))
-          )
-          if (!active) return
-          if (active) setPasswords(decryptedPasswords)
-        }
+        if (error) console.error('Error loading passwords:', error.code || error.message)
+        else if (data) setRows(data as PasswordRow[])
 
         const { data: categoryData, error: categoryError } = await supabase
           .from('password_categories')
@@ -71,116 +115,113 @@ export function usePasswords(enabled = true) {
           .order('name')
         if (categoryError && categoryError.code !== '42P01') console.error('Error loading password categories:', categoryError)
         if (active && categoryData) setCategories(categoryData)
-      } else {
-        // Fallback to localStorage if not authenticated
-        const stored = localStorage.getItem('ak-passwords')
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored)
-            setPasswords(parsed.map((p: any) => ({
-              ...p,
-              createdAt: new Date(p.createdAt)
-            })))
-          } catch (error) {
-            console.error('Error loading passwords from localStorage:', error)
-          }
-        }
       }
       if (active) setIsLoading(false)
     }
 
     loadPasswords()
     return () => { active = false }
-  }, [user?.id, enabled])
+  }, [user?.id, enabled, vault.dataVersion])
 
-  // Save to localStorage as backup
   useEffect(() => {
-    if (enabled && !isLoading && !user) {
-      localStorage.setItem('ak-passwords', JSON.stringify(passwords))
-    }
-  }, [passwords, isLoading, user?.id, enabled])
+    let active = true
+    Promise.all(rows.map(row => toPassword(row, vaultUnlocked && isVaultUnlocked()))).then(next => {
+      if (active) setPasswords(next)
+    })
+    return () => { active = false }
+  }, [rows, vaultUnlocked])
 
-  const addPassword = async (password: Omit<Password, 'id' | 'createdAt'>) => {
-    if (user) {
-      // Save to Supabase
-      const encryptedPwd = await encryptPassword(password.password)
-      const { data, error} = await supabase
-        .from('passwords')
-        .insert({
-          user_id: user.id,
-          title: password.title,
-          username: password.username,
-          encrypted_password: encryptedPwd,
-          website: password.website,
-          category: password.category,
-          emoji: password.emoji,
-          notes: password.notes || null,
-          is_favorite: password.isFavorite || false,
-          pin_code: password.pin_code || null,
-        })
-        .select()
-        .single()
+  const replaceRow = (row: PasswordRow) => setRows(prev => prev.some(item => item.id === row.id) ? prev.map(item => item.id === row.id ? row : item) : [row, ...prev])
 
-      if (error) {
-        console.error('Error saving password:', error)
-        return null
-      }
-
-      const newPassword: Password = {
-        id: data.id,
-        title: data.title,
-        username: data.username,
-        password: password.password,
-        website: data.website || '',
-        category: data.category,
-        emoji: data.emoji,
-        notes: data.notes,
-        isFavorite: data.is_favorite,
-        pin_code: data.pin_code || '',
-        createdAt: new Date(data.created_at),
-      }
-      setPasswords(prev => [newPassword, ...prev])
-      return newPassword
-    } else {
-      // Save to localStorage
-      const newPassword: Password = {
-        ...password,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-      }
-      setPasswords(prev => [newPassword, ...prev])
-      return newPassword
-    }
+  const requireUser = () => {
+    if (!user) throw new Error('Accedi per gestire le password.')
+    return user
   }
 
-  const updatePassword = async (id: string, updates: Partial<Password>) => {
-    if (user) {
-      const updateData: any = {}
-      if (updates.title !== undefined) updateData.title = updates.title
-      if (updates.username !== undefined) updateData.username = updates.username
-      if (updates.password) updateData.encrypted_password = await encryptPassword(updates.password)
-      if (updates.website !== undefined) updateData.website = updates.website
-      if (updates.category !== undefined) updateData.category = updates.category
-      if (updates.emoji !== undefined) updateData.emoji = updates.emoji
-      if (updates.notes !== undefined) updateData.notes = updates.notes || null
-      if (updates.isFavorite !== undefined) updateData.is_favorite = updates.isFavorite
-      if (updates.pin_code !== undefined) updateData.pin_code = updates.pin_code || null
-      updateData.updated_at = new Date().toISOString()
+  const requireVault = () => {
+    if (!isVaultUnlocked()) throw new Error('Sblocca la cassaforte con la master password per salvare le credenziali.')
+  }
 
-      const { error } = await supabase
-        .from('passwords')
-        .update(updateData)
-        .eq('id', id)
-
-      if (error) {
-        console.error('Error updating password:', error)
-        return
-      }
+  const addPassword = async (password: Omit<Password, 'id' | 'createdAt'>) => {
+    const currentUser = requireUser()
+    requireVault()
+    const id = globalThis.crypto.randomUUID().toLowerCase()
+    let encryptedPassword: string, encryptedPin: string | null
+    try {
+      encryptedPassword = await encryptVaultField(id, 'password', password.password || '')
+      encryptedPin = password.pin_code ? await encryptVaultField(id, 'pin', password.pin_code) : null
+    } catch (error) {
+      throw new Error(describeVaultError(error, 'cifrare la password'))
     }
-    
-    setPasswords(prev => 
-      prev.map(p => p.id === id ? { ...p, ...updates } : p)
-    )
+    const { data, error } = await supabase
+      .from('passwords')
+      .insert({
+        id,
+        user_id: currentUser.id,
+        title: password.title,
+        username: password.username,
+        encrypted_password: encryptedPassword,
+        encrypted_pin_code: encryptedPin,
+        pin_code: null,
+        vault_format: 1,
+        website: password.website,
+        category: password.category,
+        emoji: password.emoji,
+        notes: password.notes || null,
+        is_favorite: password.isFavorite || false,
+      })
+      .select()
+      .single()
+    if (error) {
+      console.error('Error saving password:', error.code || error.message)
+      throw new Error(describeVaultError(error, 'salvare la password'))
+    }
+    replaceRow(data as PasswordRow)
+    return toPassword(data as PasswordRow, isVaultUnlocked())
+  }
+
+  // Any change to the password or PIN re-encrypts both secrets in format v1. This is also how a
+  // legacy row gets upgraded when it is edited explicitly.
+  const updatePassword = async (id: string, updates: Partial<Password>) => {
+    requireUser()
+    const current = passwords.find(item => item.id === id)
+    const updateData: Record<string, unknown> = {}
+    if (updates.title !== undefined) updateData.title = updates.title
+    if (updates.username !== undefined) updateData.username = updates.username
+    if (updates.website !== undefined) updateData.website = updates.website
+    if (updates.category !== undefined) updateData.category = updates.category
+    if (updates.emoji !== undefined) updateData.emoji = updates.emoji
+    if (updates.notes !== undefined) updateData.notes = updates.notes || null
+    if (updates.isFavorite !== undefined) updateData.is_favorite = updates.isFavorite
+    if (updates.password !== undefined || updates.pin_code !== undefined) {
+      requireVault()
+      if (!current || (current.secretStatus !== 'decrypted' && current.secretStatus !== 'legacy')) {
+        throw new Error('Questa credenziale non è leggibile: sbloccala o ricarica prima di modificarla.')
+      }
+      const nextPassword = updates.password !== undefined ? updates.password : current.password
+      const nextPin = updates.pin_code !== undefined ? updates.pin_code : current.pin_code
+      try {
+        updateData.encrypted_password = await encryptVaultField(id, 'password', nextPassword || '')
+        updateData.encrypted_pin_code = nextPin ? await encryptVaultField(id, 'pin', nextPin) : null
+      } catch (error) {
+        throw new Error(describeVaultError(error, 'cifrare la password'))
+      }
+      updateData.pin_code = null
+      updateData.vault_format = 1
+    }
+    updateData.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('passwords')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+    if (error) {
+      console.error('Error updating password:', error.code || error.message)
+      throw new Error(describeVaultError(error, 'aggiornare la password'))
+    }
+    if (!data || data.length !== 1) throw new Error('La credenziale non esiste più o non hai i permessi per modificarla.')
+    replaceRow(data[0] as PasswordRow)
   }
 
   const deletePassword = async (id: string) => {
@@ -191,12 +232,11 @@ export function usePasswords(enabled = true) {
         .eq('id', id)
 
       if (error) {
-        console.error('Error deleting password:', error)
+        console.error('Error deleting password:', error.code || error.message)
         return
       }
     }
-    
-    setPasswords(prev => prev.filter(p => p.id !== id))
+    setRows(prev => prev.filter(p => p.id !== id))
   }
 
   const getPasswordsByCategory = (category: string) => {
@@ -262,7 +302,7 @@ export function usePasswords(enabled = true) {
       await Promise.all(affected.map(password => supabase.from('passwords').update({ category: password.category.replace(oldPath, newPath), updated_at: new Date().toISOString() }).eq('id', password.id)))
     }
     setCategories(prev => prev.map(item => item.id === id ? { ...item, name: cleanName } : item))
-    setPasswords(prev => prev.map(password => password.category === oldPath || password.category.startsWith(`${oldPath} / `) ? { ...password, category: password.category.replace(oldPath, newPath) } : password))
+    setRows(prev => prev.map(row => row.category === oldPath || row.category.startsWith(`${oldPath} / `) ? { ...row, category: row.category.replace(oldPath, newPath) } : row))
     return true
   }
 
@@ -294,7 +334,7 @@ export function usePasswords(enabled = true) {
         return false
       }
     }
-    setPasswords(prev => prev.map(password => affected.some(item => item.id === password.id) ? { ...password, category: '' } : password))
+    setRows(prev => prev.map(row => affected.some(item => item.id === row.id) ? { ...row, category: '' } : row))
     setCategories(prev => prev.filter(item => !descendantIds.includes(item.id)))
     return true
   }
@@ -304,6 +344,7 @@ export function usePasswords(enabled = true) {
     categories,
     isLoading,
     user,
+    vault,
     addPassword,
     updatePassword,
     deletePassword,

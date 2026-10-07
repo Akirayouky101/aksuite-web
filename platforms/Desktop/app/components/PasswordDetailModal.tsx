@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Eye, EyeOff, Copy, Trash2, Pencil, ExternalLink, Star, KeyRound, Hash, StickyNote } from 'lucide-react'
 import { Password } from '../hooks/usePasswords'
+import { usePasswordVault } from '@/lib/passwordVault/store'
 
 interface PasswordDetailModalProps {
   password: Password | null
@@ -16,6 +17,9 @@ export default function PasswordDetailModal({ password, onClose, onEdit, onDelet
   const [showPassword, setShowPassword] = useState(false)
   const [showPin, setShowPin] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const vault = usePasswordVault()
+  const readable = password?.secretStatus === 'legacy' || (vault.status === 'unlocked' && password?.secretStatus === 'decrypted')
+  const lockedText = password?.secretStatus === 'error' ? 'Errore di decifratura' : 'Bloccata — sblocca la cassaforte'
 
   const copy = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text)
@@ -60,12 +64,12 @@ export default function PasswordDetailModal({ password, onClose, onEdit, onDelet
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                   <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Password</div>
                   <div className="flex items-center justify-between gap-3">
-                    <code className="text-sm text-slate-800 font-mono flex-1 break-all">{showPassword ? password.password : '••••••••••••••••'}</code>
+                    <code className="text-sm text-slate-800 font-mono flex-1 break-all">{!readable ? lockedText : showPassword ? password.password : '••••••••••••••••'}</code>
                     <div className="flex gap-1.5 shrink-0">
                       <button onClick={() => setShowPassword((v) => !v)} className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-all" title={showPassword ? 'Nascondi' : 'Mostra'}>
                         {showPassword ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
                       </button>
-                      <CopyBtn text={password.password} id="pass" />
+                      {readable && <CopyBtn text={password.password} id="pass" />}
                     </div>
                   </div>
                 </div>
@@ -79,16 +83,16 @@ export default function PasswordDetailModal({ password, onClose, onEdit, onDelet
                   </div>
                 )}
 
-                {password.pin_code && (
+                {(password.pin_code || (!readable && password.hasPin)) && (
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                     <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Hash className="w-3.5 h-3.5" /> PIN / Codice</div>
                     <div className="flex items-center justify-between gap-3">
-                      <code className="text-sm text-slate-800 font-mono flex-1 break-all tracking-widest">{showPin ? password.pin_code : '●'.repeat(password.pin_code.length)}</code>
+                      <code className="text-sm text-slate-800 font-mono flex-1 break-all tracking-widest">{!readable ? lockedText : showPin ? password.pin_code : '●'.repeat((password.pin_code || '').length)}</code>
                       <div className="flex gap-1.5 shrink-0">
                         <button onClick={() => setShowPin((v) => !v)} className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-all" title={showPin ? 'Nascondi PIN' : 'Mostra PIN'}>
                           {showPin ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
                         </button>
-                        <CopyBtn text={password.pin_code} id="pin" title="Copia PIN" />
+                        {readable && <CopyBtn text={password.pin_code || ''} id="pin" title="Copia PIN" />}
                       </div>
                     </div>
                   </div>

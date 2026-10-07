@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Lock, User, Globe, Tag, Eye, EyeOff, Dices, Star, MessageSquare, Hash } from 'lucide-react'
 import PasswordGenerator from './PasswordGenerator'
-import { PasswordCategory } from '../hooks/usePasswords'
+import { PasswordCategory, PasswordSecretStatus } from '../hooks/usePasswords'
+import PasswordVaultPanel from './PasswordVaultPanel'
+import { usePasswordVault } from '@/lib/passwordVault/store'
 
 interface PasswordData {
   id?: string
@@ -17,12 +19,13 @@ interface PasswordData {
   notes?: string
   isFavorite?: boolean
   pin_code?: string
+  secretStatus?: PasswordSecretStatus
 }
 
 interface PasswordModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: PasswordData) => void
+  onSave: (data: PasswordData) => void | Promise<void>
   editPassword?: PasswordData | null
   categories?: PasswordCategory[]
 }
@@ -43,6 +46,26 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
   const [showPin, setShowPin] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showGenerator, setShowGenerator] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const vault = usePasswordVault()
+  const vaultReady = vault.status === 'unlocked'
+  const wasUnlocked = useRef(vaultReady)
+  useEffect(() => {
+    if (wasUnlocked.current && !vaultReady && isOpen) {
+      setFormData(previous => ({ ...previous, password: '', pin_code: '' }))
+      setShowPassword(false)
+      setShowPin(false)
+      setShowGenerator(false)
+      onClose()
+    }
+    wasUnlocked.current = vaultReady
+  }, [vaultReady, isOpen, onClose])
+  const unreadable = Boolean(editPassword && (editPassword.secretStatus === 'locked' || editPassword.secretStatus === 'error'))
+  const blockedReason = !vaultReady
+    ? 'Sblocca la cassaforte per salvare: password e PIN vengono cifrati sul dispositivo.'
+    : editPassword?.secretStatus === 'error'
+      ? 'Questa credenziale non può essere decifrata (dati danneggiati o chiave diversa). Non è modificabile da qui.'
+      : unreadable ? 'Credenziale ancora bloccata: chiudi e riapri dopo lo sblocco.' : ''
   const selectCategory = (level: number, value: string) => {
     const currentPath = formData.category ? formData.category.split(' / ') : []
     const nextPath = [...currentPath.slice(0, level), value].filter(Boolean)
@@ -84,14 +107,21 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
     }
     setShowPassword(false)
     setShowPin(false)
+    setSaveError('')
   }, [editPassword, isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.category) return
+    if (!formData.category || blockedReason) return
     setIsSaving(true)
-    await new Promise(resolve => setTimeout(resolve, 600))
-    onSave(formData)
+    setSaveError('')
+    try {
+      await onSave(formData)
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Impossibile salvare la credenziale.')
+      setIsSaving(false)
+      return
+    }
     if (!editPassword) {
       setFormData({
         title: '',
@@ -111,7 +141,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && !(wasUnlocked.current && !vaultReady) && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -153,6 +183,7 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
 
               {/* Form */}
               <div className="p-6 overflow-y-auto flex-1">
+                {!vaultReady && <div className="mb-5"><PasswordVaultPanel compact /></div>}
                 <form onSubmit={handleSubmit} className="space-y-5">
 
                   {/* Titolo */}
@@ -319,10 +350,12 @@ export default function PasswordModal({ isOpen, onClose, onSave, editPassword, c
                     </label>
                   </div>
 
+                  {(blockedReason || saveError) && <p className="text-sm text-red-600" role="alert">{saveError || blockedReason}</p>}
+
                   {/* Submit */}
                   <button
                     type="submit"
-                    disabled={isSaving}
+                    disabled={isSaving || Boolean(blockedReason)}
                     className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     {isSaving ? 'Salvataggio...' : editPassword ? 'Aggiorna credenziale' : 'Salva credenziale'}

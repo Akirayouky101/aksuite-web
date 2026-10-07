@@ -22,28 +22,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { lock: authLock },
 })
 
-// Encryption/Decryption utilities
-const ENCRYPTION_KEY = 'your-secret-key-change-this' // TODO: Use env variable
-
-export async function encryptPassword(password: string): Promise<string> {
-  // Simple encryption for now - in production use proper crypto
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password + ENCRYPTION_KEY)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-  
-  // Base64 encode for storage
-  return btoa(password) // Simple encoding for demo
-}
-
-export async function decryptPassword(encryptedPassword: string): Promise<string> {
-  try {
-    return atob(encryptedPassword) // Simple decoding for demo
-  } catch {
-    return encryptedPassword
-  }
-}
+// Password secrets are encrypted client-side by lib/passwordVault (see docs/password-vault.md).
 
 export type Database = {
   public: {
@@ -81,6 +60,9 @@ export type Database = {
           title: string
           username: string
           encrypted_password: string
+          pin_code: string | null
+          encrypted_pin_code: string | null
+          vault_format: number
           website: string | null
           category: string
           emoji: string
@@ -93,6 +75,9 @@ export type Database = {
           title: string
           username: string
           encrypted_password: string
+          pin_code?: string | null
+          encrypted_pin_code?: string | null
+          vault_format?: number
           website?: string | null
           category?: string
           emoji?: string
@@ -105,6 +90,9 @@ export type Database = {
           title?: string
           username?: string
           encrypted_password?: string
+          pin_code?: string | null
+          encrypted_pin_code?: string | null
+          vault_format?: number
           website?: string | null
           category?: string
           emoji?: string
