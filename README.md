@@ -72,7 +72,9 @@ The atom rotates outward on opening. Closing retracts each expanded category
 in sequence, then collapses the satellites and finally the nucleus. Selecting
 a destination waits for the exit to finish before navigating. The page behind
 the web menu is blurred without an added dark veil. The launcher has a subtle breathing glow
-and hover feedback. The dialog keeps focus and scroll locked until its exit
+and hover feedback. The bottom bar also offers Dashboard, Calendar, Calls and
+To-dos shortcuts beside the launcher. They appear on bar hover or keyboard
+focus, and stay visible on touch devices. The dialog keeps focus and scroll locked until its exit
 finishes; reopening cancels the pending close. Reduced-motion preferences
 disable electron motion and close the dialog without the exit delay. Native
 Apple menus use the same atomic component, with positive minimum animation

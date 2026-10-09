@@ -34,6 +34,7 @@ import PaymentModal from './components/PaymentModal'
 import PaymentsOverview from './components/PaymentsOverview'
 import AgendaSummaryModal, { AgendaItem } from './components/AgendaSummaryModal'
 import OperationalDashboard from './components/OperationalDashboard'
+import WebNavigationDock from './components/WebNavigationDock'
 import { DashboardRow } from '@/lib/dashboard'
 import { useReminderFeed } from './hooks/useReminderFeed'
 import GlobalSearchModal from './components/GlobalSearchModal'
@@ -261,11 +262,8 @@ export default function Home() {
         {section === 'clients' && <ClientsWorkspace clients={clients} calls={calls} events={events} workItems={workItems} initialSelectedClientId={returnClientId} onOpenWorkItems={client => { setReturnClientId(null); setWorkClientId(client.id); setSection('work_items') }} onOpenTodos={client => { setReturnClientId(null); setTodoClientId(client.id); setSection('todos') }} onNewAppointment={openNewAppointment} onEditEvent={openEditAppointment} onDeleteEvent={id => { void deleteEvent(id) }} onScheduleFollowUp={scheduleEventFollowUp} onNew={() => open('client')} onEdit={(client) => open('client', client)} onDelete={deleteClient} onToggleFavorite={toggleFavorite} />}
         {section === 'payments' && (paymentView === 'overview' ? <PaymentsOverview payments={payments} onNew={() => open('payment')} onDelete={deletePayment} onOpenPractice={(payment) => { setSelectedPaymentId(payment.id); setPaymentView('practice') }} /> : <PaymentsWorkspace payments={payments} focusPaymentId={selectedPaymentId} onNew={() => open('payment')} onEdit={(payment) => open('payment', payment)} onDelete={deletePayment} onUpdate={(id, updates) => updatePayment(id, updates)} onBack={() => { setSelectedPaymentId(null); setPaymentView('overview') }} />)}
           </div>
-      <footer className={shell.dock}>
-        <button type="button" className={shell.launcher} aria-label="Apri menu principale"
-          aria-haspopup="dialog" aria-expanded={menuOpen} title="Apri menu principale (Comando-K)"
-          onClick={() => setMenuOpen(true)}><LayoutGrid size={23} aria-hidden="true" /></button>
-      </footer>
+      <WebNavigationDock menuOpen={menuOpen} section={section} items={items}
+        onNavigate={navigateToSection} onOpen={() => setMenuOpen(true)} />
       <WebOrbitNavigation open={menuOpen} section={section} items={items}
         onNavigate={navigateToSection} onClose={() => setMenuOpen(false)} />
 

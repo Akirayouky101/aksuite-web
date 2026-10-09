@@ -42,7 +42,7 @@
 }
 .button:hover, .iconButton:hover { background: #83cfff20; }
 .iconButton { min-width: 44px; padding: 8px; }
-.button:focus-visible, .iconButton:focus-visible, .launcher:focus-visible, .orbitNode:focus-visible, .orbitCore:focus-visible, .destination:focus-visible, .dashboard button:focus-visible {
+.button:focus-visible, .iconButton:focus-visible, .launcher:focus-visible, .dockShortcut:focus-visible, .orbitNode:focus-visible, .orbitCore:focus-visible, .destination:focus-visible, .dashboard button:focus-visible {
   outline: 3px solid #83cfff;
   outline-offset: 4px;
 }
@@ -58,6 +58,39 @@
   padding-bottom: env(safe-area-inset-bottom);
   background: radial-gradient(ellipse at center, #1966a54d, transparent 35%), #030a17ef;
   border-top: 1px solid #83cfff15;
+}
+.dockItems { display: flex; align-items: center; justify-content: center; gap: clamp(4px, 1.5vw, 20px); }
+.dockShortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: clamp(54px, 16vw, 64px);
+  min-height: 58px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--section-accent);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity .25s ease, transform .3s ease, background .25s ease;
+}
+.dockShortcut span { color: var(--mac-text); font-size: 10px; font-weight: 600; line-height: 1.2; text-align: center; }
+.dock:hover .dockShortcut, .dock:focus-within .dockShortcut, .dock[data-menu-open='true'] .dockShortcut {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.dockShortcut:hover, .dockShortcut[aria-current='page'] { background: var(--section-tint); border-color: var(--section-line); }
+@media (hover: none), (pointer: coarse) {
+  .dock .dockShortcut { opacity: 1; transform: none; pointer-events: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dockShortcut { transition: none; transform: none; }
 }
 .launcher, .orbitCore {
   display: flex;
