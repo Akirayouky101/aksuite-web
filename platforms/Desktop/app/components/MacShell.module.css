@@ -98,6 +98,105 @@
   background: transparent;
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
+
+.atomicDialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #eff9ff;
+  background: transparent;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.atomicDialog::backdrop { background: transparent; backdrop-filter: blur(5px); }
+.atomicBackdrop { min-height: 100%; display: grid; place-items: center; padding: 16px; }
+.atomicBoard { position: relative; width: min(100%, 1000px); aspect-ratio: 1000 / 640; }
+.atomicStage, .atomicBranches, .atomicBranch, .atomicLinks { position: absolute; inset: 0; width: 100%; height: 100%; }
+.atomicBranches, .atomicBranch { pointer-events: none; }
+.atomicStage { animation: atomicExpand .55s ease-in-out both; }
+.atomicLinks { pointer-events: none; overflow: visible; }
+.atomicLinks line { stroke-width: 1.5; opacity: .6; }
+.atomicCategory, .atomicCore, .atomicDestination {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #83cfff80;
+  color: #eff9ff;
+  background: linear-gradient(145deg, #344a63ed, #102139f5);
+  box-shadow: 0 6px 22px #0006, inset 0 1px 1px #ffffff40;
+  cursor: pointer;
+}
+.atomicCategory { width: 10.8%; aspect-ratio: 1; border-radius: 50%; flex-direction: column; transform: translate(-50%, -50%); font-size: 14px; font-weight: 700; }
+.atomicCategory svg { color: var(--orbit-accent); width: 24px; height: 24px; }
+.atomicCategory[aria-expanded='true'] { border-color: var(--orbit-accent); box-shadow: 0 0 20px color-mix(in srgb, var(--orbit-accent) 35%, transparent); }
+.atomicCategory:focus-visible, .atomicCore:focus-visible, .atomicDestination:focus-visible { outline: 3px solid #eff9ff; outline-offset: 4px; }
+.atomicCore { left: 50%; top: 50%; width: 8.6%; aspect-ratio: 1; border-radius: 50%; flex-direction: column; animation: atomicCoreIn .55s ease-in-out both; }
+.atomicCore strong { font-size: 28px; }
+.atomicBranch h3 { display: none; }
+.atomicBranch .atomicLinks { opacity: 0; transition: opacity .3s ease; }
+.atomicBranch[data-open='true'] .atomicLinks { opacity: 1; }
+.atomicDestination {
+  width: 14.2%;
+  height: 12.1875%;
+  padding: 8px;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translate(calc(-50% + var(--entry-x)), calc(-50% + var(--entry-y))) scale(.05);
+  transition: transform .3s ease-in-out var(--entry-delay), opacity .3s ease-in-out var(--entry-delay);
+}
+.atomicDestination svg { color: var(--section-accent); flex-shrink: 0; }
+.atomicBranch[data-open='true'] .atomicDestination { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+.atomicDialog[data-phase='atom'] .atomicStage, .atomicDialog[data-phase='core'] .atomicStage { animation: atomicCollapse .42s ease-in-out both; }
+.atomicDialog[data-phase='core'] .atomicCore { animation: atomicCoreOut .18s ease-in both; }
+.atomicDialog:not([data-phase='open']) .electronTrack { animation-play-state: paused; }
+.electronField { position: absolute; left: 50%; top: 50%; width: 37%; aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; }
+.electronTilt { position: absolute; inset: 0; }
+.electronOrbit { position: absolute; inset: 3%; border: 1px solid #83cfff55; border-radius: 50%; transform: scaleY(.457); }
+.electronTrack { position: absolute; inset: 0; animation: electronSpin 6s linear infinite; }
+.electronTrack i { position: absolute; left: 50%; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: #83cfff; box-shadow: 0 0 12px #83cfff; transform: scaleY(2.19); }
+.electronTrack i + i { top: auto; bottom: -4px; background: #b29bdb; }
+@keyframes electronSpin { to { transform: rotate(360deg); } }
+@keyframes atomicExpand { from { opacity: 0; transform: rotate(180deg) scale(.05); } to { opacity: 1; transform: rotate(0) scale(1); } }
+@keyframes atomicCollapse { from { opacity: 1; transform: rotate(0) scale(1); } to { opacity: 0; transform: rotate(180deg) scale(.05); } }
+@keyframes atomicCoreIn { from { opacity: 0; transform: translate(-50%, -50%) rotate(-180deg) scale(.05); } to { opacity: 1; transform: translate(-50%, -50%) rotate(0) scale(1); } }
+@keyframes atomicCoreOut { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) rotate(-180deg) scale(.05); } }
+@media (max-width: 699px), (max-height: 499px) {
+  .atomicBackdrop { display: block; padding: 16px 12px; }
+  .atomicBoard { width: 100%; aspect-ratio: auto; padding-top: 330px; }
+  .atomicStage { height: 330px; }
+  .atomicStage .atomicLinks { display: none; }
+  .atomicCategory { width: 84px; height: 84px; font-size: 12px; }
+  .atomicCategory:nth-of-type(1) { left: 50% !important; top: 60px !important; }
+  .atomicCategory:nth-of-type(2) { left: calc(50% - 105px) !important; top: 165px !important; }
+  .atomicCategory:nth-of-type(3) { left: calc(50% + 105px) !important; top: 165px !important; }
+  .atomicCategory:nth-of-type(4) { left: 50% !important; top: 270px !important; }
+  .atomicCore { top: 165px; width: 70px; height: 70px; }
+  .electronField { width: 266px; height: 266px; }
+  .atomicBranches { position: relative; height: auto; }
+  .atomicBranch { position: relative; height: auto; max-height: 0; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .45s, margin .3s, max-height .45s, padding .3s; }
+  .atomicBranch[data-open='true'] { max-height: 520px; opacity: 1; visibility: visible; margin-top: 16px; padding: 18px; border: 1px solid #83cfff66; border-radius: 22px; background: #152841f0; }
+  .atomicBranch h3 { display: block; margin-bottom: 12px; color: var(--orbit-accent); font-weight: 700; }
+  .atomicBranch .atomicLinks { display: none; }
+  .atomicDestination { position: relative; left: auto !important; top: auto !important; width: 100%; height: 56px; margin-top: 8px; justify-content: flex-start; padding: 12px; font-size: 18px; border-radius: 14px; transform: none; }
+  .atomicBranch[data-open='true'] .atomicDestination { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atomicDialog *, .atomicDialog *::before, .atomicDialog *::after { animation: none !important; transition: none !important; }
+  .atomicCore { transform: translate(-50%, -50%); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .atomicCategory, .atomicCore, .atomicDestination { background: #152841; }
+}
 .orbitDialog::backdrop { background: #030a179e; backdrop-filter: blur(5px); }
 .orbitDialog[data-state='open']::backdrop { animation: orbitShadeIn .32s ease both; }
 .orbitDialog[data-state='closing']::backdrop { animation: orbitShadeOut var(--orbit-exit-duration) ease both; }

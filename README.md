@@ -61,15 +61,22 @@ The user-management entry remains admin-only on the web.
 
 The web interface uses the native Mac blue glass shell, bottom menu
 launcher and grouped orbital navigation (Dashboard, Operatività, Gestione,
-Strumenti). On narrow screens the orbital groups become a compact grid.
+Strumenti). The atomic menu has three elliptical electron orbits and independently
+expandable categories. Desktop web, Mac and full-size iPad windows place
+destinations outside the central atom; iPhone and narrow web windows show
+scrollable destination panels below a compact atom.
 Command/Control-K opens the menu, Escape closes it and
 Shift-Command/Control-F opens global search. The native HTML dialog keeps
 keyboard focus within the menu and restores focus when closed.
-The web menu fades and expands on opening, staggers its group/destination
-entries and fades down on closing. The launcher has a subtle breathing glow
+The atom rotates outward on opening. Closing retracts each expanded category
+in sequence, then collapses the satellites and finally the nucleus. Selecting
+a destination waits for the exit to finish before navigating. The page behind
+the web menu is blurred without an added dark veil. The launcher has a subtle breathing glow
 and hover feedback. The dialog keeps focus and scroll locked until its exit
 finishes; reopening cancels the pending close. Reduced-motion preferences
-disable these animations and close the dialog without the exit delay.
+disable electron motion and close the dialog without the exit delay. Native
+Apple menus use the same atomic component, with positive minimum animation
+scales to avoid singular AppKit transforms.
 Web sections share the native navigation accents: green calls, blue calendar,
 gold to-dos, sage work, teal contacts/shopping, orange notes, coral payments,
 purple passwords and pink photos. Menu icons/tiles and workspace headings,
