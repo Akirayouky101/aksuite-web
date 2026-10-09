@@ -47,7 +47,7 @@ export function useEvents(enabled = true) {
     const ticket = ++request.current
     const userId = user.id
     try {
-      const { data, error } = await supabase.from('events').select('*').eq('is_completed', false)
+      const { data, error } = await supabase.from('events').select('*')
         .is('archived_at', null).order('start_date')
       if (error) throw error
       if (owner.current !== userId || ticket !== request.current) return
@@ -71,7 +71,7 @@ export function useEvents(enabled = true) {
     loadedFor.current = user?.id || null
     setEvents(current => {
       const others = sameOwner ? current.filter(event => event.id !== data.id) : []
-      return data.is_completed || data.archived_at ? others : [...others, data].sort((a, b) => a.start_date.localeCompare(b.start_date))
+      return data.archived_at ? others : [...others, data].sort((a, b) => a.start_date.localeCompare(b.start_date))
     })
   }
   const addEvent = async (input: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {

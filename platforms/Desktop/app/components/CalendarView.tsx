@@ -83,7 +83,7 @@ export default function CalendarView({
   const [onlyWithoutReminder, setOnlyWithoutReminder] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [changedHistoryItem, setChangedHistoryItem] = useState<{ id: string } | null>(null)
-  const [history, setHistory] = useState<'pending' | 'completed' | 'archived'>('pending')
+  const [history, setHistory] = useState<'all' | 'pending' | 'completed' | 'completed-search' | 'archived'>('all')
   const [settings, setSettings] = useState(initialSettings)
 
   const currentYear = currentDate.getFullYear()
@@ -150,9 +150,17 @@ export default function CalendarView({
     return ev.color || 'blue'
   }
 
-  const calendarEvents = onlyWithoutReminder ? filteredEvents.filter(event => event.reminder_minutes === 0) : filteredEvents
+  const calendarEvents = filteredEvents.filter(event => {
+    if (event.archived_at) return false
+    if (history === 'pending') return !event.is_completed
+    if (history === 'completed') return event.is_completed
+    return history === 'all'
+  })
+  const visibleCalendarEvents = onlyWithoutReminder
+    ? calendarEvents.filter(event => event.reminder_minutes === 0)
+    : calendarEvents
 
-  const getEventsForDate = (date: Date) => calendarEvents.filter(ev => {
+  const getEventsForDate = (date: Date) => visibleCalendarEvents.filter(ev => {
     const s = new Date(ev.start_date)
     const e = ev.end_date ? new Date(ev.end_date) : s
     const ds = new Date(date); ds.setHours(0,0,0,0)
@@ -277,11 +285,13 @@ export default function CalendarView({
           {/* BODY */}
           <div className="flex flex-wrap gap-2 border-b p-3">
             <button onClick={() => setSettings(current => !current)} className="rounded-xl border px-3 py-2 text-sm font-bold">Impostazioni calendario</button>
-            {(['pending', 'completed', 'archived'] as const).map(value => <button key={value} aria-pressed={history === value} onClick={() => setHistory(value)} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === value ? 'bg-ak-success-bg' : 'bg-ak-inset'}`}>{value === 'pending' ? 'Da fare' : value === 'completed' ? 'Eseguite' : 'Archiviate'}</button>)}
+            {(['all', 'pending', 'completed'] as const).map(value => <button key={value} aria-pressed={history === value} onClick={() => setHistory(value)} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === value ? 'bg-ak-success-bg' : 'bg-ak-inset'}`}>{value === 'all' ? 'Tutti' : value === 'pending' ? 'Da fare' : 'Completati'}</button>)}
+            <button aria-pressed={history === 'completed-search'} onClick={() => setHistory('completed-search')} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === 'completed-search' ? 'bg-ak-success-bg' : 'bg-ak-inset'}`}>Ricerca completati</button>
+            <button aria-pressed={history === 'archived'} onClick={() => setHistory('archived')} className={`rounded-xl px-3 py-2 text-sm font-bold ${history === 'archived' ? 'bg-ak-success-bg' : 'bg-ak-inset'}`}>Archiviate</button>
           </div>
           {settings && <div className="max-h-[40vh] overflow-y-auto px-5"><WebPushSettings /><GoogleCalendarSettings /></div>}
-          {history !== 'pending' && <div className="min-h-0 flex-1 overflow-y-auto p-5"><HistoryBrowser key={history} kind="event" state={history} changedItem={changedHistoryItem} onOpen={setSelectedEvent} /></div>}
-          {history === 'pending' &&
+          {(history === 'completed-search' || history === 'archived') && <div className="min-h-0 flex-1 overflow-y-auto p-5"><HistoryBrowser key={history} kind="event" state={history === 'archived' ? 'archived' : 'completed'} changedItem={changedHistoryItem} onOpen={setSelectedEvent} /></div>}
+          {history !== 'completed-search' && history !== 'archived' &&
           <div className="flex-1 overflow-hidden flex flex-col lg:flex-row min-h-0">
 
             {/* GRIGLIA */}
@@ -332,7 +342,7 @@ export default function CalendarView({
                         {dayEvents.slice(0, 3).map(ev => (
                           <button key={ev.id}
                             onClick={e => openPopup(ev, e)}
-                            className={`w-full text-left text-xs leading-snug font-semibold truncate rounded-lg px-2 py-1 text-white hover:opacity-90 active:scale-[0.97] transition-all ${EV_PILL[getEvColor(ev)]}`}
+                            className={`w-full text-left text-xs leading-snug font-semibold truncate rounded-lg px-2 py-1 text-white hover:opacity-90 active:scale-[0.97] transition-all ${EV_PILL[getEvColor(ev)]} ${ev.is_completed ? 'line-through opacity-70' : ''}`}
                           >
                             {!ev.all_day && <span className="opacity-80 mr-0.5">{fmt(ev.start_date)}</span>}
                             {filterUserId === 'all' && managedUsers.length > 0 && ev.assigned_to_name && (
@@ -412,7 +422,7 @@ export default function CalendarView({
                       className={`rounded-2xl border-l-4 p-4 cursor-pointer hover:shadow-md transition-all ${c.bg} ${c.border}`}
                     >
                       <div className="flex items-start justify-between gap-1 mb-1">
-                        <p className={`text-sm font-bold leading-tight ${c.text}`}>{ev.title}</p>
+                        <p className={`text-sm font-bold leading-tight ${c.text} ${ev.is_completed ? 'line-through opacity-70' : ''}`}>{ev.title}</p>
                         <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${c.badge}`} />
                       </div>
                       <div className={`flex items-center gap-1.5 text-xs ${c.text} opacity-70 mb-1`}>

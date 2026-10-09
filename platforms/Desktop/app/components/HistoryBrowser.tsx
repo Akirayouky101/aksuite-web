@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { HISTORY_PAGE_SIZE, historyDates, HistoryState } from '@/lib/lifecycle'
+import DateTimePicker from './DateTimePicker'
 import type { Event } from '../hooks/useEvents'
 import type { WorkItem } from '../hooks/useWorkItems'
 import { useAuth } from '../hooks/useAuth'
@@ -46,14 +47,25 @@ export default function HistoryBrowser(props: Props) {
       if (!userId) throw new Error('Accedi per consultare lo storico.')
       if (!more) invalidated.current.clear()
       const input = more ? criteria.current : { text: text.trim(), from, until }
-      const dates = historyDates(input.from, input.until)
+      let dateBounds: { start: string | undefined; end: string | undefined }
+      if (props.kind === 'event') {
+        const start = input.from ? new Date(input.from) : null
+        const end = input.until ? new Date(input.until) : null
+        if ((start && !Number.isFinite(start.getTime())) || (end && !Number.isFinite(end.getTime()))) {
+          throw new Error('Date di ricerca non valide.')
+        }
+        if (start && end && start > end) throw new Error('La data iniziale deve precedere quella finale.')
+        dateBounds = { start: start?.toISOString(), end: end?.toISOString() }
+      } else {
+        dateBounds = historyDates(input.from, input.until)
+      }
       let query = supabase.from(props.kind === 'event' ? 'events' : 'work_items').select('*')
       query = props.kind === 'event' ? query.eq('is_completed', true) : query.eq('kind', 'todo').eq('status', 'completed')
       query = props.state === 'archived' ? query.not('archived_at', 'is', null) : query.is('archived_at', null)
       if (props.clientId) query = query.eq('client_id', props.clientId)
       if (input.text) query = query.ilike('title', `%${input.text.replace(/[%_\\]/g, '\\$&')}%`)
-      if (dates.start) query = query.gte('completed_at', dates.start)
-      if (dates.end) query = query.lte('completed_at', dates.end)
+      if (dateBounds.start) query = query.gte('completed_at', dateBounds.start)
+      if (dateBounds.end) query = query.lte('completed_at', dateBounds.end)
       const last = more ? cursor.current : null
       if (last) query = query.or(`completed_at.lt.${last.time},and(completed_at.eq.${last.time},id.lt.${last.id})`)
       const { data, error: queryError } = await query.order('completed_at', { ascending: false })
@@ -78,8 +90,16 @@ export default function HistoryBrowser(props: Props) {
     <p className="text-sm text-ak-muted">Lo storico resta nel database. Cerca o carica 5 elementi alla volta, solo quando lo richiedi. Dopo 7 giorni le eseguite passano automaticamente in archivio.</p>
     <form onSubmit={event => { event.preventDefault(); void search() }} className="flex flex-wrap items-end gap-3">
       <label className="text-sm">Titolo<input value={text} onChange={event => setText(event.target.value)} className="mt-1 block rounded-lg border p-2" /></label>
-      <label className="text-sm">Eseguite dal<input type="date" value={from} onChange={event => setFrom(event.target.value)} className="mt-1 block rounded-lg border p-2" /></label>
-      <label className="text-sm">Al<input type="date" value={until} onChange={event => setUntil(event.target.value)} className="mt-1 block rounded-lg border p-2" /></label>
+      <label className="text-sm">{props.kind === 'event' ? 'Completato dal' : 'Eseguite dal'}
+        {props.kind === 'event'
+          ? <DateTimePicker mode="datetime" value={from} onChange={setFrom} placeholder="Data e ora iniziale" />
+          : <input type="date" value={from} onChange={event => setFrom(event.target.value)} className="mt-1 block rounded-lg border p-2" />}
+      </label>
+      <label className="text-sm">Al
+        {props.kind === 'event'
+          ? <DateTimePicker mode="datetime" value={until} onChange={setUntil} placeholder="Data e ora finale" />
+          : <input type="date" value={until} onChange={event => setUntil(event.target.value)} className="mt-1 block rounded-lg border p-2" />}
+      </label>
       <button disabled={busy} className="ak-primary-action">{busy ? 'Caricamento...' : 'Cerca / carica 5'}</button>
     </form>
     {error && <p role="alert" className="text-ak-danger">{error}</p>}
