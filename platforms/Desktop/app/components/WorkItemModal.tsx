@@ -11,6 +11,7 @@ import DictationButton from './DictationButton'
 interface WorkItemModalProps {
   isOpen: boolean
   clients: Client[]
+  checklistSources: WorkItem[]
   mode?: WorkKind
   defaultClientId?: string | null
   editingWorkItem?: WorkItem | null
@@ -20,6 +21,7 @@ interface WorkItemModalProps {
 
 const emptyForm: WorkItemInput = {
   kind: 'work',
+  checklist_source_id: null,
   client_id: null,
   title: '',
   description: '',
@@ -33,7 +35,7 @@ const emptyForm: WorkItemInput = {
   materials: [],
 }
 
-export default function WorkItemModal({ isOpen, clients, mode = 'work', defaultClientId, editingWorkItem, onClose, onSave }: WorkItemModalProps) {
+export default function WorkItemModal({ isOpen, clients, checklistSources, mode = 'work', defaultClientId, editingWorkItem, onClose, onSave }: WorkItemModalProps) {
   const [form, setForm] = useState<WorkItemInput>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -45,6 +47,7 @@ export default function WorkItemModal({ isOpen, clients, mode = 'work', defaultC
     setActiveList(null)
     setForm(editingWorkItem ? {
       kind: editingWorkItem.kind || mode,
+      checklist_source_id: editingWorkItem.checklist_source_id || null,
       client_id: editingWorkItem.client_id,
       title: editingWorkItem.title,
       description: editingWorkItem.description,
@@ -99,6 +102,32 @@ export default function WorkItemModal({ isOpen, clients, mode = 'work', defaultC
             </select>
           </label>
           <Field label="Descrizione" value={form.description} onChange={value => setValue('description', value)} placeholder="Cosa c'è da fare?" />
+
+          {mode === 'work' && <label className="block text-xs font-semibold text-ak-muted">Collega una checklist esistente
+            <select
+              value={form.checklist_source_id || ''}
+              onChange={event => {
+                const source = checklistSources.find(item => item.id === event.target.value)
+                setForm(current => ({
+                  ...current,
+                  checklist_source_id: source?.id || null,
+                  checklist: source?.checklist || current.checklist,
+                }))
+              }}
+              className="mt-1 w-full rounded-xl border border-ak-line bg-ak-inset px-3.5 py-3 text-sm text-ak-text"
+            >
+              <option value="">Checklist indipendente</option>
+              {checklistSources.map(source => {
+                const progress = checklistProgress(source.checklist)
+                return <option key={source.id} value={source.id}>{source.title} · {progress.done}/{progress.total}</option>
+              })}
+            </select>
+            <span className="mt-1 block font-normal">
+              {form.checklist_source_id
+                ? 'Le modifiche e gli avanzamenti saranno sincronizzati con la checklist originale.'
+                : 'Puoi crearne una nuova oppure collegarne una dalla sezione Cose da fare.'}
+            </span>
+          </label>}
 
           <div className={`grid gap-3 border-y border-ak-line py-3 ${mode === 'todo' ? '' : 'grid-cols-2'}`}>
             <button type="button" onClick={() => setActiveList('checklist')} className="flex min-w-0 items-center gap-2 rounded-lg border border-ak-line bg-ak-inset px-3 py-3 text-left text-sm font-bold text-ak-text hover:border-ak-success">

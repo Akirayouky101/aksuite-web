@@ -67,6 +67,7 @@ export interface WorkItem {
   id: string
   user_id: string
   kind: WorkKind
+  checklist_source_id: string | null
   client_id: string | null
   title: string
   description: string
@@ -148,8 +149,31 @@ export function useWorkItems(enabled = true) {
   const updateWorkItem = async (id: string, updates: Partial<WorkItemInput>) => {
     if (!user) throw new Error('Accedi per modificare una lavorazione.')
     const previous = workItems.find(item => item.id === id)
-    const changes = previous && (updates.checklist || updates.materials)
-      ? { ...updates, materials: synchronizeMaterialUsage(updates.materials || previous.materials, updates.checklist || previous.checklist, previous.checklist) }
+    const sharedChecklist = updates.checklist
+    const sourceChanged = updates.checklist_source_id !== undefined
+      && updates.checklist_source_id !== previous?.checklist_source_id
+    const sourceId = sharedChecklist && !sourceChanged ? previous?.checklist_source_id : null
+    let sourceData: WorkItem | null = null
+
+    if (sourceId) {
+      const { data, error } = await supabase
+        .from('work_items')
+        .update({ checklist: sharedChecklist, updated_at: new Date().toISOString() })
+        .eq('id', sourceId)
+        .select()
+        .single()
+      if (error) throw error
+      sourceData = data as WorkItem
+    }
+
+    const directUpdates = sourceId
+      ? Object.fromEntries(Object.entries(updates).filter(([key]) => key !== 'checklist')) as Partial<WorkItemInput>
+      : updates
+    const changes = previous && (sharedChecklist || directUpdates.materials)
+      ? {
+          ...directUpdates,
+          materials: synchronizeMaterialUsage(directUpdates.materials || previous.materials, sharedChecklist || previous.checklist, previous.checklist),
+        }
       : updates
     const { data, error } = await supabase
       .from('work_items')
@@ -159,8 +183,30 @@ export function useWorkItems(enabled = true) {
       .single()
     if (error) throw error
     if (owner.current !== user.id) throw new Error('Sessione cambiata. Accedi nuovamente.')
+    const checklistOwnerId = sharedChecklist ? sourceId || (previous?.kind === 'todo' ? id : null) : null
+    const linkedItems = checklistOwnerId
+      ? workItems.filter(item => item.checklist_source_id === checklistOwnerId && item.id !== id)
+      : []
+    const linkedResults = await Promise.all(linkedItems.map(async item => {
+      const { data: linkedData, error: linkedError } = await supabase
+        .from('work_items')
+        .update({
+          materials: synchronizeMaterialUsage(item.materials, sharedChecklist!, item.checklist),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', item.id)
+        .select()
+        .single()
+      if (linkedError) throw linkedError
+      return linkedData as WorkItem
+    }))
+    const refreshed = new Map<string, WorkItem>(linkedResults.map(item => [item.id, item]))
+    if (sourceData) refreshed.set(sourceData.id, sourceData)
+    refreshed.set(data.id, data as WorkItem)
     setWorkItems(current => {
-      const remaining = current.filter(item => item.id !== id)
+      const remaining = current
+        .filter(item => item.id !== id)
+        .map(item => refreshed.get(item.id) || item)
       return data.archived_at || (data.kind === 'todo' && data.status === 'completed') ? remaining : [data, ...remaining]
     })
     return data as WorkItem
