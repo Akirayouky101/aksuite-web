@@ -135,6 +135,17 @@ export function useWorkItems(enabled = true) {
   const addWorkItem = async (input: WorkItemInput) => {
     if (!user) throw new Error('Devi accedere per salvare una lavorazione.')
     const workItem = { ...input, materials: synchronizeMaterialUsage(input.materials, input.checklist) }
+    const source = input.checklist_source_id ? workItems.find(item => item.id === input.checklist_source_id) : undefined
+    if (source && JSON.stringify(source.checklist) !== JSON.stringify(input.checklist)) {
+      const { data: sourceData, error: sourceError } = await supabase
+        .from('work_items')
+        .update({ checklist: input.checklist, updated_at: new Date().toISOString() })
+        .eq('id', source.id)
+        .select()
+        .single()
+      if (sourceError) throw sourceError
+      setWorkItems(current => current.map(item => item.id === sourceData.id ? sourceData as WorkItem : item))
+    }
     const { data, error } = await supabase
       .from('work_items')
       .insert([{ ...workItem, user_id: user.id }])

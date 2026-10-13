@@ -1,9 +1,12 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 private enum NativeWorkUnit: String, Codable, CaseIterable {
     case pezzi, metri
-
     var label: String { self == .pezzi ? "Pezzi" : "Metri" }
 }
 
@@ -131,6 +134,7 @@ private struct WorkIntervention: Decodable, Identifiable {
 private struct WorkItem: Codable, Identifiable, Equatable {
     let id: UUID
     var kind: String
+    var checklistSourceID: UUID?
     var clientID: UUID?
     var title: String
     var description: String
@@ -149,6 +153,7 @@ private struct WorkItem: Codable, Identifiable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case id, kind, title, description, status, priority, notes, checklist, materials
+        case checklistSourceID = "checklist_source_id"
         case clientID = "client_id"
         case scheduledAt = "scheduled_at"
         case dueDate = "due_date"
@@ -162,6 +167,7 @@ private struct WorkItem: Codable, Identifiable, Equatable {
 
 private struct WorkItemPayload: Encodable {
     var clientID: UUID?
+    var checklistSourceID: UUID?
     let kind: String
     let title: String
     let description: String
@@ -177,6 +183,7 @@ private struct WorkItemPayload: Encodable {
 
     enum CodingKeys: String, CodingKey {
         case kind, title, description, status, priority, notes, checklist, materials
+        case checklistSourceID = "checklist_source_id"
         case clientID = "client_id"
         case scheduledAt = "scheduled_at"
         case dueDate = "due_date"
@@ -187,6 +194,7 @@ private struct WorkItemPayload: Encodable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(clientID, forKey: .clientID)
+        try container.encode(checklistSourceID, forKey: .checklistSourceID)
         try container.encode(kind, forKey: .kind)
         try container.encode(title, forKey: .title)
         try container.encode(description, forKey: .description)
@@ -232,6 +240,7 @@ private enum WorkListKind: String, Identifiable {
 
 struct WorkItemsWorkspaceView: View {
     @EnvironmentObject private var auth: AuthViewModel
+    @Environment(\.akTabletDevice) private var tabletDevice
     let mode: String
     let initialClientID: UUID?
     let onBack: () -> Void
@@ -239,6 +248,7 @@ struct WorkItemsWorkspaceView: View {
     var createNewItem = false
     @State private var consumedInitialCreation = false
     @State private var items: [WorkItem] = []
+    @State private var checklistSources: [WorkItem] = []
     @State private var clients: [WorkClient] = []
     @State private var interventions: [WorkIntervention] = []
     @State private var query = ""
@@ -252,9 +262,15 @@ struct WorkItemsWorkspaceView: View {
     @State private var editingItem: WorkItem?
     @State private var selectedItemID: UUID?
     @State private var selectedList: WorkListKind?
+    @State private var phoneSummaryList: WorkListKind?
+    @State private var editAfterSummaryDismissal = false
     @State private var itemToDelete: WorkItem?
 
     private var selectedItem: WorkItem? { historicalItem?.id == selectedItemID ? historicalItem : items.first { $0.id == selectedItemID } }
+
+    #if os(macOS)
+    private var macFocusedItem: WorkItem? { selectedItem }
+    #endif
 
     private let columns = [GridItem(.adaptive(minimum: 300, maximum: 440), spacing: 12, alignment: .top)]
 
@@ -269,21 +285,12 @@ struct WorkItemsWorkspaceView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color(hex: "#efe8d8").ignoresSafeArea()
-                if isLoading {
-                    ProgressView("Caricamento lavorazioni...")
-                } else {
-                    content
-                }
-            }
-            .platformNavigationBarTitleDisplayMode()
-            .toolbar {
-                ToolbarItem(placement: .akLeading) { Button(action: onBack) { Image(systemName: "chevron.left") }.accessibilityLabel(initialClientID == nil ? "Dashboard" : "Rubrica") }
-                ToolbarItem(placement: .principal) { Text(mode == "todo" ? "COSE DA FARE" : "LAVORAZIONI").font(.headline.weight(.black)).foregroundStyle(Color(hex: "#2d2754")) }
-                ToolbarItem(placement: .akTrailing) { Button { editingItem = nil; showEditor = true } label: { Image(systemName: "plus") }.accessibilityLabel(mode == "todo" ? "Nuova cosa da fare" : "Nuova lavorazione") }
-            }
+        Group {
+            #if os(macOS)
+            macWorkspace
+            #else
+            mobileWorkspace
+            #endif
         }
         .task {
             await load()
@@ -294,23 +301,54 @@ struct WorkItemsWorkspaceView: View {
         }
         .overlay {
             if showEditor {
-                WorkItemEditorView(item: editingItem, clients: clients, mode: mode, defaultClientID: initialClientID, onClose: closeEditor, onSave: save)
-                    .platformModalWidth(compact: 380, regular: 860)
-                    .shadow(color: Color.black.opacity(0.18), radius: 24, y: 10)
-                    .transition(.asymmetric(insertion: .scale(scale: 0.9).combined(with: .opacity), removal: .scale(scale: 0.95).combined(with: .opacity)))
+                WorkItemEditorView(item: editingItem, clients: clients, checklistSources: checklistSources, mode: mode, defaultClientID: initialClientID, onClose: closeEditor, onSave: save)
+                    .platformModalWidth(compact: 380, regular: 980)
+                    .shadow(color: Color.black.opacity(0.34), radius: 28, y: 12)
+                    .transition(.asymmetric(insertion: .scale(scale: 0.94).combined(with: .opacity), removal: .scale(scale: 0.97).combined(with: .opacity)))
             }
         }
+        #if !os(macOS)
         .overlay {
-            if let item = selectedItem {
-                WorkItemSummaryView(item: item, interventions: interventions.filter { $0.workItemID == item.id }, clientName: clientName(for: item), onClose: { selectedItemID = nil; historicalItem = nil }, onEdit: { selectedItemID = nil; editingItem = item; showEditor = true }, onOpenList: { selectedList = $0 }, onRestore: {
-                    let updated: WorkItem = try await SupabaseService.shared.from("work_items").update(["status": "planned"]).eq("id", value: item.id.uuidString).select().single().execute().value
-                    retain(updated)
-                    selectedItemID = nil; historicalItem = nil
-                })
+            if tabletDevice, let item = selectedItem {
+                WorkItemSummaryView(item: item, interventions: interventions.filter { $0.workItemID == item.id }, clientName: clientName(for: item), onClose: { selectedItemID = nil; historicalItem = nil }, onEdit: { selectedItemID = nil; editingItem = item; showEditor = true }, onOpenList: { selectedList = $0 }, onRestore: { try await restore(item) })
                     .platformModalWidth(compact: 380, regular: 760)
-                    .shadow(color: Color.black.opacity(0.18), radius: 24, y: 10)
+                    .shadow(color: Color.black.opacity(0.3), radius: 28, y: 12)
             }
         }
+        .fullScreenCover(isPresented: Binding(
+            get: { !tabletDevice && selectedItem != nil },
+            set: { if !$0 { selectedItemID = nil; historicalItem = nil } }
+        ), onDismiss: {
+            if editAfterSummaryDismissal {
+                editAfterSummaryDismissal = false
+                showEditor = true
+            }
+        }) {
+            if let item = selectedItem {
+                WorkItemSummaryView(
+                    item: item,
+                    interventions: interventions.filter { $0.workItemID == item.id },
+                    clientName: clientName(for: item),
+                    onClose: { selectedItemID = nil; historicalItem = nil },
+                    onEdit: {
+                        editingItem = item
+                        editAfterSummaryDismissal = true
+                        selectedItemID = nil
+                        historicalItem = nil
+                    },
+                    onOpenList: { phoneSummaryList = $0 },
+                    onRestore: { try await restore(item) }
+                )
+                .sheet(item: $phoneSummaryList) { kind in
+                    WorkListEditorView(kind: kind, simple: mode == "todo", title: item.title,
+                        entries: kind == .checklist ? item.checklist : item.materials,
+                        materials: item.materials, checklist: item.checklist, workItemID: item.id) { entries in
+                        try await saveList(entries, kind: kind, for: item)
+                    }
+                }
+            }
+        }
+        #endif
         .sheet(item: $selectedList) { kind in
             if let item = selectedItem {
                 WorkListEditorView(kind: kind, simple: mode == "todo", title: item.title, entries: kind == .checklist ? item.checklist : item.materials, materials: item.materials, checklist: item.checklist, workItemID: item.id) { entries in
@@ -322,6 +360,231 @@ struct WorkItemsWorkspaceView: View {
             Button("Elimina", role: .destructive) { if let item = itemToDelete { Task { await delete(item) } } }
         } message: { Text(itemToDelete?.title ?? "") }
     }
+
+    private var mobileWorkspace: some View {
+        NavigationStack {
+            ZStack {
+                AKOrbitBackground()
+                if isLoading {
+                    ProgressView("Caricamento lavorazioni...").tint(AKOrbitTheme.cyan)
+                } else {
+                    content
+                }
+            }
+            .foregroundStyle(AKOrbitTheme.primaryText)
+            .tint(AKOrbitTheme.cyan)
+            .preferredColorScheme(.dark)
+            .platformNavigationBarTitleDisplayMode()
+            .toolbar {
+                ToolbarItem(placement: .akLeading) { Button(action: onBack) { Image(systemName: "chevron.left") }.accessibilityLabel(initialClientID == nil ? "Dashboard" : "Rubrica") }
+                ToolbarItem(placement: .principal) { Text(mode == "todo" ? "COSE DA FARE" : "LAVORAZIONI").font(.headline.weight(.black)).foregroundStyle(AKOrbitTheme.primaryText) }
+                ToolbarItem(placement: .akTrailing) { Button { editingItem = nil; showEditor = true } label: { Image(systemName: "plus") }.accessibilityLabel(mode == "todo" ? "Nuova cosa da fare" : "Nuova lavorazione") }
+            }
+        }
+    }
+
+    #if os(macOS)
+    private var macWorkspace: some View {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    macHeader
+                    HStack(spacing: 14) {
+                        macMetric(mode == "todo" ? "Da fare" : "In vista", count: filteredItems.count, icon: mode == "todo" ? "checklist" : "briefcase", tint: AKOrbitTheme.cyan)
+                        macMetric("In corso", count: count("in_progress"), icon: "arrow.trianglehead.2.clockwise.rotate.90", tint: Color(hex: "#f0c778"))
+                        macMetric("Completate", count: count("completed"), icon: "checkmark.circle", tint: Color(hex: "#70c3a3"))
+                    }
+                    if let errorMessage {
+                        AKGlassPanel(cornerRadius: 16, padding: 14) {
+                            HStack {
+                                Label(errorMessage, systemImage: "exclamationmark.triangle").foregroundStyle(Color(hex: "#ffb5a7"))
+                                Spacer()
+                                Button("Riprova") { Task { await load() } }.disabled(isLoading)
+                            }
+                        }
+                    }
+                    if geometry.size.width >= 1050 {
+                        HStack(alignment: .top, spacing: 18) {
+                            macRegister(height: max(340, geometry.size.height - 400))
+                            ScrollView { macInspector.padding(5) }
+                                .frame(width: min(max(geometry.size.width * 0.36, 390), 540), height: max(420, geometry.size.height - 220))
+                        }
+                    } else {
+                        macRegister(height: 420)
+                        macInspector
+                    }
+                }
+                .padding(24)
+                .frame(maxWidth: 1560)
+                .frame(maxWidth: .infinity)
+            }
+            .refreshable { await load() }
+        }
+        .background(AKOrbitBackground())
+        .foregroundStyle(AKOrbitTheme.primaryText)
+        .tint(AKOrbitTheme.cyan)
+        .environment(\.colorScheme, .dark)
+    }
+
+    private var macHeader: some View {
+        HStack(spacing: 18) {
+            Button(action: onBack) {
+                Image(systemName: "chevron.left")
+                    .platformAdaptiveFont(size: 14, weight: .semibold)
+                    .frame(width: 38, height: 38)
+                    .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 11))
+            }
+            .platformPlainButtonStyle()
+            .accessibilityLabel("Torna alla sezione precedente")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("DAL PRIMO CONTATTO ALLA CONSEGNA")
+                    .platformAdaptiveFont(size: mode == "todo" ? 12 : 11, weight: .bold).tracking(2)
+                    .foregroundStyle(Color(hex: "#70c3a3"))
+                Text(initialClientID.flatMap { id in clients.first(where: { $0.id == id })?.name }.map { "\(mode == "todo" ? "Cose da fare" : "Lavorazioni") · \($0)" } ?? (mode == "todo" ? "Le tue cose da fare" : "Le tue lavorazioni"))
+                    .platformAdaptiveFont(size: mode == "todo" ? 30 : 28, weight: .bold).foregroundStyle(AKOrbitTheme.primaryText)
+                Text(mode == "todo" ? "Dai priorità ai prossimi passi e tieni sotto controllo le attività." : "Interventi, materiali e prossime azioni in un unico spazio.")
+                    .platformAdaptiveFont(size: mode == "todo" ? 15 : 14).foregroundStyle(AKOrbitTheme.secondaryText)
+            }
+            Spacer(minLength: 12)
+            Button { editingItem = nil; showEditor = true } label: {
+                Label(mode == "todo" ? "Nuova attività" : "Nuova lavorazione", systemImage: "plus")
+                    .platformAdaptiveFont(size: 14, weight: .semibold)
+                    .padding(.horizontal, 16).frame(height: 44)
+                    .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 13), highlighted: true) }
+            }
+            .platformPlainButtonStyle()
+        }
+    }
+
+    private func macMetric(_ title: String, count: Int, icon: String, tint: Color) -> some View {
+        AKGlassPanel(cornerRadius: 17, padding: 15) {
+            HStack(spacing: 12) {
+                Image(systemName: icon).platformAdaptiveFont(size: 18, weight: .semibold)
+                    .foregroundStyle(tint).frame(width: 38, height: 38)
+                    .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\(count)").platformAdaptiveFont(size: 23, weight: .bold).monospacedDigit()
+                    Text(title).platformAdaptiveFont(size: mode == "todo" ? 14 : 12, weight: .medium).foregroundStyle(AKOrbitTheme.secondaryText)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private func macRegister(height: CGFloat) -> some View {
+        AKGlassPanel(cornerRadius: 21, padding: 18) {
+            VStack(alignment: .leading, spacing: 15) {
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(AKOrbitTheme.cyan)
+                    TextField(mode == "todo" ? "Cerca attività o cliente" : "Cerca lavorazione o cliente", text: $query)
+                        .textFieldStyle(.plain).platformAdaptiveFont(size: mode == "todo" ? 16 : 14)
+                    if !query.isEmpty {
+                        Button { query = "" } label: { Image(systemName: "xmark.circle.fill") }
+                            .platformPlainButtonStyle().accessibilityLabel("Cancella ricerca")
+                    }
+                }
+                .padding(12)
+                .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+
+                if mode == "todo" {
+                    Picker("Stato", selection: $historyState) {
+                        ForEach(NativeHistoryState.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                } else {
+                    HStack(spacing: 7) {
+                        ForEach(WorkStatus.values, id: \.self) { status in
+                            macStatusFilter(status)
+                        }
+                    }
+                }
+
+                HStack {
+                    Text("\(filteredItems.count) \(mode == "todo" ? "attività" : "lavorazioni")")
+                        .platformAdaptiveFont(size: mode == "todo" ? 14 : 12, weight: .medium)
+                    Spacer()
+                    Text("Scadenza più vicina").platformAdaptiveFont(size: mode == "todo" ? 13 : 11)
+                }
+                .foregroundStyle(AKOrbitTheme.secondaryText)
+
+                if mode == "todo" && historyState != .pending {
+                    NativeHistoryView(kind: "todo", state: historyState, clientID: initialClientID, changedItem: changedHistoryID, usesGlassPanels: true) { id in
+                        Task {
+                            do {
+                                historicalItem = try await SupabaseService.shared.from("work_items").select().eq("id", value: id.uuidString).single().execute().value
+                                selectedItemID = id
+                            } catch { errorMessage = NativeErrorMessages.message(for: error, action: "aprire la lavorazione archiviata") }
+                        }
+                    }
+                    .frame(height: height - 130)
+                } else if isLoading {
+                    ProgressView("Caricamento...").frame(maxWidth: .infinity, minHeight: 180)
+                } else if filteredItems.isEmpty {
+                    emptyState.frame(maxWidth: .infinity, minHeight: 200)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            ForEach(filteredItems) { item in
+                                WorkItemCard(
+                                    item: item,
+                                    mode: mode,
+                                    clientName: clientName(for: item),
+                                    selected: selectedItemID == item.id,
+                                    onOpen: { selectedItemID = item.id },
+                                    onEdit: { editingItem = item; showEditor = true },
+                                    onStatusChange: { status in Task { await updateStatus(item, to: status) } },
+                                    onDelete: { itemToDelete = item }
+                                )
+                            }
+                        }
+                        .padding(4)
+                    }
+                    .frame(height: height - 130)
+                }
+            }
+        }
+    }
+
+    private func macStatusFilter(_ status: String) -> some View {
+        let selected = selectedStatus == status
+        return Button { selectedStatus = status } label: {
+            Text(status == WorkStatus.all ? "Tutte" : WorkStatus.label(status))
+                .platformAdaptiveFont(size: mode == "todo" ? 14 : 12, weight: .semibold)
+                .padding(.horizontal, 11).padding(.vertical, 9)
+                .background(selected ? AKOrbitTheme.orbitBlue.opacity(0.48) : .white.opacity(0.035), in: Capsule())
+                .overlay { Capsule().stroke(AKOrbitTheme.cyan.opacity(selected ? 0.55 : 0.08), lineWidth: 1) }
+        }
+        .platformPlainButtonStyle()
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    @ViewBuilder private var macInspector: some View {
+        if let item = macFocusedItem, !(mode == "todo" && historyState != .pending) {
+            MacWorkItemInspector(
+                item: item,
+                interventions: interventions.filter { $0.workItemID == item.id },
+                clientName: clientName(for: item),
+                mode: mode,
+                onEdit: { editingItem = item; showEditor = true },
+                onStatusChange: { status in Task { await updateStatus(item, to: status) } },
+                onDelete: { itemToDelete = item },
+                onOpenList: { selectedList = $0 },
+                onToggleChecklist: { entryID in Task { await toggleChecklistEntry(item, id: entryID) } },
+                onRestore: { try await restore(item) }
+            )
+                .id(item.id)
+        } else {
+            AKGlassPanel {
+                VStack(alignment: .leading, spacing: 12) {
+                    Image(systemName: mode == "todo" ? "checklist" : "briefcase").platformAdaptiveFont(size: 28).foregroundStyle(AKOrbitTheme.cyan)
+                    Text(mode == "todo" ? "Il prossimo passo" : "Panoramica lavoro").platformAdaptiveFont(size: 18, weight: .bold)
+                    Text("Seleziona una voce per consultare dettagli, checklist e materiali.")
+                        .platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText)
+                }.frame(maxWidth: .infinity, minHeight: 220, alignment: .topLeading)
+            }
+        }
+    }
+    #endif
 
     private var content: some View {
         ScrollView(showsIndicators: false) {
@@ -338,15 +601,18 @@ struct WorkItemsWorkspaceView: View {
                             do {
                                 historicalItem = try await SupabaseService.shared.from("work_items").select().eq("id", value: id.uuidString).single().execute().value
                                 selectedItemID = id
-                            } catch { errorMessage = error.localizedDescription }
+                            } catch { errorMessage = NativeErrorMessages.message(for: error, action: "aprire l'attività archiviata") }
                         }
                     }.id(historyState)
                 } else {
                     HStack(spacing: 9) {
-                        Image(systemName: "magnifyingglass").foregroundStyle(Color(hex: "#8a7f9f"))
-                        TextField("Cerca lavoro o cliente...", text: $query).platformNoAutocapitalization()
+                        Image(systemName: "magnifyingglass").foregroundStyle(AKOrbitTheme.cyan)
+                        TextField("Cerca lavoro o cliente...", text: $query)
+                            .platformNoAutocapitalization()
+                            .foregroundStyle(AKOrbitTheme.primaryText)
                     }
-                    .padding(13).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 14))
+                    .padding(13)
+                    .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 14)) }
                     if mode != "todo" {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 7) {
@@ -376,7 +642,7 @@ struct WorkItemsWorkspaceView: View {
                         }
                     }
                 }
-                if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
+                if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#ffb5a7")) }
             }
             .padding(16)
         }
@@ -384,23 +650,28 @@ struct WorkItemsWorkspaceView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("DAL PRIMO CONTATTO ALLA CONSEGNA").font(.caption2.weight(.black)).foregroundStyle(Color(hex: "#257259"))
-            Text(clients.first(where: { $0.id == initialClientID }).map { "\(mode == "todo" ? "Cose da fare" : "Lavorazioni") · \($0.name)" } ?? (mode == "todo" ? "Le tue cose da fare" : "Le tue lavorazioni")).font(.title2.weight(.black)).foregroundStyle(Color(hex: "#2d2754"))
-            Text("\(filteredItems.count) in vista · \(count("in_progress")) in corso").font(.caption).foregroundStyle(Color(hex: "#716a91"))
+        AKGlassPanel(cornerRadius: 20, padding: 20) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("DAL PRIMO CONTATTO ALLA CONSEGNA").font(.caption.weight(.black)).foregroundStyle(Color(hex: "#70c3a3"))
+                Text(clients.first(where: { $0.id == initialClientID }).map { "\(mode == "todo" ? "Cose da fare" : "Lavorazioni") · \($0.name)" } ?? (mode == "todo" ? "Le tue cose da fare" : "Le tue lavorazioni"))
+                    .font(.title2.weight(.black)).foregroundStyle(AKOrbitTheme.primaryText)
+                Text("\(filteredItems.count) in vista · \(count("in_progress")) in corso")
+                    .font(.subheadline).foregroundStyle(AKOrbitTheme.secondaryText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(18).frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "#d9e8d9")).clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
     private var emptyState: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "briefcase").font(.system(size: 32)).foregroundStyle(Color(hex: "#257259"))
-            Text(query.isEmpty ? (mode == "todo" ? "Nessuna cosa da fare" : "Nessuna lavorazione") : "Nessun risultato").font(.headline.weight(.black)).foregroundStyle(Color(hex: "#2d2754"))
-            Text(query.isEmpty ? "Registra un lavoro e tieni a portata di mano il prossimo passo." : "Prova a modificare la ricerca o il filtro.").font(.caption).foregroundStyle(Color(hex: "#716a91"))
-            if scopedItems.isEmpty { Button(mode == "todo" ? "Nuova cosa da fare" : "Nuova lavorazione") { editingItem = nil; showEditor = true }.font(.caption.weight(.bold)).foregroundStyle(Color(hex: "#257259")) }
+        AKGlassPanel(cornerRadius: 18, padding: 30) {
+            VStack(spacing: 10) {
+                Image(systemName: "briefcase").platformScaledFont(size: 32).foregroundStyle(AKOrbitTheme.cyan)
+                Text(query.isEmpty ? (mode == "todo" ? "Nessuna cosa da fare" : "Nessuna lavorazione") : "Nessun risultato").font(.headline.weight(.black)).foregroundStyle(AKOrbitTheme.primaryText)
+                Text(query.isEmpty ? "Registra un lavoro e tieni a portata di mano il prossimo passo." : "Prova a modificare la ricerca o il filtro.").font(.subheadline).foregroundStyle(AKOrbitTheme.secondaryText)
+                if scopedItems.isEmpty { Button(mode == "todo" ? "Nuova cosa da fare" : "Nuova lavorazione") { editingItem = nil; showEditor = true }.font(.subheadline.weight(.bold)).foregroundStyle(AKOrbitTheme.cyan) }
+            }
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity).padding(30).background(Color(hex: "#fff8ed")).clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private func statusFilter(_ value: String, title: String, count: Int) -> some View {
@@ -410,12 +681,15 @@ struct WorkItemsWorkspaceView: View {
                 Text("\(count)").opacity(0.7)
             }
             .font(.caption.weight(.bold))
-            .foregroundStyle(selectedStatus == value ? Color.white : Color(hex: "#716a91"))
+            .foregroundStyle(selectedStatus == value ? AKOrbitTheme.primaryText : AKOrbitTheme.secondaryText)
             .padding(.horizontal, 12).padding(.vertical, 10)
-            .background(selectedStatus == value ? Color(hex: "#2d2754") : Color(hex: "#fff8ed"))
+            .background {
+                Capsule().fill(selectedStatus == value ? AKOrbitTheme.orbitBlue.opacity(0.52) : AKOrbitTheme.glassBlue.opacity(0.74))
+            }
+            .overlay { Capsule().stroke(AKOrbitTheme.cyan.opacity(selectedStatus == value ? 0.55 : 0.18), lineWidth: 1) }
             .clipShape(Capsule())
         }
-        .buttonStyle(.plain)
+        .platformPlainButtonStyle()
     }
 
     private func count(_ status: String) -> Int { scopedItems.filter { $0.status == status }.count }
@@ -431,11 +705,25 @@ struct WorkItemsWorkspaceView: View {
         isLoading = true
         defer { isLoading = false }
         do {
-            var itemQuery = SupabaseService.shared.from("work_items").select().eq("kind", value: mode)
-            if mode == "todo" { itemQuery = itemQuery.neq("status", value: "completed").is("archived_at", value: nil) }
+            let itemQuery = mode == "todo"
+                ? SupabaseService.shared.from("work_items").select().eq("kind", value: mode).neq("status", value: "completed").is("archived_at", value: nil)
+                : SupabaseService.shared.from("work_items").select().eq("kind", value: mode)
             async let loadedItems: [WorkItem] = itemQuery.order("updated_at", ascending: false).execute().value
             async let loadedClients: [WorkClient] = SupabaseService.shared.from("clients").select("id,name,company,parent_client_id").order("name", ascending: true).execute().value
             items = try await loadedItems
+            #if os(macOS)
+            if mode == "work" {
+                checklistSources = try await SupabaseService.shared.from("work_items")
+                    .select()
+                    .eq("kind", value: "todo")
+                    .neq("status", value: "completed")
+                    .is("archived_at", value: nil)
+                    .order("updated_at", ascending: false)
+                    .execute().value
+            } else {
+                checklistSources = []
+            }
+            #endif
             if let initialItemID {
                 historicalItem = try await SupabaseService.shared.from("work_items").select().eq("id", value: initialItemID.uuidString).single().execute().value
                 selectedItemID = initialItemID
@@ -444,18 +732,38 @@ struct WorkItemsWorkspaceView: View {
             interventions = (try? await SupabaseService.shared.from("events").select("id,work_item_id,title,start_date,end_date,all_day,location").not("work_item_id", operator: .is, value: "null").eq("is_completed", value: false).is("archived_at", value: nil).execute().value) ?? []
             errorMessage = nil
         } catch {
-            errorMessage = "Impossibile caricare le lavorazioni. Verifica la configurazione Supabase."
+            errorMessage = NativeErrorMessages.message(for: error, action: "caricare le lavorazioni")
         }
     }
 
     private func save(_ payload: WorkItemPayload, _ existing: WorkItem?) async throws {
         if let existing {
+            let sharedChecklistChanged = payload.checklist != existing.checklist
+                && payload.checklistSourceID == existing.checklistSourceID
+            let checklistOwnerID = sharedChecklistChanged
+                ? existing.checklistSourceID ?? (existing.kind == "todo" ? existing.id : nil)
+                : nil
+            let linkedItems: [WorkItem]
+            if let checklistOwnerID {
+                linkedItems = try await linkedWorkItems(checklistOwnerID)
+            } else {
+                linkedItems = []
+            }
+            if let sourceID = existing.checklistSourceID, checklistOwnerID == sourceID {
+                retainChecklistSource(try await updateChecklistSource(sourceID, checklist: payload.checklist))
+            }
             var update = payload
             if update.status == existing.status { update.status = nil }
             let updated: WorkItem = try await SupabaseService.shared.from("work_items").update(update).eq("id", value: existing.id.uuidString).select().single().execute().value
             retain(updated)
+            try await synchronizeLinkedMaterials(linkedItems, checklist: payload.checklist)
         } else {
             guard let userID = auth.session?.user.id else { throw WorkItemSaveError.missingUser }
+            if let sourceID = payload.checklistSourceID,
+               let source = checklistSources.first(where: { $0.id == sourceID }),
+               source.checklist != payload.checklist {
+                retainChecklistSource(try await updateChecklistSource(sourceID, checklist: payload.checklist))
+            }
             var insert = payload
             insert.userID = userID
             let created: WorkItem = try await SupabaseService.shared.from("work_items").insert(insert).select().single().execute().value
@@ -467,20 +775,111 @@ struct WorkItemsWorkspaceView: View {
         do {
             let updated: WorkItem = try await SupabaseService.shared.from("work_items").update(["status": status, "updated_at": ISO8601DateFormatter().string(from: .now)]).eq("id", value: item.id.uuidString).select().single().execute().value
             retain(updated)
+            #if os(macOS)
+            selectedItemID = updated.id
+            historicalItem = nil
+            #else
             selectedItemID = nil; historicalItem = nil
+            #endif
         } catch {
-            errorMessage = "Impossibile aggiornare lo stato."
+            errorMessage = NativeErrorMessages.message(for: error, action: "aggiornare lo stato")
         }
+    }
+
+    private func toggleChecklistEntry(_ item: WorkItem, id: String) async {
+        var entries = item.checklist
+        func toggle(_ entries: inout [NativeChecklistEntry]) -> Bool {
+            for index in entries.indices {
+                if entries[index].id == id {
+                    entries[index].done.toggle()
+                    if let steps = entries[index].steps {
+                        let done = entries[index].done
+                        entries[index].steps = steps.map { step in var value = step; value.done = done; return value }
+                    }
+                    return true
+                }
+                if var steps = entries[index].steps, toggle(&steps) {
+                    entries[index].steps = steps
+                    entries[index].done = !steps.isEmpty && steps.allSatisfy(\.done)
+                    return true
+                }
+            }
+            return false
+        }
+        guard toggle(&entries) else { return }
+        do { try await saveList(entries, kind: .checklist, for: item) }
+        catch { errorMessage = NativeErrorMessages.message(for: error, action: "aggiornare la checklist") }
+    }
+
+    private func restore(_ item: WorkItem) async throws {
+        let updated: WorkItem = try await SupabaseService.shared.from("work_items")
+            .update(["status": "planned"])
+            .eq("id", value: item.id.uuidString)
+            .select()
+            .single()
+            .execute().value
+        retain(updated)
+        selectedItemID = nil
+        historicalItem = nil
     }
 
     private func saveList(_ entries: [NativeChecklistEntry], kind: WorkListKind, for item: WorkItem) async throws {
         let checklist = kind == .checklist ? entries : item.checklist
         let materials = synchronizeMaterialUsage(kind == .materials ? entries : item.materials, checklist: checklist, previousChecklist: item.checklist)
+        if kind == .checklist, let checklistOwnerID = item.checklistSourceID ?? (item.kind == "todo" ? item.id : nil) {
+            let linkedItems = try await linkedWorkItems(checklistOwnerID)
+            if let sourceID = item.checklistSourceID {
+                retainChecklistSource(try await updateChecklistSource(sourceID, checklist: checklist))
+            } else {
+                let updated: WorkItem = try await SupabaseService.shared.from("work_items")
+                    .update(WorkListUpdate(checklist: checklist, materials: materials))
+                    .eq("id", value: item.id.uuidString).select().single().execute().value
+                retain(updated)
+                if historicalItem?.id == updated.id { historicalItem = updated }
+            }
+            try await synchronizeLinkedMaterials(linkedItems, checklist: checklist)
+            return
+        }
         let updated: WorkItem = try await SupabaseService.shared.from("work_items")
             .update(WorkListUpdate(checklist: checklist, materials: materials))
             .eq("id", value: item.id.uuidString).select().single().execute().value
         retain(updated)
         if historicalItem?.id == updated.id { historicalItem = updated }
+    }
+
+    private func linkedWorkItems(_ sourceID: UUID) async throws -> [WorkItem] {
+        try await SupabaseService.shared.from("work_items")
+            .select()
+            .eq("checklist_source_id", value: sourceID.uuidString)
+            .execute().value
+    }
+
+    private func updateChecklistSource(_ sourceID: UUID, checklist: [NativeChecklistEntry]) async throws -> WorkItem {
+        try await SupabaseService.shared.from("work_items")
+            .update(WorkListUpdate(checklist: checklist, materials: nil))
+            .eq("id", value: sourceID.uuidString)
+            .select()
+            .single()
+            .execute().value
+    }
+
+    private func synchronizeLinkedMaterials(_ linkedItems: [WorkItem], checklist: [NativeChecklistEntry]) async throws {
+        for linkedItem in linkedItems {
+            let materials = synchronizeMaterialUsage(linkedItem.materials, checklist: checklist, previousChecklist: linkedItem.checklist)
+            let updated: WorkItem = try await SupabaseService.shared.from("work_items")
+                .update(WorkListUpdate(checklist: nil, materials: materials))
+                .eq("id", value: linkedItem.id.uuidString)
+                .select()
+                .single()
+                .execute().value
+            if items.contains(where: { $0.id == updated.id }) { retain(updated) }
+            if historicalItem?.id == updated.id { historicalItem = updated }
+        }
+    }
+
+    private func retainChecklistSource(_ source: WorkItem) {
+        guard let index = checklistSources.firstIndex(where: { $0.id == source.id }) else { return }
+        checklistSources[index] = source
     }
 
     private func delete(_ item: WorkItem) async {
@@ -490,7 +889,7 @@ struct WorkItemsWorkspaceView: View {
             changedHistoryID = NativeHistoryChange(id: item.id)
             itemToDelete = nil
         } catch {
-            errorMessage = "Impossibile eliminare la lavorazione."
+            errorMessage = NativeErrorMessages.message(for: error, action: "eliminare la lavorazione")
         }
     }
 
@@ -507,6 +906,7 @@ private struct WorkItemCard: View {
     let item: WorkItem
     let mode: String
     let clientName: String
+    var selected = false
     let onOpen: () -> Void
     let onEdit: () -> Void
     let onStatusChange: (String) -> Void
@@ -523,40 +923,40 @@ private struct WorkItemCard: View {
             Button(action: onOpen) {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: "briefcase.fill").font(.headline).foregroundStyle(Color(hex: "#257259"))
-                            .frame(width: 40, height: 40).background(Color(hex: "#d9e8d9")).clipShape(RoundedRectangle(cornerRadius: 12))
+                        Image(systemName: "briefcase.fill").font(.headline).foregroundStyle(Color(hex: "#70c3a3"))
+                            .frame(width: 40, height: 40).background(Color(hex: "#70c3a3").opacity(0.14)).clipShape(RoundedRectangle(cornerRadius: 12))
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(item.title).font(.subheadline.weight(.black)).foregroundStyle(Color(hex: "#2d2754")).lineLimit(2).multilineTextAlignment(.leading)
-                            Text(clientName).font(.caption).foregroundStyle(Color(hex: "#716a91")).lineLimit(1)
+                            Text(item.title).platformAdaptiveFont(size: 17, weight: .black).foregroundStyle(AKOrbitTheme.primaryText).lineLimit(2).multilineTextAlignment(.leading)
+                            Text(clientName).platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText).lineLimit(1)
                         }
                         Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Color(hex: "#a99dbb"))
+                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(AKOrbitTheme.cyan)
                     }
-                    if !item.description.isEmpty { Text(item.description).font(.caption).foregroundStyle(Color(hex: "#514b70")).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading) }
+                    if !item.description.isEmpty { Text(item.description).platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading) }
                     HStack(spacing: 6) {
-                        Text(mode == "todo" && item.status == "planned" ? "Da fare" : WorkStatus.label(item.status)).font(.caption2.weight(.bold)).foregroundStyle(Color(hex: item.status == "completed" ? "#257259" : item.status == "waiting" ? "#856300" : "#376db5"))
-                        Text(priorityLabel).font(.caption2.weight(.bold)).foregroundStyle(priorityColor).padding(.horizontal, 7).padding(.vertical, 4).background(priorityColor.opacity(0.12)).clipShape(Capsule())
+                        Text(mode == "todo" && item.status == "planned" ? "Da fare" : WorkStatus.label(item.status)).platformAdaptiveFont(size: 13, weight: .bold).foregroundStyle(Color(hex: item.status == "completed" ? "#70c3a3" : item.status == "waiting" ? "#f0c778" : "#83cfff"))
+                        Text(priorityLabel).platformAdaptiveFont(size: 13, weight: .bold).foregroundStyle(priorityColor).padding(.horizontal, 7).padding(.vertical, 4).background(priorityColor.opacity(0.12)).clipShape(Capsule())
                         Spacer(minLength: 0)
-                        Label(dueLabel, systemImage: "calendar").font(.caption2.weight(.bold)).foregroundStyle(Color(hex: "#716a91"))
+                        Label(dueLabel, systemImage: "calendar").platformAdaptiveFont(size: 13, weight: .bold).foregroundStyle(AKOrbitTheme.secondaryText)
                     }
                     if !item.nextAction.isEmpty {
-                        Label(item.nextAction, systemImage: "arrow.turn.down.right").font(.caption).foregroundStyle(Color(hex: "#514b70")).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+                        Label(item.nextAction, systemImage: "arrow.turn.down.right").platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
                     }
                     let progress = listProgress(item.checklist)
                     if progress.total > 0 {
                         HStack(spacing: 6) { Image(systemName: "checklist"); Text("Checklist \(progress.done)/\(progress.total)"); Spacer(); Text("\(Int(Double(progress.done) / Double(progress.total) * 100))%") }
-                            .font(.caption2.weight(.bold)).foregroundStyle(Color(hex: "#257259"))
-                        ProgressView(value: Double(progress.done), total: Double(progress.total)).tint(Color(hex: "#257259"))
+                            .platformAdaptiveFont(size: 13, weight: .bold).foregroundStyle(Color(hex: "#70c3a3"))
+                        ProgressView(value: Double(progress.done), total: Double(progress.total)).tint(Color(hex: "#70c3a3"))
                     }
                     let coverage = materialCoverage(item.materials, checklist: item.checklist)
                     if mode != "todo" && (coverage.total > 0 || coverage.orphaned > 0) {
                         Label("\(coverage.matched)/\(coverage.total) materiali installati\(coverage.unitMismatches > 0 ? " · unità diversa" : "")\(coverage.orphaned > 0 ? " · da verificare" : "")", systemImage: coverage.complete ? "checkmark.circle.fill" : "exclamationmark.triangle")
-                            .font(.caption2.weight(.bold)).foregroundStyle(Color(hex: coverage.complete ? "#257259" : "#856300"))
+                            .platformAdaptiveFont(size: 13, weight: .bold).foregroundStyle(Color(hex: coverage.complete ? "#70c3a3" : "#f0c778"))
                     }
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .platformPlainButtonStyle()
 
             HStack {
                 Menu {
@@ -565,17 +965,15 @@ private struct WorkItemCard: View {
                     }
                 } label: {
                     Label("Stato", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
-                        .font(.caption.weight(.bold)).foregroundStyle(Color(hex: "#376db5"))
+                        .platformAdaptiveFont(size: 14, weight: .bold).foregroundStyle(AKOrbitTheme.cyan)
                 }
                 Spacer()
-                Button("Modifica", action: onEdit).font(.caption.weight(.bold)).foregroundStyle(Color(hex: "#716a91"))
+                Button("Modifica", action: onEdit).platformAdaptiveFont(size: 14, weight: .bold).foregroundStyle(AKOrbitTheme.secondaryText)
                 Button(role: .destructive, action: onDelete) { Image(systemName: "trash") }.accessibilityLabel("Elimina lavorazione")
             }
         }
         .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "#fff8ed"))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(hex: "#d8cbb8"), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 16), highlighted: selected) }
     }
 
     private var priorityLabel: String {
@@ -583,12 +981,299 @@ private struct WorkItemCard: View {
     }
 
     private var priorityColor: Color {
-        switch item.priority { case "high": Color(hex: "#a83d35"); case "low": Color(hex: "#257259"); default: Color(hex: "#716a91") }
+        switch item.priority { case "high": Color(hex: "#ffb5a7"); case "low": Color(hex: "#70c3a3"); default: AKOrbitTheme.secondaryText }
     }
 }
 
+#if os(macOS)
+private enum MacWorkItemTab: String, CaseIterable, Identifiable {
+    case details, checklist, materials
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .details: return "Dettagli"
+        case .checklist: return "Checklist"
+        case .materials: return "Materiali"
+        }
+    }
+}
+
+private struct MacWorkItemInspector: View {
+    let item: WorkItem
+    let interventions: [WorkIntervention]
+    let clientName: String
+    let mode: String
+    let onEdit: () -> Void
+    let onStatusChange: (String) -> Void
+    let onDelete: () -> Void
+    let onOpenList: (WorkListKind) -> Void
+    let onToggleChecklist: (String) -> Void
+    let onRestore: () async throws -> Void
+    @State private var tab: MacWorkItemTab = .details
+    @State private var showAllChecklist = false
+    @State private var restoring = false
+    @State private var restoreError: String?
+
+    private var progress: (done: Int, total: Int) { listProgress(item.checklist) }
+    private var visibleChecklist: [NativeChecklistEntry] {
+        showAllChecklist ? item.checklist : Array(item.checklist.prefix(4))
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            tabPicker
+            ScrollView(showsIndicators: false) {
+                Group {
+                    switch tab {
+                    case .details: detailsContent
+                    case .checklist: checklistContent
+                    case .materials: materialsContent
+                    }
+                }
+                .padding(16)
+            }
+            Divider().overlay(AKOrbitTheme.cyan.opacity(0.18))
+            footer
+        }
+        .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 22), highlighted: true) }
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+    }
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            Image(systemName: mode == "todo" ? "checklist" : "briefcase.fill")
+                .platformAdaptiveFont(size: 18, weight: .semibold)
+                .foregroundStyle(Color(hex: "#70c3a3"))
+                .frame(width: 42, height: 42)
+                .background(Color(hex: "#70c3a3").opacity(0.14), in: RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title).platformAdaptiveFont(size: 20, weight: .bold).foregroundStyle(AKOrbitTheme.primaryText)
+                Text(clientName).platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText)
+            }
+            Spacer(minLength: 4)
+            Menu {
+                Button("Modifica", action: onEdit)
+                Button("Elimina", role: .destructive, action: onDelete)
+            } label: {
+                Image(systemName: "ellipsis").platformAdaptiveFont(size: 16, weight: .semibold)
+                    .foregroundStyle(AKOrbitTheme.secondaryText).frame(width: 34, height: 34)
+            }
+            .menuStyle(.borderlessButton)
+            .accessibilityLabel("Azioni per \(item.title)")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+        .padding(.bottom, 12)
+    }
+
+    private var tabPicker: some View {
+        HStack(spacing: 4) {
+            ForEach(MacWorkItemTab.allCases) { destination in
+                Button { withAnimation(.easeOut(duration: 0.18)) { tab = destination } } label: {
+                    Text(destination.title)
+                        .platformAdaptiveFont(size: 15, weight: .semibold)
+                        .foregroundStyle(tab == destination ? Color(hex: "#061426") : AKOrbitTheme.secondaryText)
+                        .frame(maxWidth: .infinity, minHeight: 34)
+                        .background(tab == destination ? AKOrbitTheme.cyan : .clear, in: Capsule())
+                }
+                .platformPlainButtonStyle()
+                .accessibilityAddTraits(tab == destination ? .isSelected : [])
+            }
+        }
+        .padding(4)
+        .background(AKOrbitTheme.glassBlue.opacity(0.85), in: Capsule())
+        .overlay(Capsule().stroke(AKOrbitTheme.cyan.opacity(0.18), lineWidth: 1))
+        .padding(.horizontal, 14)
+        .padding(.bottom, 4)
+    }
+
+    private var detailsContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 7) {
+                statusChip
+                priorityChip
+                Spacer(minLength: 0)
+            }
+            if !item.description.isEmpty { detailCard("DESCRIZIONE", item.description) }
+            if let dueDate = item.dueDate {
+                detailCard("SCADENZA", WorkDateFormatters.date.date(from: dueDate)?.formatted(.dateTime.day().month(.wide).year()) ?? dueDate)
+            }
+            if let scheduledAt = item.scheduledAt {
+                detailCard("APPUNTAMENTO", ISO8601DateFormatter().date(from: scheduledAt)?.formatted(date: .abbreviated, time: .shortened) ?? scheduledAt)
+            }
+            if !item.nextAction.isEmpty { detailCard("PROSSIMA AZIONE", item.nextAction) }
+            if !item.notes.isEmpty { detailCard("NOTE", item.notes) }
+            NativePhotoGallery(workItemID: item.id)
+            if !interventions.isEmpty {
+                AKGlassPanel(cornerRadius: 14, padding: 13) {
+                    VStack(alignment: .leading, spacing: 9) {
+                        Label("Interventi collegati", systemImage: "calendar").platformAdaptiveFont(size: 15, weight: .semibold)
+                        ForEach(interventions.sorted { $0.startDate < $1.startDate }) { intervention in
+                            HStack(spacing: 9) {
+                                Circle().fill(Color(hex: "#70c3a3")).frame(width: 7, height: 7)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(intervention.title).platformAdaptiveFont(size: 14, weight: .medium)
+                                    Text(intervention.startDate).platformAdaptiveFont(size: 12).foregroundStyle(AKOrbitTheme.secondaryText)
+                                }
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+
+    private var checklistContent: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            AKGlassPanel(cornerRadius: 13, padding: 13) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Label("Checklist", systemImage: "checklist").platformAdaptiveFont(size: 15, weight: .semibold)
+                        Spacer()
+                        Text("\(progress.done) di \(progress.total) completati").platformAdaptiveFont(size: 13).foregroundStyle(AKOrbitTheme.secondaryText)
+                    }
+                    ProgressView(value: Double(progress.done), total: Double(max(progress.total, 1))).tint(Color(hex: "#70c3a3"))
+                    HStack {
+                        Text("\(progress.total == 0 ? 0 : Int(Double(progress.done) / Double(progress.total) * 100))%")
+                            .platformAdaptiveFont(size: 13, weight: .bold).foregroundStyle(Color(hex: "#70c3a3"))
+                        Spacer()
+                        Button("Modifica checklist") { onOpenList(.checklist) }.platformAdaptiveFont(size: 13, weight: .semibold)
+                    }
+                }
+            }
+            if item.checklist.isEmpty {
+                emptyTab("Nessuna voce nella checklist.", icon: "checklist")
+            } else {
+                ForEach(visibleChecklist) { entry in
+                    Button { onToggleChecklist(entry.id) } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: entry.done ? "checkmark.circle.fill" : "circle")
+                                .platformAdaptiveFont(size: 17).foregroundStyle(entry.done ? Color(hex: "#70c3a3") : AKOrbitTheme.cyan.opacity(0.7))
+                            Text(entry.text).platformAdaptiveFont(size: 14, weight: .medium)
+                                .foregroundStyle(entry.done ? AKOrbitTheme.secondaryText : AKOrbitTheme.primaryText)
+                                .strikethrough(entry.done, color: AKOrbitTheme.secondaryText)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 11).frame(minHeight: 40)
+                        .contentShape(Rectangle())
+                    }
+                    .platformPlainButtonStyle()
+                    .overlay(alignment: .bottom) { Rectangle().fill(.white.opacity(0.07)).frame(height: 1) }
+                    .accessibilityLabel("\(entry.done ? "Completata" : "Da fare"): \(entry.text)")
+                }
+                if item.checklist.count > 4 {
+                    Button(showAllChecklist ? "Mostra meno" : "Mostra tutte le \(item.checklist.count) voci") {
+                        withAnimation(.easeInOut(duration: 0.18)) { showAllChecklist.toggle() }
+                    }
+                    .platformAdaptiveFont(size: 13, weight: .semibold)
+                    .frame(maxWidth: .infinity, minHeight: 34)
+                    .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 9))
+                }
+            }
+        }
+    }
+
+    private var materialsContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Materiali").platformAdaptiveFont(size: 19, weight: .bold)
+                Spacer()
+                Button("Modifica materiali") { onOpenList(.materials) }.platformAdaptiveFont(size: 13, weight: .semibold)
+            }
+            if item.materials.isEmpty {
+                emptyTab("Nessun materiale registrato.", icon: "shippingbox")
+            } else {
+                ForEach(item.materials) { material in
+                    let unit = material.unit ?? .pezzi
+                    let installed = installedQuantity(item.checklist, materialID: material.id, unit: unit)
+                    let required = material.quantity ?? 1
+                    AKGlassPanel(cornerRadius: 12, padding: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 9) {
+                                Image(systemName: material.done ? "checkmark.circle.fill" : "shippingbox")
+                                    .foregroundStyle(material.done ? Color(hex: "#70c3a3") : AKOrbitTheme.cyan)
+                                Text(material.text).platformAdaptiveFont(size: 15, weight: .semibold)
+                                Spacer(minLength: 4)
+                                Text("\(quantityLabel(installed))/\(quantityLabel(required)) \(unit.label.lowercased())")
+                                    .platformAdaptiveFont(size: 13, weight: .medium).foregroundStyle(AKOrbitTheme.secondaryText)
+                            }
+                            ProgressView(value: min(installed, required), total: max(required, 1)).tint(Color(hex: "#70c3a3"))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var statusChip: some View {
+        Text(item.kind == "todo" && item.status == "planned" ? "Da fare" : WorkStatus.label(item.status))
+            .platformAdaptiveFont(size: 12, weight: .semibold).foregroundStyle(Color(hex: "#70c3a3"))
+            .padding(.horizontal, 9).padding(.vertical, 5).background(Color(hex: "#70c3a3").opacity(0.12), in: Capsule())
+    }
+
+    private var priorityChip: some View {
+        let title = item.priority == "high" ? "Priorità alta" : item.priority == "low" ? "Priorità bassa" : "Priorità normale"
+        let tint = item.priority == "high" ? Color(hex: "#ffb5a7") : item.priority == "low" ? Color(hex: "#70c3a3") : AKOrbitTheme.secondaryText
+        return Text(title).platformAdaptiveFont(size: 12, weight: .semibold).foregroundStyle(tint)
+            .padding(.horizontal, 9).padding(.vertical, 5).background(tint.opacity(0.12), in: Capsule())
+    }
+
+    private func detailCard(_ title: String, _ text: String) -> some View {
+        AKGlassPanel(cornerRadius: 12, padding: 12) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title).platformAdaptiveFont(size: 12, weight: .bold).foregroundStyle(AKOrbitTheme.cyan)
+                Text(text).platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.primaryText).textSelection(.enabled)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func emptyTab(_ message: String, icon: String) -> some View {
+        AKGlassPanel(cornerRadius: 12, padding: 20) {
+            Label(message, systemImage: icon).platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var footer: some View {
+        HStack(spacing: 8) {
+            Menu {
+                ForEach(WorkStatus.values, id: \.self) { status in
+                    Button(WorkStatus.label(status)) { onStatusChange(status) }
+                }
+            } label: {
+                Label("Stato", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
+                    .platformAdaptiveFont(size: 13, weight: .semibold)
+                    .padding(.horizontal, 11).frame(height: 34)
+                    .background(AKOrbitTheme.glassBlue, in: RoundedRectangle(cornerRadius: 10))
+            }
+            .menuStyle(.borderlessButton)
+            Spacer(minLength: 0)
+            if mode == "todo" && item.status == "completed" {
+                Button("Riporta da fare") {
+                    Task { restoring = true; defer { restoring = false }; try? await onRestore() }
+                }
+                .disabled(restoring)
+            }
+            Button { onEdit() } label: {
+                Label(item.kind == "todo" ? "Modifica attività" : "Modifica lavorazione", systemImage: "pencil")
+                    .platformAdaptiveFont(size: 13, weight: .semibold).padding(.horizontal, 12).frame(height: 38)
+                    .background(AKOrbitTheme.orbitBlue.opacity(0.68), in: RoundedRectangle(cornerRadius: 10))
+            }
+            .platformPlainButtonStyle()
+            Button(role: .destructive, action: onDelete) { Image(systemName: "trash") }
+                .buttonStyle(.bordered).help("Elimina")
+        }
+        .padding(12)
+        .overlay(alignment: .top) { Rectangle().fill(AKOrbitTheme.cyan.opacity(0.15)).frame(height: 1) }
+    }
+}
+#endif
+
 private struct WorkItemSummaryView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.akTabletDevice) private var tabletDevice
     @State private var pdfShare: WorkItemPDFShare?
     @State private var exportError: String?
     let item: WorkItem
@@ -612,26 +1297,40 @@ private struct WorkItemSummaryView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        AKModalScrollContent {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(item.kind == "todo" ? "COSA DA FARE" : "RIEPILOGO LAVORAZIONE").font(.caption2.weight(.black)).foregroundStyle(Color(hex: "#257259"))
-                    Text(item.title).font(.title3.weight(.black)).foregroundStyle(Color(hex: "#2d2754"))
-                    Text(clientName).font(.subheadline).foregroundStyle(Color(hex: "#716a91"))
+                    Text(item.kind == "todo" ? "COSA DA FARE" : "RIEPILOGO LAVORAZIONE").platformAdaptiveFont(size: 13, weight: .black).foregroundStyle(Color(hex: "#70c3a3"))
+                    Text(item.title).platformAdaptiveFont(size: 22, weight: .black).foregroundStyle(AKOrbitTheme.primaryText)
+                    Text(clientName).platformAdaptiveFont(size: 16).foregroundStyle(AKOrbitTheme.secondaryText)
                 }
                 Spacer()
-                Button(action: onClose) { Image(systemName: "xmark") }.accessibilityLabel("Chiudi").disabled(restoring)
+                Button(action: onClose) {
+                    Image(systemName: "xmark").platformAdaptiveFont(size: 13, weight: .semibold)
+                        .foregroundStyle(AKOrbitTheme.primaryText).frame(width: 44, height: 44)
+                        .background(.white.opacity(0.07), in: Circle())
+                }
+                .platformPlainButtonStyle().accessibilityLabel("Chiudi").disabled(restoring)
             }
-            ScrollView(showsIndicators: false) {
+            .padding(.bottom, 16)
+        } content: {
                 VStack(alignment: .leading, spacing: 16) {
-                    HStack { Text(item.kind == "todo" && item.status == "planned" ? "Da fare" : WorkStatus.label(item.status)); Text(item.priority == "high" ? "Priorità alta" : item.priority == "low" ? "Priorità bassa" : "Priorità normale") }
-                        .font(.caption.weight(.bold)).foregroundStyle(Color(hex: "#257259"))
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 16) {
+                            statusLabel
+                            priorityLabel
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            statusLabel
+                            priorityLabel
+                        }
+                    }
+                    .font(.subheadline.weight(.semibold))
                     if !item.description.isEmpty { summaryDetail("DESCRIZIONE", item.description) }
                     if let due = item.dueDate { summaryDetail("SCADENZA", WorkDateFormatters.date.date(from: due)?.formatted(.dateTime.day().month().year()) ?? due) }
                     if let scheduled = item.scheduledAt { summaryDetail("APPUNTAMENTO", ISO8601DateFormatter().date(from: scheduled)?.formatted(date: .abbreviated, time: .shortened) ?? scheduled) }
                     if !item.nextAction.isEmpty { summaryDetail("PROSSIMA AZIONE", item.nextAction) }
                     if !item.notes.isEmpty { summaryDetail("NOTE", item.notes) }
-                    NativePhotoGallery(workItemID: item.id)
                     if item.kind == "todo" && item.status == "completed" {
                         Button(restoring ? "Salvataggio..." : "Riporta da fare") {
                             Task {
@@ -653,75 +1352,137 @@ private struct WorkItemSummaryView: View {
                             if item.kind != "todo" { listButton(.materials, entries: item.materials) }
                         }
                     }
+                    NativePhotoGallery(workItemID: item.id)
                     if item.kind != "todo" {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
-                                Text("DIAGRAMMA INTERVENTI").font(.caption2.weight(.black)).foregroundStyle(Color(hex: "#257259"))
+                                Label("Interventi", systemImage: "calendar")
+                                    .font(.subheadline.weight(.semibold)).foregroundStyle(Color(hex: "#70c3a3"))
                                 Spacer()
-                                Text("\(interventions.count)").font(.caption.weight(.bold)).foregroundStyle(Color(hex: "#716a91"))
+                                Text("\(interventions.count)").platformAdaptiveFont(size: 14, weight: .bold).foregroundStyle(AKOrbitTheme.secondaryText)
                             }
                             if orderedInterventions.isEmpty {
-                                Text("Nessun intervento nel calendario per questa lavorazione.").font(.caption).foregroundStyle(Color(hex: "#716a91"))
+                                Text("Nessun intervento programmato.")
+                                    .font(.subheadline).foregroundStyle(AKOrbitTheme.secondaryText)
                             }
                             ForEach(orderedInterventions) { intervention in
                                 let start = interventionDate(intervention.startDate)
                                 let elapsed = (interventionDate(intervention.endDate ?? intervention.startDate) ?? .distantFuture) < .now
                                 HStack(alignment: .top, spacing: 12) {
-                                    Circle().fill(Color(hex: elapsed ? "#716a91" : "#257259")).frame(width: 10, height: 10).padding(.top, 4)
+                                    Circle().fill(Color(hex: elapsed ? "#75869a" : "#70c3a3")).frame(width: 10, height: 10).padding(.top, 4)
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("\(start.map { intervention.allDay ? $0.formatted(date: .abbreviated, time: .omitted) : $0.formatted(date: .abbreviated, time: .shortened) } ?? intervention.startDate) · \(elapsed ? "Trascorso" : "In programma")")
-                                            .font(.caption.weight(.bold)).foregroundStyle(Color(hex: "#257259"))
-                                        Text(intervention.title).font(.subheadline.weight(.bold)).foregroundStyle(Color(hex: "#2d2754"))
-                                        if let location = intervention.location, !location.isEmpty { Text(location).font(.caption).foregroundStyle(Color(hex: "#716a91")) }
+                                            .platformAdaptiveFont(size: 14, weight: .bold).foregroundStyle(Color(hex: "#70c3a3"))
+                                        Text(intervention.title).platformAdaptiveFont(size: 16, weight: .bold).foregroundStyle(AKOrbitTheme.primaryText)
+                                        if let location = intervention.location, !location.isEmpty { Text(location).platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText) }
                                     }
                                 }.padding(.leading, 6).padding(.vertical, 5)
                             }
-                        }.padding(.top, 5)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(14)
+                        .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
                     }
-                    if let exportError { Text(exportError).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
+                    if let exportError {
+                        Label(exportError, systemImage: "exclamationmark.triangle")
+                            .font(.subheadline).foregroundStyle(Color(hex: "#ffb5a7"))
+                    }
                     if item.kind != "todo" { Button {
                         do { pdfShare = WorkItemPDFShare(url: try WorkItemPDF.create(for: item, clientName: clientName, interventions: orderedInterventions)); exportError = nil }
                         catch { exportError = "Impossibile creare il PDF della lavorazione." }
                     } label: {
-                        Label("Esporta e condividi PDF", systemImage: "square.and.arrow.up")
-                            .frame(maxWidth: .infinity).padding(12)
-                    }.buttonStyle(.borderedProminent).tint(Color(hex: "#257259")) }
-                    Button(item.kind == "todo" ? "Modifica attività" : "Modifica lavorazione", action: onEdit).buttonStyle(.borderedProminent).tint(Color(hex: "#2d2754")).frame(maxWidth: .infinity).disabled(restoring)
-                }
+                        Label("Condividi PDF", systemImage: "square.and.arrow.up")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .padding(.horizontal, 12)
+                            .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .platformPlainButtonStyle()
+                    .foregroundStyle(AKOrbitTheme.cyan)
+                    .disabled(restoring)
+                    }
+                    Button(action: onEdit) {
+                        Label(item.kind == "todo" ? "Modifica attività" : "Modifica lavorazione", systemImage: "pencil")
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                        .buttonStyle(.borderedProminent).tint(AKOrbitTheme.orbitBlue)
+                        .frame(maxWidth: .infinity, minHeight: 48).disabled(restoring)
             }
         }
-        .padding(20).frame(maxHeight: 720).background(Color(hex: "#fffdf9")).clipShape(RoundedRectangle(cornerRadius: 24)).padding(16)
+        .padding(tabletDevice ? 20 : 16)
+        .frame(maxWidth: .infinity, maxHeight: tabletDevice ? 760 : .infinity)
+        .background {
+            if tabletDevice {
+                AKGlassSurface(shape: RoundedRectangle(cornerRadius: 24), highlighted: true)
+            } else {
+                AKOrbitBackground()
+            }
+        }
+        .environment(\.colorScheme, .dark)
+        .padding(tabletDevice ? 16 : 0)
+        .preferredColorScheme(.dark)
         .sheet(item: $pdfShare) { share in WorkItemShareSheet(url: share.url) }
+    }
+
+    private var statusLabel: some View {
+        Label(item.kind == "todo" && item.status == "planned" ? "Da fare" : WorkStatus.label(item.status),
+              systemImage: item.status == "completed" ? "checkmark.circle" : "clock")
+            .foregroundStyle(Color(hex: "#70c3a3"))
+    }
+
+    private var priorityLabel: some View {
+        Label(item.priority == "high" ? "Priorità alta" : item.priority == "low" ? "Priorità bassa" : "Priorità normale",
+              systemImage: "flag")
+            .foregroundStyle(AKOrbitTheme.secondaryText)
     }
 
     private func summaryDetail(_ heading: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(heading).font(.caption2.weight(.black)).foregroundStyle(Color(hex: "#716a91"))
-            Text(value).font(.subheadline).foregroundStyle(Color(hex: "#2d2754"))
-        }.frame(maxWidth: .infinity, alignment: .leading)
+            Text(heading).platformAdaptiveFont(size: 13, weight: .black).foregroundStyle(AKOrbitTheme.cyan)
+            Text(value).platformAdaptiveFont(size: 16).foregroundStyle(AKOrbitTheme.primaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 12)) }
     }
 
     private func listButton(_ kind: WorkListKind, entries: [NativeChecklistEntry]) -> some View {
         let progress = listProgress(entries)
         let coverage = materialCoverage(item.materials, checklist: item.checklist)
         return Button { onOpenList(kind) } label: {
-            VStack(alignment: .leading, spacing: 7) {
-                Label(kind.title, systemImage: kind.icon).font(.subheadline.weight(.bold))
-                Text("\(progress.done)/\(progress.total) \(kind == .materials ? "utilizzati" : "fatte")").font(.caption)
-                if kind == .checklist && progress.total > 0 {
-                    ProgressView(value: Double(progress.done), total: Double(progress.total)).tint(Color(hex: "#257259"))
-                    Text("\(Int(Double(progress.done) / Double(progress.total) * 100))%").font(.caption.weight(.black))
+            AKGlassPanel(cornerRadius: 12, padding: 12) {
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack(spacing: 8) {
+                        Label(kind.title, systemImage: kind.icon).font(.headline).foregroundStyle(AKOrbitTheme.primaryText)
+                        Spacer(minLength: 4)
+                        Text("\(progress.done)/\(progress.total)").font(.subheadline).foregroundStyle(AKOrbitTheme.secondaryText)
+                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(AKOrbitTheme.cyan)
+                    }
+                    if kind == .checklist && progress.total > 0 {
+                        ProgressView(value: Double(progress.done), total: Double(progress.total)).tint(Color(hex: "#70c3a3"))
+                    }
+                    if kind == .materials && (coverage.total > 0 || coverage.orphaned > 0) {
+                        Label("\(coverage.matched)/\(coverage.total) installati\(coverage.unitMismatches > 0 ? " · unità diversa" : "")\(coverage.orphaned > 0 ? " · da verificare" : "")", systemImage: coverage.complete ? "checkmark.circle.fill" : "exclamationmark.triangle")
+                            .platformAdaptiveFont(size: 13, weight: .bold).foregroundStyle(Color(hex: coverage.complete ? "#70c3a3" : "#f0c778"))
+                    }
                 }
-                if kind == .materials && (coverage.total > 0 || coverage.orphaned > 0) {
-                    Label("\(coverage.matched)/\(coverage.total) installati\(coverage.unitMismatches > 0 ? " · unità diversa" : "")\(coverage.orphaned > 0 ? " · da verificare" : "")", systemImage: coverage.complete ? "checkmark.circle.fill" : "exclamationmark.triangle")
-                        .font(.caption2.weight(.bold)).foregroundStyle(Color(hex: coverage.complete ? "#257259" : "#856300"))
-                }
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(12).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 12))
-        }.buttonStyle(.plain).foregroundStyle(Color(hex: "#2d2754")).frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .contentShape(Rectangle())
+        }.platformPlainButtonStyle().frame(maxWidth: .infinity)
     }
 }
 
+private struct WorkListDraftSnapshot: Equatable {
+    let entries: [NativeChecklistEntry]
+    let pendingOrder: [NativeChecklistEntry]?
+    let newText: String
+    let newStepText: String
+}
+
 private struct WorkListEditorView: View {
+    @Environment(\.akTabletDevice) private var tabletDevice
     @Environment(\.dismiss) private var dismiss
     let kind: WorkListKind
     let simple: Bool
@@ -737,6 +1498,7 @@ private struct WorkListEditorView: View {
     @State private var editingID: String?
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @State private var draftState: AKDraftState<WorkListDraftSnapshot>
     let workItemID: UUID?
     private let savedEntryIDs: Set<String>
     @State private var photoEntry: NativeChecklistEntry?
@@ -751,12 +1513,33 @@ private struct WorkListEditorView: View {
         self.workItemID = workItemID
         self.savedEntryIDs = Set(entries.flatMap { [$0.id] + ($0.steps ?? []).map(\.id) })
         _draft = State(initialValue: entries)
+        _draftState = State(initialValue: AKDraftState(baseline: WorkListDraftSnapshot(entries: entries, pendingOrder: nil, newText: "", newStepText: "")))
+    }
+
+    private var draftSnapshot: WorkListDraftSnapshot {
+        WorkListDraftSnapshot(
+            entries: draft,
+            pendingOrder: ordering == visibleEntries ? nil : ordering,
+            newText: AKDraftValue.text(newText),
+            newStepText: AKDraftValue.text(newStepText)
+        )
+    }
+
+    private func requestClose() {
+        draftState.requestClose(current: draftSnapshot, isSaving: isSaving) { dismiss() }
     }
 
     private var parent: NativeChecklistEntry? { draft.first { $0.id == selectedParentID } }
     private var visibleEntries: [NativeChecklistEntry] { parent?.steps ?? draft }
     private var currentMaterials: [NativeChecklistEntry] { kind == .materials ? draft : materials }
     private var currentChecklist: [NativeChecklistEntry] { kind == .materials ? checklist : draft }
+    private var lightweightRows: Bool {
+        #if os(iOS)
+        !tabletDevice
+        #else
+        false
+        #endif
+    }
     private func hasMaterialLink(_ material: NativeChecklistEntry) -> Bool {
         let unit = material.unit ?? .pezzi
         return linkedQuantity(currentChecklist, materialID: material.id, unit: unit) > 0
@@ -765,99 +1548,171 @@ private struct WorkListEditorView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            checklistScrollContent
             HStack(spacing: 12) {
-                if parent != nil && ordering == nil {
-                    Button { if !newStepText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { addEntry() }; selectedParentID = nil; editingID = nil } label: { Image(systemName: "chevron.left") }.accessibilityLabel("Checklist")
+                Button { if ordering != nil { ordering = nil } else { requestClose() } } label: {
+                    Text("Annulla").platformAdaptiveFont(size: 15, weight: .bold).frame(maxWidth: .infinity).padding(.vertical, 12)
+                        .foregroundStyle(AKOrbitTheme.secondaryText).background(AKOrbitTheme.glassBlue).clipShape(RoundedRectangle(cornerRadius: 12))
+                }.platformPlainButtonStyle().disabled(isSaving)
+                Button { Task { await persistOrderOrList() } } label: {
+                    Text(isSaving ? "Salvo..." : "Salva").platformAdaptiveFont(size: 15, weight: .bold).frame(maxWidth: .infinity).padding(.vertical, 12)
+                        .foregroundStyle(.white).background(AKOrbitTheme.orbitBlue).clipShape(RoundedRectangle(cornerRadius: 12))
+                }.platformPlainButtonStyle().disabled(isSaving)
+            }.padding(16).background(AKOrbitTheme.glassBlue.opacity(0.85))
+        }
+        .foregroundStyle(AKOrbitTheme.primaryText)
+        .background(AKOrbitBackground())
+        .presentationDetents([.large])
+        .akUnsavedChangesGuard($draftState, current: draftSnapshot, isSaving: isSaving, canSave: true, onSave: { Task { await persistOrderOrList(closeAfterSave: true) } }, onDiscard: { dismiss() })
+        .sheet(item: $photoEntry) { entry in
+            AKModalScrollContent {
+                HStack {
+                    Text(entry.text).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
+                    Button { photoEntry = nil } label: {
+                        Image(systemName: "xmark").frame(width: 44, height: 44)
+                    }.accessibilityLabel("Chiudi")
+                }.padding(.horizontal, 16).padding(.top, 12)
+            } content: {
+                NativePhotoGallery(workItemID: workItemID, entryID: entry.id).padding(16)
+            }
+            .background(AKOrbitBackground())
+            .preferredColorScheme(.dark)
+        }
+    }
+
+    @ViewBuilder
+    private var checklistScrollContent: some View {
+        #if os(iOS)
+        if !tabletDevice {
+            List {
+                checklistHeader
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                checklistContent
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .buttonStyle(.borderless)
+            .id("\(selectedParentID ?? "root")-\(ordering == nil ? "editing" : "ordering")")
+        } else {
+            tabletChecklistScrollContent
+        }
+        #else
+        tabletChecklistScrollContent
+        #endif
+    }
+
+    private var tabletChecklistScrollContent: some View {
+        AKModalScrollContent {
+            checklistHeader
+        } content: {
+            VStack(alignment: .leading, spacing: 13) { checklistContent }
+                .padding(20)
+                .id("\(selectedParentID ?? "root")-\(ordering == nil ? "editing" : "ordering")")
+        }
+    }
+
+    private var checklistHeader: some View {
+                HStack(spacing: 12) {
+                    if parent != nil && ordering == nil {
+                        Button { if !newStepText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { addEntry() }; selectedParentID = nil; editingID = nil } label: { Image(systemName: "chevron.left") }.accessibilityLabel("Checklist")
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title).platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText)
+                        Text(ordering == nil ? parent?.text ?? kind.title : "Riordina \(parent?.text ?? kind.title)")
+                            .platformAdaptiveFont(size: 19, weight: .black).foregroundStyle(AKOrbitTheme.primaryText).lineLimit(2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Button(action: requestClose) { Image(systemName: "xmark").frame(width: 44, height: 44).contentShape(Rectangle()) }
+                        .platformPlainButtonStyle().keyboardShortcut(.cancelAction).disabled(isSaving).accessibilityLabel("Chiudi")
                 }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.caption).foregroundStyle(Color(hex: "#716a91"))
-                    Text(ordering == nil ? parent?.text ?? kind.title : "Riordina \(parent?.text ?? kind.title)")
-                        .font(.headline.weight(.black)).foregroundStyle(Color(hex: "#2d2754")).lineLimit(2)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                if ordering == nil && visibleEntries.count > 1 {
-                    Button("Riordina") { ordering = visibleEntries }
-                        .font(.caption.weight(.bold)).lineLimit(1).fixedSize()
+                .padding(18)
+                .background(AKOrbitTheme.glassBlue.opacity(0.8))
+    }
+
+    @ViewBuilder
+    private var checklistContent: some View {
+                Group {
+                    if ordering == nil && visibleEntries.count > 1 {
+                        Button { ordering = visibleEntries } label: {
+                            Label("Riordina voci", systemImage: "arrow.up.arrow.down")
+                                .platformAdaptiveFont(size: 14, weight: .bold)
+                                .frame(minHeight: 44)
+                        }
                         .disabled(!pendingText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         .accessibilityHint("Apri l'ordinamento delle voci")
-                }
-                Button { dismiss() } label: { Image(systemName: "xmark") }.disabled(isSaving).accessibilityLabel("Chiudi")
-            }.padding(18)
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 13) {
+                    }
                     if let ordering {
                         ForEach(Array(ordering.enumerated()), id: \.element.id) { index, entry in
                             HStack(spacing: 12) {
-                                Text("\(index + 1)").font(.caption.weight(.bold)).frame(width: 24)
-                                Text(entry.text).frame(maxWidth: .infinity, alignment: .leading)
+                                Text("\(index + 1)").platformAdaptiveFont(size: 14, weight: .bold).frame(width: 24)
+                                Text(entry.text).platformAdaptiveFont(size: 15).frame(maxWidth: .infinity, alignment: .leading)
                                 Button { move(index, by: -1) } label: { Image(systemName: "arrow.up") }.disabled(index == 0 || isSaving).accessibilityLabel("Sposta \(entry.text) su")
                                 Button { move(index, by: 1) } label: { Image(systemName: "arrow.down") }.disabled(index == ordering.count - 1 || isSaving).accessibilityLabel("Sposta \(entry.text) giù")
-                            }.padding(12).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 12))
+                            }.padding(12).background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 12), lightweight: lightweightRows) }
                         }
                     } else {
                         let progress = listProgress(visibleEntries)
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text("\(progress.done) \(kind == .materials ? "utilizzati" : "fatte") · \(progress.total - progress.done) \(kind == .materials ? "da utilizzare" : "da fare")")
-                                .font(.caption.weight(.bold)).frame(maxWidth: .infinity, alignment: .leading)
-                            if progress.total > 0 { Text("\(Int(Double(progress.done) / Double(progress.total) * 100))%").font(.caption.weight(.black)).fixedSize() }
+                                .platformAdaptiveFont(size: 14, weight: .bold).frame(maxWidth: .infinity, alignment: .leading)
+                            if progress.total > 0 { Text("\(Int(Double(progress.done) / Double(progress.total) * 100))%").platformAdaptiveFont(size: 14, weight: .black).fixedSize() }
                         }
-                        if progress.total > 0 { ProgressView(value: Double(progress.done), total: Double(progress.total)).tint(Color(hex: "#257259")) }
+                        if progress.total > 0 { ProgressView(value: Double(progress.done), total: Double(progress.total)).tint(Color(hex: "#70c3a3")) }
                         ForEach(visibleEntries) { entry in entryRow(entry) }
                         HStack {
-                            TextField(kind == .materials ? "Nuovo materiale" : parent == nil ? "Nuova voce" : "Nuova sottoattività", text: parent == nil ? $newText : $newStepText).onSubmit(addEntry).paymentInputStyle()
+                            TextField(kind == .materials ? "Nuovo materiale" : parent == nil ? "Nuova voce" : "Nuova sottoattività", text: parent == nil ? $newText : $newStepText).onSubmit(addEntry).paymentInputStyle(lightweight: lightweightRows).platformAdaptiveFont(size: 17)
                             Button(action: addEntry) { Image(systemName: "plus") }.disabled(pendingText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityLabel("Aggiungi voce")
                         }
                         NativeDictationButton(text: parent == nil ? $newText : $newStepText)
                     }
-                    if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
-                }.padding(20)
-            }
-            HStack(spacing: 12) {
-                Button { if ordering != nil { ordering = nil } else { dismiss() } } label: {
-                    Text("Annulla").font(.subheadline.weight(.bold)).frame(maxWidth: .infinity).padding(.vertical, 12)
-                        .foregroundStyle(Color(hex: "#2d2754")).background(Color(hex: "#f0ece8")).clipShape(RoundedRectangle(cornerRadius: 12))
-                }.buttonStyle(.plain).disabled(isSaving)
-                Button { Task { await persistOrderOrList() } } label: {
-                    Text(isSaving ? "Salvo..." : "Salva").font(.subheadline.weight(.bold)).frame(maxWidth: .infinity).padding(.vertical, 12)
-                        .foregroundStyle(.white).background(Color(hex: "#2d2754")).clipShape(RoundedRectangle(cornerRadius: 12))
-                }.buttonStyle(.plain).disabled(isSaving)
-            }.padding(16).background(Color(hex: "#fffdf9"))
-        }.foregroundStyle(Color(hex: "#2d2754")).background(Color(hex: "#fffdf9")).presentationDetents([.large])
-        .sheet(item: $photoEntry) { entry in
-            NavigationStack {
-                ScrollView { NativePhotoGallery(workItemID: workItemID, entryID: entry.id).padding() }
-                    .navigationTitle("Foto voce")
-                    .toolbar { ToolbarItem(placement: .akTrailing) { Button("Chiudi") { photoEntry = nil } } }
-            }
-        }
+                    if let errorMessage { Text(errorMessage).platformAdaptiveFont(size: 14).foregroundStyle(Color(hex: "#a9322b")) }
+                }
     }
 
     private func entryRow(_ entry: NativeChecklistEntry) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 10) {
-                Button { toggle(entry) } label: { Image(systemName: entry.done ? "checkmark.square.fill" : "square").foregroundStyle(Color(hex: "#257259")) }
+                Button { toggle(entry) } label: {
+                    Image(systemName: entry.done ? "checkmark.square.fill" : "square")
+                        .foregroundStyle(Color(hex: "#70c3a3"))
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
                     .disabled(kind == .materials && hasMaterialLink(entry))
                     .accessibilityLabel("\(entry.done ? "Deseleziona" : "Completa") \(entry.text)")
                     .accessibilityHint(kind == .materials && hasMaterialLink(entry) ? "Utilizzo gestito dalla checklist lavorazione" : "")
                 if kind == .checklist && parent == nil && editingID != entry.id {
                     Button { selectedParentID = entry.id } label: {
-                        HStack { Text(entry.text).frame(maxWidth: .infinity, alignment: .leading); if let steps = entry.steps, !steps.isEmpty { let progress = listProgress(steps); Text("\(progress.done)/\(progress.total)").font(.caption) }; Image(systemName: "chevron.right") }
-                    }.buttonStyle(.plain)
+                        HStack { Text(entry.text).platformAdaptiveFont(size: 15).frame(maxWidth: .infinity, alignment: .leading); if let steps = entry.steps, !steps.isEmpty { let progress = listProgress(steps); Text("\(progress.done)/\(progress.total)").platformAdaptiveFont(size: 13) }; Image(systemName: "chevron.right") }
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }.platformPlainButtonStyle()
                 } else {
                     TextField("Voce", text: Binding(get: { currentText(for: entry.id) }, set: { updateText(entry.id, to: $0) }))
-                        .onSubmit { editingID = nil }.paymentInputStyle()
+                        .onSubmit { editingID = nil }.paymentInputStyle(lightweight: lightweightRows).platformAdaptiveFont(size: 17)
                 }
+            }
+            HStack(spacing: 12) {
                 if kind == .checklist && parent == nil {
-                    Button { editingID = entry.id } label: { Image(systemName: "pencil") }.accessibilityLabel("Rinomina \(entry.text)")
+                    Button { editingID = entry.id } label: { Label("Rinomina", systemImage: "pencil") }
+                        .frame(minHeight: 44).accessibilityLabel("Rinomina \(entry.text)")
                 }
-                Button(role: .destructive) { remove(entry.id) } label: { Image(systemName: "trash") }.accessibilityLabel("Elimina \(entry.text)")
+                Spacer(minLength: 0)
+                Button(role: .destructive) { remove(entry.id) } label: {
+                    Image(systemName: "trash").frame(width: 44, height: 44)
+                }.accessibilityLabel("Elimina \(entry.text)")
             }
             if !simple { HStack(spacing: 8) {
-                Text("Quantità").font(.caption)
+                Text("Quantità").platformAdaptiveFont(size: 14)
                 TextField("Quantità", value: Binding(get: { currentEntry(for: entry.id)?.quantity ?? 1 }, set: { value in
                     guard value > 0, value.isFinite, (currentEntry(for: entry.id)?.unit ?? .pezzi) == .metri || value.rounded() == value else { return }
                     updateEntry(entry.id) { $0.quantity = value }
-                }), format: .number).keyboardType(.decimalPad).frame(width: 65).paymentInputStyle()
+                }), format: .number).platformDecimalKeyboard().frame(width: 75).paymentInputStyle(lightweight: lightweightRows).platformAdaptiveFont(size: 16)
                 Spacer(minLength: 0)
                 Menu {
                     ForEach(NativeWorkUnit.allCases, id: \.self) { unit in
@@ -870,9 +1725,9 @@ private struct WorkListEditorView: View {
                     }
                 } label: {
                     Label((entry.unit ?? .pezzi).label, systemImage: "chevron.up.chevron.down")
-                        .font(.caption.weight(.bold)).lineLimit(1).foregroundStyle(Color(hex: "#2d2754"))
+                        .platformAdaptiveFont(size: 14, weight: .bold).lineLimit(1).foregroundStyle(AKOrbitTheme.primaryText)
                         .padding(.horizontal, 10).padding(.vertical, 9)
-                        .background(Color(hex: "#fffdf9")).clipShape(RoundedRectangle(cornerRadius: 10))
+                            .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 10), lightweight: lightweightRows) }
                 }.accessibilityLabel("Unità \((entry.unit ?? .pezzi).label)")
             } }
             if kind == .checklist && !simple {
@@ -894,9 +1749,9 @@ private struct WorkListEditorView: View {
                             .lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
                         Image(systemName: "chevron.down").font(.caption2.weight(.bold)).fixedSize()
                     }
-                    .font(.caption.weight(.semibold)).foregroundStyle(Color(hex: "#2d2754"))
+                    .font(.caption.weight(.semibold)).foregroundStyle(AKOrbitTheme.primaryText)
                     .padding(.horizontal, 12).padding(.vertical, 10)
-                    .background(Color(hex: "#fffdf9")).clipShape(RoundedRectangle(cornerRadius: 10))
+                    .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 10), lightweight: lightweightRows) }
                     .frame(maxWidth: .infinity)
                 }.accessibilityLabel("Materiale per \(entry.text)")
             }
@@ -908,7 +1763,7 @@ private struct WorkListEditorView: View {
                     Text("Salva prima la voce per aggiungere foto.").font(.caption)
                 }
             }
-        }.font(.subheadline).padding(10).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 12))
+        }.platformAdaptiveFont(size: 15).padding(10).background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 12), lightweight: lightweightRows) }
     }
 
     private func currentText(for id: String) -> String { visibleEntries.first { $0.id == id }?.text ?? "" }
@@ -933,7 +1788,7 @@ private struct WorkListEditorView: View {
         let required = material.quantity ?? 1
         return Label("\(quantityLabel(installed))/\(quantityLabel(required)) \(unit.label.lowercased()) installati\(mismatched > 0 ? " · unità diversa" : "")", systemImage: mismatched > 0 ? "exclamationmark.triangle" : abs(installed - required) < 0.000001 ? "checkmark.circle.fill" : "circle.dotted")
             .font(.caption.weight(.bold))
-            .foregroundStyle(Color(hex: mismatched > 0 ? "#a83d35" : abs(installed - required) < 0.000001 ? "#257259" : "#856300"))
+            .foregroundStyle(Color(hex: mismatched > 0 ? "#ffb5a7" : abs(installed - required) < 0.000001 ? "#70c3a3" : "#f0c778"))
     }
 
     private func updateEntry(_ id: String, change: (inout NativeChecklistEntry) -> Void) {
@@ -976,7 +1831,7 @@ private struct WorkListEditorView: View {
         self.ordering = ordering
     }
 
-    private func persistOrderOrList() async {
+    private func persistOrderOrList(closeAfterSave: Bool = false) async {
         var updated = draft
         if let ordering {
             if let selectedParentID, let index = updated.firstIndex(where: { $0.id == selectedParentID }) { updated[index].steps = ordering }
@@ -993,16 +1848,37 @@ private struct WorkListEditorView: View {
             draft = updated
             newText = ""
             newStepText = ""
-            if ordering != nil { self.ordering = nil } else { dismiss() }
+            let keepOpen = ordering != nil && !closeAfterSave
+            ordering = nil
+            draftState.markSaved(draftSnapshot)
+            if !keepOpen { dismiss() }
         } catch { errorMessage = "Impossibile salvare la lista." }
         isSaving = false
     }
 }
 
+private struct WorkItemDraftSnapshot: Equatable {
+    let title: String
+    let description: String
+    let clientID: UUID?
+    let checklistSourceID: UUID?
+    let status: String
+    let priority: String
+    let dueDay: DateComponents?
+    let scheduledMinute: Int?
+    let nextAction: String
+    let notes: String
+    let checklist: [NativeChecklistEntry]
+    let materials: [NativeChecklistEntry]
+}
+
 private struct WorkItemEditorView: View {
+    private enum MacPlanningTarget { case dueDate, appointment }
+
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     let item: WorkItem?
     let clients: [WorkClient]
+    let checklistSources: [WorkItem]
     let mode: String
     let defaultClientID: UUID?
     let onClose: () -> Void
@@ -1011,6 +1887,7 @@ private struct WorkItemEditorView: View {
     @State private var title = ""
     @State private var description = ""
     @State private var clientID: UUID?
+    @State private var checklistSourceID: UUID?
     @State private var status = "planned"
     @State private var priority = "normal"
     @State private var hasDueDate = false
@@ -1024,21 +1901,47 @@ private struct WorkItemEditorView: View {
     @State private var selectedList: WorkListKind?
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @State private var macPlanningTarget = MacPlanningTarget.appointment
+    @State private var macVisibleMonth = Calendar.current.dateInterval(of: .month, for: .now)?.start ?? .now
+    @State private var macAppointmentTime = "09:00"
+    @State private var draft = AKDraftState<WorkItemDraftSnapshot>()
+
+    private static let macTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "briefcase.fill").foregroundStyle(Color(hex: "#257259")).font(.title3).frame(width: 42, height: 42).background(Color(hex: "#d9e8d9")).clipShape(RoundedRectangle(cornerRadius: 13))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(mode == "todo" ? item == nil ? "Nuova cosa da fare" : "Modifica cosa da fare" : item == nil ? "Nuova lavorazione" : "Modifica lavorazione").font(.headline.weight(.black)).foregroundStyle(Color(hex: "#2d2754"))
-                    Text("Un posto solo per il lavoro e il prossimo passo").font(.caption).foregroundStyle(Color(hex: "#8a7f9f"))
-                }
-                Spacer()
-                Button(action: onClose) { Image(systemName: "xmark").foregroundStyle(Color(hex: "#8a7f9f")).frame(width: 36, height: 36).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 11)) }
-            }
-            .padding(18).overlay(alignment: .bottom) { Rectangle().fill(Color(hex: "#ead8bf")).frame(height: 1) }
+        Group {
+            #if os(macOS)
+            macBody
+            #else
+            mobileBody
+            #endif
+        }
+        .akUnsavedChangesGuard($draft, current: draftSnapshot, isSaving: isSaving, canSave: !title.trimmingCharacters(in: .whitespaces).isEmpty, onSave: { Task { await submit() } }, onDiscard: onClose)
+    }
 
-            ScrollView(showsIndicators: false) {
+    private var mobileBody: some View {
+        VStack(spacing: 0) {
+            AKModalScrollContent {
+                HStack(spacing: 12) {
+                    Image(systemName: "briefcase.fill").foregroundStyle(Color(hex: "#70c3a3")).font(.title3).frame(width: 42, height: 42).background(Color(hex: "#70c3a3").opacity(0.14)).clipShape(RoundedRectangle(cornerRadius: 13))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(mode == "todo" ? item == nil ? "Nuova cosa da fare" : "Modifica cosa da fare" : item == nil ? "Nuova lavorazione" : "Modifica lavorazione").platformAdaptiveFont(size: 20, weight: .black).foregroundStyle(AKOrbitTheme.primaryText)
+                        Text("Un posto solo per il lavoro e il prossimo passo").platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText)
+                    }
+                    Spacer()
+                    Button(action: requestClose) {
+                        Image(systemName: "xmark").foregroundStyle(AKOrbitTheme.primaryText)
+                            .frame(width: 44, height: 44).background(AKOrbitTheme.glassBlue, in: Circle())
+                    }
+                    .platformPlainButtonStyle().accessibilityLabel("Chiudi").disabled(isSaving)
+                }
+                .padding(18).overlay(alignment: .bottom) { Rectangle().fill(AKOrbitTheme.cyan.opacity(0.22)).frame(height: 1) }
+            } content: {
                 VStack(alignment: .leading, spacing: 16) {
                     field(mode == "todo" ? "COSA DEVI FARE" : "NOME DEL LAVORO", placeholder: mode == "todo" ? "Es. Sentire Pietro" : "Es. Installazione cucina", text: $title)
                     VStack(alignment: .leading, spacing: 7) {
@@ -1052,8 +1955,8 @@ private struct WorkItemEditorView: View {
                                     .lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
                                 Image(systemName: "chevron.up.chevron.down").font(.caption.weight(.bold)).fixedSize()
                             }
-                            .font(.subheadline).foregroundStyle(Color(hex: "#2d2754"))
-                            .padding(12).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 12))
+                            .platformAdaptiveFont(size: 16).foregroundStyle(AKOrbitTheme.primaryText)
+                            .padding(12).background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 12)) }
                         }
                     }
                     field("DESCRIZIONE", placeholder: "Cosa c'è da fare?", text: $description)
@@ -1070,44 +1973,60 @@ private struct WorkItemEditorView: View {
                         }
                     }
 
-                    HStack(spacing: 12) {
-                        pickerField("STATO", selection: $status, values: mode == "todo" ? [("planned", "Da fare"), ("completed", "Completata")] : WorkStatus.values.map { ($0, WorkStatus.label($0)) })
-                        pickerField("PRIORITÀ", selection: $priority, values: [("low", "Bassa"), ("normal", "Normale"), ("high", "Alta")])
+                    if horizontalSizeClass == .compact {
+                        VStack(spacing: 12) {
+                            pickerField("STATO", selection: $status, values: mode == "todo" ? [("planned", "Da fare"), ("completed", "Completata")] : WorkStatus.values.map { ($0, WorkStatus.label($0)) })
+                            pickerField("PRIORITÀ", selection: $priority, values: [("low", "Bassa"), ("normal", "Normale"), ("high", "Alta")])
+                        }
+                    } else {
+                        HStack(spacing: 12) {
+                            pickerField("STATO", selection: $status, values: mode == "todo" ? [("planned", "Da fare"), ("completed", "Completata")] : WorkStatus.values.map { ($0, WorkStatus.label($0)) })
+                            pickerField("PRIORITÀ", selection: $priority, values: [("low", "Bassa"), ("normal", "Normale"), ("high", "Alta")])
+                        }
                     }
 
                     VStack(alignment: .leading, spacing: 10) {
-                        Toggle("Imposta una scadenza", isOn: $hasDueDate).tint(Color(hex: "#3d8be8"))
-                        if hasDueDate { DatePicker("Scadenza", selection: $dueDate, displayedComponents: .date).datePickerStyle(.compact) }
-                        Toggle("Fissa un appuntamento", isOn: $hasAppointment).tint(Color(hex: "#3d8be8"))
-                        if hasAppointment { DatePicker("Data e ora", selection: $scheduledAt, displayedComponents: [.date, .hourAndMinute]).datePickerStyle(.compact) }
+                        Toggle("Imposta una scadenza", isOn: $hasDueDate).tint(AKOrbitTheme.cyan)
+                        if hasDueDate {
+                            DatePicker("Scadenza", selection: $dueDate, displayedComponents: .date)
+                                .datePickerStyle(.compact).tint(AKOrbitTheme.cyan)
+                        }
+                        Toggle("Fissa un appuntamento", isOn: $hasAppointment).tint(AKOrbitTheme.cyan)
+                        if hasAppointment {
+                            DatePicker("Data e ora", selection: $scheduledAt, displayedComponents: [.date, .hourAndMinute])
+                                .datePickerStyle(.compact).tint(AKOrbitTheme.cyan)
+                        }
                     }
-                    .font(.subheadline.weight(.medium)).padding(14).background(Color(hex: "#f4eddf")).clipShape(RoundedRectangle(cornerRadius: 15))
+                    .platformAdaptiveFont(size: 16, weight: .medium).padding(14).background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 15)) }
 
                     field("PROSSIMA AZIONE", placeholder: "Es. richiamare per confermare", text: $nextAction)
                     VStack(alignment: .leading, spacing: 7) {
                         fieldLabel("NOTE", icon: "text.alignleft")
-                        TextField("Dettagli da ritrovare al volo...", text: $notes, axis: .vertical).lineLimit(3...6).paymentInputStyle()
+                        TextField("Dettagli da ritrovare al volo...", text: $notes, axis: .vertical).lineLimit(3...6).paymentInputStyle().platformAdaptiveFont(size: 16)
                         NativeDictationButton(text: $notes)
                     }
-                    if let errorMessage { Text(errorMessage).font(.caption).foregroundStyle(Color(hex: "#a9322b")) }
+                    if let errorMessage { Text(errorMessage).platformAdaptiveFont(size: 14).foregroundStyle(Color(hex: "#ffb5a7")) }
                 }
                 .padding(20)
             }
 
             HStack(spacing: 12) {
-                Button(action: onClose) {
-                    Text("Annulla").font(.subheadline.weight(.bold)).frame(maxWidth: .infinity).padding(.vertical, 12)
-                        .foregroundStyle(Color(hex: "#2d2754")).background(Color(hex: "#f0ece8")).clipShape(RoundedRectangle(cornerRadius: 12))
-                }.buttonStyle(.plain)
+                Button(action: requestClose) {
+                    Text("Annulla").platformAdaptiveFont(size: 15, weight: .bold).frame(maxWidth: .infinity, minHeight: 48)
+                        .foregroundStyle(AKOrbitTheme.secondaryText).background(AKOrbitTheme.glassBlue).clipShape(RoundedRectangle(cornerRadius: 12))
+                }.platformPlainButtonStyle().disabled(isSaving)
                 Button { Task { await submit() } } label: {
                     Text(isSaving ? "Salvo..." : horizontalSizeClass == .compact ? "Salva" : mode == "todo" ? "Salva attività" : "Salva lavorazione")
-                        .font(.subheadline.weight(.bold)).frame(maxWidth: .infinity).padding(.vertical, 12)
-                        .foregroundStyle(.white).background(Color(hex: "#3d8be8")).clipShape(RoundedRectangle(cornerRadius: 12))
-                }.buttonStyle(.plain).disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
+                        .platformAdaptiveFont(size: 15, weight: .bold).frame(maxWidth: .infinity, minHeight: 48)
+                        .foregroundStyle(.white).background(AKOrbitTheme.orbitBlue).clipShape(RoundedRectangle(cornerRadius: 12))
+                }.platformPlainButtonStyle().disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
             }
-            .padding(16).background(Color(hex: "#fffdf9"))
+            .padding(16).background(AKOrbitTheme.glassBlue.opacity(0.85))
         }
-        .frame(maxHeight: 760).background(Color(hex: "#fffdf9")).clipShape(RoundedRectangle(cornerRadius: 24)).padding(16)
+        .frame(maxHeight: 780)
+        .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 24), highlighted: true) }
+        .environment(\.colorScheme, .dark)
+        .padding(16)
         .onAppear(perform: load)
         .sheet(item: $selectedList) { kind in
             WorkListEditorView(kind: kind, simple: mode == "todo", title: title, entries: kind == .checklist ? checklist : materials, materials: materials, checklist: checklist) { entries in
@@ -1120,23 +2039,370 @@ private struct WorkItemEditorView: View {
         }
     }
 
+    #if os(macOS)
+    private var macBody: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 13) {
+                Image(systemName: mode == "todo" ? "checklist" : "briefcase.fill")
+                    .platformAdaptiveFont(size: 19, weight: .semibold)
+                    .foregroundStyle(AKOrbitTheme.cyan)
+                    .frame(width: 44, height: 44)
+                    .background(AKOrbitTheme.cyan.opacity(0.12), in: RoundedRectangle(cornerRadius: 13))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(mode == "todo" ? item == nil ? "Nuova attività" : "Modifica attività" : item == nil ? "Nuova lavorazione" : "Modifica lavorazione")
+                        .platformAdaptiveFont(size: 22, weight: .bold).foregroundStyle(AKOrbitTheme.primaryText)
+                    Text(mode == "todo" ? "Organizza la tua attività e il prossimo passo." : "Organizza interventi, checklist e materiali.")
+                        .platformAdaptiveFont(size: 14).foregroundStyle(AKOrbitTheme.secondaryText)
+                }
+                Spacer()
+                Button(action: requestClose) {
+                    Image(systemName: "xmark").platformAdaptiveFont(size: 14, weight: .semibold)
+                        .foregroundStyle(AKOrbitTheme.secondaryText).frame(width: 38, height: 38)
+                        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 11))
+                }
+                .platformPlainButtonStyle().keyboardShortcut(.cancelAction).accessibilityLabel("Chiudi").disabled(isSaving)
+            }
+            .padding(.horizontal, 22).padding(.vertical, 16)
+            .overlay(alignment: .bottom) { Rectangle().fill(AKOrbitTheme.cyan.opacity(0.22)).frame(height: 1) }
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 15) {
+                    macField(mode == "todo" ? "COSA DEVI FARE" : "NOME DEL LAVORO", icon: "text.alignleft") {
+                        TextField(mode == "todo" ? "Es. Sentire Pietro" : "Es. Installazione cucina", text: $title)
+                            .platformNoAutocapitalization()
+                            .paymentInputStyle()
+                            .platformAdaptiveFont(size: 18)
+                    }
+                    macField("CLIENTE", icon: "person") {
+                        Picker("Cliente", selection: $clientID) {
+                            Text("Nessun cliente").tag(UUID?.none)
+                            ForEach(clients) { client in Text(clientOptionLabel(client)).tag(Optional(client.id)) }
+                        }
+                        .pickerStyle(.menu).paymentInputStyle().platformAdaptiveFont(size: 18)
+                    }
+                    macField("DESCRIZIONE", icon: "text.bubble") {
+                        TextField("Cosa c'è da fare?", text: $description, axis: .vertical)
+                            .lineLimit(3...5).paymentInputStyle().platformAdaptiveFont(size: 17)
+                    }
+
+                    if mode != "todo" {
+                        macField("CHECKLIST COLLEGATA", icon: "link") {
+                            Picker("Checklist collegata", selection: $checklistSourceID) {
+                                Text("Checklist indipendente").tag(UUID?.none)
+                                ForEach(checklistSources) { source in
+                                    let progress = listProgress(source.checklist)
+                                    Text("\(source.title) · \(progress.done)/\(progress.total)").tag(Optional(source.id))
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .paymentInputStyle()
+                            .platformAdaptiveFont(size: 16)
+                            .onChange(of: checklistSourceID) { sourceID in
+                                guard let source = checklistSources.first(where: { $0.id == sourceID }) else { return }
+                                let previous = checklist
+                                checklist = source.checklist
+                                materials = synchronizeMaterialUsage(materials, checklist: source.checklist, previousChecklist: previous)
+                            }
+                            Text(checklistSourceID == nil
+                                 ? "Puoi crearne una nuova oppure collegarne una da Cose da fare."
+                                 : "Modifiche e avanzamenti saranno sincronizzati con la checklist originale.")
+                                .platformAdaptiveFont(size: 11)
+                                .foregroundStyle(AKOrbitTheme.secondaryText)
+                        }
+                    }
+
+                    HStack(spacing: 12) {
+                        macListButton(.checklist, entries: checklist)
+                        if mode != "todo" { macListButton(.materials, entries: materials) }
+                    }
+
+                    HStack(alignment: .top, spacing: 12) {
+                        macField("STATO", icon: "circle.lefthalf.filled") {
+                            Picker("Stato", selection: $status) {
+                                ForEach(WorkStatus.values.filter { mode != "todo" || $0 != "waiting" }, id: \.self) { value in
+                                    Text(value == "planned" ? "Da fare" : WorkStatus.label(value)).tag(value)
+                                }
+                            }
+                            .pickerStyle(.segmented).platformAdaptiveFont(size: 14, weight: .medium)
+                        }
+                        macField("PRIORITÀ", icon: "chart.bar") {
+                            Picker("Priorità", selection: $priority) {
+                                Text("Bassa").tag("low"); Text("Normale").tag("normal"); Text("Alta").tag("high")
+                            }.pickerStyle(.menu).paymentInputStyle().platformAdaptiveFont(size: 16)
+                        }
+                    }
+
+                    HStack(spacing: 12) {
+                        macPlanningToggle("Imposta una scadenza", subtitle: "Indica la data di completamento prevista.", icon: "calendar", value: $hasDueDate) {
+                            macPlanningTarget = .dueDate
+                            macVisibleMonth = Calendar.current.dateInterval(of: .month, for: dueDate)?.start ?? dueDate
+                        }
+                        if mode != "todo" {
+                            macPlanningToggle("Fissa un appuntamento", subtitle: "Pianifica un incontro o un intervento.", icon: "calendar.badge.plus", value: $hasAppointment) {
+                                macPlanningTarget = .appointment
+                                macVisibleMonth = Calendar.current.dateInterval(of: .month, for: scheduledAt)?.start ?? scheduledAt
+                            }
+                        }
+                    }
+
+                    if hasDueDate || (mode != "todo" && hasAppointment) {
+                        macPlanningCalendar
+                    }
+
+                    macField("PROSSIMA AZIONE", icon: "arrow.turn.down.right") {
+                        TextField("Es. richiamare per confermare", text: $nextAction).paymentInputStyle().platformAdaptiveFont(size: 17)
+                    }
+                    macField("NOTE", icon: "text.alignleft") {
+                        VStack(alignment: .leading, spacing: 9) {
+                            TextField("Dettagli da ritrovare al volo...", text: $notes, axis: .vertical).lineLimit(3...5).paymentInputStyle().platformAdaptiveFont(size: 17)
+                            NativeDictationButton(text: $notes)
+                        }
+                    }
+                    if let errorMessage { Text(errorMessage).platformAdaptiveFont(size: 12).foregroundStyle(Color(hex: "#ffb5a7")) }
+                }
+                .padding(.horizontal, 20).padding(.vertical, 16)
+            }
+
+            HStack(spacing: 12) {
+                Text("* Campi obbligatori").platformAdaptiveFont(size: 13).foregroundStyle(AKOrbitTheme.secondaryText)
+                Spacer()
+                Button("Annulla", action: requestClose).platformAdaptiveFont(size: 14, weight: .medium).buttonStyle(.bordered).tint(AKOrbitTheme.cyan).disabled(isSaving)
+                Button(isSaving ? "Salvo..." : mode == "todo" ? "Salva attività" : "Salva lavorazione") {
+                    Task { await submit() }
+                }
+                .platformAdaptiveFont(size: 14, weight: .semibold)
+                .buttonStyle(.borderedProminent).tint(AKOrbitTheme.orbitBlue)
+                .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
+            }
+            .padding(.horizontal, 20).padding(.vertical, 14)
+            .background(AKOrbitTheme.glassBlue.opacity(0.84))
+            .overlay(alignment: .top) { Rectangle().fill(AKOrbitTheme.cyan.opacity(0.18)).frame(height: 1) }
+        }
+        .frame(minWidth: 640, maxWidth: 760, maxHeight: 780)
+        .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 24), highlighted: true) }
+        .onAppear(perform: load)
+        .sheet(item: $selectedList) { kind in
+            WorkListEditorView(kind: kind, simple: mode == "todo", title: title, entries: kind == .checklist ? checklist : materials, materials: materials, checklist: checklist) { entries in
+                if kind == .checklist {
+                    let previous = checklist
+                    checklist = entries
+                    materials = synchronizeMaterialUsage(materials, checklist: entries, previousChecklist: previous)
+                } else {
+                    materials = synchronizeMaterialUsage(entries, checklist: checklist)
+                }
+            }
+        }
+    }
+
+    private func macField<Content: View>(_ title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label(title, systemImage: icon).platformAdaptiveFont(size: 12, weight: .bold).foregroundStyle(AKOrbitTheme.cyan)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func macListButton(_ kind: WorkListKind, entries: [NativeChecklistEntry]) -> some View {
+        Button { selectedList = kind } label: {
+            HStack(spacing: 9) {
+                Image(systemName: kind.icon).foregroundStyle(AKOrbitTheme.cyan)
+                Text(kind.title).platformAdaptiveFont(size: 15, weight: .semibold)
+                Text("· \(entries.count) elementi").platformAdaptiveFont(size: 13).foregroundStyle(AKOrbitTheme.secondaryText)
+                Spacer(minLength: 0)
+                Image(systemName: "plus.circle.fill").foregroundStyle(AKOrbitTheme.cyan)
+                Image(systemName: "chevron.down").platformAdaptiveFont(size: 10, weight: .bold).foregroundStyle(AKOrbitTheme.secondaryText)
+            }
+            .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 46)
+            .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 12)) }
+        }
+        .platformPlainButtonStyle()
+        .foregroundStyle(AKOrbitTheme.primaryText)
+    }
+
+    private func macPlanningToggle(_ title: String, subtitle: String, icon: String, value: Binding<Bool>, action: @escaping () -> Void) -> some View {
+        AKGlassPanel(cornerRadius: 12, padding: 13) {
+            HStack(spacing: 11) {
+                Image(systemName: icon)
+                    .platformAdaptiveFont(size: 17)
+                    .foregroundStyle(AKOrbitTheme.cyan)
+                    .frame(width: 34, height: 34)
+                    .background(AKOrbitTheme.cyan.opacity(0.12), in: RoundedRectangle(cornerRadius: 9))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title).platformAdaptiveFont(size: 15, weight: .semibold)
+                    Text(subtitle).platformAdaptiveFont(size: 12).foregroundStyle(AKOrbitTheme.secondaryText)
+                }
+                Spacer(minLength: 3)
+                Toggle(title, isOn: value).labelsHidden().tint(AKOrbitTheme.orbitBlue)
+            }
+        }
+        .onChange(of: value.wrappedValue) { isEnabled in if isEnabled { action() } }
+    }
+
+    private var macPlanningDate: Date {
+        macPlanningTarget == .dueDate ? dueDate : scheduledAt
+    }
+
+    private var macPlanningDays: [Date?] {
+        let calendar = Calendar.current
+        let firstDay = calendar.date(from: calendar.dateComponents([.year, .month], from: macVisibleMonth)) ?? macVisibleMonth
+        let leadingDays = (calendar.component(.weekday, from: firstDay) + 5) % 7
+        guard let range = calendar.range(of: .day, in: .month, for: firstDay) else { return [] }
+        let days = range.compactMap { calendar.date(byAdding: .day, value: $0 - 1, to: firstDay) }
+        let trailingDays = (7 - ((leadingDays + days.count) % 7)) % 7
+        return Array(repeating: nil, count: leadingDays) + days.map(Optional.some) + Array(repeating: nil, count: trailingDays)
+    }
+
+    private var macPlanningCalendar: some View {
+        AKGlassPanel(cornerRadius: 15, padding: 13) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    planningDateChip("Scadenza", date: dueDate, enabled: hasDueDate, selected: macPlanningTarget == .dueDate) {
+                        macPlanningTarget = .dueDate
+                        macVisibleMonth = Calendar.current.dateInterval(of: .month, for: dueDate)?.start ?? dueDate
+                    }
+                    if mode != "todo" {
+                        planningDateChip("Appuntamento", date: scheduledAt, enabled: hasAppointment, selected: macPlanningTarget == .appointment) {
+                            macPlanningTarget = .appointment
+                            macVisibleMonth = Calendar.current.dateInterval(of: .month, for: scheduledAt)?.start ?? scheduledAt
+                        }
+                    }
+                }
+                HStack(alignment: .top, spacing: 15) {
+                    VStack(spacing: 9) {
+                        HStack {
+                            Button { shiftMacPlanningMonth(-1) } label: { Image(systemName: "chevron.left") }.platformPlainButtonStyle().accessibilityLabel("Mese precedente")
+                            Spacer()
+                            Text(macVisibleMonth.formatted(.dateTime.month(.wide).year().locale(Locale(identifier: "it_IT"))).capitalized)
+                                .platformAdaptiveFont(size: 15, weight: .semibold)
+                            Spacer()
+                            Button { shiftMacPlanningMonth(1) } label: { Image(systemName: "chevron.right") }.platformPlainButtonStyle().accessibilityLabel("Mese successivo")
+                        }
+                        HStack(spacing: 5) {
+                            ForEach(["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"], id: \.self) { day in
+                                Text(day).platformAdaptiveFont(size: 11, weight: .semibold).foregroundStyle(AKOrbitTheme.secondaryText).frame(maxWidth: .infinity)
+                            }
+                        }
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 3), count: 7), spacing: 3) {
+                            ForEach(Array(macPlanningDays.enumerated()), id: \.offset) { _, date in
+                                if let date { macPlanningDay(date) }
+                                else { Color.clear.frame(height: 28) }
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    if mode != "todo" && macPlanningTarget == .appointment {
+                        Rectangle().fill(AKOrbitTheme.cyan.opacity(0.15)).frame(width: 1)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("ORA").platformAdaptiveFont(size: 12, weight: .bold).foregroundStyle(AKOrbitTheme.cyan)
+                            HStack(spacing: 9) {
+                                Image(systemName: "clock").foregroundStyle(AKOrbitTheme.cyan)
+                                TextField("09:00", text: $macAppointmentTime)
+                                    .textFieldStyle(.plain)
+                                    .platformAdaptiveFont(size: 17, weight: .semibold).monospacedDigit()
+                                    .onChange(of: macAppointmentTime) { value in updateMacAppointmentTime(value) }
+                                    .onSubmit { macAppointmentTime = Self.macTimeFormatter.string(from: scheduledAt) }
+                            }
+                            .padding(11)
+                            .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 10), highlighted: true) }
+                            Text("Scrivi l'ora nel formato HH:mm")
+                                .platformAdaptiveFont(size: 10).foregroundStyle(AKOrbitTheme.secondaryText)
+                            Rectangle().fill(AKOrbitTheme.cyan.opacity(0.14)).frame(height: 1)
+                            Text("Appuntamento: \(scheduledAt.formatted(.dateTime.weekday(.wide).day().month(.wide).hour().minute().locale(Locale(identifier: "it_IT"))))")
+                                .platformAdaptiveFont(size: 13, weight: .semibold).foregroundStyle(AKOrbitTheme.primaryText)
+                            if hasDueDate {
+                                Text("Scadenza: \(dueDate.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(Locale(identifier: "it_IT"))))")
+                                    .platformAdaptiveFont(size: 12).foregroundStyle(AKOrbitTheme.secondaryText)
+                            }
+                        }
+                        .frame(width: 225, alignment: .leading)
+                    } else if macPlanningTarget == .dueDate {
+                        Rectangle().fill(AKOrbitTheme.cyan.opacity(0.15)).frame(width: 1)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("SCADENZA SELEZIONATA").platformAdaptiveFont(size: 12, weight: .bold).foregroundStyle(AKOrbitTheme.cyan)
+                            Text(dueDate.formatted(.dateTime.weekday(.wide).day().month(.wide).year().locale(Locale(identifier: "it_IT"))))
+                                .platformAdaptiveFont(size: 14, weight: .semibold).foregroundStyle(AKOrbitTheme.primaryText)
+                            if hasAppointment {
+                                Text("Appuntamento: \(scheduledAt.formatted(.dateTime.day().month(.wide).hour().minute().locale(Locale(identifier: "it_IT"))))")
+                                    .platformAdaptiveFont(size: 12).foregroundStyle(AKOrbitTheme.secondaryText)
+                            }
+                        }
+                        .frame(width: 225, alignment: .leading)
+                    }
+                }
+            }
+        }
+    }
+
+    private func planningDateChip(_ title: String, date: Date, enabled: Bool, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label("\(title) · \(date.formatted(.dateTime.day().month(.abbreviated).locale(Locale(identifier: "it_IT"))))", systemImage: title == "Scadenza" ? "calendar" : "calendar.badge.plus")
+                .platformAdaptiveFont(size: 11, weight: .semibold)
+                .foregroundStyle(enabled ? AKOrbitTheme.primaryText : AKOrbitTheme.secondaryText)
+                .padding(.horizontal, 10).frame(maxWidth: .infinity, minHeight: 34)
+                .background(selected ? AKOrbitTheme.orbitBlue.opacity(0.6) : AKOrbitTheme.glassBlue, in: RoundedRectangle(cornerRadius: 9))
+                .overlay { RoundedRectangle(cornerRadius: 9).stroke(AKOrbitTheme.cyan.opacity(selected ? 0.65 : 0.18), lineWidth: 1) }
+        }
+        .platformPlainButtonStyle().disabled(!enabled)
+    }
+
+    private func macPlanningDay(_ date: Date) -> some View {
+        let selected = Calendar.current.isDate(date, inSameDayAs: macPlanningDate)
+        let currentMonth = Calendar.current.isDate(date, equalTo: macVisibleMonth, toGranularity: .month)
+        return Button {
+            let currentTime = Calendar.current.dateComponents([.hour, .minute], from: macPlanningDate)
+            let dateWithTime = Calendar.current.date(bySettingHour: currentTime.hour ?? 9, minute: currentTime.minute ?? 0, second: 0, of: date) ?? date
+            if macPlanningTarget == .dueDate { dueDate = dateWithTime } else { scheduledAt = dateWithTime }
+        } label: {
+            Text("\(Calendar.current.component(.day, from: date))")
+                .platformAdaptiveFont(size: 13, weight: selected ? .bold : .medium)
+                .foregroundStyle(selected ? Color(hex: "#061426") : currentMonth ? AKOrbitTheme.primaryText : AKOrbitTheme.secondaryText.opacity(0.45))
+                .frame(maxWidth: .infinity).frame(height: 28)
+                .background {
+                    if selected { Circle().fill(AKOrbitTheme.cyan) }
+                    else if Calendar.current.isDateInToday(date) { Circle().stroke(AKOrbitTheme.cyan.opacity(0.62), lineWidth: 1) }
+                }
+                .contentShape(Circle())
+        }
+        .platformPlainButtonStyle()
+        .accessibilityLabel(date.formatted(date: .complete, time: .omitted))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func shiftMacPlanningMonth(_ offset: Int) {
+        macVisibleMonth = Calendar.current.date(byAdding: .month, value: offset, to: macVisibleMonth) ?? macVisibleMonth
+    }
+
+    private func updateMacAppointmentTime(_ value: String) {
+        guard value.range(of: #"^\d{2}:\d{2}$"#, options: .regularExpression) != nil,
+              let parsed = Self.macTimeFormatter.date(from: value) else { return }
+        let components = Calendar.current.dateComponents([.hour, .minute], from: parsed)
+        guard let hour = components.hour, (0..<24).contains(hour),
+              let minute = components.minute, (0..<60).contains(minute) else { return }
+        scheduledAt = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: scheduledAt) ?? scheduledAt
+    }
+
+    #endif
+
     private func listButton(_ kind: WorkListKind, entries: [NativeChecklistEntry]) -> some View {
         let progress = listProgress(entries)
         return Button { selectedList = kind } label: {
-            HStack {
+            AKGlassPanel(cornerRadius: 12, padding: 12) {
+                HStack {
                 Label(kind.title, systemImage: kind.icon).font(.caption.weight(.bold)).lineLimit(1)
                 Spacer(minLength: 2)
                 Text(kind == .checklist && progress.total > 0 ? "\(Int(Double(progress.done) / Double(progress.total) * 100))%" : "\(progress.total)").font(.caption.weight(.black)).fixedSize()
-            }.padding(12).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 12))
-        }.buttonStyle(.plain).foregroundStyle(Color(hex: "#2d2754")).frame(maxWidth: .infinity)
+                }
+            }
+            .contentShape(Rectangle())
+        }.platformPlainButtonStyle().foregroundStyle(AKOrbitTheme.primaryText).frame(maxWidth: .infinity)
     }
 
     private func field(_ label: String, placeholder: String, text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 7) { fieldLabel(label, icon: "text.alignleft"); TextField(placeholder, text: text).platformNoAutocapitalization().paymentInputStyle() }
+        VStack(alignment: .leading, spacing: 7) { fieldLabel(label, icon: "text.alignleft"); TextField(placeholder, text: text).platformNoAutocapitalization().paymentInputStyle().platformAdaptiveFont(size: 16) }
     }
 
     private func fieldLabel(_ title: String, icon: String) -> some View {
-        Label(title, systemImage: icon).font(.caption2.weight(.black)).foregroundStyle(Color(hex: "#8a7f9f"))
+        Label(title, systemImage: icon).platformAdaptiveFont(size: 12, weight: .black).foregroundStyle(Color(hex: "#8a7f9f"))
     }
 
     private func clientOptionLabel(_ client: WorkClient) -> String {
@@ -1151,15 +2417,22 @@ private struct WorkItemEditorView: View {
             fieldLabel(title, icon: "line.3.horizontal.decrease")
             Picker(title, selection: selection) { ForEach(values, id: \.0) { Text($0.1).tag($0.0) } }
                 .pickerStyle(.menu).frame(maxWidth: .infinity, alignment: .leading)
-                .padding(11).background(Color(hex: "#f8e8cf")).clipShape(RoundedRectangle(cornerRadius: 12))
+                .platformAdaptiveFont(size: 16)
+                .padding(11).background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 12)) }
         }
     }
 
     private func load() {
-        guard let item else { clientID = defaultClientID; return }
+        defer { draft.capture(draftSnapshot) }
+        guard let item else {
+            clientID = defaultClientID
+            macAppointmentTime = Self.macTimeFormatter.string(from: scheduledAt)
+            return
+        }
         title = item.title
         description = item.description
         clientID = item.clientID
+        checklistSourceID = item.checklistSourceID
         status = item.status
         priority = item.priority
         nextAction = item.nextAction
@@ -1167,7 +2440,34 @@ private struct WorkItemEditorView: View {
         checklist = item.checklist
         materials = item.materials
         if let value = item.dueDate, let date = WorkDateFormatters.date.date(from: value) { dueDate = date; hasDueDate = true }
-        if let value = item.scheduledAt, let date = ISO8601DateFormatter().date(from: value) { scheduledAt = date; hasAppointment = true }
+        if let value = item.scheduledAt, let date = ISO8601DateFormatter().date(from: value) {
+            scheduledAt = date
+            macAppointmentTime = Self.macTimeFormatter.string(from: date)
+            hasAppointment = true
+        } else {
+            macAppointmentTime = Self.macTimeFormatter.string(from: scheduledAt)
+        }
+    }
+
+    private var draftSnapshot: WorkItemDraftSnapshot {
+        WorkItemDraftSnapshot(
+            title: AKDraftValue.text(title),
+            description: AKDraftValue.text(description),
+            clientID: clientID,
+            checklistSourceID: checklistSourceID,
+            status: status,
+            priority: priority,
+            dueDay: hasDueDate ? AKDraftValue.day(dueDate) : nil,
+            scheduledMinute: hasAppointment ? AKDraftValue.minute(scheduledAt) : nil,
+            nextAction: AKDraftValue.text(nextAction),
+            notes: AKDraftValue.text(notes),
+            checklist: checklist,
+            materials: materials
+        )
+    }
+
+    private func requestClose() {
+        draft.requestClose(current: draftSnapshot, isSaving: isSaving, close: onClose)
     }
 
     private func submit() async {
@@ -1175,6 +2475,7 @@ private struct WorkItemEditorView: View {
         defer { isSaving = false }
         let payload = WorkItemPayload(
             clientID: clientID,
+            checklistSourceID: checklistSourceID,
             kind: item?.kind ?? mode,
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             description: description,
@@ -1210,6 +2511,42 @@ private struct WorkItemPDFShare: Identifiable {
     let url: URL
 }
 
+#if os(macOS)
+private struct WorkItemShareSheet: View {
+    let url: URL
+
+    var body: some View {
+        ShareLink(item: url) {
+            Label("Condividi PDF", systemImage: "square.and.arrow.up")
+        }
+        .padding(24)
+        .frame(minWidth: 320, minHeight: 140)
+    }
+}
+
+private enum WorkItemPDF {
+    static func create(for item: WorkItem, clientName: String, interventions: [WorkIntervention] = []) throws -> URL {
+        let sections = [
+            "AK Suite · Riepilogo lavorazione",
+            item.title,
+            "Cliente: \(clientName)",
+            "Stato: \(item.status)",
+            item.description,
+            "Prossima azione: \(item.nextAction)",
+            item.notes,
+            "Checklist\n\(item.checklist.map { "• \($0.text)" }.joined(separator: "\n"))",
+            "Materiali\n\(item.materials.map { "• \($0.text)" }.joined(separator: "\n"))",
+        ].filter { !$0.isEmpty }
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 595, height: 842))
+        textView.string = sections.joined(separator: "\n\n")
+        textView.font = .systemFont(ofSize: 12)
+        textView.isEditable = false
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("AKSuite-Lavorazione-\(item.id.uuidString).pdf")
+        try textView.dataWithPDF(inside: textView.bounds).write(to: url, options: .atomic)
+        return url
+    }
+}
+#else
 private struct WorkItemShareSheet: UIViewControllerRepresentable {
     let url: URL
 
@@ -1452,10 +2789,18 @@ private enum WorkItemPDF {
         return url
     }
 }
+#endif
 
 private extension View {
-    func paymentInputStyle() -> some View {
-        self.font(.subheadline).foregroundStyle(Color(hex: "#2d2754")).padding(.horizontal, 13).padding(.vertical, 11)
-            .background(Color(hex: "#f8e8cf")).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#e6d3b6"), lineWidth: 1)).clipShape(RoundedRectangle(cornerRadius: 12))
+    func paymentInputStyle(lightweight: Bool = false) -> some View {
+        #if os(macOS)
+        self.platformAdaptiveFont(size: 17).foregroundStyle(AKOrbitTheme.primaryText).textFieldStyle(.plain)
+            .padding(.horizontal, 13).padding(.vertical, 11)
+            .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 12), lightweight: lightweight) }
+        #else
+        self.platformAdaptiveFont(size: 16).foregroundStyle(AKOrbitTheme.primaryText)
+            .padding(.horizontal, 13).padding(.vertical, 11)
+            .background { AKGlassSurface(shape: RoundedRectangle(cornerRadius: 12), lightweight: lightweight) }
+        #endif
     }
 }
